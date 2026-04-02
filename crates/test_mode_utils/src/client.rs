@@ -27,6 +27,10 @@ pub enum TestError {
     WebSocketWrongValue,
     #[error("Event channel closed")]
     EventChannelClosed,
+    #[error("Client message channel closed")]
+    ClientMessageChannelClosed,
+    #[error("Client message sending handle missing")]
+    ClientMessageSendingHandleMissing,
     #[error("Event receiving handle disabled")]
     EventReceivingHandleDisabled,
     #[error("Event receiving handle missing")]

@@ -4,6 +4,8 @@ use api_client::models::{
 use model::{
     AdminBotNotificationTypes as InternalAdminBotNotificationTypes, ContentProcessingStateInternal,
     ContentProcessingStateType as InternalContentProcessingStateType, EventToClientInternal,
+    ResponseNextProfilePageStatus as InternalResponseNextProfilePageStatus,
+    ResponseResetProfilePagingStatus as InternalResponseResetProfilePagingStatus,
     parse_server_binary_message,
 };
 
@@ -13,6 +15,8 @@ pub type EventType = ServerMessageType;
 pub struct EventToClient {
     pub admin_bot_notification: Option<AdminBotNotificationTypes>,
     pub content_processing_state_changed: Option<ContentProcessingStateChanged>,
+    pub response_reset_profile_paging: Option<ResponseResetProfilePaging>,
+    pub response_next_profile_page: Option<ResponseNextProfilePage>,
     pub event: EventType,
 }
 
@@ -21,8 +25,14 @@ impl EventToClient {
         Self {
             admin_bot_notification: None,
             content_processing_state_changed: None,
+            response_reset_profile_paging: None,
+            response_next_profile_page: None,
             event,
         }
+    }
+
+    pub fn should_be_forwarded_when_events_disabled(&self) -> bool {
+        self.response_reset_profile_paging.is_some() || self.response_next_profile_page.is_some()
     }
 }
 
@@ -44,6 +54,18 @@ impl ContentProcessingStateChanged {
     pub fn new(id: i64, new_state: ContentProcessingState) -> Self {
         Self { id, new_state }
     }
+}
+
+#[derive(Clone, Default, Debug, PartialEq)]
+pub struct ResponseNextProfilePage {
+    pub success: bool,
+    pub profiles: Vec<String>,
+}
+
+#[derive(Clone, Default, Debug, PartialEq)]
+pub struct ResponseResetProfilePaging {
+    pub success: bool,
+    pub iterator_session_id: Option<i64>,
 }
 
 pub fn parse_server_event_to_client_for_test_mode(
@@ -88,6 +110,28 @@ fn convert_server_event_to_client_for_test_mode(
             event.content_processing_state_changed = Some(value);
             Some(event)
         }
+        EventToClientInternal::ResponseResetProfilePaging {
+            status,
+            iterator_session_id,
+        } => {
+            let mut event = EventToClient::new(EventType::ResponseResetProfilePaging);
+            event.response_reset_profile_paging = Some(ResponseResetProfilePaging {
+                success: matches!(status, InternalResponseResetProfilePagingStatus::Success),
+                iterator_session_id,
+            });
+            Some(event)
+        }
+        EventToClientInternal::ResponseNextProfilePage { status, profiles } => {
+            let mut event = EventToClient::new(EventType::ResponseNextProfilePage);
+            event.response_next_profile_page = Some(ResponseNextProfilePage {
+                success: matches!(status, InternalResponseNextProfilePageStatus::Success),
+                profiles: profiles
+                    .into_iter()
+                    .map(|profile| profile.account_id().to_string())
+                    .collect(),
+            });
+            Some(event)
+        }
         EventToClientInternal::AccountStateChanged
         | EventToClientInternal::NewMessageReceived
         | EventToClientInternal::PendingChatNotificationsChanged
@@ -95,8 +139,6 @@ fn convert_server_event_to_client_for_test_mode(
         | EventToClientInternal::ReceivedLikesChanged
         | EventToClientInternal::ClientConfigChanged
         | EventToClientInternal::ProfileChanged
-        | EventToClientInternal::ResponseResetProfilePaging { .. }
-        | EventToClientInternal::ResponseNextProfilePage { .. }
         | EventToClientInternal::ResponseAutomaticProfileSearchResetProfilePaging { .. }
         | EventToClientInternal::ResponseAutomaticProfileSearchNextProfilePage { .. }
         | EventToClientInternal::NewsChanged

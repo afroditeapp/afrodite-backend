@@ -17,9 +17,11 @@ pub fn create_event_channel(
 ) -> (
     EventSenderAndQuitWatcher,
     EventReceiver,
+    ClientMessageSender,
     broadcast::Sender<()>,
 ) {
     let (event_sender, event_receiver) = mpsc::unbounded_channel();
+    let (client_message_sender, client_message_receiver) = mpsc::unbounded_channel();
     let (quit_handle, quit_watcher) = broadcast::channel(1);
     (
         EventSenderAndQuitWatcher {
@@ -27,9 +29,15 @@ pub fn create_event_channel(
                 event_info_handle: enable_event_sending,
                 event_sender,
             },
+            client_message_receiver: ClientMessageReceiver {
+                client_message_receiver,
+            },
             quit_watcher,
         },
         EventReceiver { event_receiver },
+        ClientMessageSender {
+            client_message_sender,
+        },
         quit_handle,
     )
 }
@@ -42,25 +50,43 @@ pub struct EventSender {
 
 impl EventSender {
     pub async fn send_if_sending_enabled(&self, event: EventToClient) {
-        if self.event_info_handle.are_events_enabled() {
+        if self.event_info_handle.are_events_enabled()
+            || event.should_be_forwarded_when_events_disabled()
+        {
             let _ = self.event_sender.send(event);
         }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ClientMessageSender {
+    client_message_sender: mpsc::UnboundedSender<Vec<u8>>,
+}
+
+impl ClientMessageSender {
+    pub fn send(&self, message: Vec<u8>) -> Result<(), TestError> {
+        self.client_message_sender
+            .send(message)
+            .map_err(|_| TestError::ClientMessageChannelClosed.report())
+    }
+}
+
+#[derive(Debug)]
+pub struct ClientMessageReceiver {
+    client_message_receiver: mpsc::UnboundedReceiver<Vec<u8>>,
+}
+
+impl ClientMessageReceiver {
+    pub async fn recv(&mut self) -> Option<Vec<u8>> {
+        self.client_message_receiver.recv().await
     }
 }
 
 #[derive(Debug)]
 pub struct EventSenderAndQuitWatcher {
     pub event_sender: EventSender,
+    pub client_message_receiver: ClientMessageReceiver,
     pub quit_watcher: broadcast::Receiver<()>,
-}
-
-impl Clone for EventSenderAndQuitWatcher {
-    fn clone(&self) -> Self {
-        Self {
-            event_sender: self.event_sender.clone(),
-            quit_watcher: self.quit_watcher.resubscribe(),
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -126,6 +152,7 @@ pub struct BotConnections {
     enable_event_sending: Arc<AtomicBool>,
     connections: Option<ApiConnection>,
     events: Option<EventReceiver>,
+    client_message_sender: Option<ClientMessageSender>,
 }
 
 impl BotConnections {
@@ -135,6 +162,10 @@ impl BotConnections {
 
     pub fn set_events(&mut self, events: EventReceiver) {
         self.events = Some(events);
+    }
+
+    pub fn set_client_message_sender(&mut self, sender: ClientMessageSender) {
+        self.client_message_sender = Some(sender);
     }
 
     pub fn event_info_handle(&self) -> EventInfoHandle {
@@ -161,12 +192,29 @@ impl BotConnections {
             .expect("Account connections are missing")
     }
 
+    pub fn send_client_message(&self, message: Vec<u8>) -> Result<(), TestError> {
+        let sender = self
+            .client_message_sender
+            .as_ref()
+            .ok_or(TestError::ClientMessageSendingHandleMissing.report())?;
+        sender.send(message)
+    }
+
     /// Receive next event without timeout.
     pub async fn recv_event(&mut self) -> Result<EventToClient, TestError> {
         if !self.enable_event_sending.load(Ordering::Relaxed) {
             return Err(TestError::EventReceivingHandleDisabled.report());
         }
 
+        self.recv_event_internal().await
+    }
+
+    /// Receive next event without requiring global event forwarding.
+    pub async fn recv_event_unchecked(&mut self) -> Result<EventToClient, TestError> {
+        self.recv_event_internal().await
+    }
+
+    async fn recv_event_internal(&mut self) -> Result<EventToClient, TestError> {
         let events = self
             .events
             .as_mut()

@@ -2,7 +2,7 @@ use std::{collections::HashSet, fmt::Debug};
 
 use api_client::{
     apis::{
-        common_api::{self, get_client_config},
+        common_api::get_client_config,
         profile_api::{
             self, get_location, get_profile, post_get_query_profile_attributes_config,
             post_profile, post_search_age_range, post_search_groups,
@@ -17,8 +17,12 @@ use async_trait::async_trait;
 use chrono::{DateTime, NaiveTime, Utc};
 use config::{bot_config_file::Gender, file::LocationConfig};
 use error_stack::{Result, ResultExt};
-use test_mode_utils::client::TestError;
+use test_mode_utils::{
+    client::TestError,
+    websocket_protocol::{ResponseNextProfilePage, ResponseResetProfilePaging},
+};
 use tracing::error;
+use utils::minimal_i64;
 
 use super::{BotAction, BotState, PreviousValue};
 use crate::{actions::account::DEFAULT_AGE, utils::location::LocationConfigUtils};
@@ -257,10 +261,20 @@ pub struct ResetProfileIterator;
 #[async_trait]
 impl BotAction for ResetProfileIterator {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let iterator_session_id = common_api::post_reset_profile_paging(&state.api())
-            .await
-            .change_context(TestError::ApiRequest)?;
-        state.profile.profile_iterator_session_id = Some(iterator_session_id);
+        let response = wait_response_reset_profile_paging(
+            state,
+            create_request_reset_profile_paging_message(),
+        )
+        .await?;
+        if !response.success {
+            return Err(TestError::ApiRequest.report());
+        }
+
+        let iterator_session_id = response
+            .iterator_session_id
+            .ok_or(TestError::MissingValue)?;
+        state.profile.profile_iterator_session_id =
+            Some(ProfileIteratorSessionId::new(iterator_session_id));
         Ok(())
     }
 }
@@ -277,17 +291,84 @@ impl BotAction for GetProfileList {
             .as_ref()
             .ok_or(TestError::MissingValue)?
             .clone();
-        let data = common_api::post_get_next_profile_page(&state.api(), iterator_session_id)
-            .await
-            .change_context(TestError::ApiRequest)?;
-        let value =
-            HashSet::<String>::from_iter(data.profiles.into_iter().map(|l| l.a.to_string()));
+
+        let response = wait_response_next_profile_page(
+            state,
+            create_request_get_next_profile_page_message(&iterator_session_id),
+        )
+        .await?;
+        if !response.success {
+            return Err(TestError::ApiRequest.report());
+        }
+
+        let value = HashSet::<String>::from_iter(response.profiles);
         state.previous_value = PreviousValue::Profiles(value);
         Ok(())
     }
 
     fn previous_value_supported(&self) -> bool {
         true
+    }
+}
+
+fn create_request_get_next_profile_page_message(
+    iterator_session_id: &ProfileIteratorSessionId,
+) -> Vec<u8> {
+    const REQUEST_GET_NEXT_PROFILE_PAGE: u8 = 61;
+
+    let mut payload = vec![REQUEST_GET_NEXT_PROFILE_PAGE];
+    minimal_i64::add_minimal_i64(&mut payload, iterator_session_id.id);
+    payload
+}
+
+fn create_request_reset_profile_paging_message() -> Vec<u8> {
+    const REQUEST_RESET_PROFILE_PAGING: u8 = 60;
+    vec![REQUEST_RESET_PROFILE_PAGING]
+}
+
+async fn wait_response_reset_profile_paging(
+    state: &mut BotState,
+    message: Vec<u8>,
+) -> Result<ResponseResetProfilePaging, TestError> {
+    let mut message = Some(message);
+
+    loop {
+        tokio::select! {
+            _ = tokio::task::yield_now(), if message.is_some() => {
+                if let Some(message) = message.take() {
+                    state.connections.send_client_message(message)?;
+                }
+            }
+            event = state.connections.recv_event_unchecked() => {
+                let event = event?;
+                if let Some(page) = event.response_reset_profile_paging {
+                    return Ok(page);
+                }
+            }
+        }
+    }
+}
+
+async fn wait_response_next_profile_page(
+    state: &mut BotState,
+    message: Vec<u8>,
+) -> Result<ResponseNextProfilePage, TestError> {
+    let mut message = Some(message);
+
+    loop {
+        tokio::select! {
+            _ = tokio::task::yield_now(), if message.is_some() => {
+                if let Some(message) = message.take() {
+                    state.connections.send_client_message(message)?;
+                }
+            }
+            event = state.connections.recv_event_unchecked() => {
+                let event = event?;
+                if let Some(page) = event.response_next_profile_page {
+                    return Ok(page);
+                }
+            }
+        }
     }
 }
 

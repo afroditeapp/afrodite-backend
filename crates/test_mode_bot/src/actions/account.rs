@@ -86,9 +86,12 @@ impl BotAction for Login {
 
         state.api.set_access_token(auth_pair.access.token.clone());
 
-        let (event_sender, event_receiver, quit_handle) =
+        let (event_sender, event_receiver, client_message_sender, quit_handle) =
             create_event_channel(state.connections.event_info_handle());
         state.connections.set_events(event_receiver);
+        state
+            .connections
+            .set_client_message_sender(client_message_sender);
 
         let url = state
             .api_urls
@@ -96,7 +99,7 @@ impl BotAction for Login {
             .join(PATH_CONNECT)
             .change_context(TestError::WebSocket)?;
         let connection: Option<WsConnection> =
-            connect_websocket(auth_pair, url, event_sender.clone(), state.api.clone()).into();
+            connect_websocket(auth_pair, url, event_sender, state.api.clone()).into();
 
         state.connections.set_connections(ApiConnection {
             connection,
@@ -126,7 +129,19 @@ fn connect_websocket(
         loop {
             tokio::select! {
                 _ = events.quit_watcher.recv() => break,
-                _ = handle_connection(&mut stream, &events.event_sender) => (),
+                message_from_client = events.client_message_receiver.recv() => {
+                    match message_from_client {
+                        Some(message) => {
+                            if let Err(e) = stream.send(Message::Binary(message.into())).await {
+                                panic!("Sending WebSocket binary message failed, error: {e}");
+                            }
+                        }
+                        None => break,
+                    }
+                }
+                event = stream.next() => {
+                    handle_connection_event(event, &events.event_sender).await;
+                }
                 _ = reconnect_timer.tick() => {
                     let new_stream = connect_websocket_internal(&mut auth, url.clone(), &api_client)
                         .await
@@ -245,31 +260,32 @@ async fn connect_websocket_internal(
     Ok(stream)
 }
 
-async fn handle_connection(stream: &mut WsStream, sender: &EventSender) {
-    loop {
-        match stream.next().await {
-            Some(event) => match event {
-                Ok(Message::Text(_)) => panic!("Unexpected WebSocket message type"),
-                // Connection test message, which does not need a response
-                Ok(Message::Binary(data)) if data.is_empty() => (),
-                Ok(Message::Binary(data)) => {
-                    match parse_server_event_to_client_for_test_mode(data.as_ref()) {
-                        Ok(None) => (),
-                        Ok(Some(event)) => sender.send_if_sending_enabled(event).await,
-                        Err(error) => warn!("Failed to parse WebSocket binary event: {error}"),
-                    }
+async fn handle_connection_event(
+    event: Option<std::result::Result<Message, tokio_tungstenite::tungstenite::Error>>,
+    sender: &EventSender,
+) {
+    match event {
+        Some(event) => match event {
+            Ok(Message::Text(_)) => panic!("Unexpected WebSocket message type"),
+            // Connection test message, which does not need a response
+            Ok(Message::Binary(data)) if data.is_empty() => (),
+            Ok(Message::Binary(data)) => {
+                match parse_server_event_to_client_for_test_mode(data.as_ref()) {
+                    Ok(None) => (),
+                    Ok(Some(event)) => sender.send_if_sending_enabled(event).await,
+                    Err(error) => warn!("Failed to parse WebSocket binary event: {error}"),
                 }
-                Ok(Message::Pong(_)) => (),
-                Ok(_) => {
-                    panic!("Unexpected WebSocket message type");
-                }
-                Err(e) => {
-                    panic!("Unexpected WebSocket error, {e}");
-                }
-            },
-            None => {
-                panic!("Unexpected WebSocket connection closing");
             }
+            Ok(Message::Pong(_)) => (),
+            Ok(_) => {
+                panic!("Unexpected WebSocket message type");
+            }
+            Err(e) => {
+                panic!("Unexpected WebSocket error, {e}");
+            }
+        },
+        None => {
+            panic!("Unexpected WebSocket connection closing");
         }
     }
 }
