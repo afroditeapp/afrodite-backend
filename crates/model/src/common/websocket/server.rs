@@ -55,6 +55,18 @@ pub use parser::parse_server_binary_message;
 ///     - 2: internal server error
 ///   - if status is 0:
 ///     - automatic profile search iterator session id as minimal i64
+/// - `ResponseAutomaticProfileSearchNextProfilePage` (64): payload format:
+///   - status byte:
+///     - 0: success
+///     - 1: invalid iterator session id
+///     - 2: rate limited
+///     - 3: internal server error
+///   - if status is 0:
+///     - repeated profile entries until payload ends:
+///       - account id as 16-byte big-endian UUID
+///       - profile version as 16-byte big-endian UUID
+///       - profile content version as 16-byte big-endian UUID
+///       - null last seen time (0 byte) or last seen time as minimal i64
 /// - `ContentProcessingStateChanged` (90): payload format:
 ///   - content processing server process ID as minimal i64
 ///   - content processing state byte:
@@ -109,6 +121,7 @@ pub enum ServerMessageType {
     ResponseResetProfilePaging = 61,
     ResponseNextProfilePage = 62,
     ResponseAutomaticProfileSearchResetProfilePaging = 63,
+    ResponseAutomaticProfileSearchNextProfilePage = 64,
     // - media: 90..=119
     ContentProcessingStateChanged = 90,
     MediaContentChanged = 91,
@@ -148,6 +161,9 @@ pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
         }
         EventToClientInternal::ResponseAutomaticProfileSearchResetProfilePaging { .. } => {
             ServerMessageType::ResponseAutomaticProfileSearchResetProfilePaging
+        }
+        EventToClientInternal::ResponseAutomaticProfileSearchNextProfilePage { .. } => {
+            ServerMessageType::ResponseAutomaticProfileSearchNextProfilePage
         }
         EventToClientInternal::NewsChanged => ServerMessageType::NewsCountChanged,
         EventToClientInternal::MediaContentChanged => ServerMessageType::MediaContentChanged,
@@ -212,6 +228,12 @@ pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
                 *status,
                 *iterator_session_id,
             );
+        }
+        EventToClientInternal::ResponseAutomaticProfileSearchNextProfilePage {
+            status,
+            profiles,
+        } => {
+            append_response_next_profile_page_payload(&mut message, *status, profiles);
         }
         EventToClientInternal::AccountStateChanged
         | EventToClientInternal::NewMessageReceived

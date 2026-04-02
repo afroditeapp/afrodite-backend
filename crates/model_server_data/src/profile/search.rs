@@ -25,6 +25,10 @@ pub struct AutomaticProfileSearchIteratorSessionId {
 }
 
 impl AutomaticProfileSearchIteratorSessionId {
+    pub fn from_i64(id: i64) -> Self {
+        Self { id }
+    }
+
     pub fn as_i64(&self) -> i64 {
         self.id
     }

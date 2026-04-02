@@ -3,7 +3,7 @@ use model::{
     AccountId, AccountIdInternal, ClientMessageForDataAllCrate, ClientMessageType,
     EventToClientInternal, ScheduledMaintenanceStatus, create_server_binary_message,
 };
-use model_server_data::ProfileIteratorSessionId;
+use model_server_data::{AutomaticProfileSearchIteratorSessionId, ProfileIteratorSessionId};
 use server_common::websocket::WebSocketError;
 use server_data::{app::ReadData, db_manager::InternalReading, result::WrappedResultExt};
 use server_state::S;
@@ -26,6 +26,9 @@ pub enum ClientMessageForServerApiCrate {
         iterator_session_id: ProfileIteratorSessionId,
     },
     RequestAutomaticProfileSearchResetProfilePaging,
+    RequestAutomaticProfileSearchGetNextProfilePage {
+        iterator_session_id: AutomaticProfileSearchIteratorSessionId,
+    },
     TypingStart {
         typing_to: AccountId,
     },
@@ -91,6 +94,14 @@ pub fn parse_client_binary_message(
                 ClientMessageForServerApiCrate::RequestAutomaticProfileSearchResetProfilePaging,
             ))
         }
+        ClientMessageType::RequestAutomaticProfileSearchGetNextProfilePage => {
+            let iterator_session_id = parse_automatic_profile_search_iterator_session_id(payload)?;
+            Ok(ClientMessageParsed::ForServerApi(
+                ClientMessageForServerApiCrate::RequestAutomaticProfileSearchGetNextProfilePage {
+                    iterator_session_id,
+                },
+            ))
+        }
         ClientMessageType::TypingStart => {
             let typing_to = parse_account_id(payload)?;
             Ok(ClientMessageParsed::ForServerApi(
@@ -146,6 +157,20 @@ fn parse_profile_iterator_session_id(
     Ok(ProfileIteratorSessionId::from_i64(value))
 }
 
+fn parse_automatic_profile_search_iterator_session_id(
+    payload: &[u8],
+) -> crate::result::Result<AutomaticProfileSearchIteratorSessionId, WebSocketError> {
+    let mut iterator = payload.iter().copied();
+    let value = minimal_i64::parse_minimal_i64_from_iter(&mut iterator)
+        .ok_or(WebSocketError::ProtocolError.report())?;
+
+    if iterator.next().is_some() {
+        return Err(WebSocketError::ProtocolError.report());
+    }
+
+    Ok(AutomaticProfileSearchIteratorSessionId::from_i64(value))
+}
+
 /// Errors which can cause log spam are ignored so
 /// logging the returned error is safe.
 pub async fn handle_message_from_client(
@@ -180,6 +205,17 @@ pub async fn handle_message_from_client(
         } => profile::handle_get_next_profile_page(state, socket, id, iterator_session_id).await,
         ClientMessageForServerApiCrate::RequestAutomaticProfileSearchResetProfilePaging => {
             profile::handle_automatic_profile_search_reset_profile_paging(state, socket, id).await
+        }
+        ClientMessageForServerApiCrate::RequestAutomaticProfileSearchGetNextProfilePage {
+            iterator_session_id,
+        } => {
+            profile::handle_automatic_profile_search_get_next_profile_page(
+                state,
+                socket,
+                id,
+                iterator_session_id,
+            )
+            .await
         }
         ClientMessageForServerApiCrate::TypingStart { typing_to } => {
             COMMON.event_to_server_typing_start.incr();

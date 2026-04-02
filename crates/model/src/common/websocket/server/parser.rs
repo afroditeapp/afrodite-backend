@@ -58,6 +58,13 @@ pub fn parse_server_binary_message(message: &[u8]) -> Result<EventToClientIntern
                 iterator_session_id,
             }
         }
+        ServerMessageType::ResponseAutomaticProfileSearchNextProfilePage => {
+            let (status, profiles) = parse_response_next_profile_page_payload(&mut message_iter)?;
+            EventToClientInternal::ResponseAutomaticProfileSearchNextProfilePage {
+                status,
+                profiles,
+            }
+        }
         ServerMessageType::ContentProcessingStateChanged => {
             EventToClientInternal::ContentProcessingStateChanged(
                 parse_content_processing_state_changed_payload(&mut message_iter)?,
@@ -621,6 +628,45 @@ mod tests {
             } => {
                 assert_eq!(parsed_status, status);
                 assert_eq!(parsed_iterator_session_id, iterator_session_id);
+            }
+            _ => panic!("unexpected event parsed"),
+        }
+    }
+
+    #[test]
+    fn roundtrip_response_automatic_profile_search_next_profile_page_message() {
+        let profiles = vec![
+            ProfileLink::new(
+                test_account_id(14),
+                test_profile_version(15),
+                test_profile_content_version(16),
+                Some(LastSeenTime::new(123)),
+            ),
+            ProfileLink::new(
+                test_account_id(17),
+                test_profile_version(18),
+                test_profile_content_version(19),
+                None,
+            ),
+        ];
+        let status = ResponseNextProfilePageStatus::Success;
+
+        let message = create_server_binary_message(
+            &EventToClientInternal::ResponseAutomaticProfileSearchNextProfilePage {
+                status,
+                profiles: profiles.clone(),
+            },
+        );
+        let parsed = parse_server_binary_message(&message)
+            .expect("automatic profile search next profile page should parse");
+
+        match parsed {
+            EventToClientInternal::ResponseAutomaticProfileSearchNextProfilePage {
+                status: parsed_status,
+                profiles: parsed_profiles,
+            } => {
+                assert_eq!(parsed_status, status);
+                assert_eq!(parsed_profiles, profiles);
             }
             _ => panic!("unexpected event parsed"),
         }
