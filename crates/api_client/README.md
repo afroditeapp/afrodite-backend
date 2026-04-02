@@ -136,8 +136,12 @@ Class | Method | HTTP request | Description
 *CommonApi* | [**get_pending_app_notifications**](docs/CommonApi.md#get_pending_app_notifications) | **GET** /common_api/pending_app_notifications | 
 *CommonApi* | [**get_push_notification_info**](docs/CommonApi.md#get_push_notification_info) | **GET** /common_api/get_push_notification_info | 
 *CommonApi* | [**get_version**](docs/CommonApi.md#get_version) | **GET** /common_api/version | Get backend version.
+*CommonApi* | [**post_automatic_profile_search_get_next_profile_page**](docs/CommonApi.md#post_automatic_profile_search_get_next_profile_page) | **POST** /common_api/automatic_profile_search/next | Post (updates iterator) to get next page of automatic profile search profile list.
+*CommonApi* | [**post_automatic_profile_search_reset_profile_paging**](docs/CommonApi.md#post_automatic_profile_search_reset_profile_paging) | **POST** /common_api/automatic_profile_search/reset | Reset automatic profile search profile paging.
 *CommonApi* | [**post_client_language**](docs/CommonApi.md#post_client_language) | **POST** /common_api/client_language | 
 *CommonApi* | [**post_delete_pending_app_notifications**](docs/CommonApi.md#post_delete_pending_app_notifications) | **POST** /common_api/pending_app_notifications/delete | 
+*CommonApi* | [**post_get_next_profile_page**](docs/CommonApi.md#post_get_next_profile_page) | **POST** /common_api/profile/page/next | Post (updates iterator) to get next page of profile list.
+*CommonApi* | [**post_reset_profile_paging**](docs/CommonApi.md#post_reset_profile_paging) | **POST** /common_api/profile/page/reset | Reset profile paging.
 *CommonApi* | [**post_set_device_token**](docs/CommonApi.md#post_set_device_token) | **POST** /common_api/set_device_token | 
 *CommonApi* | [**post_start_data_export**](docs/CommonApi.md#post_start_data_export) | **POST** /common_api/start_data_export | Start data export
 *CommonAdminApi* | [**get_admin_notification_settings**](docs/CommonAdminApi.md#get_admin_notification_settings) | **GET** /common_api/admin_notification_settings | Get admin notification settings.
@@ -203,11 +207,8 @@ Class | Method | HTTP request | Description
 *ProfileApi* | [**get_profile_statistics**](docs/ProfileApi.md#get_profile_statistics) | **GET** /profile_api/profile_statistics | Non default values for [model::GetProfileStatisticsParams] requires [model::Permissions::admin_profile_statistics].
 *ProfileApi* | [**get_search_age_range**](docs/ProfileApi.md#get_search_age_range) | **GET** /profile_api/search_age_range | Get account's current search age range
 *ProfileApi* | [**get_search_groups**](docs/ProfileApi.md#get_search_groups) | **GET** /profile_api/search_groups | Get account's current search groups (gender and what gender user is looking for)
-*ProfileApi* | [**post_automatic_profile_search_get_next_profile_page**](docs/ProfileApi.md#post_automatic_profile_search_get_next_profile_page) | **POST** /profile_api/automatic_profile_search/next | Post (updates iterator) to get next page of automatic profile search profile list.
-*ProfileApi* | [**post_automatic_profile_search_reset_profile_paging**](docs/ProfileApi.md#post_automatic_profile_search_reset_profile_paging) | **POST** /profile_api/automatic_profile_search/reset | Reset automatic profile search profile paging.
 *ProfileApi* | [**post_automatic_profile_search_settings**](docs/ProfileApi.md#post_automatic_profile_search_settings) | **POST** /profile_api/automatic_profile_search_settings | 
 *ProfileApi* | [**post_favorite_profile**](docs/ProfileApi.md#post_favorite_profile) | **POST** /profile_api/favorite_profile | Add new favorite profile
-*ProfileApi* | [**post_get_next_profile_page**](docs/ProfileApi.md#post_get_next_profile_page) | **POST** /profile_api/page/next | Post (updates iterator) to get next page of profile list.
 *ProfileApi* | [**post_get_query_profile_attributes_config**](docs/ProfileApi.md#post_get_query_profile_attributes_config) | **POST** /profile_api/query_profile_attributes_config | Query profile attributes from profile attributes config using profile attribute ID list.
 *ProfileApi* | [**post_profile**](docs/ProfileApi.md#post_profile) | **POST** /profile_api/profile | Update profile information.
 *ProfileApi* | [**post_profile_app_notification_settings**](docs/ProfileApi.md#post_profile_app_notification_settings) | **POST** /profile_api/post_profile_app_notification_settings | 
@@ -216,7 +217,6 @@ Class | Method | HTTP request | Description
 *ProfileApi* | [**post_profile_to_database_debug_mode_benchmark**](docs/ProfileApi.md#post_profile_to_database_debug_mode_benchmark) | **POST** /profile_api/benchmark/profile | Post account's current profile directly to database. Debug mode must be enabled that route can be used.
 *ProfileApi* | [**post_report_profile_name**](docs/ProfileApi.md#post_report_profile_name) | **POST** /profile_api/report_profile_name | Report profile name
 *ProfileApi* | [**post_report_profile_text**](docs/ProfileApi.md#post_report_profile_text) | **POST** /profile_api/report_profile_text | Report profile text
-*ProfileApi* | [**post_reset_profile_paging**](docs/ProfileApi.md#post_reset_profile_paging) | **POST** /profile_api/page/reset | Reset profile paging.
 *ProfileApi* | [**post_search_age_range**](docs/ProfileApi.md#post_search_age_range) | **POST** /profile_api/search_age_range | Set account's current search age range
 *ProfileApi* | [**post_search_groups**](docs/ProfileApi.md#post_search_groups) | **POST** /profile_api/search_groups | Set account's current search groups (gender and what gender user is looking for)
 *ProfileApi* | [**put_location**](docs/ProfileApi.md#put_location) | **PUT** /profile_api/location | Update location for account which makes this request.

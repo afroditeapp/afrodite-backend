@@ -11,20 +11,14 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// PendingAppNotificationType : App notification types  # Notification specific data  ## Admin notification  Integer payload contains the following bitflags:  * MODERATE_INITIAL_MEDIA_CONTENT_BOT = 1 << 0 * MODERATE_INITIAL_MEDIA_CONTENT_HUMAN = 1 << 1 * MODERATE_MEDIA_CONTENT_BOT = 1 << 2 * MODERATE_MEDIA_CONTENT_HUMAN = 1 << 3 * MODERATE_PROFILE_TEXTS_BOT = 1 << 4 * MODERATE_PROFILE_TEXTS_HUMAN = 1 << 5 * MODERATE_PROFILE_NAMES_BOT = 1 << 6 * MODERATE_PROFILE_NAMES_HUMAN = 1 << 7 * PROCESS_REPORTS = 1 << 8  ## News changed  Integer payload contains current unread news count.  ## Received likes changed  Integer payload contains current received likes count.
-/// App notification types  # Notification specific data  ## Admin notification  Integer payload contains the following bitflags:  * MODERATE_INITIAL_MEDIA_CONTENT_BOT = 1 << 0 * MODERATE_INITIAL_MEDIA_CONTENT_HUMAN = 1 << 1 * MODERATE_MEDIA_CONTENT_BOT = 1 << 2 * MODERATE_MEDIA_CONTENT_HUMAN = 1 << 3 * MODERATE_PROFILE_TEXTS_BOT = 1 << 4 * MODERATE_PROFILE_TEXTS_HUMAN = 1 << 5 * MODERATE_PROFILE_NAMES_BOT = 1 << 6 * MODERATE_PROFILE_NAMES_HUMAN = 1 << 7 * PROCESS_REPORTS = 1 << 8  ## News changed  Integer payload contains current unread news count.  ## Received likes changed  Integer payload contains current received likes count.
+/// PendingAppNotificationType : App notification types  # Notification specific data  ## Admin notification  Integer payload contains the following bitflags:  * MODERATE_INITIAL_MEDIA_CONTENT_BOT = 1 << 0 * MODERATE_INITIAL_MEDIA_CONTENT_HUMAN = 1 << 1 * MODERATE_MEDIA_CONTENT_BOT = 1 << 2 * MODERATE_MEDIA_CONTENT_HUMAN = 1 << 3 * MODERATE_PROFILE_TEXTS_BOT = 1 << 4 * MODERATE_PROFILE_TEXTS_HUMAN = 1 << 5 * MODERATE_PROFILE_NAMES_BOT = 1 << 6 * MODERATE_PROFILE_NAMES_HUMAN = 1 << 7 * PROCESS_REPORTS = 1 << 8  ## News changed  Integer payload contains current unread news count.  ## Automatic profile search completed  Integer payload contains the found profile count.  ## Received likes changed  Integer payload contains current received likes count.
+/// App notification types  # Notification specific data  ## Admin notification  Integer payload contains the following bitflags:  * MODERATE_INITIAL_MEDIA_CONTENT_BOT = 1 << 0 * MODERATE_INITIAL_MEDIA_CONTENT_HUMAN = 1 << 1 * MODERATE_MEDIA_CONTENT_BOT = 1 << 2 * MODERATE_MEDIA_CONTENT_HUMAN = 1 << 3 * MODERATE_PROFILE_TEXTS_BOT = 1 << 4 * MODERATE_PROFILE_TEXTS_HUMAN = 1 << 5 * MODERATE_PROFILE_NAMES_BOT = 1 << 6 * MODERATE_PROFILE_NAMES_HUMAN = 1 << 7 * PROCESS_REPORTS = 1 << 8  ## News changed  Integer payload contains current unread news count.  ## Automatic profile search completed  Integer payload contains the found profile count.  ## Received likes changed  Integer payload contains current received likes count.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum PendingAppNotificationType {
     #[serde(rename = "AdminNotification")]
     AdminNotification,
     #[serde(rename = "NewsChanged")]
     NewsChanged,
-    #[serde(rename = "MediaContentModerationAccepted")]
-    MediaContentModerationAccepted,
-    #[serde(rename = "MediaContentModerationRejected")]
-    MediaContentModerationRejected,
-    #[serde(rename = "MediaContentModerationDeleted")]
-    MediaContentModerationDeleted,
     #[serde(rename = "ProfileNameModerationAccepted")]
     ProfileNameModerationAccepted,
     #[serde(rename = "ProfileNameModerationRejected")]
@@ -35,6 +29,12 @@ pub enum PendingAppNotificationType {
     ProfileTextModerationRejected,
     #[serde(rename = "AutomaticProfileSearchCompleted")]
     AutomaticProfileSearchCompleted,
+    #[serde(rename = "MediaContentModerationAccepted")]
+    MediaContentModerationAccepted,
+    #[serde(rename = "MediaContentModerationRejected")]
+    MediaContentModerationRejected,
+    #[serde(rename = "MediaContentModerationDeleted")]
+    MediaContentModerationDeleted,
     #[serde(rename = "ReceivedLikesChanged")]
     ReceivedLikesChanged,
 
@@ -45,14 +45,14 @@ impl std::fmt::Display for PendingAppNotificationType {
         match self {
             Self::AdminNotification => write!(f, "AdminNotification"),
             Self::NewsChanged => write!(f, "NewsChanged"),
-            Self::MediaContentModerationAccepted => write!(f, "MediaContentModerationAccepted"),
-            Self::MediaContentModerationRejected => write!(f, "MediaContentModerationRejected"),
-            Self::MediaContentModerationDeleted => write!(f, "MediaContentModerationDeleted"),
             Self::ProfileNameModerationAccepted => write!(f, "ProfileNameModerationAccepted"),
             Self::ProfileNameModerationRejected => write!(f, "ProfileNameModerationRejected"),
             Self::ProfileTextModerationAccepted => write!(f, "ProfileTextModerationAccepted"),
             Self::ProfileTextModerationRejected => write!(f, "ProfileTextModerationRejected"),
             Self::AutomaticProfileSearchCompleted => write!(f, "AutomaticProfileSearchCompleted"),
+            Self::MediaContentModerationAccepted => write!(f, "MediaContentModerationAccepted"),
+            Self::MediaContentModerationRejected => write!(f, "MediaContentModerationRejected"),
+            Self::MediaContentModerationDeleted => write!(f, "MediaContentModerationDeleted"),
             Self::ReceivedLikesChanged => write!(f, "ReceivedLikesChanged"),
         }
     }

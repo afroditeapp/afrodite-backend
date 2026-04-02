@@ -2,7 +2,7 @@ use std::{collections::HashSet, fmt::Debug};
 
 use api_client::{
     apis::{
-        common_api::get_client_config,
+        common_api::{self, get_client_config},
         profile_api::{
             self, get_location, get_profile, post_get_query_profile_attributes_config,
             post_profile, post_search_age_range, post_search_groups,
@@ -257,7 +257,7 @@ pub struct ResetProfileIterator;
 #[async_trait]
 impl BotAction for ResetProfileIterator {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let iterator_session_id = profile_api::post_reset_profile_paging(&state.api())
+        let iterator_session_id = common_api::post_reset_profile_paging(&state.api())
             .await
             .change_context(TestError::ApiRequest)?;
         state.profile.profile_iterator_session_id = Some(iterator_session_id);
@@ -277,7 +277,7 @@ impl BotAction for GetProfileList {
             .as_ref()
             .ok_or(TestError::MissingValue)?
             .clone();
-        let data = profile_api::post_get_next_profile_page(&state.api(), iterator_session_id)
+        let data = common_api::post_get_next_profile_page(&state.api(), iterator_session_id)
             .await
             .change_context(TestError::ApiRequest)?;
         let value =

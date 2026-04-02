@@ -1,7 +1,7 @@
 use api_client::{
     apis::{
         account_api::get_account_state,
-        profile_api::{post_get_next_profile_page, post_reset_profile_paging},
+        common_api::{post_get_next_profile_page, post_reset_profile_paging},
     },
     models::ProfileVisibility,
 };
