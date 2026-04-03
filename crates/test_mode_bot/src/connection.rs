@@ -50,8 +50,8 @@ pub struct EventSender {
 
 impl EventSender {
     pub async fn send_if_sending_enabled(&self, event: EventToClient) {
-        if self.event_info_handle.are_events_enabled()
-            || event.should_be_forwarded_when_events_disabled()
+        if event.should_be_forwarded_when_events_disabled()
+            || self.event_info_handle.are_events_enabled()
         {
             let _ = self.event_sender.send(event);
         }
@@ -210,6 +210,9 @@ impl BotConnections {
     }
 
     /// Receive next event without requiring global event forwarding.
+    ///
+    /// Can be used for receiving events which return true value from
+    /// [EventToClient::should_be_forwarded_when_events_disabled].
     pub async fn recv_event_unchecked(&mut self) -> Result<EventToClient, TestError> {
         self.recv_event_internal().await
     }

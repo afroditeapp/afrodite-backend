@@ -127,8 +127,6 @@ impl AdminBot {
     }
 
     async fn run_admin_initial_logic(state: &mut BotState) -> Result<(), TestError> {
-        state.connections.enable_events();
-
         for action in action_array![Register, Login, DoInitialSetupIfNeeded { admin: true }].iter()
         {
             action.excecute(state).await?;
@@ -236,7 +234,7 @@ impl AdminBot {
         loop {
             tokio::select! {
                 // Receive events from websocket and notify appropriate pipelines
-                event = connections.recv_event() => {
+                event = connections.recv_event_unchecked() => {
                     let event = event?;
                     if event.event == EventType::AdminBotNotification
                         && let Some(notification) = event.admin_bot_notification {

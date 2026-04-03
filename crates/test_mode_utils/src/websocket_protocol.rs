@@ -32,7 +32,9 @@ impl EventToClient {
     }
 
     pub fn should_be_forwarded_when_events_disabled(&self) -> bool {
-        self.response_reset_profile_paging.is_some() || self.response_next_profile_page.is_some()
+        self.admin_bot_notification.is_some()
+            || self.response_reset_profile_paging.is_some()
+            || self.response_next_profile_page.is_some()
     }
 }
 

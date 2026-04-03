@@ -243,7 +243,6 @@ impl Account {
             urls,
             test_context.reqwest_client.clone(),
         );
-        state.enable_events();
 
         Register.excecute_impl(&mut state).await?;
         Login.excecute_impl(&mut state).await?;
