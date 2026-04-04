@@ -118,7 +118,10 @@ CREATE TABLE IF NOT EXISTS shared_state(
     -- birthdate validation using third party service is implemented
     -- someday.
     birthdate                 DATE,
-    is_bot_account            BOOLEAN              NOT NULL DEFAULT FALSE,
+    -- Null = not a bot account
+    -- 0 = admin bot
+    -- 1 = user bot
+    bot_account_type_number   SMALLINT,
     email_verified            BOOLEAN              NOT NULL DEFAULT FALSE,
     -- Profile component uses this info for profile filtering.
     initial_setup_completed_unix_time BIGINT       NOT NULL DEFAULT 0,

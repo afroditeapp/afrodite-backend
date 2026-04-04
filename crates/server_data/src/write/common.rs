@@ -1,5 +1,5 @@
 use database::current::write::GetDbWriteCommandsCommon;
-use model::{Account, AccountIdInternal, ReportTypeNumberInternal, UnixTime};
+use model::{Account, AccountIdInternal, BotAccountType, ReportTypeNumberInternal, UnixTime};
 use server_common::data::cache::CacheError;
 use simple_backend_utils::time::DurationValue;
 
@@ -74,19 +74,19 @@ impl WriteCommandsCommon<'_> {
         Ok(())
     }
 
-    pub async fn set_is_bot_account(
+    pub async fn set_bot_account_type_number(
         &self,
         id: AccountIdInternal,
-        value: bool,
+        value: BotAccountType,
     ) -> Result<(), DataError> {
         self.write_cache_common(id, |cache| {
-            cache.other_shared_state.is_bot_account = value;
+            cache.other_shared_state.set_bot_account_type_number(value);
             Ok(())
         })
         .await?;
 
         db_transaction!(self, move |mut cmds| {
-            cmds.common().state().set_is_bot_account(id, value)
+            cmds.common().state().set_bot_account_type_number(id, value)
         })
     }
 

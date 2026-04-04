@@ -18,14 +18,13 @@ use headers::HeaderValue;
 use simple_backend_model::VersionNumber;
 use test_mode_utils::{
     client::{ApiClient, TestError},
-    server::TEST_ADMIN_ACCESS_EMAIL,
     websocket_protocol::parse_server_event_to_client_for_test_mode,
 };
 use tokio_stream::StreamExt;
 use tokio_tungstenite::tungstenite::{Message, client::IntoClientRequest};
 use tracing::warn;
 use url::Url;
-use utils::api::PATH_CONNECT;
+use utils::api::{ADMIN_BOT_EMAIL, PATH_CONNECT};
 
 use super::{BotAction, BotState, PreviousValue};
 use crate::{
@@ -419,7 +418,7 @@ impl BotAction for SetAccountSetup {
             .change_context(TestError::ApiRequest)?;
 
         let email = if self.admin {
-            TEST_ADMIN_ACCESS_EMAIL.to_string()
+            ADMIN_BOT_EMAIL.to_string()
         } else {
             format!("bot{}@example.com", state.task_id)
         };

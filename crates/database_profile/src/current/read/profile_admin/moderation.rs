@@ -23,7 +23,7 @@ impl CurrentReadProfileModeration<'_> {
             .common()
             .state()
             .other_shared_state(moderator_id)?
-            .is_bot_account;
+            .is_bot();
         self.profile_string_pending_moderation_list(is_bot, params)
     }
 

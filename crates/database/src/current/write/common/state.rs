@@ -3,8 +3,8 @@ use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
     Account, AccountIdInternal, AccountStateContainer, AccountStateRelatedSharedState,
-    AccountSyncVersion, InitialSetupCompletedTime, Permissions, ProfileVisibility, SharedStateRaw,
-    SyncVersionUtils,
+    AccountSyncVersion, BotAccountType, InitialSetupCompletedTime, Permissions, ProfileVisibility,
+    SharedStateRaw, SyncVersionUtils,
 };
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_utils::ContextExt;
@@ -76,15 +76,15 @@ impl CurrentWriteCommonState<'_> {
         Ok(())
     }
 
-    pub fn set_is_bot_account(
+    pub fn set_bot_account_type_number(
         &mut self,
         id: AccountIdInternal,
-        value_for_is_bot_account: bool,
+        value_for_bot_account_type_number: BotAccountType,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::shared_state::dsl::*;
 
         update(shared_state.find(id.as_db_id()))
-            .set((is_bot_account.eq(value_for_is_bot_account),))
+            .set(bot_account_type_number.eq(Some(value_for_bot_account_type_number)))
             .execute(self.conn())
             .into_db_error(id)?;
 

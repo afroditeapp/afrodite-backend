@@ -1,6 +1,6 @@
 use database::{DbReadMode, DieselDatabaseError, current::read::GetDbReadCommandsCommon};
 use model::{
-    Account, AccountIdInternal, AdminNotification, AdminNotificationSettings,
+    Account, AccountIdInternal, AdminNotification, AdminNotificationSettings, BotAccountType,
     ClientConfigSyncVersion, ClientLanguage, ClientType, GetApiUsageStatisticsResult,
     GetApiUsageStatisticsSettings, GetIpAddressStatisticsResult, InitialSetupCompletedTime,
     LatestBirthdate, OtherSharedState, PendingAppNotification, PushNotificationDbState, ReportId,
@@ -67,7 +67,7 @@ impl UserDataExportJsonCommon {
 #[derive(Serialize)]
 struct DataExportSharedState {
     latest_birthdate: LatestBirthdate,
-    is_bot_account: bool,
+    bot_account_type_number: Option<BotAccountType>,
     initial_setup_completed_unix_time: InitialSetupCompletedTime,
 }
 
@@ -75,7 +75,7 @@ impl DataExportSharedState {
     fn new(state: OtherSharedState) -> Self {
         Self {
             latest_birthdate: state.latest_birthdate(),
-            is_bot_account: state.is_bot_account,
+            bot_account_type_number: state.bot_account_type_number(),
             initial_setup_completed_unix_time: state.initial_setup_completed_unix_time,
         }
     }

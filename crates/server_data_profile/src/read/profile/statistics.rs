@@ -28,7 +28,7 @@ impl ReadCommandsProfileStatistics<'_> {
         self.read_cache_profile_and_common_for_all_accounts(|p, e| {
             account_count += 1;
 
-            if !e.other_shared_state.is_bot_account {
+            if !e.other_shared_state.is_bot() {
                 account_count_bots_excluded += 1;
             }
 

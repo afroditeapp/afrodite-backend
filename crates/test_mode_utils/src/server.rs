@@ -24,10 +24,9 @@ use tokio::{
     task::JoinHandle,
 };
 use tracing::info;
+use utils::api::ADMIN_BOT_EMAIL;
 
 use crate::dir::DataDirUtils;
-
-pub const TEST_ADMIN_ACCESS_EMAIL: &str = "admin@example.com";
 
 pub const SERVER_INSTANCE_DIR_START: &str = "server_instance_";
 
@@ -117,7 +116,7 @@ fn new_config(config: &TestMode, bot_api_port: u16) -> (ConfigFile, SimpleBacken
         grant_admin_access: GrantAdminAccessConfig {
             debug_for_every_matching_new_account: false,
             debug_match_only_email_domain: false,
-            email: EmailAddress(TEST_ADMIN_ACCESS_EMAIL.to_string()),
+            email: EmailAddress(ADMIN_BOT_EMAIL.to_string()),
         }
         .into(),
         general: config::file::GeneralConfig {

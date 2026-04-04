@@ -1,6 +1,7 @@
 use database::current::read::GetDbReadCommandsCommon;
 use model::{
-    AccessTokenType, Account, AccountId, AccountIdInternal, LatestBirthdate, RefreshToken,
+    AccessTokenType, Account, AccountId, AccountIdInternal, BotAccountType, LatestBirthdate,
+    RefreshToken,
 };
 use model_server_data::SearchGroupFlags;
 use server_common::data::IntoDataError;
@@ -159,7 +160,7 @@ impl ReadCommandsCommon<'_> {
         self.cache()
             .read_cache(id, |e| {
                 Ok(BotAndGenderInfo {
-                    is_bot: e.common.other_shared_state.is_bot_account,
+                    bot_account_type: e.common.other_shared_state.bot_account_type_number(),
                     gender: e.profile.state.search_group_flags,
                 })
             })
@@ -169,7 +170,7 @@ impl ReadCommandsCommon<'_> {
 
     pub async fn is_bot(&self, id: AccountIdInternal) -> Result<bool, DataError> {
         self.cache()
-            .read_cache(id, |e| Ok(e.common.other_shared_state.is_bot_account))
+            .read_cache(id, |e| Ok(e.common.other_shared_state.is_bot()))
             .await
             .into_error()
     }
@@ -189,6 +190,16 @@ impl ReadCommandsCommon<'_> {
 }
 
 pub struct BotAndGenderInfo {
-    pub is_bot: bool,
+    bot_account_type: Option<BotAccountType>,
     pub gender: SearchGroupFlags,
+}
+
+impl BotAndGenderInfo {
+    pub fn is_bot(&self) -> bool {
+        self.bot_account_type.is_some()
+    }
+
+    pub fn is_admin_bot(&self) -> bool {
+        self.bot_account_type == Some(BotAccountType::Admin)
+    }
 }

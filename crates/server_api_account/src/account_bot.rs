@@ -1,7 +1,7 @@
 use std::net::SocketAddr;
 
 use axum::extract::{ConnectInfo, State};
-use model::ClientType;
+use model::{BotAccountType, ClientType};
 use model_account::{
     AccountId, BotAccount, EmailAddress, GetBotsResult, LoginResult, RemoteBotLogin,
     RemoteBotPassword, SignInWithInfo,
@@ -15,6 +15,7 @@ use server_api::{
 use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
+use utils::api::ADMIN_BOT_EMAIL;
 
 use super::account::login_impl;
 use crate::{
@@ -46,7 +47,7 @@ pub async fn post_bot_login(
     ACCOUNT_BOT.post_bot_login.incr();
 
     let internal_id = state.get_internal_id(id).await?;
-    let is_bot = state.read().account().is_bot_account(internal_id).await?;
+    let is_bot = state.read().common().is_bot(internal_id).await?;
     if !is_bot {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
@@ -72,6 +73,10 @@ pub const PATH_BOT_REGISTER: &str = "/account_api/bot_register";
 /// Register a new bot account. Returns new account ID which is UUID.
 ///
 /// Available only from local bot API port.
+///
+/// Registered account is by default user bot account. Changing the account to
+/// admin bot account can be done by changing email address of the account
+/// to `admin@example.com` when the account is in initial setup state.
 #[utoipa::path(
     post,
     path = PATH_BOT_REGISTER,
@@ -89,7 +94,9 @@ pub async fn post_bot_register(State(state): State<S>) -> Result<Json<AccountId>
         .await?;
 
     db_write!(state, move |cmds| {
-        cmds.common().set_is_bot_account(new_account_id, true).await
+        cmds.common()
+            .set_bot_account_type_number(new_account_id, BotAccountType::User)
+            .await
     })?;
 
     Ok(new_account_id.as_id().into())
@@ -169,7 +176,6 @@ async fn get_or_create_bots_impl(state: &S) -> Result<Json<GetBotsResult>, Statu
     // Get existing bot accounts using data layer
     let mut result = state.read().account().get_existing_bots().await?;
 
-    const ADMIN_EMAIL: &str = "admin@example.com";
     const BOT_EMAIL_PREFIX: &str = "bot";
     const BOT_EMAIL_SUFFIX: &str = "@example.com";
 
@@ -186,8 +192,12 @@ async fn get_or_create_bots_impl(state: &S) -> Result<Json<GetBotsResult>, Statu
     // Create missing admin bot if needed
     if bot_config.admin_bot
         && result.admin.is_none()
-        && let Some(admin) =
-            create_bot_account(state, EmailAddress(ADMIN_EMAIL.to_string())).await?
+        && let Some(admin) = create_bot_account(
+            state,
+            EmailAddress(ADMIN_BOT_EMAIL.to_string()),
+            BotAccountType::Admin,
+        )
+        .await?
     {
         result.admin = Some(admin);
     }
@@ -200,7 +210,7 @@ async fn get_or_create_bots_impl(state: &S) -> Result<Json<GetBotsResult>, Statu
                 "{}{}{}",
                 BOT_EMAIL_PREFIX, bot_number, BOT_EMAIL_SUFFIX
             ));
-            if let Some(bot) = create_bot_account(state, bot_email).await? {
+            if let Some(bot) = create_bot_account(state, bot_email, BotAccountType::User).await? {
                 result.users.push(bot);
             }
         }
@@ -213,6 +223,7 @@ async fn get_or_create_bots_impl(state: &S) -> Result<Json<GetBotsResult>, Statu
 async fn create_bot_account(
     state: &S,
     email: EmailAddress,
+    bot_type: BotAccountType,
 ) -> Result<Option<BotAccount>, StatusCode> {
     let new_account_id = state
         .data_all_access()
@@ -221,7 +232,7 @@ async fn create_bot_account(
 
     db_write!(state, move |cmds| {
         cmds.common()
-            .set_is_bot_account(new_account_id, true)
+            .set_bot_account_type_number(new_account_id, bot_type)
             .await?;
         cmds.account()
             .email()
@@ -277,7 +288,7 @@ pub async fn post_remote_bot_login(
     }
 
     let internal_id = state.get_internal_id(info.aid).await?;
-    let is_bot = state.read().account().is_bot_account(internal_id).await?;
+    let is_bot = state.read().common().is_bot(internal_id).await?;
     if !is_bot {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }

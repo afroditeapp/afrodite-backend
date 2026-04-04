@@ -1,6 +1,6 @@
 use diesel::prelude::*;
 use error_stack::Result;
-use model::AccountIdInternal;
+use model::{AccountIdInternal, BotAccountType};
 use simple_backend_utils::db::DieselDatabaseError;
 
 use crate::{IntoDatabaseError, define_current_read_commands};
@@ -24,21 +24,27 @@ impl<'a> CurrentReadCommonAdmin<'a> {
 }
 
 impl CurrentReadCommonAdmin<'_> {
+    /// `Vec<AccountIdInternal>` order is from oldest to latest
     pub fn admin_bot_account_ids(&mut self) -> Result<Vec<AccountIdInternal>, DieselDatabaseError> {
-        use crate::schema::{account_id, account_permissions, shared_state};
+        use crate::schema::{account_id, shared_state};
 
         account_id::table
             .inner_join(shared_state::table.on(shared_state::account_id.eq(account_id::id)))
-            .inner_join(
-                account_permissions::table.on(account_permissions::account_id.eq(account_id::id)),
-            )
-            .filter(shared_state::is_bot_account.eq(true))
-            .filter(
-                account_permissions::admin_moderate_media_content
-                    .eq(true)
-                    .or(account_permissions::admin_moderate_profile_names.eq(true))
-                    .or(account_permissions::admin_moderate_profile_texts.eq(true)),
-            )
+            .filter(shared_state::bot_account_type_number.eq(Some(BotAccountType::Admin)))
+            .order(account_id::id.asc())
+            .select(AccountIdInternal::as_select())
+            .load(self.conn())
+            .into_db_error(())
+    }
+
+    /// `Vec<AccountIdInternal>` order is from oldest to latest
+    pub fn user_bot_account_ids(&mut self) -> Result<Vec<AccountIdInternal>, DieselDatabaseError> {
+        use crate::schema::{account_id, shared_state};
+
+        account_id::table
+            .inner_join(shared_state::table.on(shared_state::account_id.eq(account_id::id)))
+            .filter(shared_state::bot_account_type_number.eq(Some(BotAccountType::User)))
+            .order(account_id::id.asc())
             .select(AccountIdInternal::as_select())
             .load(self.conn())
             .into_db_error(())

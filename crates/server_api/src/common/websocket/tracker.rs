@@ -53,13 +53,13 @@ impl WebSocketConnectionTrackers {
             .await
             .change_context(WebSocketError::DatabaseBotAndGenderInfoQuery)?;
 
-        let all = if info.is_bot {
+        let all = if info.is_bot() {
             websocket::BotConnections::create().into()
         } else {
             websocket::Connections::create().into()
         };
 
-        let gender_specific = if info.is_bot {
+        let gender_specific = if info.is_bot() {
             if info.gender.is_man() {
                 Some(websocket::BotConnectionsMen::create().into())
             } else if info.gender.is_woman() {
@@ -79,19 +79,8 @@ impl WebSocketConnectionTrackers {
             None
         };
 
-        let admin_bot = if info.is_bot {
-            let admin_bot_accounts = state
-                .read()
-                .common_admin()
-                .admin_bot_account_ids()
-                .await
-                .change_context(WebSocketError::DatabaseBotAndGenderInfoQuery)?;
-
-            if admin_bot_accounts.contains(&id) {
-                Some(state.admin_bot_status_data().create_tracker())
-            } else {
-                None
-            }
+        let admin_bot = if info.is_admin_bot() {
+            Some(state.admin_bot_status_data().create_tracker())
         } else {
             None
         };

@@ -7,7 +7,7 @@ use axum::{
     http::StatusCode,
 };
 use axum_extra::{TypedHeader, headers::ContentType};
-use model::{AccessToken, AccountIdInternal, AccountState, Permissions, UnixTime};
+use model::{AccessToken, AccountIdInternal, AccountState, BotAccountType, Permissions, UnixTime};
 use model_account::{
     EmailAddressState, InitEmailChange, InitEmailChangeResult, SendVerifyEmailMessageResult,
     SetEmailLoginEnabled, SetInitialEmail,
@@ -19,7 +19,7 @@ use server_api::{
     create_open_api_router, db_write,
     utils::Json,
 };
-use server_data::{app::GetConfig, read::GetReadCommandsCommon};
+use server_data::{app::GetConfig, read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
 use server_data_account::{
     read::GetReadCommandsAccount,
     write::{GetWriteCommandsAccount, account::email::TokenCheckResult},
@@ -27,6 +27,7 @@ use server_data_account::{
 use simple_backend::create_counters;
 use simple_backend_utils::time::seconds_until_current_time_is_at;
 use tokio::time::timeout;
+use utils::api::ADMIN_BOT_EMAIL;
 
 use crate::app::GetAccounts;
 
@@ -403,11 +404,20 @@ pub async fn post_initial_email(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    db_write!(state, move |cmds| cmds
-        .account()
-        .email()
-        .inital_setup_account_email_change(api_caller_account_id, email.email)
-        .await)?;
+    db_write!(state, move |cmds| {
+        if cmds.read().common().is_bot(api_caller_account_id).await?
+            && email.email.as_str() == ADMIN_BOT_EMAIL
+        {
+            cmds.common()
+                .set_bot_account_type_number(api_caller_account_id, BotAccountType::Admin)
+                .await?;
+        }
+
+        cmds.account()
+            .email()
+            .inital_setup_account_email_change(api_caller_account_id, email.email)
+            .await
+    })?;
 
     Ok(())
 }

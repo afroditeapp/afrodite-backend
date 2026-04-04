@@ -3,7 +3,7 @@ use chrono::NaiveDate;
 use diesel::{
     AsExpression, FromSqlRow,
     prelude::*,
-    sql_types::{BigInt, Binary},
+    sql_types::{BigInt, Binary, SmallInt},
 };
 use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
@@ -545,6 +545,24 @@ impl AsRef<i64> for AccountIdDb {
 
 diesel_i64_wrapper!(AccountIdDb);
 
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Serialize,
+    TryFromPrimitive,
+    simple_backend_model::SimpleDieselEnum,
+    diesel::FromSqlRow,
+    diesel::AsExpression,
+)]
+#[diesel(sql_type = SmallInt)]
+#[repr(i16)]
+pub enum BotAccountType {
+    Admin = 0,
+    User = 1,
+}
+
 #[derive(Debug, Clone, Default, Queryable, Selectable, Insertable)]
 #[diesel(table_name = crate::schema::shared_state)]
 #[diesel(check_for_backend(crate::Db))]
@@ -556,7 +574,7 @@ pub struct SharedStateRaw {
     pub sync_version: AccountSyncVersion,
     pub unlimited_likes: bool,
     pub birthdate: Option<NaiveDate>,
-    pub is_bot_account: bool,
+    pub bot_account_type_number: Option<BotAccountType>,
     pub initial_setup_completed_unix_time: InitialSetupCompletedTime,
 }
 
@@ -585,7 +603,7 @@ pub struct LatestBirthdate {
 pub struct OtherSharedState {
     pub unlimited_likes: bool,
     birthdate: Option<NaiveDate>,
-    pub is_bot_account: bool,
+    bot_account_type_number: Option<BotAccountType>,
     pub initial_setup_completed_unix_time: InitialSetupCompletedTime,
 }
 
@@ -594,6 +612,18 @@ impl OtherSharedState {
         LatestBirthdate {
             birthdate: self.birthdate,
         }
+    }
+
+    pub fn set_bot_account_type_number(&mut self, bot_type: BotAccountType) {
+        self.bot_account_type_number = Some(bot_type);
+    }
+
+    pub fn bot_account_type_number(&self) -> Option<BotAccountType> {
+        self.bot_account_type_number
+    }
+
+    pub fn is_bot(&self) -> bool {
+        self.bot_account_type_number.is_some()
     }
 }
 

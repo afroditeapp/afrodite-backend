@@ -70,7 +70,7 @@ impl<'a> ApiLimits<'a> {
         let is_limit_reached = self
             .cache
             .write_cache_common(self.account_id, |e| {
-                if e.other_shared_state.is_bot_account {
+                if e.other_shared_state.is_bot() {
                     Ok(false)
                 } else {
                     Ok(check(e.api_limits_mut(), self.config))

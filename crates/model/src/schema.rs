@@ -849,7 +849,7 @@ diesel::table! {
         sync_version -> Int2,
         unlimited_likes -> Bool,
         birthdate -> Nullable<Date>,
-        is_bot_account -> Bool,
+        bot_account_type_number -> Nullable<Int2>,
         email_verified -> Bool,
         initial_setup_completed_unix_time -> Int8,
     }

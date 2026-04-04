@@ -45,7 +45,7 @@ impl CurrentWriteMediaAdminMediaContent<'_> {
             .common()
             .state()
             .other_shared_state(moderator_id)?
-            .is_bot_account;
+            .is_bot();
 
         let next_state = if accepted {
             if moderator_is_bot {
