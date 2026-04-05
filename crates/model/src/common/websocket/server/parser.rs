@@ -2,8 +2,8 @@ use utils::minimal_i64;
 
 use crate::{
     AccountId, ContentProcessingStateChanged, ContentProcessingStateInternal,
-    ContentProcessingStateType, EventToClientInternal, LastSeenTime, ProfileContentVersion,
-    ProfileLink, ProfileVersion, ResponseCheckOnlineStatus, ResponseNextProfilePageStatus,
+    ContentProcessingStateType, EventToClientInternal, LastSeenTime, OnlineStatusUpdate,
+    ProfileContentVersion, ProfileLink, ProfileVersion, ResponseNextProfilePageStatus,
     ResponseResetProfilePagingStatus, ScheduledMaintenanceStatus, ServerMessageType, UnixTime,
 };
 
@@ -83,11 +83,9 @@ pub fn parse_server_binary_message(message: &[u8]) -> Result<EventToClientIntern
         ServerMessageType::TypingStop => {
             EventToClientInternal::TypingStop(parse_account_id_payload(&mut message_iter)?)
         }
-        ServerMessageType::ResponseCheckOnlineStatus => {
-            EventToClientInternal::ResponseCheckOnlineStatus(
-                parse_check_online_status_response_payload(&mut message_iter)?,
-            )
-        }
+        ServerMessageType::OnlineStatusUpdated => EventToClientInternal::OnlineStatusUpdated(
+            parse_online_status_updated_payload(&mut message_iter)?,
+        ),
         ServerMessageType::MessageDeliveryInfoChanged => {
             EventToClientInternal::MessageDeliveryInfoChanged
         }
@@ -348,9 +346,9 @@ fn parse_content_id_payload(
     Ok(crate::ContentId { cid: content_id })
 }
 
-fn parse_check_online_status_response_payload(
+fn parse_online_status_updated_payload(
     payload_iter: &mut impl Iterator<Item = u8>,
-) -> Result<ResponseCheckOnlineStatus, String> {
+) -> Result<OnlineStatusUpdate, String> {
     let account_id = parse_account_id_payload(payload_iter)?;
     let marker = next_payload_byte(payload_iter, "check online status last seen marker")?;
 
@@ -364,7 +362,7 @@ fn parse_check_online_status_response_payload(
         )?))
     };
 
-    Ok(ResponseCheckOnlineStatus {
+    Ok(OnlineStatusUpdate {
         a: account_id,
         l: last_seen,
     })
@@ -377,9 +375,10 @@ mod tests {
     use super::parse_server_binary_message;
     use crate::{
         AccountId, ContentProcessingStateChanged, ContentProcessingStateInternal,
-        EventToClientInternal, LastSeenTime, ProfileContentVersion, ProfileLink, ProfileVersion,
-        ResponseCheckOnlineStatus, ResponseNextProfilePageStatus, ResponseResetProfilePagingStatus,
-        UnixTime, common::websocket::server::create_server_binary_message,
+        EventToClientInternal, LastSeenTime, OnlineStatusUpdate, ProfileContentVersion,
+        ProfileLink, ProfileVersion, ResponseNextProfilePageStatus,
+        ResponseResetProfilePagingStatus, UnixTime,
+        common::websocket::server::create_server_binary_message,
     };
 
     fn test_uuid(value: u8) -> simple_backend_utils::UuidBase64Url {
@@ -728,20 +727,20 @@ mod tests {
     }
 
     #[test]
-    fn roundtrip_check_online_status_response_message() {
-        let expected = ResponseCheckOnlineStatus {
+    fn roundtrip_online_status_updated_message() {
+        let expected = OnlineStatusUpdate {
             a: test_account_id(12),
             l: Some(LastSeenTime::new(123_456_789)),
         };
 
-        let message = create_server_binary_message(
-            &EventToClientInternal::ResponseCheckOnlineStatus(expected.clone()),
-        );
+        let message = create_server_binary_message(&EventToClientInternal::OnlineStatusUpdated(
+            expected.clone(),
+        ));
         let parsed = parse_server_binary_message(&message)
-            .expect("check online status response should parse");
+            .expect("online status updated event should parse");
 
         match parsed {
-            EventToClientInternal::ResponseCheckOnlineStatus(parsed_value) => {
+            EventToClientInternal::OnlineStatusUpdated(parsed_value) => {
                 assert_eq!(parsed_value.a, expected.a);
                 assert_eq!(parsed_value.l, expected.l);
             }
@@ -750,20 +749,20 @@ mod tests {
     }
 
     #[test]
-    fn roundtrip_check_online_status_response_without_last_seen_message() {
-        let expected = ResponseCheckOnlineStatus {
+    fn roundtrip_online_status_updated_without_last_seen_message() {
+        let expected = OnlineStatusUpdate {
             a: test_account_id(13),
             l: None,
         };
 
-        let message = create_server_binary_message(
-            &EventToClientInternal::ResponseCheckOnlineStatus(expected.clone()),
-        );
+        let message = create_server_binary_message(&EventToClientInternal::OnlineStatusUpdated(
+            expected.clone(),
+        ));
         let parsed = parse_server_binary_message(&message)
-            .expect("check online status response without last seen should parse");
+            .expect("online status updated event without last seen should parse");
 
         match parsed {
-            EventToClientInternal::ResponseCheckOnlineStatus(parsed_value) => {
+            EventToClientInternal::OnlineStatusUpdated(parsed_value) => {
                 assert_eq!(parsed_value.a, expected.a);
                 assert_eq!(parsed_value.l, expected.l);
             }

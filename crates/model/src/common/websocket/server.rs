@@ -5,7 +5,7 @@ use utoipa::ToSchema;
 
 use crate::{
     AccountId, ContentProcessingStateChanged, ContentProcessingStateInternal,
-    EventToClientInternal, ProfileLink, ResponseCheckOnlineStatus, ResponseNextProfilePageStatus,
+    EventToClientInternal, OnlineStatusUpdate, ProfileLink, ResponseNextProfilePageStatus,
     ResponseResetProfilePagingStatus,
 };
 
@@ -90,7 +90,7 @@ pub use parser::parse_server_binary_message;
 ///   big-endian byte order.
 /// - `TypingStop` (125): payload is exactly 16 bytes account UUID in
 ///   big-endian byte order.
-/// - `ResponseCheckOnlineStatus` (126): payload is 16 bytes account UUID,
+/// - `OnlineStatusUpdated` (126): payload is 16 bytes account UUID,
 ///   followed by null last seen time (0 byte) or last seen time as minimal i64.
 /// - `MessageDeliveryInfoChanged` (127): payload is empty.
 /// - `LatestSeenMessageChanged` (128): payload is empty.
@@ -132,7 +132,7 @@ pub enum ServerMessageType {
     DailyLikesLeftChanged = 123,
     TypingStart = 124,
     TypingStop = 125,
-    ResponseCheckOnlineStatus = 126,
+    OnlineStatusUpdated = 126,
     MessageDeliveryInfoChanged = 127,
     LatestSeenMessageChanged = 128,
 }
@@ -177,9 +177,7 @@ pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
         }
         EventToClientInternal::TypingStart(_) => ServerMessageType::TypingStart,
         EventToClientInternal::TypingStop(_) => ServerMessageType::TypingStop,
-        EventToClientInternal::ResponseCheckOnlineStatus(_) => {
-            ServerMessageType::ResponseCheckOnlineStatus
-        }
+        EventToClientInternal::OnlineStatusUpdated(_) => ServerMessageType::OnlineStatusUpdated,
         EventToClientInternal::MessageDeliveryInfoChanged => {
             ServerMessageType::MessageDeliveryInfoChanged
         }
@@ -203,8 +201,8 @@ pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
         EventToClientInternal::TypingStart(value) | EventToClientInternal::TypingStop(value) => {
             append_account_id_payload(&mut message, *value);
         }
-        EventToClientInternal::ResponseCheckOnlineStatus(value) => {
-            append_check_online_status_response_payload(&mut message, value);
+        EventToClientInternal::OnlineStatusUpdated(value) => {
+            append_online_status_updated_payload(&mut message, value);
         }
         EventToClientInternal::ResponseResetProfilePaging {
             status,
@@ -340,10 +338,7 @@ fn append_content_processing_state_changed_payload(
     }
 }
 
-fn append_check_online_status_response_payload(
-    buffer: &mut Vec<u8>,
-    value: &ResponseCheckOnlineStatus,
-) {
+fn append_online_status_updated_payload(buffer: &mut Vec<u8>, value: &OnlineStatusUpdate) {
     append_account_id_payload(buffer, value.a);
     match value.l {
         Some(last_seen) => {

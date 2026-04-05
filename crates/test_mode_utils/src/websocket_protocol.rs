@@ -150,7 +150,7 @@ fn convert_server_event_to_client_for_test_mode(
         | EventToClientInternal::PushNotificationInfoChanged
         | EventToClientInternal::TypingStart(_)
         | EventToClientInternal::TypingStop(_)
-        | EventToClientInternal::ResponseCheckOnlineStatus(_)
+        | EventToClientInternal::OnlineStatusUpdated(_)
         | EventToClientInternal::MessageDeliveryInfoChanged
         | EventToClientInternal::LatestSeenMessageChanged => None,
     }

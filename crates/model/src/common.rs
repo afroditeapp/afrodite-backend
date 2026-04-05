@@ -16,7 +16,7 @@ use utoipa::{IntoParams, ToSchema};
 
 use crate::{
     Account, AccountStateContainer, ContentProcessingStateInternal, InitialSetupCompletedTime,
-    IpAddressInternal, ProfileLink, ProfileVisibility, ResponseCheckOnlineStatus,
+    IpAddressInternal, OnlineStatusUpdate, ProfileLink, ProfileVisibility,
 };
 
 pub mod api_usage;
@@ -120,7 +120,7 @@ pub enum EventToClientInternal {
     PushNotificationInfoChanged,
     TypingStart(AccountId),
     TypingStop(AccountId),
-    ResponseCheckOnlineStatus(ResponseCheckOnlineStatus),
+    OnlineStatusUpdated(OnlineStatusUpdate),
     MessageDeliveryInfoChanged,
     LatestSeenMessageChanged,
 }
