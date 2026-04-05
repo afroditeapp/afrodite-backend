@@ -22,6 +22,7 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 
 # [general]
 # log_timestamp = true
+# allow_public_api_without_tls = false
 
 [socket]
 public_api = "127.0.0.1:3000"
@@ -293,6 +294,9 @@ impl ConfigFileUtils {
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct GeneralConfig {
     pub debug: Option<bool>,
+    /// Allow public API without backend TLS cert, for setups where TLS
+    /// termination is handled by a reverse proxy.
+    pub allow_public_api_without_tls: Option<bool>,
     /// Override face detection result with this value
     pub debug_face_detection_result: Option<bool>,
     /// Write timestamp to log messages. Enabled by default.

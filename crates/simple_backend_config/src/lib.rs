@@ -323,9 +323,13 @@ pub fn get_config(
         && public_api_tls_config.is_none()
         && file_config.lets_encrypt.is_none()
         && !file_config.general.debug.unwrap_or_default()
+        && !file_config
+            .general
+            .allow_public_api_without_tls
+            .unwrap_or_default()
     {
         return Err(GetConfigError::TlsConfigMissing).attach_printable(
-            "TLS certificate or Let's Encrypt must be configured if some public API is enabled when debug mode is false",
+            "TLS certificate or Let's Encrypt must be configured if public API is enabled and allow_public_api_without_tls is false and debug mode is false",
         );
     }
 
