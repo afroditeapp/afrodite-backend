@@ -370,6 +370,8 @@ pub struct LlmStringModerationFileConfig {
     /// For example "http://localhost:11434/v1"
     pub openai_api_url: Url,
     pub model: String,
+    pub temperature: Option<f32>,
+    pub seed: Option<i64>,
     #[serde(default)]
     pub debug_log_results: bool,
     /// Wait times in seconds between retry attempts. The length of this vector
@@ -409,6 +411,8 @@ pub struct LlmContentModerationFileConfig {
     /// For example "http://localhost:11434/v1"
     pub openai_api_url: Url,
     pub model: String,
+    pub temperature: Option<f32>,
+    pub seed: Option<i64>,
     #[serde(default)]
     pub debug_log_results: bool,
     /// Wait times in seconds between retry attempts. The length of this vector

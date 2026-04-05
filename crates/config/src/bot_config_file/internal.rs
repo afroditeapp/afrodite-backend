@@ -45,6 +45,8 @@ impl ProfileStringModerationConfig {
 pub struct LlmStringModerationConfig {
     pub openai_api_url: Url,
     pub model: String,
+    pub temperature: Option<f32>,
+    pub seed: Option<i64>,
     pub system_text: String,
     pub user_text_template: String,
     pub expected_response: String,
@@ -71,6 +73,8 @@ impl LlmStringModerationConfig {
         Some(Self {
             openai_api_url: file.openai_api_url,
             model: file.model,
+            temperature: file.temperature,
+            seed: file.seed,
             system_text: db.system_text,
             user_text_template: db.user_text_template,
             expected_response: db.expected_response,
@@ -168,6 +172,8 @@ impl NsfwDetectionConfig {
 pub struct LlmContentModerationConfig {
     pub openai_api_url: Url,
     pub model: String,
+    pub temperature: Option<f32>,
+    pub seed: Option<i64>,
     pub system_text: String,
     pub expected_response: String,
     pub ignore_rejected: bool,
@@ -194,6 +200,8 @@ impl LlmContentModerationConfig {
         Some(Self {
             openai_api_url: file.openai_api_url,
             model: file.model,
+            temperature: file.temperature,
+            seed: file.seed,
             system_text: db.system_text,
             expected_response: db.expected_response,
             ignore_rejected: db.ignore_rejected,

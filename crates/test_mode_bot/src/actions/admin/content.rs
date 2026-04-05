@@ -475,8 +475,8 @@ impl AdminBotContentModerationLogic {
                     ChatCompletionRequestMessage::User(message),
                 ],
                 model: config.model.clone(),
-                temperature: Some(0.0),
-                seed: Some(0),
+                temperature: config.temperature,
+                seed: config.seed,
                 max_completion_tokens: Some(config.max_tokens),
                 max_tokens: Some(config.max_tokens),
                 ..Default::default()
