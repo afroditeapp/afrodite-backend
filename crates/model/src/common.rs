@@ -121,6 +121,9 @@ pub enum EventToClientInternal {
     DailyLikesLeftChanged,
     ScheduledMaintenanceStatus(ScheduledMaintenanceStatus),
     AdminBotNotification(crate::AdminBotNotificationTypes),
+    RequestAdminBotConfigWarnings {
+        request_id: u8,
+    },
     PushNotificationInfoChanged,
     TypingStart(AccountId),
     TypingStop(AccountId),

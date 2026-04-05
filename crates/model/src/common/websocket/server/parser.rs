@@ -33,6 +33,13 @@ pub fn parse_server_binary_message(message: &[u8]) -> Result<EventToClientIntern
                 crate::AdminBotNotificationTypes::from_bits_truncate(bits),
             )
         }
+        ServerMessageType::RequestAdminBotConfigWarnings => {
+            let request_id = next_payload_byte(
+                &mut message_iter,
+                "request admin bot config warnings request id",
+            )?;
+            EventToClientInternal::RequestAdminBotConfigWarnings { request_id }
+        }
         ServerMessageType::PushNotificationInfoChanged => {
             EventToClientInternal::PushNotificationInfoChanged
         }

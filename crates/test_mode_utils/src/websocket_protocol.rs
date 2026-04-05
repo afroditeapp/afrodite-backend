@@ -1,20 +1,20 @@
-use api_client::models::{
-    ContentId, ContentProcessingState, ContentProcessingStateType, ServerMessageType,
-};
+use api_client::models::{ContentId, ContentProcessingState, ContentProcessingStateType};
+pub use model::AdminBotConfigWarningFlags;
 use model::{
     AdminBotNotificationTypes as InternalAdminBotNotificationTypes, ContentProcessingStateInternal,
     ContentProcessingStateType as InternalContentProcessingStateType, EventToClientInternal,
     ResponseNextProfilePageStatus as InternalResponseNextProfilePageStatus,
     ResponseResetProfilePagingStatus as InternalResponseResetProfilePagingStatus,
-    parse_server_binary_message,
+    ServerMessageType, parse_server_binary_message,
 };
 
 pub type EventType = ServerMessageType;
 
-#[derive(Clone, Default, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct EventToClient {
     pub admin_bot_notification: Option<AdminBotNotificationTypes>,
     pub content_processing_state_changed: Option<ContentProcessingStateChanged>,
+    pub request_admin_bot_config_warnings: Option<RequestAdminBotConfigWarnings>,
     pub response_reset_profile_paging: Option<ResponseResetProfilePaging>,
     pub response_next_profile_page: Option<ResponseNextProfilePage>,
     pub event: EventType,
@@ -25,6 +25,7 @@ impl EventToClient {
         Self {
             admin_bot_notification: None,
             content_processing_state_changed: None,
+            request_admin_bot_config_warnings: None,
             response_reset_profile_paging: None,
             response_next_profile_page: None,
             event,
@@ -72,6 +73,11 @@ pub struct ResponseResetProfilePaging {
     pub iterator_session_id: Option<i64>,
 }
 
+#[derive(Clone, Default, Debug, PartialEq)]
+pub struct RequestAdminBotConfigWarnings {
+    pub request_id: u8,
+}
+
 pub fn parse_server_event_to_client_for_test_mode(
     data: &[u8],
 ) -> std::result::Result<Option<EventToClient>, String> {
@@ -112,6 +118,12 @@ fn convert_server_event_to_client_for_test_mode(
                 convert_content_processing_state(state_changed.new_state),
             );
             event.content_processing_state_changed = Some(value);
+            Some(event)
+        }
+        EventToClientInternal::RequestAdminBotConfigWarnings { request_id } => {
+            let mut event = EventToClient::new(EventType::RequestAdminBotConfigWarnings);
+            event.request_admin_bot_config_warnings =
+                Some(RequestAdminBotConfigWarnings { request_id });
             Some(event)
         }
         EventToClientInternal::ResponseResetProfilePaging {

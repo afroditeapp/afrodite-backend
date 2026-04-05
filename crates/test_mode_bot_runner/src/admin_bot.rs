@@ -11,7 +11,7 @@ use test_mode_bot::{
 use test_mode_utils::{
     client::{ApiClient, TestError},
     state::{BotPersistentState, StateData},
-    websocket_protocol::EventType,
+    websocket_protocol::{AdminBotConfigWarningFlags, EventType},
 };
 use tokio::{
     select,
@@ -165,7 +165,7 @@ impl AdminBot {
         );
 
         let (profile_name_config, profile_text_config, content_config) =
-            config::bot_config_file::internal::merge(admin_bot_config, file_config);
+            config::bot_config_file::internal::merge(admin_bot_config, file_config.clone());
 
         // Create separate notification pipelines for each content type
         let (content_sender, mut content_receiver) = ContentModerationHandler::new(
@@ -195,6 +195,7 @@ impl AdminBot {
                 content_sender,
                 profile_name_sender,
                 profile_text_sender,
+                file_config,
             ) => {
                 if let Err(e) = result {
                     error!("Admin bot logic error: {:?}", e);
@@ -225,6 +226,7 @@ impl AdminBot {
         content_sender: NotificationSender,
         profile_name_sender: NotificationSender,
         profile_text_sender: NotificationSender,
+        file_config: BotConfigFile,
     ) -> Result<(), TestError> {
         // Hourly fallback timer in case there is some event related bug or
         // error for example. The timer ticks right away after creation as
@@ -251,6 +253,14 @@ impl AdminBot {
                             if notification.moderate_profile_texts_bot.unwrap_or(false) {
                                 profile_text_sender.notify().await;
                             }
+                        } else if event.event == EventType::RequestAdminBotConfigWarnings
+                            && let Some(request) = event.request_admin_bot_config_warnings
+                        {
+                            let response = create_response_admin_bot_config_warnings_message(
+                                request.request_id,
+                                &file_config,
+                            );
+                            connections.send_client_message(response)?;
                         }
                 }
                 // Forced moderation every hour as fallback - notify all pipelines
@@ -262,4 +272,24 @@ impl AdminBot {
             }
         }
     }
+}
+
+fn create_response_admin_bot_config_warnings_message(
+    request_id: u8,
+    file_config: &BotConfigFile,
+) -> Vec<u8> {
+    const RESPONSE_ADMIN_BOT_CONFIG_WARNINGS: u8 = 2;
+
+    let mut flags = AdminBotConfigWarningFlags::empty();
+    if file_config.profile_name_moderation.is_none() {
+        flags.insert(AdminBotConfigWarningFlags::PROFILE_NAME_MODERATION_FILE_CONFIG_MISSING);
+    }
+    if file_config.profile_text_moderation.is_none() {
+        flags.insert(AdminBotConfigWarningFlags::PROFILE_TEXT_MODERATION_FILE_CONFIG_MISSING);
+    }
+    if file_config.content_moderation.is_none() {
+        flags.insert(AdminBotConfigWarningFlags::CONTENT_MODERATION_FILE_CONFIG_MISSING);
+    }
+
+    vec![RESPONSE_ADMIN_BOT_CONFIG_WARNINGS, request_id, flags.bits()]
 }

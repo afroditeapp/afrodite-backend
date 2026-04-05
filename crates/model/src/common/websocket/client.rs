@@ -10,6 +10,12 @@ use utoipa::ToSchema;
 ///   of the byte defines the data type (see `SyncCheckDataType`). If client
 ///   does not have any version of the data, version number must be `255`.
 /// - `ClearMaintenanceStatusIfPossible` (1): payload is empty.
+/// - `ResponseAdminBotConfigWarnings` (2): payload format:
+///   - request id byte (u8)
+///   - warnings flags byte (u8). Bits in the byte:
+///     - bit 0: profile name moderation file config missing
+///     - bit 1: profile text moderation file config missing
+///     - bit 2: content moderation file config missing
 /// - `RequestResetProfilePaging` (60): payload format:
 ///   - request id byte (u8)
 /// - `RequestGetNextProfilePage` (61): payload format:
@@ -40,6 +46,7 @@ pub enum ClientMessageType {
     // - common: 0..=29
     SyncVersionList = 0,
     ClearMaintenanceStatusIfPossible = 1,
+    ResponseAdminBotConfigWarnings = 2,
     // - account: 30..=59
     // - profile: 60..=89
     RequestResetProfilePaging = 60,
@@ -56,4 +63,13 @@ pub enum ClientMessageType {
 #[derive(Debug, Clone, Copy)]
 pub enum ClientMessageForDataAllCrate<'a> {
     SyncVersionList(&'a [u8]),
+}
+
+bitflags::bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq)]
+    pub struct AdminBotConfigWarningFlags: u8 {
+        const PROFILE_NAME_MODERATION_FILE_CONFIG_MISSING = 0b0000_0001;
+        const PROFILE_TEXT_MODERATION_FILE_CONFIG_MISSING = 0b0000_0010;
+        const CONTENT_MODERATION_FILE_CONFIG_MISSING = 0b0000_0100;
+    }
 }

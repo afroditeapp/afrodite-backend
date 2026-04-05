@@ -27,6 +27,8 @@ pub use parser::parse_server_binary_message;
 ///   little-endian byte order for `AdminBotNotificationTypes` bitflags.
 ///   (1 byte = u8, 2 bytes = u16 etc.)
 /// - `PushNotificationInfoChanged` (5): payload is empty.
+/// - `RequestAdminBotConfigWarnings` (6): payload format:
+///   - request id byte (u8)
 /// - `AccountStateChanged` (30): payload is empty.
 /// - `ProfileChanged` (60): payload is empty.
 /// - `ResponseResetProfilePaging` (61): payload format:
@@ -117,6 +119,7 @@ pub enum ServerMessageType {
     ScheduledMaintenanceStatus = 3,
     AdminBotNotification = 4,
     PushNotificationInfoChanged = 5,
+    RequestAdminBotConfigWarnings = 6,
     // - account: 30..=59
     /// Account state, profile visibility or permissions changed
     AccountStateChanged = 30,
@@ -176,6 +179,9 @@ pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
             ServerMessageType::ScheduledMaintenanceStatus
         }
         EventToClientInternal::AdminBotNotification(_) => ServerMessageType::AdminBotNotification,
+        EventToClientInternal::RequestAdminBotConfigWarnings { .. } => {
+            ServerMessageType::RequestAdminBotConfigWarnings
+        }
         EventToClientInternal::PushNotificationInfoChanged => {
             ServerMessageType::PushNotificationInfoChanged
         }
@@ -201,6 +207,9 @@ pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
         }
         EventToClientInternal::AdminBotNotification(value) => {
             message.push(value.bits());
+        }
+        EventToClientInternal::RequestAdminBotConfigWarnings { request_id } => {
+            message.push(*request_id);
         }
         EventToClientInternal::TypingStart(value) | EventToClientInternal::TypingStop(value) => {
             append_account_id_payload(&mut message, *value);

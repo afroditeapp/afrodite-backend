@@ -1,12 +1,24 @@
+use std::sync::{
+    OnceLock,
+    atomic::{AtomicU8, Ordering},
+};
+
 use axum::{Extension, extract::State};
 use config::bot_config_file::internal::LlmStringModerationConfig;
-use model::{AccountIdInternal, BotConfig, BotConfigWarnings, Permissions};
+use model::{
+    AccountIdInternal, AdminBotConfigWarningFlags, BotConfig, BotConfigWarnings,
+    EventToClientInternal, Permissions,
+};
 use server_data::{app::GetConfig, read::GetReadCommandsCommon};
-use simple_backend::create_counters;
+use simple_backend::{app::GetManagerApi, create_counters};
+use tokio::{
+    sync::{Mutex, oneshot},
+    time::Duration,
+};
 
 use crate::{
     S,
-    app::{ReadData, ReadDynamicConfig, WriteDynamicConfig},
+    app::{EventManagerProvider, ReadData, ReadDynamicConfig, WriteDynamicConfig},
     create_open_api_router,
     utils::{Json, StatusCode},
 };
@@ -128,22 +140,130 @@ pub async fn get_bot_config_warnings(
     }
 
     let config = state.read_config().await?;
-    let bot_config_file = state.config().parsed_files().bot;
 
+    if !config.admin_bot {
+        return Ok(BotConfigWarnings::default().into());
+    }
+
+    if config.remote_bot_login {
+        if state
+            .manager_api_client()
+            .maintenance_status()
+            .await
+            .admin_bot_offline()
+        {
+            return Ok(BotConfigWarnings::error_admin_bot_offline().into());
+        }
+
+        let admin_bot_id = state
+            .read()
+            .common_admin()
+            .admin_bot_account_ids()
+            .await?
+            .into_iter()
+            .next()
+            .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
+
+        let (request_id, response_receiver) = init_remote_bot_config_warnings_waiter().await?;
+
+        state
+            .event_manager()
+            .send_connected_event(
+                admin_bot_id,
+                EventToClientInternal::RequestAdminBotConfigWarnings { request_id },
+            )
+            .await?;
+
+        let response = tokio::time::timeout(Duration::from_secs(5), response_receiver).await;
+
+        clear_remote_bot_config_warnings_waiter().await;
+
+        let warning_flags = match response {
+            Ok(Ok(warning_flags)) => warning_flags,
+            Ok(Err(_)) | Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+        };
+
+        let config = &config.admin_bot_config;
+        let warnings = BotConfigWarnings {
+            error: false,
+            error_admin_bot_offline: false,
+            profile_name_moderation_file_config_missing: config.profile_name_moderation_enabled
+                && warning_flags.contains(
+                    AdminBotConfigWarningFlags::PROFILE_NAME_MODERATION_FILE_CONFIG_MISSING,
+                ),
+            profile_text_moderation_file_config_missing: config.profile_text_moderation_enabled
+                && warning_flags.contains(
+                    AdminBotConfigWarningFlags::PROFILE_TEXT_MODERATION_FILE_CONFIG_MISSING,
+                ),
+            content_moderation_file_config_missing: config.content_moderation_enabled
+                && warning_flags
+                    .contains(AdminBotConfigWarningFlags::CONTENT_MODERATION_FILE_CONFIG_MISSING),
+        };
+
+        return Ok(Json(warnings));
+    }
+
+    let config = &config.admin_bot_config;
+    let bot_config_file = state.config().parsed_files().bot;
     let warnings = BotConfigWarnings {
-        profile_name_moderation_file_config_missing: config
-            .admin_bot_config
-            .profile_name_moderation_enabled
+        error: false,
+        error_admin_bot_offline: false,
+        profile_name_moderation_file_config_missing: config.profile_name_moderation_enabled
             && bot_config_file.profile_name_moderation.is_none(),
-        profile_text_moderation_file_config_missing: config
-            .admin_bot_config
-            .profile_text_moderation_enabled
+        profile_text_moderation_file_config_missing: config.profile_text_moderation_enabled
             && bot_config_file.profile_text_moderation.is_none(),
-        content_moderation_file_config_missing: config.admin_bot_config.content_moderation_enabled
+        content_moderation_file_config_missing: config.content_moderation_enabled
             && bot_config_file.content_moderation.is_none(),
     };
 
     Ok(Json(warnings))
+}
+
+static REMOTE_BOT_CONFIG_WARNINGS_WAITER: OnceLock<Mutex<Option<RemoteBotConfigWarningsWaiter>>> =
+    OnceLock::new();
+
+struct RemoteBotConfigWarningsWaiter {
+    request_id: u8,
+    sender: oneshot::Sender<AdminBotConfigWarningFlags>,
+}
+
+static REMOTE_BOT_CONFIG_WARNINGS_REQUEST_ID: AtomicU8 = AtomicU8::new(0);
+
+fn next_remote_bot_config_warnings_request_id() -> u8 {
+    REMOTE_BOT_CONFIG_WARNINGS_REQUEST_ID.fetch_add(1, Ordering::Relaxed)
+}
+
+async fn init_remote_bot_config_warnings_waiter()
+-> Result<(u8, oneshot::Receiver<AdminBotConfigWarningFlags>), StatusCode> {
+    let request_id = next_remote_bot_config_warnings_request_id();
+    let (sender, receiver) = oneshot::channel();
+    let waiters = REMOTE_BOT_CONFIG_WARNINGS_WAITER.get_or_init(|| Mutex::new(None));
+    // Replace previous waiter to keep the latest request active.
+    *waiters.lock().await = Some(RemoteBotConfigWarningsWaiter { request_id, sender });
+
+    Ok((request_id, receiver))
+}
+
+async fn clear_remote_bot_config_warnings_waiter() {
+    let waiters = REMOTE_BOT_CONFIG_WARNINGS_WAITER.get_or_init(|| Mutex::new(None));
+    let mut waiters = waiters.lock().await;
+    *waiters = None;
+}
+
+pub(crate) async fn complete_remote_bot_config_warnings_waiter(
+    request_id: u8,
+    warning_flags: AdminBotConfigWarningFlags,
+) {
+    let waiters = REMOTE_BOT_CONFIG_WARNINGS_WAITER.get_or_init(|| Mutex::new(None));
+    let mut waiters = waiters.lock().await;
+
+    if waiters
+        .as_ref()
+        .is_some_and(|waiter| waiter.request_id == request_id)
+        && let Some(waiter) = waiters.take()
+    {
+        let _ = waiter.sender.send(warning_flags);
+    }
 }
 
 create_open_api_router!(
