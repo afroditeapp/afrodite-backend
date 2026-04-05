@@ -30,6 +30,7 @@ pub use parser::parse_server_binary_message;
 /// - `AccountStateChanged` (30): payload is empty.
 /// - `ProfileChanged` (60): payload is empty.
 /// - `ResponseResetProfilePaging` (61): payload format:
+///   - request id byte (u8)
 ///   - status byte:
 ///     - 0: success
 ///     - 1: rate limited
@@ -37,6 +38,7 @@ pub use parser::parse_server_binary_message;
 ///   - if status is 0:
 ///     - profile iterator session id as minimal i64
 /// - `ResponseNextProfilePage` (62): payload format:
+///   - request id byte (u8)
 ///   - status byte:
 ///     - 0: success
 ///     - 1: invalid iterator session id
@@ -49,6 +51,7 @@ pub use parser::parse_server_binary_message;
 ///       - profile content version as 16-byte big-endian UUID
 ///       - null last seen time (0 byte) or last seen time as minimal i64
 /// - `ResponseAutomaticProfileSearchResetProfilePaging` (63): payload format:
+///   - request id byte (u8)
 ///   - status byte:
 ///     - 0: success
 ///     - 1: rate limited
@@ -56,6 +59,7 @@ pub use parser::parse_server_binary_message;
 ///   - if status is 0:
 ///     - automatic profile search iterator session id as minimal i64
 /// - `ResponseAutomaticProfileSearchNextProfilePage` (64): payload format:
+///   - request id byte (u8)
 ///   - status byte:
 ///     - 0: success
 ///     - 1: invalid iterator session id
@@ -205,33 +209,42 @@ pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
             append_online_status_updated_payload(&mut message, value);
         }
         EventToClientInternal::ResponseResetProfilePaging {
+            request_id,
             status,
             iterator_session_id,
         } => {
             append_response_reset_profile_paging_payload(
                 &mut message,
+                *request_id,
                 *status,
                 *iterator_session_id,
             );
         }
-        EventToClientInternal::ResponseNextProfilePage { status, profiles } => {
-            append_response_next_profile_page_payload(&mut message, *status, profiles);
+        EventToClientInternal::ResponseNextProfilePage {
+            request_id,
+            status,
+            profiles,
+        } => {
+            append_response_next_profile_page_payload(&mut message, *request_id, *status, profiles);
         }
         EventToClientInternal::ResponseAutomaticProfileSearchResetProfilePaging {
+            request_id,
             status,
             iterator_session_id,
         } => {
             append_response_reset_profile_paging_payload(
                 &mut message,
+                *request_id,
                 *status,
                 *iterator_session_id,
             );
         }
         EventToClientInternal::ResponseAutomaticProfileSearchNextProfilePage {
+            request_id,
             status,
             profiles,
         } => {
-            append_response_next_profile_page_payload(&mut message, *status, profiles);
+            append_response_next_profile_page_payload(&mut message, *request_id, *status, profiles);
         }
         EventToClientInternal::AccountStateChanged
         | EventToClientInternal::NewMessageReceived
@@ -257,9 +270,11 @@ fn append_account_id_payload(buffer: &mut Vec<u8>, account_id: AccountId) {
 
 fn append_response_reset_profile_paging_payload(
     buffer: &mut Vec<u8>,
+    request_id: u8,
     status: ResponseResetProfilePagingStatus,
     iterator_session_id: Option<i64>,
 ) {
+    buffer.push(request_id);
     buffer.push(status as u8);
 
     if !matches!(status, ResponseResetProfilePagingStatus::Success) {
@@ -273,9 +288,11 @@ fn append_response_reset_profile_paging_payload(
 
 fn append_response_next_profile_page_payload(
     buffer: &mut Vec<u8>,
+    request_id: u8,
     status: ResponseNextProfilePageStatus,
     profiles: &[ProfileLink],
 ) {
+    buffer.push(request_id);
     buffer.push(status as u8);
 
     if !matches!(status, ResponseNextProfilePageStatus::Success) {

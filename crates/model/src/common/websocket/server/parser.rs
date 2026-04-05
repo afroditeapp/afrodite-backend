@@ -39,28 +39,37 @@ pub fn parse_server_binary_message(message: &[u8]) -> Result<EventToClientIntern
         ServerMessageType::AccountStateChanged => EventToClientInternal::AccountStateChanged,
         ServerMessageType::ProfileChanged => EventToClientInternal::ProfileChanged,
         ServerMessageType::ResponseResetProfilePaging => {
-            let (status, iterator_session_id) =
+            let (request_id, status, iterator_session_id) =
                 parse_response_reset_profile_paging_payload(&mut message_iter)?;
             EventToClientInternal::ResponseResetProfilePaging {
+                request_id,
                 status,
                 iterator_session_id,
             }
         }
         ServerMessageType::ResponseNextProfilePage => {
-            let (status, profiles) = parse_response_next_profile_page_payload(&mut message_iter)?;
-            EventToClientInternal::ResponseNextProfilePage { status, profiles }
+            let (request_id, status, profiles) =
+                parse_response_next_profile_page_payload(&mut message_iter)?;
+            EventToClientInternal::ResponseNextProfilePage {
+                request_id,
+                status,
+                profiles,
+            }
         }
         ServerMessageType::ResponseAutomaticProfileSearchResetProfilePaging => {
-            let (status, iterator_session_id) =
+            let (request_id, status, iterator_session_id) =
                 parse_response_reset_profile_paging_payload(&mut message_iter)?;
             EventToClientInternal::ResponseAutomaticProfileSearchResetProfilePaging {
+                request_id,
                 status,
                 iterator_session_id,
             }
         }
         ServerMessageType::ResponseAutomaticProfileSearchNextProfilePage => {
-            let (status, profiles) = parse_response_next_profile_page_payload(&mut message_iter)?;
+            let (request_id, status, profiles) =
+                parse_response_next_profile_page_payload(&mut message_iter)?;
             EventToClientInternal::ResponseAutomaticProfileSearchNextProfilePage {
+                request_id,
                 status,
                 profiles,
             }
@@ -208,7 +217,8 @@ fn parse_optional_minimal_i64_value(
 
 fn parse_response_reset_profile_paging_payload(
     payload_iter: &mut impl Iterator<Item = u8>,
-) -> Result<(ResponseResetProfilePagingStatus, Option<i64>), String> {
+) -> Result<(u8, ResponseResetProfilePagingStatus, Option<i64>), String> {
+    let request_id = next_payload_byte(payload_iter, "response reset profile paging request id")?;
     let status_raw = next_payload_byte(payload_iter, "response reset profile paging status")?;
     let status = ResponseResetProfilePagingStatus::try_from(status_raw)
         .map_err(|_| format!("unsupported reset profile paging status value {status_raw}"))?;
@@ -219,7 +229,7 @@ fn parse_response_reset_profile_paging_payload(
                 "unexpected payload for non-success reset profile paging response".to_owned(),
             );
         }
-        return Ok((status, None));
+        return Ok((request_id, status, None));
     }
 
     let iterator_session_id = parse_minimal_i64_value_with_context(
@@ -227,12 +237,13 @@ fn parse_response_reset_profile_paging_payload(
         "invalid or missing reset profile paging iterator session id payload",
     )?;
 
-    Ok((status, Some(iterator_session_id)))
+    Ok((request_id, status, Some(iterator_session_id)))
 }
 
 fn parse_response_next_profile_page_payload(
     payload_iter: &mut impl Iterator<Item = u8>,
-) -> Result<(ResponseNextProfilePageStatus, Vec<ProfileLink>), String> {
+) -> Result<(u8, ResponseNextProfilePageStatus, Vec<ProfileLink>), String> {
+    let request_id = next_payload_byte(payload_iter, "response next profile page request id")?;
     let status_raw = next_payload_byte(payload_iter, "response next profile page status")?;
     let status = ResponseNextProfilePageStatus::try_from(status_raw)
         .map_err(|_| format!("unsupported next profile page status value {status_raw}"))?;
@@ -243,7 +254,7 @@ fn parse_response_next_profile_page_payload(
                 "unexpected profile payload for non-success next profile page response".to_owned(),
             );
         }
-        return Ok((status, Vec::new()));
+        return Ok((request_id, status, Vec::new()));
     }
 
     let mut profiles = Vec::new();
@@ -260,7 +271,7 @@ fn parse_response_next_profile_page_payload(
         ));
     }
 
-    Ok((status, profiles))
+    Ok((request_id, status, profiles))
 }
 
 fn parse_optional_account_id_payload(
@@ -535,10 +546,12 @@ mod tests {
                 None,
             ),
         ];
+        let request_id = 7;
         let status = ResponseNextProfilePageStatus::Success;
 
         let message =
             create_server_binary_message(&EventToClientInternal::ResponseNextProfilePage {
+                request_id,
                 status,
                 profiles: profiles.clone(),
             });
@@ -546,9 +559,11 @@ mod tests {
 
         match parsed {
             EventToClientInternal::ResponseNextProfilePage {
+                request_id: parsed_request_id,
                 status: parsed_status,
                 profiles: parsed_profiles,
             } => {
+                assert_eq!(parsed_request_id, request_id);
                 assert_eq!(parsed_status, status);
                 assert_eq!(parsed_profiles, profiles);
             }
@@ -558,11 +573,13 @@ mod tests {
 
     #[test]
     fn roundtrip_response_reset_profile_paging_message() {
+        let request_id = 9;
         let status = ResponseResetProfilePagingStatus::Success;
         let iterator_session_id = Some(42);
 
         let message =
             create_server_binary_message(&EventToClientInternal::ResponseResetProfilePaging {
+                request_id,
                 status,
                 iterator_session_id,
             });
@@ -571,9 +588,11 @@ mod tests {
 
         match parsed {
             EventToClientInternal::ResponseResetProfilePaging {
+                request_id: parsed_request_id,
                 status: parsed_status,
                 iterator_session_id: parsed_iterator_session_id,
             } => {
+                assert_eq!(parsed_request_id, request_id);
                 assert_eq!(parsed_status, status);
                 assert_eq!(parsed_iterator_session_id, iterator_session_id);
             }
@@ -583,11 +602,13 @@ mod tests {
 
     #[test]
     fn roundtrip_response_reset_profile_paging_rate_limited_message() {
+        let request_id = 10;
         let status = ResponseResetProfilePagingStatus::RateLimited;
         let iterator_session_id = None;
 
         let message =
             create_server_binary_message(&EventToClientInternal::ResponseResetProfilePaging {
+                request_id,
                 status,
                 iterator_session_id,
             });
@@ -596,9 +617,11 @@ mod tests {
 
         match parsed {
             EventToClientInternal::ResponseResetProfilePaging {
+                request_id: parsed_request_id,
                 status: parsed_status,
                 iterator_session_id: parsed_iterator_session_id,
             } => {
+                assert_eq!(parsed_request_id, request_id);
                 assert_eq!(parsed_status, status);
                 assert_eq!(parsed_iterator_session_id, iterator_session_id);
             }
@@ -608,11 +631,13 @@ mod tests {
 
     #[test]
     fn roundtrip_response_automatic_profile_search_reset_profile_paging_message() {
+        let request_id = 11;
         let status = ResponseResetProfilePagingStatus::Success;
         let iterator_session_id = Some(55);
 
         let message = create_server_binary_message(
             &EventToClientInternal::ResponseAutomaticProfileSearchResetProfilePaging {
+                request_id,
                 status,
                 iterator_session_id,
             },
@@ -622,9 +647,11 @@ mod tests {
 
         match parsed {
             EventToClientInternal::ResponseAutomaticProfileSearchResetProfilePaging {
+                request_id: parsed_request_id,
                 status: parsed_status,
                 iterator_session_id: parsed_iterator_session_id,
             } => {
+                assert_eq!(parsed_request_id, request_id);
                 assert_eq!(parsed_status, status);
                 assert_eq!(parsed_iterator_session_id, iterator_session_id);
             }
@@ -648,10 +675,12 @@ mod tests {
                 None,
             ),
         ];
+        let request_id = 12;
         let status = ResponseNextProfilePageStatus::Success;
 
         let message = create_server_binary_message(
             &EventToClientInternal::ResponseAutomaticProfileSearchNextProfilePage {
+                request_id,
                 status,
                 profiles: profiles.clone(),
             },
@@ -661,9 +690,11 @@ mod tests {
 
         match parsed {
             EventToClientInternal::ResponseAutomaticProfileSearchNextProfilePage {
+                request_id: parsed_request_id,
                 status: parsed_status,
                 profiles: parsed_profiles,
             } => {
+                assert_eq!(parsed_request_id, request_id);
                 assert_eq!(parsed_status, status);
                 assert_eq!(parsed_profiles, profiles);
             }

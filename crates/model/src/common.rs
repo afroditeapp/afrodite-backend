@@ -97,18 +97,22 @@ pub enum EventToClientInternal {
     ClientConfigChanged,
     ProfileChanged,
     ResponseResetProfilePaging {
+        request_id: u8,
         status: ResponseResetProfilePagingStatus,
         iterator_session_id: Option<i64>,
     },
     ResponseNextProfilePage {
+        request_id: u8,
         status: ResponseNextProfilePageStatus,
         profiles: Vec<ProfileLink>,
     },
     ResponseAutomaticProfileSearchResetProfilePaging {
+        request_id: u8,
         status: ResponseResetProfilePagingStatus,
         iterator_session_id: Option<i64>,
     },
     ResponseAutomaticProfileSearchNextProfilePage {
+        request_id: u8,
         status: ResponseNextProfilePageStatus,
         profiles: Vec<ProfileLink>,
     },

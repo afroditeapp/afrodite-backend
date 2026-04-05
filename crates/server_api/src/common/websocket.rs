@@ -21,12 +21,18 @@ pub mod tracker;
 #[derive(Debug, Clone)]
 pub enum ClientMessageForServerApiCrate {
     ClearMaintenanceStatusIfPossible,
-    RequestResetProfilePaging,
+    RequestResetProfilePaging {
+        request_id: u8,
+    },
     RequestGetNextProfilePage {
+        request_id: u8,
         iterator_session_id: ProfileIteratorSessionId,
     },
-    RequestAutomaticProfileSearchResetProfilePaging,
+    RequestAutomaticProfileSearchResetProfilePaging {
+        request_id: u8,
+    },
     RequestAutomaticProfileSearchGetNextProfilePage {
+        request_id: u8,
         iterator_session_id: AutomaticProfileSearchIteratorSessionId,
     },
     TypingStart {
@@ -69,35 +75,38 @@ pub fn parse_client_binary_message(
             ))
         }
         ClientMessageType::RequestResetProfilePaging => {
-            if !payload.is_empty() {
-                return Err(WebSocketError::ProtocolError.report());
-            }
+            let request_id = parse_request_id_payload(payload)?;
 
             Ok(ClientMessageParsed::ForServerApi(
-                ClientMessageForServerApiCrate::RequestResetProfilePaging,
+                ClientMessageForServerApiCrate::RequestResetProfilePaging { request_id },
             ))
         }
         ClientMessageType::RequestGetNextProfilePage => {
-            let iterator_session_id = parse_profile_iterator_session_id(payload)?;
+            let (request_id, iterator_payload) = split_request_id_payload(payload)?;
+            let iterator_session_id = parse_profile_iterator_session_id(iterator_payload)?;
             Ok(ClientMessageParsed::ForServerApi(
                 ClientMessageForServerApiCrate::RequestGetNextProfilePage {
+                    request_id,
                     iterator_session_id,
                 },
             ))
         }
         ClientMessageType::RequestAutomaticProfileSearchResetProfilePaging => {
-            if !payload.is_empty() {
-                return Err(WebSocketError::ProtocolError.report());
-            }
+            let request_id = parse_request_id_payload(payload)?;
 
             Ok(ClientMessageParsed::ForServerApi(
-                ClientMessageForServerApiCrate::RequestAutomaticProfileSearchResetProfilePaging,
+                ClientMessageForServerApiCrate::RequestAutomaticProfileSearchResetProfilePaging {
+                    request_id,
+                },
             ))
         }
         ClientMessageType::RequestAutomaticProfileSearchGetNextProfilePage => {
-            let iterator_session_id = parse_automatic_profile_search_iterator_session_id(payload)?;
+            let (request_id, iterator_payload) = split_request_id_payload(payload)?;
+            let iterator_session_id =
+                parse_automatic_profile_search_iterator_session_id(iterator_payload)?;
             Ok(ClientMessageParsed::ForServerApi(
                 ClientMessageForServerApiCrate::RequestAutomaticProfileSearchGetNextProfilePage {
+                    request_id,
                     iterator_session_id,
                 },
             ))
@@ -141,6 +150,23 @@ fn parse_account_id(payload: &[u8]) -> crate::result::Result<AccountId, WebSocke
         .map_err(|_| WebSocketError::ProtocolError.report())?;
 
     Ok(AccountId::new_base_64_url(UuidBase64Url::from_bytes(bytes)))
+}
+
+fn split_request_id_payload(payload: &[u8]) -> crate::result::Result<(u8, &[u8]), WebSocketError> {
+    let (request_id, payload_rest) = payload
+        .split_first()
+        .ok_or(WebSocketError::ProtocolError.report())?;
+
+    Ok((*request_id, payload_rest))
+}
+
+fn parse_request_id_payload(payload: &[u8]) -> crate::result::Result<u8, WebSocketError> {
+    let (request_id, payload_rest) = split_request_id_payload(payload)?;
+    if !payload_rest.is_empty() {
+        return Err(WebSocketError::ProtocolError.report());
+    }
+
+    Ok(request_id)
 }
 
 fn parse_profile_iterator_session_id(
@@ -197,22 +223,39 @@ pub async fn handle_message_from_client(
             }
             Ok(())
         }
-        ClientMessageForServerApiCrate::RequestResetProfilePaging => {
-            profile::handle_reset_profile_paging(state, socket, id).await
+        ClientMessageForServerApiCrate::RequestResetProfilePaging { request_id } => {
+            profile::handle_reset_profile_paging(state, socket, id, request_id).await
         }
         ClientMessageForServerApiCrate::RequestGetNextProfilePage {
+            request_id,
             iterator_session_id,
-        } => profile::handle_get_next_profile_page(state, socket, id, iterator_session_id).await,
-        ClientMessageForServerApiCrate::RequestAutomaticProfileSearchResetProfilePaging => {
-            profile::handle_automatic_profile_search_reset_profile_paging(state, socket, id).await
+        } => {
+            profile::handle_get_next_profile_page(
+                state,
+                socket,
+                id,
+                request_id,
+                iterator_session_id,
+            )
+            .await
+        }
+        ClientMessageForServerApiCrate::RequestAutomaticProfileSearchResetProfilePaging {
+            request_id,
+        } => {
+            profile::handle_automatic_profile_search_reset_profile_paging(
+                state, socket, id, request_id,
+            )
+            .await
         }
         ClientMessageForServerApiCrate::RequestAutomaticProfileSearchGetNextProfilePage {
+            request_id,
             iterator_session_id,
         } => {
             profile::handle_automatic_profile_search_get_next_profile_page(
                 state,
                 socket,
                 id,
+                request_id,
                 iterator_session_id,
             )
             .await

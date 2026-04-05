@@ -10,12 +10,16 @@ use utoipa::ToSchema;
 ///   of the byte defines the data type (see `SyncCheckDataType`). If client
 ///   does not have any version of the data, version number must be `255`.
 /// - `ClearMaintenanceStatusIfPossible` (1): payload is empty.
-/// - `RequestResetProfilePaging` (60): payload is empty.
-/// - `RequestGetNextProfilePage` (61): payload is profile iterator session id as
-///   minimal i64.
-/// - `RequestAutomaticProfileSearchResetProfilePaging` (62): payload is empty.
-/// - `RequestAutomaticProfileSearchGetNextProfilePage` (63): payload is
-///   automatic profile search iterator session id as minimal i64.
+/// - `RequestResetProfilePaging` (60): payload format:
+///   - request id byte (u8)
+/// - `RequestGetNextProfilePage` (61): payload format:
+///   - request id byte (u8)
+///   - profile iterator session id as minimal i64
+/// - `RequestAutomaticProfileSearchResetProfilePaging` (62): payload format:
+///   - request id byte (u8)
+/// - `RequestAutomaticProfileSearchGetNextProfilePage` (63): payload format:
+///   - request id byte (u8)
+///   - automatic profile search iterator session id as minimal i64
 /// - `TypingStart` (120): payload is exactly 16 bytes account UUID in big-endian
 ///   byte order.
 /// - `TypingStop` (121): payload is empty.

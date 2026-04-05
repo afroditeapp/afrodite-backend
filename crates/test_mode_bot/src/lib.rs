@@ -8,7 +8,7 @@ pub mod benchmark;
 pub mod connection;
 pub mod utils;
 
-use std::{fmt::Debug, sync::Arc};
+use std::{fmt::Debug, num::Wrapping, sync::Arc};
 
 use actions::{chat::ChatState, profile::ProfileState};
 use api_client::{apis::configuration::Configuration, models::AccountId};
@@ -45,6 +45,7 @@ pub struct BotState {
     pub refresh_token: Option<Vec<u8>>,
     pub deterministic_rng: Xoshiro256PlusPlus,
     pub reqwest_client: reqwest::Client,
+    next_ws_request_id: Wrapping<u8>,
 }
 
 impl BotState {
@@ -78,7 +79,14 @@ impl BotState {
                 let task_i_u64: u64 = task_id.into();
                 Xoshiro256PlusPlus::seed_from_u64(task_i_u64)
             },
+            next_ws_request_id: Wrapping(0),
         }
+    }
+
+    pub fn next_ws_request_id(&mut self) -> u8 {
+        let request_id = self.next_ws_request_id.0;
+        self.next_ws_request_id += 1;
+        request_id
     }
 
     pub fn api(&self) -> Arc<Configuration> {

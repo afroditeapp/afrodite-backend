@@ -261,9 +261,11 @@ pub struct ResetProfileIterator;
 #[async_trait]
 impl BotAction for ResetProfileIterator {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+        let request_id = state.next_ws_request_id();
         let response = wait_response_reset_profile_paging(
             state,
-            create_request_reset_profile_paging_message(),
+            create_request_reset_profile_paging_message(request_id),
+            request_id,
         )
         .await?;
         if !response.success {
@@ -292,9 +294,11 @@ impl BotAction for GetProfileList {
             .ok_or(TestError::MissingValue)?
             .clone();
 
+        let request_id = state.next_ws_request_id();
         let response = wait_response_next_profile_page(
             state,
-            create_request_get_next_profile_page_message(&iterator_session_id),
+            create_request_get_next_profile_page_message(request_id, &iterator_session_id),
+            request_id,
         )
         .await?;
         if !response.success {
@@ -312,23 +316,25 @@ impl BotAction for GetProfileList {
 }
 
 fn create_request_get_next_profile_page_message(
+    request_id: u8,
     iterator_session_id: &ProfileIteratorSessionId,
 ) -> Vec<u8> {
     const REQUEST_GET_NEXT_PROFILE_PAGE: u8 = 61;
 
-    let mut payload = vec![REQUEST_GET_NEXT_PROFILE_PAGE];
+    let mut payload = vec![REQUEST_GET_NEXT_PROFILE_PAGE, request_id];
     minimal_i64::add_minimal_i64(&mut payload, iterator_session_id.id);
     payload
 }
 
-fn create_request_reset_profile_paging_message() -> Vec<u8> {
+fn create_request_reset_profile_paging_message(request_id: u8) -> Vec<u8> {
     const REQUEST_RESET_PROFILE_PAGING: u8 = 60;
-    vec![REQUEST_RESET_PROFILE_PAGING]
+    vec![REQUEST_RESET_PROFILE_PAGING, request_id]
 }
 
 async fn wait_response_reset_profile_paging(
     state: &mut BotState,
     message: Vec<u8>,
+    request_id: u8,
 ) -> Result<ResponseResetProfilePaging, TestError> {
     let mut message = Some(message);
 
@@ -341,8 +347,8 @@ async fn wait_response_reset_profile_paging(
             }
             event = state.connections.recv_event_unchecked() => {
                 let event = event?;
-                if let Some(page) = event.response_reset_profile_paging {
-                    return Ok(page);
+                if let Some(response) = event.response_reset_profile_paging && response.request_id == request_id {
+                    return Ok(response);
                 }
             }
         }
@@ -352,6 +358,7 @@ async fn wait_response_reset_profile_paging(
 async fn wait_response_next_profile_page(
     state: &mut BotState,
     message: Vec<u8>,
+    request_id: u8,
 ) -> Result<ResponseNextProfilePage, TestError> {
     let mut message = Some(message);
 
@@ -364,8 +371,8 @@ async fn wait_response_next_profile_page(
             }
             event = state.connections.recv_event_unchecked() => {
                 let event = event?;
-                if let Some(page) = event.response_next_profile_page {
-                    return Ok(page);
+                if let Some(response) = event.response_next_profile_page && response.request_id == request_id {
+                    return Ok(response);
                 }
             }
         }

@@ -60,12 +60,14 @@ impl ContentProcessingStateChanged {
 
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct ResponseNextProfilePage {
+    pub request_id: u8,
     pub success: bool,
     pub profiles: Vec<String>,
 }
 
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct ResponseResetProfilePaging {
+    pub request_id: u8,
     pub success: bool,
     pub iterator_session_id: Option<i64>,
 }
@@ -113,19 +115,26 @@ fn convert_server_event_to_client_for_test_mode(
             Some(event)
         }
         EventToClientInternal::ResponseResetProfilePaging {
+            request_id,
             status,
             iterator_session_id,
         } => {
             let mut event = EventToClient::new(EventType::ResponseResetProfilePaging);
             event.response_reset_profile_paging = Some(ResponseResetProfilePaging {
+                request_id,
                 success: matches!(status, InternalResponseResetProfilePagingStatus::Success),
                 iterator_session_id,
             });
             Some(event)
         }
-        EventToClientInternal::ResponseNextProfilePage { status, profiles } => {
+        EventToClientInternal::ResponseNextProfilePage {
+            request_id,
+            status,
+            profiles,
+        } => {
             let mut event = EventToClient::new(EventType::ResponseNextProfilePage);
             event.response_next_profile_page = Some(ResponseNextProfilePage {
+                request_id,
                 success: matches!(status, InternalResponseNextProfilePageStatus::Success),
                 profiles: profiles
                     .into_iter()
