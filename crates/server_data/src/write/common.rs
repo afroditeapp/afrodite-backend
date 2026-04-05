@@ -1,4 +1,4 @@
-use database::current::write::GetDbWriteCommandsCommon;
+use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
 use model::{Account, AccountIdInternal, BotAccountType, ReportTypeNumberInternal, UnixTime};
 use server_common::data::cache::CacheError;
 use simple_backend_utils::time::DurationValue;
@@ -81,12 +81,35 @@ impl WriteCommandsCommon<'_> {
     ) -> Result<(), DataError> {
         self.write_cache_common(id, |cache| {
             cache.other_shared_state.set_bot_account_type_number(value);
+            if value == BotAccountType::Admin {
+                cache.permissions.admin_moderate_media_content = true;
+                cache.permissions.admin_moderate_profile_names = true;
+                cache.permissions.admin_moderate_profile_texts = true;
+            }
             Ok(())
         })
         .await?;
 
         db_transaction!(self, move |mut cmds| {
-            cmds.common().state().set_bot_account_type_number(id, value)
+            cmds.common()
+                .state()
+                .set_bot_account_type_number(id, value)?;
+
+            if value == BotAccountType::Admin {
+                let account = cmds.read().common().account(id)?;
+                cmds.common().state().update_syncable_account_data(
+                    id,
+                    account,
+                    |_, permissions, _, _| {
+                        permissions.admin_moderate_media_content = true;
+                        permissions.admin_moderate_profile_names = true;
+                        permissions.admin_moderate_profile_texts = true;
+                        Ok(())
+                    },
+                )?;
+            }
+
+            Ok(())
         })
     }
 

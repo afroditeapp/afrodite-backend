@@ -10,7 +10,7 @@ async fn admin_rights_granting_only_grants_rights_once_by_default(
         get_account_state(&account1.account().account_api())
             .await?
             .permissions
-            .admin_moderate_media_content
+            .admin_edit_permissions
             .unwrap_or_default(),
     )?;
 
@@ -25,7 +25,7 @@ async fn admin_rights_granting_only_grants_rights_once_by_default(
         !get_account_state(&account2.account().account_api())
             .await?
             .permissions
-            .admin_moderate_media_content
+            .admin_edit_permissions
             .unwrap_or_default(),
     )?;
 
