@@ -151,6 +151,8 @@ impl CurrentWriteMediaContent<'_> {
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::current_account_media::dsl::*;
 
+        let current_time = UnixTime::current_time();
+
         let state = self
             .read()
             .media()
@@ -165,7 +167,10 @@ impl CurrentWriteMediaContent<'_> {
         }
 
         update(current_account_media.find(content_id.content_owner().as_db_id()))
-            .set((security_content_id.eq(content_id.as_db_id()),))
+            .set((
+                security_content_id.eq(content_id.as_db_id()),
+                security_content_set_unix_time.eq(current_time),
+            ))
             .execute(self.conn())
             .into_db_error((content_id.content_owner(), content_id))?;
 

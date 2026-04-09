@@ -858,6 +858,10 @@ CREATE TABLE IF NOT EXISTS media_content(
 CREATE TABLE IF NOT EXISTS current_account_media(
     account_id                   INTEGER PRIMARY KEY NOT NULL,
     security_content_id          BIGINT,
+    -- Time when security_content_id was set.
+    -- This does not track removal time; removals can happen via foreign key
+    -- constraint (ON DELETE SET NULL), which is not timestamped here.
+    security_content_set_unix_time BIGINT,
     profile_content_version_uuid BLOB                NOT NULL,
     profile_content_id_0         BIGINT,
     profile_content_id_1         BIGINT,

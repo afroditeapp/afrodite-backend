@@ -26,6 +26,18 @@ pub struct GetMediaContentPendingModerationList {
     pub values: Vec<MediaContentPendingModeration>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct GetMediaContentFaceVerifiedNullList {
+    pub values: Vec<MediaContentFaceVerifiedNullByAccount>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct MediaContentFaceVerifiedNullByAccount {
+    pub account_id: AccountId,
+    pub security_content: ContentId,
+    pub values: Vec<ContentId>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema, Queryable)]
 pub struct MediaContentPendingModeration {
     pub account_id: AccountId,

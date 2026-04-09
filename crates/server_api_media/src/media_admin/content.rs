@@ -1,9 +1,13 @@
 use axum::{Extension, extract::State};
 use model_media::{
-    AccountIdInternal, Permissions, PostMediaContentFaceDetectedValue,
-    PostMediaContentFaceVerifiedValue,
+    AccountIdInternal, GetMediaContentFaceVerifiedNullList, Permissions,
+    PostMediaContentFaceDetectedValue, PostMediaContentFaceVerifiedValue,
 };
-use server_api::{S, app::GetAccounts, create_open_api_router};
+use server_api::{
+    S,
+    app::{GetAccounts, ReadData},
+    create_open_api_router,
+};
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
 
@@ -62,6 +66,44 @@ pub async fn post_media_content_face_detected_value(
     })?;
 
     Ok(())
+}
+
+const PATH_GET_MEDIA_CONTENT_FACE_VERIFIED_NULL_LIST: &str =
+    "/media_api/media_content_face_verified_null_list";
+
+/// Get first page of accounts with security selfie and content where `face_verified` is NULL
+/// and `face_detected` is true or `face_detected_manual` is true.
+/// Oldest security content set time is first and count 25.
+#[utoipa::path(
+    get,
+    path = PATH_GET_MEDIA_CONTENT_FACE_VERIFIED_NULL_LIST,
+    responses(
+        (status = 200, description = "Successful", body = GetMediaContentFaceVerifiedNullList),
+        (status = 401, description = "Unauthorized"),
+        (
+            status = 500,
+            description = "Internal server error",
+        ),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_media_content_face_verified_null_list(
+    State(state): State<S>,
+    Extension(permissions): Extension<Permissions>,
+) -> Result<Json<GetMediaContentFaceVerifiedNullList>, StatusCode> {
+    MEDIA_ADMIN.get_media_content_face_verified_null_list.incr();
+
+    if !permissions.admin_edit_media_content_face_verified_value {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    let values = state
+        .read()
+        .media_admin()
+        .media_content_face_verified_null_list()
+        .await?;
+
+    Ok(values.into())
 }
 
 const PATH_POST_MEDIA_CONTENT_FACE_VERIFIED_VALUE: &str =
@@ -130,6 +172,7 @@ pub async fn post_media_content_face_verified_value(
 create_open_api_router!(
         fn router_admin_content,
         post_media_content_face_detected_value,
+        get_media_content_face_verified_null_list,
         post_media_content_face_verified_value,
 );
 
@@ -138,5 +181,6 @@ create_counters!(
     MEDIA_ADMIN,
     MEDIA_ADMIN_CONTENT_COUNTERS_LIST,
     post_media_content_face_detected_value,
+    get_media_content_face_verified_null_list,
     post_media_content_face_verified_value,
 );

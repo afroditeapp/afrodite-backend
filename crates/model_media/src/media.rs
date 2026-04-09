@@ -337,6 +337,7 @@ impl From<MediaContentRaw> for ContentInfoDetailed {
 pub struct CurrentAccountMediaRaw {
     pub account_id: AccountIdDb,
     pub security_content_id: Option<ContentIdDb>,
+    pub security_content_set_unix_time: Option<UnixTime>,
     pub profile_content_version_uuid: ProfileContentVersion,
     pub profile_content_id_0: Option<ContentIdDb>,
     pub profile_content_id_1: Option<ContentIdDb>,
@@ -352,6 +353,7 @@ pub struct CurrentAccountMediaRaw {
 #[derive(Debug, Clone, PartialEq)]
 pub struct CurrentAccountMediaInternal {
     pub security_content_id: Option<MediaContentRaw>,
+    pub security_content_set_time: Option<UnixTime>,
     pub profile_content_version_uuid: ProfileContentVersion,
     pub profile_content_id_0: Option<MediaContentRaw>,
     pub profile_content_id_1: Option<MediaContentRaw>,

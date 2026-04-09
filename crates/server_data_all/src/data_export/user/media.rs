@@ -12,6 +12,7 @@ use server_data::data_export::SourceAccount;
 pub struct UserDataExportJsonMedia {
     media_state: MediaStateRaw,
     security_content: SecurityContent,
+    security_content_set_time: Option<UnixTime>,
     profile_content_version: ProfileContentVersion,
     profile_content: MyProfileContent,
     content_extra_info: Vec<DataExportMediaContent>,
@@ -33,6 +34,7 @@ impl UserDataExportJsonMedia {
         let data = Self {
             media_state: current.media().get_media_state(id)?,
             security_content: SecurityContent::new(current_media.clone()),
+            security_content_set_time: current_media.security_content_set_time,
             profile_content_version: current_media.profile_content_version_uuid,
             profile_content: current_media.into(),
             content_extra_info: media_content_raw
