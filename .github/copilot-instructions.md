@@ -6,3 +6,5 @@ If you run `grep` command for some reason, make sure to exclude
 
 Don't modify `api_client` crate or code which depends on it unless explicitly
 requested.
+
+Format code with `make fmt` command.
