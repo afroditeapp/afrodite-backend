@@ -1,6 +1,6 @@
 use axum::{Extension, extract::State};
 use model_media::{
-    AccountIdInternal, EventToClientInternal, Permissions, PostMediaContentFaceDetectedValue,
+    AccountIdInternal, Permissions, PostMediaContentFaceDetectedValue,
     PostMediaContentFaceVerifiedValue,
 };
 use server_api::{S, app::GetAccounts, create_open_api_router};
@@ -56,13 +56,6 @@ pub async fn post_media_content_face_detected_value(
         cmds.media_admin()
             .content()
             .change_face_detected_value(content_id, data.value)
-            .await?;
-
-        cmds.events()
-            .send_connected_event(
-                content_id.content_owner(),
-                EventToClientInternal::MediaContentChanged,
-            )
             .await?;
 
         Ok(())

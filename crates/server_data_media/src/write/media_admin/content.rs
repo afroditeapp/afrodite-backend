@@ -171,6 +171,13 @@ impl WriteCommandsProfileAdminContent<'_> {
                 .await?;
         }
 
+        self.events()
+            .send_connected_event(
+                content_id.content_owner(),
+                EventToClientInternal::MediaContentChanged,
+            )
+            .await?;
+
         Ok(())
     }
 
