@@ -1,11 +1,12 @@
 use axum::{Extension, extract::State};
+use model::AdminBotNotificationTypes;
 use model_media::{
     AccountIdInternal, GetMediaContentFaceVerifiedNullList, Permissions,
     PostMediaContentFaceDetectedValue, PostMediaContentFaceVerifiedValue,
 };
 use server_api::{
     S,
-    app::{GetAccounts, ReadData},
+    app::{AdminNotificationProvider, GetAccounts, ReadData},
     create_open_api_router,
 };
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
@@ -51,7 +52,7 @@ pub async fn post_media_content_face_detected_value(
 
     let content_owner = state.get_internal_id(data.account_id).await?;
 
-    db_write!(state, move |cmds| {
+    let changed = db_write!(state, move |cmds| {
         let content_id = cmds
             .read()
             .media()
@@ -60,10 +61,17 @@ pub async fn post_media_content_face_detected_value(
         cmds.media_admin()
             .content()
             .change_face_detected_value(content_id, data.value)
-            .await?;
-
-        Ok(())
+            .await
     })?;
+
+    if changed {
+        state
+            .admin_notification()
+            .send_bot_notification_if_needed(
+                AdminBotNotificationTypes::VERIFY_MEDIA_CONTENT_FACE_BOT,
+            )
+            .await;
+    }
 
     Ok(())
 }

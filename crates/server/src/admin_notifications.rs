@@ -95,6 +95,9 @@ impl AdminNotificationManager {
                             timer.start_if_not_running();
                             bot_manager.handle_notification(notification_type).await;
                         },
+                        Some(AdminNotificationEvent::SendBotNotification(notification_type)) => {
+                            bot_manager.handle_bot_notification(notification_type).await;
+                        },
                         Some(AdminNotificationEvent::RefreshStartTimeWaiter) => {
                             waiter.refresh_state().await;
                         },

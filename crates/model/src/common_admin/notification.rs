@@ -390,6 +390,7 @@ bitflags::bitflags! {
         const MODERATE_MEDIA_CONTENT_BOT = 1 << 1;
         const MODERATE_PROFILE_TEXTS_BOT = 1 << 2;
         const MODERATE_PROFILE_NAMES_BOT = 1 << 3;
+        const VERIFY_MEDIA_CONTENT_FACE_BOT = 1 << 4;
     }
 }
 

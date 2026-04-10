@@ -160,7 +160,7 @@ impl WriteCommandsMedia<'_> {
     pub async fn update_security_content(
         &self,
         content_id: ContentIdInternal,
-    ) -> Result<(), DataError> {
+    ) -> Result<bool, DataError> {
         let content_before_update = self
             .db_read(move |mut cmds| {
                 cmds.media()
@@ -176,7 +176,7 @@ impl WriteCommandsMedia<'_> {
             == Some(*content_id.as_db_id())
         {
             // Already set
-            return Ok(());
+            return Ok(false);
         }
 
         let content_before_update_for_usage = content_before_update.clone();
@@ -218,7 +218,9 @@ impl WriteCommandsMedia<'_> {
                 content_id.content_owner(),
                 EventToClientInternal::MediaContentChanged,
             )
-            .await
+            .await?;
+
+        Ok(true)
     }
 
     pub async fn delete_content(

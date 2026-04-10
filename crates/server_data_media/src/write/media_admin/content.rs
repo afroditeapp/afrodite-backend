@@ -117,7 +117,7 @@ impl WriteCommandsProfileAdminContent<'_> {
         &self,
         content_id: ContentIdInternal,
         value: Option<bool>,
-    ) -> Result<(), DataError> {
+    ) -> Result<bool, DataError> {
         let current_content = self
             .db_read(move |mut cmds| {
                 cmds.media()
@@ -127,7 +127,7 @@ impl WriteCommandsProfileAdminContent<'_> {
             .await?;
         if current_content.manual_face_detected() == value {
             // Already done
-            return Ok(());
+            return Ok(false);
         }
 
         let cache_update = db_transaction!(self, move |mut cmds| {
@@ -178,7 +178,7 @@ impl WriteCommandsProfileAdminContent<'_> {
             )
             .await?;
 
-        Ok(())
+        Ok(true)
     }
 
     pub async fn change_face_verified_values(

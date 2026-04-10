@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use model::{
-    AccountIdDb, AccountIdInternal, AdminNotification, AdminNotificationBitflags,
-    AdminNotificationTypes, UnixTime,
+    AccountIdDb, AccountIdInternal, AdminBotNotificationTypes, AdminNotification,
+    AdminNotificationBitflags, AdminNotificationTypes, UnixTime,
 };
 use simple_backend_utils::time::DurationValue;
 use tokio::sync::{
@@ -13,6 +13,7 @@ use tracing::error;
 
 pub enum AdminNotificationEvent {
     SendNotificationIfNeeded(AdminNotificationTypes),
+    SendBotNotification(AdminBotNotificationTypes),
     RefreshStartTimeWaiter,
 }
 
@@ -55,6 +56,17 @@ impl AdminNotificationManagerData {
             .is_err()
         {
             error!("Send notification if needed event sending failed");
+        }
+    }
+
+    pub async fn send_bot_notification_if_needed(&self, notification: AdminBotNotificationTypes) {
+        if self
+            .sender
+            .send(AdminNotificationEvent::SendBotNotification(notification))
+            .await
+            .is_err()
+        {
+            error!("Send bot notification if needed event sending failed");
         }
     }
 

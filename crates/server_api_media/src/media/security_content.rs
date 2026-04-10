@@ -2,9 +2,9 @@ use axum::{
     Extension,
     extract::{Path, State},
 };
-use model::Permissions;
+use model::{AdminBotNotificationTypes, Permissions};
 use model_media::{AccountId, AccountIdInternal, ContentId, SecurityContent};
-use server_api::{S, create_open_api_router, db_write};
+use server_api::{S, app::AdminNotificationProvider, create_open_api_router, db_write};
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
 
@@ -89,14 +89,25 @@ pub async fn put_security_content_info(
 ) -> Result<(), StatusCode> {
     MEDIA.put_security_content_info.incr();
 
-    db_write!(state, move |cmds| {
+    let changed = db_write!(state, move |cmds| {
         let content_id = cmds
             .read()
             .media()
             .content_id_internal(api_caller_account_id, content_id)
             .await?;
         cmds.media().update_security_content(content_id).await
-    })
+    })?;
+
+    if changed {
+        state
+            .admin_notification()
+            .send_bot_notification_if_needed(
+                AdminBotNotificationTypes::VERIFY_MEDIA_CONTENT_FACE_BOT,
+            )
+            .await;
+    }
+
+    Ok(())
 }
 
 create_open_api_router!(

@@ -1,5 +1,7 @@
 use config::Config;
-use model::{AdminNotificationTypes, ContentId, ContentProcessingStateInternal};
+use model::{
+    AdminBotNotificationTypes, AdminNotificationTypes, ContentId, ContentProcessingStateInternal,
+};
 use model_media::MediaContentUploadType;
 use server_api::{
     app::{ContentProcessingProvider, EventManagerProvider, WriteData},
@@ -208,6 +210,12 @@ impl ContentProcessingManager {
         self.state
             .admin_notification()
             .send_notification_if_needed(AdminNotificationTypes::ModerateMediaContentBot)
+            .await;
+        self.state
+            .admin_notification()
+            .send_bot_notification_if_needed(
+                AdminBotNotificationTypes::VERIFY_MEDIA_CONTENT_FACE_BOT,
+            )
             .await;
 
         Ok(ImgInfo::ProcessedSuccessfully {

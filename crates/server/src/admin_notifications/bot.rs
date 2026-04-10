@@ -30,6 +30,14 @@ impl BotNotificationManager {
             Err(_) => return, // Not a bot notification type
         };
 
+        self.handle_bot_notification(bot_notification).await;
+    }
+
+    pub async fn handle_bot_notification(&mut self, bot_notification: AdminBotNotificationTypes) {
+        if bot_notification.is_empty() {
+            return;
+        }
+
         if self.timer.timer.is_none() {
             // Timer not running, send immediately
             if let Err(e) = self.send_bot_notifications(&bot_notification).await {
