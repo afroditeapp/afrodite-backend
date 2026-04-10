@@ -24,6 +24,9 @@ pub struct ContentInfo {
     /// Face detected (automatic or manual)
     #[serde(rename = "fd", skip_serializing_if = "Option::is_none")]
     pub fd: Option<bool>,
+    /// Face verified against current security content (automatic or manual)
+    #[serde(rename = "fv", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub fv: Option<Option<bool>>,
 }
 
 impl ContentInfo {
@@ -33,6 +36,7 @@ impl ContentInfo {
             cid: Box::new(cid),
             ctype: None,
             fd: None,
+            fv: None,
         }
     }
 }

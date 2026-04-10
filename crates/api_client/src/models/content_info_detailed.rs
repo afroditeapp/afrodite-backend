@@ -23,6 +23,12 @@ pub struct ContentInfoDetailed {
     /// Manual face detected value set by admin
     #[serde(rename = "fd_manual", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub fd_manual: Option<Option<bool>>,
+    /// Face verified against current security content (automatic or manual)
+    #[serde(rename = "fv", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub fv: Option<Option<bool>>,
+    /// Manual face verified value set by admin
+    #[serde(rename = "fv_manual", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub fv_manual: Option<Option<bool>>,
     #[serde(rename = "rejected_reason_category", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub rejected_reason_category: Option<Option<Box<models::MediaContentModerationRejectedReasonCategory>>>,
     #[serde(rename = "rejected_reason_details", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -46,6 +52,8 @@ impl ContentInfoDetailed {
             ctype,
             fd,
             fd_manual: None,
+            fv: None,
+            fv_manual: None,
             rejected_reason_category: None,
             rejected_reason_details: None,
             secure_capture,

@@ -25,6 +25,8 @@ pub struct Permissions {
     pub admin_edit_login: Option<bool>,
     #[serde(rename = "admin_edit_media_content_face_detected_value", skip_serializing_if = "Option::is_none")]
     pub admin_edit_media_content_face_detected_value: Option<bool>,
+    #[serde(rename = "admin_edit_media_content_face_verified_value", skip_serializing_if = "Option::is_none")]
+    pub admin_edit_media_content_face_verified_value: Option<bool>,
     #[serde(rename = "admin_edit_permissions", skip_serializing_if = "Option::is_none")]
     pub admin_edit_permissions: Option<bool>,
     #[serde(rename = "admin_edit_profile_attributes_schema", skip_serializing_if = "Option::is_none")]
@@ -109,6 +111,7 @@ impl Permissions {
             admin_delete_media_content: None,
             admin_edit_login: None,
             admin_edit_media_content_face_detected_value: None,
+            admin_edit_media_content_face_verified_value: None,
             admin_edit_permissions: None,
             admin_edit_profile_attributes_schema: None,
             admin_edit_profile_attributes_schema_visible_content: None,

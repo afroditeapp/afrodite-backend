@@ -13,20 +13,27 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct BotConfigWarnings {
-    #[serde(rename = "content_moderation_file_config_missing")]
-    pub content_moderation_file_config_missing: bool,
-    #[serde(rename = "profile_name_moderation_file_config_missing")]
-    pub profile_name_moderation_file_config_missing: bool,
-    #[serde(rename = "profile_text_moderation_file_config_missing")]
-    pub profile_text_moderation_file_config_missing: bool,
+    #[serde(rename = "content_moderation_file_config_missing", skip_serializing_if = "Option::is_none")]
+    pub content_moderation_file_config_missing: Option<bool>,
+    #[serde(rename = "error", skip_serializing_if = "Option::is_none")]
+    pub error: Option<bool>,
+    /// True, when getting warnings fails because admin bot is offline
+    #[serde(rename = "error_admin_bot_offline", skip_serializing_if = "Option::is_none")]
+    pub error_admin_bot_offline: Option<bool>,
+    #[serde(rename = "profile_name_moderation_file_config_missing", skip_serializing_if = "Option::is_none")]
+    pub profile_name_moderation_file_config_missing: Option<bool>,
+    #[serde(rename = "profile_text_moderation_file_config_missing", skip_serializing_if = "Option::is_none")]
+    pub profile_text_moderation_file_config_missing: Option<bool>,
 }
 
 impl BotConfigWarnings {
-    pub fn new(content_moderation_file_config_missing: bool, profile_name_moderation_file_config_missing: bool, profile_text_moderation_file_config_missing: bool) -> BotConfigWarnings {
+    pub fn new() -> BotConfigWarnings {
         BotConfigWarnings {
-            content_moderation_file_config_missing,
-            profile_name_moderation_file_config_missing,
-            profile_text_moderation_file_config_missing,
+            content_moderation_file_config_missing: None,
+            error: None,
+            error_admin_bot_offline: None,
+            profile_name_moderation_file_config_missing: None,
+            profile_text_moderation_file_config_missing: None,
         }
     }
 }

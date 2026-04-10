@@ -33,6 +33,15 @@ pub enum GetImageProcessingConfigWarningsError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`get_media_content_face_verified_null_list`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetMediaContentFaceVerifiedNullListError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_media_content_pending_moderation_list`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -55,6 +64,15 @@ pub enum PostImageProcessingConfigError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PostMediaContentFaceDetectedValueError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_media_content_face_verified_value`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostMediaContentFaceVerifiedValueError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -142,6 +160,43 @@ pub async fn get_image_processing_config_warnings(configuration: &configuration:
     } else {
         let content = resp.text().await?;
         let entity: Option<GetImageProcessingConfigWarningsError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn get_media_content_face_verified_null_list(configuration: &configuration::Configuration, ) -> Result<models::GetMediaContentFaceVerifiedNullList, Error<GetMediaContentFaceVerifiedNullListError>> {
+
+    let uri_str = format!("{}/media_api/media_content_face_verified_null_list", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::GetMediaContentFaceVerifiedNullList`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::GetMediaContentFaceVerifiedNullList`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetMediaContentFaceVerifiedNullListError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -246,6 +301,36 @@ pub async fn post_media_content_face_detected_value(configuration: &configuratio
     } else {
         let content = resp.text().await?;
         let entity: Option<PostMediaContentFaceDetectedValueError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// Bot account sets automatic value and human admin account sets manual override value.  # Access * Permission [model::Permissions::admin_edit_media_content_face_verified_value]
+pub async fn post_media_content_face_verified_value(configuration: &configuration::Configuration, post_media_content_face_verified_value: models::PostMediaContentFaceVerifiedValue) -> Result<(), Error<PostMediaContentFaceVerifiedValueError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_post_media_content_face_verified_value = post_media_content_face_verified_value;
+
+    let uri_str = format!("{}/media_api/media_content_face_verified_value", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_post_media_content_face_verified_value);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostMediaContentFaceVerifiedValueError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

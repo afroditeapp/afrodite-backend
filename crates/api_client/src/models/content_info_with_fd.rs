@@ -20,6 +20,9 @@ pub struct ContentInfoWithFd {
     /// Face detected (automatic or manual)
     #[serde(rename = "fd")]
     pub fd: bool,
+    /// Face verified against current security content (automatic or manual)
+    #[serde(rename = "fv", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub fv: Option<Option<bool>>,
     #[serde(rename = "rejected_reason_category", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub rejected_reason_category: Option<Option<Box<models::MediaContentModerationRejectedReasonCategory>>>,
     #[serde(rename = "rejected_reason_details", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -34,6 +37,7 @@ impl ContentInfoWithFd {
             cid: Box::new(cid),
             ctype,
             fd,
+            fv: None,
             rejected_reason_category: None,
             rejected_reason_details: None,
             state,

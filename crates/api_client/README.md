@@ -189,9 +189,11 @@ Class | Method | HTTP request | Description
 *MediaApi* | [**put_security_content_info**](docs/MediaApi.md#put_security_content_info) | **PUT** /media_api/security_content_info | Set current security content for current account.
 *MediaAdminApi* | [**get_image_processing_config**](docs/MediaAdminApi.md#get_image_processing_config) | **GET** /media_api/image_processing_config | Get image processing configuration
 *MediaAdminApi* | [**get_image_processing_config_warnings**](docs/MediaAdminApi.md#get_image_processing_config_warnings) | **GET** /media_api/image_processing_config_warnings | Get image processing config warnings
+*MediaAdminApi* | [**get_media_content_face_verified_null_list**](docs/MediaAdminApi.md#get_media_content_face_verified_null_list) | **GET** /media_api/media_content_face_verified_null_list | Get first page of accounts with security selfie and content where `face_verified` is NULL and `face_detected` is true or `face_detected_manual` is true. Oldest security content set time is first and count 25.
 *MediaAdminApi* | [**get_media_content_pending_moderation_list**](docs/MediaAdminApi.md#get_media_content_pending_moderation_list) | **GET** /media_api/media_content_pending_moderation | Get first page of pending media content moderations. Oldest item is first and count 25.
 *MediaAdminApi* | [**post_image_processing_config**](docs/MediaAdminApi.md#post_image_processing_config) | **POST** /media_api/image_processing_config | Update image processing configuration
 *MediaAdminApi* | [**post_media_content_face_detected_value**](docs/MediaAdminApi.md#post_media_content_face_detected_value) | **POST** /media_api/media_content_face_detected_value | Change media content face detected value
+*MediaAdminApi* | [**post_media_content_face_verified_value**](docs/MediaAdminApi.md#post_media_content_face_verified_value) | **POST** /media_api/media_content_face_verified_value | Change media content face verified value
 *MediaAdminApi* | [**post_moderate_media_content**](docs/MediaAdminApi.md#post_moderate_media_content) | **POST** /media_api/moderate_media_content | Rejected category and details can be set only when the content is rejected.
 *ProfileApi* | [**delete_favorite_profile**](docs/ProfileApi.md#delete_favorite_profile) | **DELETE** /profile_api/favorite_profile | Delete favorite profile
 *ProfileApi* | [**get_automatic_profile_search_settings**](docs/ProfileApi.md#get_automatic_profile_search_settings) | **GET** /profile_api/automatic_profile_search_settings | 
@@ -359,6 +361,7 @@ Class | Method | HTTP request | Description
  - [GetIpCountryStatisticsResult](docs/GetIpCountryStatisticsResult.md)
  - [GetIpCountryStatisticsSettings](docs/GetIpCountryStatisticsSettings.md)
  - [GetLatestPublicKeyId](docs/GetLatestPublicKeyId.md)
+ - [GetMediaContentFaceVerifiedNullList](docs/GetMediaContentFaceVerifiedNullList.md)
  - [GetMediaContentPendingModerationList](docs/GetMediaContentPendingModerationList.md)
  - [GetMediaContentResult](docs/GetMediaContentResult.md)
  - [GetMyProfileResult](docs/GetMyProfileResult.md)
@@ -413,6 +416,7 @@ Class | Method | HTTP request | Description
  - [MatchesPage](docs/MatchesPage.md)
  - [MaxDistanceKm](docs/MaxDistanceKm.md)
  - [MediaAppNotificationSettings](docs/MediaAppNotificationSettings.md)
+ - [MediaContentFaceVerifiedNullByAccount](docs/MediaContentFaceVerifiedNullByAccount.md)
  - [MediaContentModerationRejectedReasonCategory](docs/MediaContentModerationRejectedReasonCategory.md)
  - [MediaContentModerationRejectedReasonDetails](docs/MediaContentModerationRejectedReasonDetails.md)
  - [MediaContentPendingModeration](docs/MediaContentPendingModeration.md)
@@ -453,6 +457,8 @@ Class | Method | HTTP request | Description
  - [PerfMetricValues](docs/PerfMetricValues.md)
  - [Permissions](docs/Permissions.md)
  - [PostMediaContentFaceDetectedValue](docs/PostMediaContentFaceDetectedValue.md)
+ - [PostMediaContentFaceVerifiedValue](docs/PostMediaContentFaceVerifiedValue.md)
+ - [PostMediaContentFaceVerifiedValueItem](docs/PostMediaContentFaceVerifiedValueItem.md)
  - [PostModerateMediaContent](docs/PostModerateMediaContent.md)
  - [PostModerateProfileString](docs/PostModerateProfileString.md)
  - [PostStartDataExport](docs/PostStartDataExport.md)

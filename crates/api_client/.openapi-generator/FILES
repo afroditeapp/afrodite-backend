@@ -141,6 +141,7 @@ src/models/get_ip_address_statistics_settings.rs
 src/models/get_ip_country_statistics_result.rs
 src/models/get_ip_country_statistics_settings.rs
 src/models/get_latest_public_key_id.rs
+src/models/get_media_content_face_verified_null_list.rs
 src/models/get_media_content_pending_moderation_list.rs
 src/models/get_media_content_result.rs
 src/models/get_my_profile_result.rs
@@ -195,6 +196,7 @@ src/models/matches_iterator_state.rs
 src/models/matches_page.rs
 src/models/max_distance_km.rs
 src/models/media_app_notification_settings.rs
+src/models/media_content_face_verified_null_by_account.rs
 src/models/media_content_moderation_rejected_reason_category.rs
 src/models/media_content_moderation_rejected_reason_details.rs
 src/models/media_content_pending_moderation.rs
@@ -236,6 +238,8 @@ src/models/perf_metric_value_area.rs
 src/models/perf_metric_values.rs
 src/models/permissions.rs
 src/models/post_media_content_face_detected_value.rs
+src/models/post_media_content_face_verified_value.rs
+src/models/post_media_content_face_verified_value_item.rs
 src/models/post_moderate_media_content.rs
 src/models/post_moderate_profile_string.rs
 src/models/post_start_data_export.rs
