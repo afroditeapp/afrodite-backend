@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use axum::{
     Extension,
     extract::{Path, Query, State},
@@ -6,6 +8,7 @@ use model::{AdminNotificationTypes, EventToClientInternal};
 use model_media::{
     AccountId, AccountIdInternal, AccountState, GetProfileContentQueryParams,
     GetProfileContentResult, Permissions, ProfileContent, SetProfileContent,
+    UpdateProfileContentResult,
 };
 use server_api::{
     S,
@@ -147,7 +150,7 @@ const PATH_PUT_PROFILE_CONTENT: &str = "/media_api/profile_content";
     path = PATH_PUT_PROFILE_CONTENT,
     request_body(content = SetProfileContent),
     responses(
-        (status = 200, description = "Successful."),
+        (status = 200, description = "Successful.", body = UpdateProfileContentResult),
         (status = 401, description = "Unauthorized."),
         (status = 500),
     ),
@@ -157,8 +160,27 @@ pub async fn put_profile_content(
     State(state): State<S>,
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
     Json(new): Json<SetProfileContent>,
-) -> Result<(), StatusCode> {
+) -> Result<Json<UpdateProfileContentResult>, StatusCode> {
     MEDIA.put_profile_content.incr();
+
+    let account_content = state
+        .read()
+        .media()
+        .all_account_media_content(api_caller_account_id)
+        .await?;
+    let available_content_ids: HashSet<_> =
+        account_content.iter().map(|v| v.content_id()).collect();
+    if let Some(missing_index) = new
+        .c
+        .iter()
+        .take(6)
+        .enumerate()
+        .find_map(|(index, content_id)| {
+            (!available_content_ids.contains(content_id)).then_some(index as i64)
+        })
+    {
+        return Ok(UpdateProfileContentResult::error_content_does_not_exist(missing_index).into());
+    }
 
     db_write!(state, move |cmds| {
         let info = cmds
@@ -191,7 +213,7 @@ pub async fn put_profile_content(
         .send_notification_if_needed(AdminNotificationTypes::ModerateMediaContentBot)
         .await;
 
-    Ok(())
+    Ok(UpdateProfileContentResult::success().into())
 }
 
 create_open_api_router!(

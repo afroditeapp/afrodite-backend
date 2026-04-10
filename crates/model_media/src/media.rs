@@ -434,6 +434,28 @@ impl SetProfileContent {
     }
 }
 
+#[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct UpdateProfileContentResult {
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    error_content_at_index_does_not_exist: Option<i64>,
+}
+
+impl UpdateProfileContentResult {
+    pub fn success() -> Self {
+        Self::default()
+    }
+
+    pub fn error_content_does_not_exist(index: i64) -> Self {
+        Self {
+            error: true,
+            error_content_at_index_does_not_exist: Some(index),
+        }
+    }
+}
+
 /// Current content in public profile.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct ProfileContent {
