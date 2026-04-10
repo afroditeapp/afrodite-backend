@@ -253,6 +253,7 @@ Class | Method | HTTP request | Description
  - [AddPublicKeyResult](docs/AddPublicKeyResult.md)
  - [AdminBotConfig](docs/AdminBotConfig.md)
  - [AdminContentModerationConfig](docs/AdminContentModerationConfig.md)
+ - [AdminFaceVerificationConfig](docs/AdminFaceVerificationConfig.md)
  - [AdminInfo](docs/AdminInfo.md)
  - [AdminNotification](docs/AdminNotification.md)
  - [AdminNotificationSettings](docs/AdminNotificationSettings.md)
@@ -401,6 +402,7 @@ Class | Method | HTTP request | Description
  - [LikesConfig](docs/LikesConfig.md)
  - [LimitedActionStatus](docs/LimitedActionStatus.md)
  - [LlmContentModerationConfig](docs/LlmContentModerationConfig.md)
+ - [LlmFaceVerificationConfig](docs/LlmFaceVerificationConfig.md)
  - [LlmStringModerationConfig](docs/LlmStringModerationConfig.md)
  - [Location](docs/Location.md)
  - [LoginResult](docs/LoginResult.md)
@@ -582,6 +584,7 @@ Class | Method | HTTP request | Description
  - [UpdateProfileTextReport](docs/UpdateProfileTextReport.md)
  - [UpdateReportResult](docs/UpdateReportResult.md)
  - [VapidPublicKey](docs/VapidPublicKey.md)
+ - [VerificationAction](docs/VerificationAction.md)
 
 
 To get access to the crate's generated documentation, use:

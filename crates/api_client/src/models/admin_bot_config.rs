@@ -17,6 +17,10 @@ pub struct AdminBotConfig {
     pub content_moderation: Box<models::AdminContentModerationConfig>,
     #[serde(rename = "content_moderation_enabled", skip_serializing_if = "Option::is_none")]
     pub content_moderation_enabled: Option<bool>,
+    #[serde(rename = "face_verification", skip_serializing_if = "Option::is_none")]
+    pub face_verification: Option<Box<models::AdminFaceVerificationConfig>>,
+    #[serde(rename = "face_verification_enabled", skip_serializing_if = "Option::is_none")]
+    pub face_verification_enabled: Option<bool>,
     #[serde(rename = "profile_name_moderation")]
     pub profile_name_moderation: Box<models::AdminProfileStringModerationConfig>,
     #[serde(rename = "profile_name_moderation_enabled", skip_serializing_if = "Option::is_none")]
@@ -32,6 +36,8 @@ impl AdminBotConfig {
         AdminBotConfig {
             content_moderation: Box::new(content_moderation),
             content_moderation_enabled: None,
+            face_verification: None,
+            face_verification_enabled: None,
             profile_name_moderation: Box::new(profile_name_moderation),
             profile_name_moderation_enabled: None,
             profile_text_moderation: Box::new(profile_text_moderation),

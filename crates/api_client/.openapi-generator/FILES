@@ -33,6 +33,7 @@ src/models/add_favorite_profile_result.rs
 src/models/add_public_key_result.rs
 src/models/admin_bot_config.rs
 src/models/admin_content_moderation_config.rs
+src/models/admin_face_verification_config.rs
 src/models/admin_info.rs
 src/models/admin_notification.rs
 src/models/admin_notification_settings.rs
@@ -181,6 +182,7 @@ src/models/latest_seen_message_info_list.rs
 src/models/likes_config.rs
 src/models/limited_action_status.rs
 src/models/llm_content_moderation_config.rs
+src/models/llm_face_verification_config.rs
 src/models/llm_string_moderation_config.rs
 src/models/location.rs
 src/models/login_result.rs
@@ -363,3 +365,4 @@ src/models/update_profile_name_report.rs
 src/models/update_profile_text_report.rs
 src/models/update_report_result.rs
 src/models/vapid_public_key.rs
+src/models/verification_action.rs

@@ -20,6 +20,8 @@ pub struct BotConfigWarnings {
     /// True, when getting warnings fails because admin bot is offline
     #[serde(rename = "error_admin_bot_offline", skip_serializing_if = "Option::is_none")]
     pub error_admin_bot_offline: Option<bool>,
+    #[serde(rename = "face_verification_file_config_missing", skip_serializing_if = "Option::is_none")]
+    pub face_verification_file_config_missing: Option<bool>,
     #[serde(rename = "profile_name_moderation_file_config_missing", skip_serializing_if = "Option::is_none")]
     pub profile_name_moderation_file_config_missing: Option<bool>,
     #[serde(rename = "profile_text_moderation_file_config_missing", skip_serializing_if = "Option::is_none")]
@@ -32,6 +34,7 @@ impl BotConfigWarnings {
             content_moderation_file_config_missing: None,
             error: None,
             error_admin_bot_offline: None,
+            face_verification_file_config_missing: None,
             profile_name_moderation_file_config_missing: None,
             profile_text_moderation_file_config_missing: None,
         }
