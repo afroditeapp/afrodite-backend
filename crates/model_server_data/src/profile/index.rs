@@ -7,8 +7,8 @@ use std::{
 };
 
 use model::{
-    AccountId, InitialSetupCompletedTime, LastSeenTime, LastSeenUnixTime, ProfileAge,
-    ProfileContentVersion, ProfileLink, ProfileVersion,
+    AccountId, InitialSetupCompletedTime, LastSeenTime, LastSeenUnixTime,
+    MediaVerificationStatusFlags, ProfileAge, ProfileContentVersion, ProfileLink, ProfileVersion,
 };
 use nalgebra::DMatrix;
 use simple_backend_model::UnixTime;
@@ -17,8 +17,8 @@ use super::{
     LastSeenTimeFilter, ProfileAttributeFilterValue, ProfileAttributesInternal,
     ProfileCreatedTimeFilter, ProfileEditedTime, ProfileEditedTimeFilter, ProfileInternal,
     ProfileStateCached, ProfileTextCharacterCount, ProfileTextMaxCharactersFilter,
-    ProfileTextMinCharactersFilter, SearchAgeRangeValidated, SearchGroupFlags,
-    SearchGroupFlagsFilter, SortedProfileAttributes,
+    ProfileTextMinCharactersFilter, ProfileVerificationStatusFilter, SearchAgeRangeValidated,
+    SearchGroupFlags, SearchGroupFlagsFilter, SortedProfileAttributes,
 };
 use crate::{AutomaticProfileSearchSettings, ProfileContentEditedTime, ProfilePrivacySettings};
 
@@ -34,6 +34,7 @@ pub struct ProfileQueryMakerDetails {
     pub profile_edited_time_filter: Option<ProfileEditedTimeFilter>,
     pub profile_text_min_characters_filter: Option<ProfileTextMinCharactersFilter>,
     pub profile_text_max_characters_filter: Option<ProfileTextMaxCharactersFilter>,
+    pub profile_verification_status_filter: Option<ProfileVerificationStatusFilter>,
 }
 
 impl ProfileQueryMakerDetails {
@@ -56,6 +57,7 @@ impl ProfileQueryMakerDetails {
             profile_edited_time_filter: state.profile_edited_time_filter,
             profile_text_min_characters_filter: state.profile_text_min_characters_filter,
             profile_text_max_characters_filter: state.profile_text_max_characters_filter,
+            profile_verification_status_filter: state.profile_verification_status_filter,
         }
     }
 
@@ -93,6 +95,7 @@ impl ProfileQueryMakerDetails {
             },
             profile_text_min_characters_filter: None,
             profile_text_max_characters_filter: None,
+            profile_verification_status_filter: None,
         }
     }
 }
@@ -212,6 +215,7 @@ pub struct LocationIndexProfileData {
     profile_edited_time: ProfileEditedTime,
     profile_content_edited_time: ProfileContentEditedTime,
     profile_text_character_count: ProfileTextCharacterCount,
+    media_verification_status_flags: MediaVerificationStatusFlags,
 }
 
 impl LocationIndexProfileData {
@@ -227,6 +231,7 @@ impl LocationIndexProfileData {
         profile_created_time: InitialSetupCompletedTime,
         profile_content_edited_time: ProfileContentEditedTime,
         profile_text_character_count: ProfileTextCharacterCount,
+        media_verification_status_flags: MediaVerificationStatusFlags,
     ) -> Self {
         Self {
             account_id: id,
@@ -245,6 +250,7 @@ impl LocationIndexProfileData {
             profile_edited_time: state.profile_edited_time,
             profile_content_edited_time,
             profile_text_character_count,
+            media_verification_status_flags,
         }
     }
 
@@ -310,6 +316,14 @@ impl LocationIndexProfileData {
 
         if is_match && let Some(filter) = query_maker_details.profile_text_max_characters_filter {
             is_match &= filter.is_match(self.profile_text_character_count);
+        }
+
+        if is_match
+            && let Some(required_mask) = query_maker_details.profile_verification_status_filter
+        {
+            is_match &= self
+                .media_verification_status_flags
+                .has_required_mask(required_mask.into());
         }
 
         if is_match {

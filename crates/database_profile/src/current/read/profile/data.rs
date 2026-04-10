@@ -135,6 +135,7 @@ impl CurrentReadProfileData<'_> {
             profile_edited_filter: state.profile_edited_time_filter,
             profile_text_min_characters_filter: state.profile_text_min_characters_filter,
             profile_text_max_characters_filter: state.profile_text_max_characters_filter,
+            profile_verification_status_filter: state.profile_verification_status_filter,
             random_profile_order: state.random_profile_order,
         })
     }

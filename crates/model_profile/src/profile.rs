@@ -7,7 +7,8 @@ use model_server_data::{
     ProfileAttributeValueUpdate, ProfileAttributesInternal, ProfileCreatedTimeFilter,
     ProfileEditedTime, ProfileEditedTimeFilter, ProfileInternal, ProfileNameModerationState,
     ProfileStateCached, ProfileTextMaxCharactersFilter, ProfileTextMinCharactersFilter,
-    ProfileTextModerationState, SearchGroupFlags, SortedProfileAttributes,
+    ProfileTextModerationState, ProfileVerificationStatusFilter, SearchGroupFlags,
+    SortedProfileAttributes,
 };
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -122,6 +123,7 @@ pub struct ProfileStateInternal {
     pub profile_edited_time_filter: Option<ProfileEditedTimeFilter>,
     pub profile_text_min_characters_filter: Option<ProfileTextMinCharactersFilter>,
     pub profile_text_max_characters_filter: Option<ProfileTextMaxCharactersFilter>,
+    pub profile_verification_status_filter: Option<ProfileVerificationStatusFilter>,
     pub random_profile_order: bool,
     pub profile_sync_version: ProfileSyncVersion,
     pub profile_edited_unix_time: ProfileEditedTime,
@@ -141,6 +143,7 @@ impl From<ProfileStateInternal> for ProfileStateCached {
             profile_edited_time_filter: value.profile_edited_time_filter,
             profile_text_min_characters_filter: value.profile_text_min_characters_filter,
             profile_text_max_characters_filter: value.profile_text_max_characters_filter,
+            profile_verification_status_filter: value.profile_verification_status_filter,
             random_profile_order: value.random_profile_order,
             profile_edited_time: value.profile_edited_unix_time,
         }

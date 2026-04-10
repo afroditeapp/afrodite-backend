@@ -1,6 +1,7 @@
 use diesel::{prelude::*, sql_types::SmallInt};
 use model::{
-    ContentId, ContentIdDb, ContentSlot, ProfileContentVersion, UnixTime, sync_version_wrappers,
+    ContentId, ContentIdDb, ContentSlot, MediaVerificationStatusFlags, ProfileContentVersion,
+    UnixTime, sync_version_wrappers,
 };
 use model_server_data::{MediaContentType, ProfileContentEditedTime};
 use num_enum::TryFromPrimitive;
@@ -408,6 +409,29 @@ impl CurrentAccountMediaInternal {
                 rejected_reason_category: v.moderation_rejected_reason_category,
                 rejected_reason_details: v.moderation_rejected_reason_details.clone(),
             })
+    }
+
+    pub fn media_verification_status_flags(&self) -> MediaVerificationStatusFlags {
+        let mut profile_content_exists = false;
+        let mut any_face_verified = false;
+        let mut all_face_verified = true;
+
+        for content in self.iter_current_profile_content() {
+            profile_content_exists = true;
+            let verified = content.effective_face_verified() == Some(true);
+            any_face_verified |= verified;
+            all_face_verified &= verified;
+        }
+
+        let mut flags = MediaVerificationStatusFlags::empty();
+        if any_face_verified {
+            flags |= MediaVerificationStatusFlags::PROFILE_CONTENT_FACE_VERIFIED_ANY;
+        }
+        if profile_content_exists && all_face_verified {
+            flags |= MediaVerificationStatusFlags::PROFILE_CONTENT_FACE_VERIFIED_ALL;
+        }
+
+        flags
     }
 }
 

@@ -574,6 +574,8 @@ CREATE TABLE IF NOT EXISTS profile_state(
     profile_text_min_characters_filter SMALLINT,
     -- Filter setting for profile text max character count.
     profile_text_max_characters_filter SMALLINT,
+    -- Filter setting for profile verification bitflags. Contains required flags.
+    profile_verification_status_filter SMALLINT,
     -- Profile iterator setting for random profile order.
     random_profile_order       BOOLEAN              NOT NULL    DEFAULT FALSE,
     latitude                   DOUBLE PRECISION               NOT NULL    DEFAULT 0.0,

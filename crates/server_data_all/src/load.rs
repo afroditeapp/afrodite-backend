@@ -155,7 +155,7 @@ impl DbDataToCacheLoader {
             .db_read(move |mut cmds| {
                 cmds.media()
                     .media_content()
-                    .current_account_media_raw(account_id)
+                    .current_account_media(account_id)
             })
             .await?;
         let media_state = db
@@ -165,6 +165,7 @@ impl DbDataToCacheLoader {
             account_id.uuid,
             media_content.profile_content_version_uuid,
             media_state.profile_content_edited_unix_time,
+            media_content.media_verification_status_flags(),
         );
 
         // Profile

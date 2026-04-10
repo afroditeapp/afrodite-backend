@@ -209,6 +209,7 @@ impl CurrentWriteProfileData<'_> {
                 profile_edited_time_filter.eq(filters.profile_edited_filter),
                 profile_text_min_characters_filter.eq(filters.profile_text_min_characters_filter),
                 profile_text_max_characters_filter.eq(filters.profile_text_max_characters_filter),
+                profile_verification_status_filter.eq(filters.profile_verification_status_filter),
                 random_profile_order.eq(filters.random_profile_order),
             ))
             .execute(self.conn())

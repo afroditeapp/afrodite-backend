@@ -822,6 +822,7 @@ diesel::table! {
         profile_edited_time_filter -> Nullable<Int8>,
         profile_text_min_characters_filter -> Nullable<Int2>,
         profile_text_max_characters_filter -> Nullable<Int2>,
+        profile_verification_status_filter -> Nullable<Int2>,
         random_profile_order -> Bool,
         latitude -> Float8,
         longitude -> Float8,

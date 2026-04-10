@@ -16,6 +16,9 @@ pub use attributes_schema::*;
 mod search;
 pub use search::*;
 
+mod verification;
+pub use verification::*;
+
 #[derive(
     Debug,
     Clone,

@@ -638,6 +638,7 @@ impl CacheEntry {
                 .initial_setup_completed_unix_time,
             self.media.profile_content_edited_time,
             profile.profile_text_character_count(),
+            self.media.media_verification_status_flags,
         )
     }
 

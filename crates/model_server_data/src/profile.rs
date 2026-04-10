@@ -35,6 +35,9 @@ pub use moderation::*;
 mod text;
 pub use text::*;
 
+mod verification;
+pub use verification::*;
+
 mod filter;
 pub use filter::*;
 
@@ -71,6 +74,7 @@ pub struct ProfileStateCached {
     pub profile_edited_time_filter: Option<ProfileEditedTimeFilter>,
     pub profile_text_min_characters_filter: Option<ProfileTextMinCharactersFilter>,
     pub profile_text_max_characters_filter: Option<ProfileTextMaxCharactersFilter>,
+    pub profile_verification_status_filter: Option<ProfileVerificationStatusFilter>,
     pub min_distance_km_filter: Option<MinDistanceKm>,
     pub max_distance_km_filter: Option<MaxDistanceKm>,
     pub random_profile_order: bool,

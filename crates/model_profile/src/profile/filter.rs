@@ -4,6 +4,7 @@ use model::AttributeId;
 use model_server_data::{
     MaxDistanceKm, MinDistanceKm, ProfileAttributeFilterValue, ProfileCreatedTimeFilter,
     ProfileEditedTimeFilter, ProfileTextMaxCharactersFilter, ProfileTextMinCharactersFilter,
+    ProfileVerificationStatusFilter,
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -29,6 +30,8 @@ pub struct ProfileFiltersUpdate {
     profile_text_min_characters_filter: Option<ProfileTextMinCharactersFilter>,
     #[serde(skip_serializing_if = "Option::is_none")]
     profile_text_max_characters_filter: Option<ProfileTextMaxCharactersFilter>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    profile_verification_status_filter: Option<ProfileVerificationStatusFilter>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     random_profile_order: bool,
@@ -114,6 +117,7 @@ impl ProfileFiltersUpdate {
             profile_edited_filter: self.profile_edited_filter,
             profile_text_min_characters_filter: self.profile_text_min_characters_filter,
             profile_text_max_characters_filter: self.profile_text_max_characters_filter,
+            profile_verification_status_filter: self.profile_verification_status_filter,
             random_profile_order: self.random_profile_order,
         })
     }
@@ -130,6 +134,7 @@ pub struct ProfileFiltersUpdateValidated {
     pub profile_edited_filter: Option<ProfileEditedTimeFilter>,
     pub profile_text_min_characters_filter: Option<ProfileTextMinCharactersFilter>,
     pub profile_text_max_characters_filter: Option<ProfileTextMaxCharactersFilter>,
+    pub profile_verification_status_filter: Option<ProfileVerificationStatusFilter>,
     pub random_profile_order: bool,
 }
 
@@ -198,6 +203,8 @@ pub struct GetProfileFilters {
     pub profile_text_min_characters_filter: Option<ProfileTextMinCharactersFilter>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub profile_text_max_characters_filter: Option<ProfileTextMaxCharactersFilter>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub profile_verification_status_filter: Option<ProfileVerificationStatusFilter>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     /// Randomize iterator starting position within the profile index area which

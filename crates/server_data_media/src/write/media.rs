@@ -307,9 +307,19 @@ impl WriteCommandsMedia<'_> {
         id: AccountIdInternal,
         modification: &ProfileContentModificationMetadata,
     ) -> Result<(), DataError> {
+        let media_verification_status_flags = self
+            .db_read(move |mut cmds| {
+                cmds.media()
+                    .media_content()
+                    .current_account_media(id)
+                    .map(|media| media.media_verification_status_flags())
+            })
+            .await?;
+
         self.write_cache_media(id, |e| {
             e.profile_content_version = modification.version;
             e.profile_content_edited_time = modification.time;
+            e.media_verification_status_flags = media_verification_status_flags;
             Ok(())
         })
         .await?;

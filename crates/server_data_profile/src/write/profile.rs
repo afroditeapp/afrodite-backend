@@ -222,6 +222,7 @@ impl WriteCommandsProfile<'_> {
             p.state.profile_edited_time_filter = filters.profile_edited_filter;
             p.state.profile_text_min_characters_filter = filters.profile_text_min_characters_filter;
             p.state.profile_text_max_characters_filter = filters.profile_text_max_characters_filter;
+            p.state.profile_verification_status_filter = filters.profile_verification_status_filter;
             p.state.random_profile_order = filters.random_profile_order;
 
             p.location.current_position = self.location_manager().coordinates_to_area(
