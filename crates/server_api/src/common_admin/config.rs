@@ -198,6 +198,9 @@ pub async fn get_bot_config_warnings(
             content_moderation_file_config_missing: config.content_moderation_enabled
                 && warning_flags
                     .contains(AdminBotConfigWarningFlags::CONTENT_MODERATION_FILE_CONFIG_MISSING),
+            face_verification_file_config_missing: config.face_verification_enabled
+                && warning_flags
+                    .contains(AdminBotConfigWarningFlags::FACE_VERIFICATION_FILE_CONFIG_MISSING),
         };
 
         return Ok(Json(warnings));
@@ -214,6 +217,8 @@ pub async fn get_bot_config_warnings(
             && bot_config_file.profile_text_moderation.is_none(),
         content_moderation_file_config_missing: config.content_moderation_enabled
             && bot_config_file.content_moderation.is_none(),
+        face_verification_file_config_missing: config.face_verification_enabled
+            && bot_config_file.face_verification.is_none(),
     };
 
     Ok(Json(warnings))

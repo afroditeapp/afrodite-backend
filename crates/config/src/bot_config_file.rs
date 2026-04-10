@@ -51,6 +51,7 @@ pub struct BotConfigFile {
     pub profile_name_moderation: Option<ProfileStringModerationFileConfig>,
     pub profile_text_moderation: Option<ProfileStringModerationFileConfig>,
     pub content_moderation: Option<ContentModerationFileConfig>,
+    pub face_verification: Option<FaceVerificationFileConfig>,
     /// Config required for starting backend in remote bot mode.
     pub remote_bot_mode: Option<RemoteBotModeConfig>,
     /// If None, reading location from server config file next
@@ -395,6 +396,14 @@ pub struct ContentModerationFileConfig {
     pub llm_secondary: Option<LlmContentModerationFileConfig>,
     #[serde(default)]
     pub debug_log_delete: bool,
+    /// Default value is 4.
+    pub concurrency: Option<u8>,
+}
+
+#[derive(Debug, Clone, Deserialize, Default)]
+pub struct FaceVerificationFileConfig {
+    /// Large language model based face verification.
+    pub llm: Option<LlmContentModerationFileConfig>,
     /// Default value is 4.
     pub concurrency: Option<u8>,
 }

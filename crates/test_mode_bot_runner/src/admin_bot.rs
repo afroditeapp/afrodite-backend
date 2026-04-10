@@ -23,6 +23,7 @@ use crate::{
     actions::user::DoInitialSetupIfNeeded,
     admin_bot::{
         content::ContentModerationHandler,
+        face_verification::FaceVerificationHandler,
         notification::{ModerationHandler, NotificationSender},
         profile_name::ProfileNameModerationHandler,
         profile_text::ProfileTextModerationHandler,
@@ -30,6 +31,7 @@ use crate::{
 };
 
 mod content;
+mod face_verification;
 mod notification;
 mod profile_name;
 mod profile_text;
@@ -163,8 +165,13 @@ impl AdminBot {
             admin_bot_config.content_moderation_enabled,
             file_config.content_moderation.is_some(),
         );
+        Self::warn_missing_file_config(
+            "face_verification",
+            admin_bot_config.face_verification_enabled,
+            file_config.face_verification.is_some(),
+        );
 
-        let (profile_name_config, profile_text_config, content_config) =
+        let (profile_name_config, profile_text_config, content_config, face_verification_config) =
             config::bot_config_file::internal::merge(admin_bot_config, file_config.clone());
 
         // Create separate notification pipelines for each content type
@@ -189,12 +196,21 @@ impl AdminBot {
         )
         .create_notification_channel();
 
+        let (face_verification_sender, mut face_verification_receiver) =
+            FaceVerificationHandler::new(
+                state.api.clone(),
+                face_verification_config,
+                state.reqwest_client.clone(),
+            )
+            .create_notification_channel();
+
         select! {
             result = Self::run_admin_main_logic(
                 state.connections,
                 content_sender,
                 profile_name_sender,
                 profile_text_sender,
+                face_verification_sender,
                 file_config,
             ) => {
                 if let Err(e) = result {
@@ -216,6 +232,11 @@ impl AdminBot {
                     error!("Profile text moderation pipeline error: {:?}", e);
                 }
             },
+            result = face_verification_receiver.process_notifications_loop() => {
+                if let Err(e) = result {
+                    error!("Face verification pipeline error: {:?}", e);
+                }
+            },
         };
 
         Ok(())
@@ -226,6 +247,7 @@ impl AdminBot {
         content_sender: NotificationSender,
         profile_name_sender: NotificationSender,
         profile_text_sender: NotificationSender,
+        face_verification_sender: NotificationSender,
         file_config: BotConfigFile,
     ) -> Result<(), TestError> {
         // Hourly fallback timer in case there is some event related bug or
@@ -253,6 +275,10 @@ impl AdminBot {
                             if notification.moderate_profile_texts_bot.unwrap_or(false) {
                                 profile_text_sender.notify().await;
                             }
+
+                            if notification.verify_media_content_face_bot.unwrap_or(false) {
+                                face_verification_sender.notify().await;
+                            }
                         } else if event.event == EventType::RequestAdminBotConfigWarnings
                             && let Some(request) = event.request_admin_bot_config_warnings
                         {
@@ -268,6 +294,7 @@ impl AdminBot {
                     content_sender.notify().await;
                     profile_name_sender.notify().await;
                     profile_text_sender.notify().await;
+                    face_verification_sender.notify().await;
                 }
             }
         }
@@ -289,6 +316,9 @@ fn create_response_admin_bot_config_warnings_message(
     }
     if file_config.content_moderation.is_none() {
         flags.insert(AdminBotConfigWarningFlags::CONTENT_MODERATION_FILE_CONFIG_MISSING);
+    }
+    if file_config.face_verification.is_none() {
+        flags.insert(AdminBotConfigWarningFlags::FACE_VERIFICATION_FILE_CONFIG_MISSING);
     }
 
     vec![RESPONSE_ADMIN_BOT_CONFIG_WARNINGS, request_id, flags.bits()]

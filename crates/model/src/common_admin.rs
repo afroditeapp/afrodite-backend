@@ -56,6 +56,9 @@ pub struct BotConfigWarnings {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub content_moderation_file_config_missing: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub face_verification_file_config_missing: bool,
 }
 
 impl BotConfigWarnings {

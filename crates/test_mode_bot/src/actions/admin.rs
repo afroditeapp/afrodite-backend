@@ -1,6 +1,7 @@
 use super::{BotAction, BotState};
 
 pub mod content;
+pub mod face_verification;
 pub mod profile_string;
 
 struct EmptyPage;

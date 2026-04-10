@@ -11,6 +11,13 @@ pub enum ModerationAction {
     MoveToHuman,
 }
 
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, Default)]
+pub enum VerificationAction {
+    Accept,
+    #[default]
+    Reject,
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
 pub struct AdminBotConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
@@ -25,6 +32,42 @@ pub struct AdminBotConfig {
     #[schema(default = false)]
     pub content_moderation_enabled: bool,
     pub content_moderation: AdminContentModerationConfig,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub face_verification_enabled: bool,
+    #[serde(default)]
+    pub face_verification: AdminFaceVerificationConfig,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
+pub struct AdminFaceVerificationConfig {
+    /// Large language model based face verification.
+    /// Actions: reject and accept.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub llm_enabled: bool,
+    pub llm: LlmFaceVerificationConfig,
+    pub default_action: VerificationAction,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct LlmFaceVerificationConfig {
+    pub system_text: String,
+    /// If LLM response starts with this text or the first
+    /// line of the response contains this text, the face pair
+    /// is moderated as accepted. The comparisons are case insensitive.
+    pub expected_response: String,
+    pub max_tokens: u32,
+}
+
+impl Default for LlmFaceVerificationConfig {
+    fn default() -> Self {
+        Self {
+            system_text: "You are verifying whether two dating app profile images contain the same person. Output 'accepted' only when they clearly show the same person. Otherwise output 'rejected'.".to_string(),
+            expected_response: "accepted".to_string(),
+            max_tokens: MAX_TOKENS_DEFAULT,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]

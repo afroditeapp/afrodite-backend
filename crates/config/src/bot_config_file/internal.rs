@@ -1,12 +1,13 @@
 use std::path::PathBuf;
 
-pub use model::common_admin::ModerationAction;
 use model::common_admin::{
-    AdminBotConfig, AdminContentModerationConfig, AdminNsfwDetectionConfig,
-    AdminProfileStringModerationConfig,
+    AdminBotConfig, AdminContentModerationConfig, AdminFaceVerificationConfig,
+    AdminNsfwDetectionConfig, AdminProfileStringModerationConfig,
     LlmContentModerationConfig as AdminLlmContentModerationConfig,
+    LlmFaceVerificationConfig as AdminLlmFaceVerificationConfig,
     LlmStringModerationConfig as AdminLlmStringModerationConfig,
 };
+pub use model::common_admin::{ModerationAction, VerificationAction};
 use serde::{Deserialize, Serialize};
 pub use simple_backend_model::NsfwDetectionThresholds;
 use url::Url;
@@ -100,6 +101,32 @@ pub struct ContentModerationConfig {
     pub concurrency: u8,
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct FaceVerificationConfig {
+    pub llm: Option<LlmFaceVerificationConfig>,
+    pub default_action: VerificationAction,
+    pub concurrency: u8,
+}
+
+impl FaceVerificationConfig {
+    pub fn new(
+        db: AdminFaceVerificationConfig,
+        db_enabled: bool,
+        file: Option<crate::bot_config_file::FaceVerificationFileConfig>,
+    ) -> Option<Self> {
+        if !db_enabled {
+            return None;
+        }
+        let file = file.unwrap_or_default();
+
+        Some(Self {
+            llm: LlmFaceVerificationConfig::new(db.llm, db.llm_enabled, file.llm),
+            default_action: db.default_action,
+            concurrency: file.concurrency.unwrap_or(LLM_CONCURRENCY_DEFAULT),
+        })
+    }
+}
+
 impl ContentModerationConfig {
     pub fn new(
         db: AdminContentModerationConfig,
@@ -186,6 +213,44 @@ pub struct LlmContentModerationConfig {
     pub retry_wait_times_in_seconds: Vec<u16>,
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct LlmFaceVerificationConfig {
+    pub openai_api_url: Url,
+    pub model: String,
+    pub temperature: Option<f32>,
+    pub seed: Option<i64>,
+    pub system_text: String,
+    pub expected_response: String,
+    pub debug_log_results: bool,
+    pub max_tokens: u32,
+    pub retry_wait_times_in_seconds: Vec<u16>,
+}
+
+impl LlmFaceVerificationConfig {
+    pub fn new(
+        db: AdminLlmFaceVerificationConfig,
+        db_enabled: bool,
+        file: Option<crate::bot_config_file::LlmContentModerationFileConfig>,
+    ) -> Option<Self> {
+        if !db_enabled {
+            return None;
+        }
+        let file = file?;
+
+        Some(Self {
+            openai_api_url: file.openai_api_url,
+            model: file.model,
+            temperature: file.temperature,
+            seed: file.seed,
+            system_text: db.system_text,
+            expected_response: db.expected_response,
+            debug_log_results: file.debug_log_results,
+            max_tokens: db.max_tokens,
+            retry_wait_times_in_seconds: file.retry_wait_times_in_seconds,
+        })
+    }
+}
+
 impl LlmContentModerationConfig {
     pub fn new(
         db: AdminLlmContentModerationConfig,
@@ -224,6 +289,7 @@ pub fn merge(
     Option<ProfileStringModerationConfig>,
     Option<ProfileStringModerationConfig>,
     Option<ContentModerationConfig>,
+    Option<FaceVerificationConfig>,
 ) {
     let name = ProfileStringModerationConfig::new(
         db.profile_name_moderation,
@@ -240,5 +306,10 @@ pub fn merge(
         db.content_moderation_enabled,
         file.content_moderation,
     );
-    (name, text, content)
+    let face_verification = FaceVerificationConfig::new(
+        db.face_verification,
+        db.face_verification_enabled,
+        file.face_verification,
+    );
+    (name, text, content, face_verification)
 }
