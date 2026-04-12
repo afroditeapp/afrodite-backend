@@ -470,13 +470,8 @@ impl EmailLoginToken {
 
 /// Refresh token is long lived token used for getting new access tokens.
 ///
-/// Refresh token is 3072 bit value which is Base64 encoded.
-/// The token length in characters is 512.
-///
-/// Why 3072 bits? Microsoft LinkedIn API uses about 500 character refresh
-/// tokens and 3072 bits is near that value.
-///
-/// https://learn.microsoft.com/en-us/linkedin/shared/authentication/programmatic-refresh-tokens
+/// Refresh token is 256 bit value which is Base64 encoded.
+/// The token length in characters is 44.
 ///
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
 pub struct RefreshToken {
@@ -488,7 +483,7 @@ impl RefreshToken {
     pub fn generate_new_with_bytes() -> (Self, Vec<u8>) {
         let mut token = Vec::new();
 
-        for _ in 1..=24 {
+        for _ in 1..=2 {
             token.extend(random_128_bits())
         }
 
@@ -700,14 +695,14 @@ mod tests {
     }
 
     #[test]
-    fn refresh_token_length_is_24_uuids() {
-        let data_24_uuid = [0u8; 128 * 24 / 8];
+    fn refresh_token_length_is_256_bits() {
+        let data_256_bit = [0u8; 256 / 8];
         let wanted_len = base64::engine::general_purpose::STANDARD
-            .encode(data_24_uuid)
+            .encode(data_256_bit)
             .len();
         let token = RefreshToken::generate_new();
         assert_eq!(token.token.len(), wanted_len);
-        assert_eq!(token.token.len(), 512);
+        assert_eq!(token.token.len(), 44);
     }
 
     #[test]
