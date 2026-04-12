@@ -39,6 +39,7 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 
 # [limits.common]
 # send_report_daily_max_count = 20
+# websocket_connection_attempts_daily_max_count = 150
 #
 # [limits.common.processed_report_deletion_wait_duration]
 # profile_name = "90d"
@@ -281,6 +282,7 @@ pub struct LimitsConfig {
 pub struct CommonLimitsConfig {
     pub processed_report_deletion_wait_duration: ProcessedReportDeletionConfig,
     pub send_report_daily_max_count: u16,
+    pub websocket_connection_attempts_daily_max_count: u16,
 }
 
 impl Default for CommonLimitsConfig {
@@ -288,6 +290,7 @@ impl Default for CommonLimitsConfig {
         Self {
             processed_report_deletion_wait_duration: ProcessedReportDeletionConfig::default(),
             send_report_daily_max_count: 20,
+            websocket_connection_attempts_daily_max_count: 150,
         }
     }
 }

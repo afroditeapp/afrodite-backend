@@ -26,8 +26,9 @@ use server_data::{
     write::GetWriteCommandsCommon,
 };
 use server_state::{
+    api_limits::ApiLimitError,
     app::{
-        ApiUsageTrackerProvider, ClientVersionTrackerProvider, GetAccessTokens,
+        ApiLimitsProvider, ApiUsageTrackerProvider, ClientVersionTrackerProvider, GetAccessTokens,
         IpAddressUsageTrackerProvider,
     },
     client_version::TrackingResult,
@@ -97,6 +98,8 @@ pub use utils::api::PATH_CONNECT;
 ///      without sending WebSocket Close message.
 ///    - 3, invalid access token, server closes the connection
 ///      without sending WebSocket Close message.
+///    - 4, WebSocket connection attempts daily limit reached, server closes the
+///      connection without sending WebSocket Close message.
 /// 2. Client sends current refresh token as Binary message.
 /// 3. Server sends new refresh token as Binary message.
 /// 4. Server sends new access token as Binary message. The client must
@@ -374,6 +377,40 @@ async fn handle_socket_result(
     id: AccountIdInternal,
     state: &S,
 ) -> crate::result::Result<(), WebSocketError> {
+    let websocket_connection_attempts_remaining_message = match state
+        .api_limits(id)
+        .common()
+        .websocket_connection_attempts()
+        .await
+    {
+        Ok(current_count) => {
+            let websocket_connection_attempts_limit = state
+                .config()
+                .limits_common()
+                .websocket_connection_attempts_daily_max_count;
+            let websocket_connection_attempts_remaining =
+                websocket_connection_attempts_limit.saturating_sub(current_count);
+            if matches!(
+                websocket_connection_attempts_remaining,
+                50 | 20 | 10 | 5 | 4 | 3 | 2 | 1
+            ) {
+                Some(websocket_connection_attempts_remaining as u8)
+            } else {
+                None
+            }
+        }
+        Err(e) => {
+            if matches!(e.current_context(), ApiLimitError::LimitReached) {
+                socket
+                    .send(Message::Binary(Bytes::from_static(&[4])))
+                    .await
+                    .change_context(WebSocketError::Send)?;
+                return Ok(());
+            }
+            return Err(e).change_context(WebSocketError::ApiLimitCheckFailed);
+        }
+    };
+
     let is_session_valid = state
         .read()
         .common()
@@ -465,6 +502,14 @@ async fn handle_socket_result(
 
         event_receiver
     };
+
+    if let Some(remaining) = websocket_connection_attempts_remaining_message {
+        send_event(
+            &mut socket,
+            EventToClientInternal::WebSocketConnectionAttemptsRemaining { remaining },
+        )
+        .await?;
+    }
 
     COMMON.websocket_connected.incr();
     let connection_trackers = WebSocketConnectionTrackers::new(state, id).await?;

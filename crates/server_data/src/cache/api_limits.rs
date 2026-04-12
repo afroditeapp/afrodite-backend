@@ -34,6 +34,7 @@ impl ApiLimitState {
 pub struct AllApiLimits {
     // Common
     pub send_report: ApiLimitState,
+    pub websocket_connection_attempts: ApiLimitState,
     // Profile
     pub post_reset_profile_paging: ApiLimitState,
     pub post_get_next_profile_page: ApiLimitState,

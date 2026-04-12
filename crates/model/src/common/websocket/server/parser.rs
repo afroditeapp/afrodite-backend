@@ -40,6 +40,11 @@ pub fn parse_server_binary_message(message: &[u8]) -> Result<EventToClientIntern
             )?;
             EventToClientInternal::RequestAdminBotConfigWarnings { request_id }
         }
+        ServerMessageType::WebSocketConnectionAttemptsRemaining => {
+            let remaining =
+                next_payload_byte(&mut message_iter, "websocket connection attempts remaining")?;
+            EventToClientInternal::WebSocketConnectionAttemptsRemaining { remaining }
+        }
         ServerMessageType::PushNotificationInfoChanged => {
             EventToClientInternal::PushNotificationInfoChanged
         }
@@ -448,6 +453,25 @@ mod tests {
         EventToClientInternal::PushNotificationInfoChanged,
         EventToClientInternal::PushNotificationInfoChanged
     );
+
+    #[test]
+    fn roundtrip_websocket_connection_attempts_remaining_message() {
+        let remaining = 50;
+        let message = create_server_binary_message(
+            &EventToClientInternal::WebSocketConnectionAttemptsRemaining { remaining },
+        );
+        let parsed = parse_server_binary_message(&message)
+            .expect("websocket connection attempts remaining should parse");
+
+        match parsed {
+            EventToClientInternal::WebSocketConnectionAttemptsRemaining {
+                remaining: parsed_remaining,
+            } => {
+                assert_eq!(parsed_remaining, remaining);
+            }
+            _ => panic!("unexpected event parsed"),
+        }
+    }
     assert_roundtrip_without_payload!(
         roundtrip_account_state_changed_message,
         EventToClientInternal::AccountStateChanged,

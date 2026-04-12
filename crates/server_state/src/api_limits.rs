@@ -108,6 +108,28 @@ impl CommonApiLimits<'_> {
             })
             .await
     }
+
+    /// Returns current daily WebsSocket connection attempt count
+    pub async fn websocket_connection_attempts(&self) -> Result<u16, ApiLimitError> {
+        self.limits
+            .check(|state, config| {
+                state
+                    .websocket_connection_attempts
+                    .increment_and_check_is_limit_reached(
+                        config
+                            .limits_common()
+                            .websocket_connection_attempts_daily_max_count,
+                    )
+            })
+            .await?;
+
+        let current_count = self
+            .limits
+            .read(|state| state.websocket_connection_attempts.value())
+            .await?;
+
+        Ok(current_count)
+    }
 }
 
 pub struct ProfileApiLimits<'a> {

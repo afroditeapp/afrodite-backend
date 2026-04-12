@@ -39,6 +39,13 @@ impl<E> WrappedReport<Report<E>> {
     pub fn into_report(self) -> Report<E> {
         self.report
     }
+
+    pub fn current_context(&self) -> &E
+    where
+        E: Send + Sync + 'static,
+    {
+        self.report.current_context()
+    }
 }
 
 impl<E> std::fmt::Debug for WrappedReport<Report<E>> {

@@ -29,6 +29,8 @@ pub use parser::parse_server_binary_message;
 /// - `PushNotificationInfoChanged` (5): payload is empty.
 /// - `RequestAdminBotConfigWarnings` (6): payload format:
 ///   - request id byte (u8)
+/// - `WebSocketConnectionAttemptsRemaining` (7): payload format:
+///   - remaining daily websocket connection attempts as u8
 /// - `AccountStateChanged` (30): payload is empty.
 /// - `ProfileChanged` (60): payload is empty.
 /// - `ResponseResetProfilePaging` (61): payload format:
@@ -120,6 +122,7 @@ pub enum ServerMessageType {
     AdminBotNotification = 4,
     PushNotificationInfoChanged = 5,
     RequestAdminBotConfigWarnings = 6,
+    WebSocketConnectionAttemptsRemaining = 7,
     // - account: 30..=59
     /// Account state, profile visibility or permissions changed
     AccountStateChanged = 30,
@@ -182,6 +185,9 @@ pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
         EventToClientInternal::RequestAdminBotConfigWarnings { .. } => {
             ServerMessageType::RequestAdminBotConfigWarnings
         }
+        EventToClientInternal::WebSocketConnectionAttemptsRemaining { .. } => {
+            ServerMessageType::WebSocketConnectionAttemptsRemaining
+        }
         EventToClientInternal::PushNotificationInfoChanged => {
             ServerMessageType::PushNotificationInfoChanged
         }
@@ -210,6 +216,9 @@ pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
         }
         EventToClientInternal::RequestAdminBotConfigWarnings { request_id } => {
             message.push(*request_id);
+        }
+        EventToClientInternal::WebSocketConnectionAttemptsRemaining { remaining } => {
+            message.push(*remaining);
         }
         EventToClientInternal::TypingStart(value) | EventToClientInternal::TypingStop(value) => {
             append_account_id_payload(&mut message, *value);

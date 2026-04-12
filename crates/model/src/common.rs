@@ -93,6 +93,9 @@ pub enum EventToClientInternal {
     NewMessageReceived,
     PendingChatNotificationsChanged,
     PendingAppNotificationsChanged,
+    WebSocketConnectionAttemptsRemaining {
+        remaining: u8,
+    },
     ReceivedLikesChanged,
     ClientConfigChanged,
     ProfileChanged,

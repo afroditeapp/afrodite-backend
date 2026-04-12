@@ -12,6 +12,8 @@ pub enum WebSocketError {
     Close,
     #[error("Data serialization error")]
     Serialize,
+    #[error("API limit check failed")]
+    ApiLimitCheckFailed,
 
     // Database errors
     #[error("Database: Access token creation time")]
