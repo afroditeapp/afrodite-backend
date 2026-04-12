@@ -580,6 +580,7 @@ Class | Method | HTTP request | Description
  - [UpdateNewsTranslationResult](docs/UpdateNewsTranslationResult.md)
  - [UpdateProfileAttributesSchema](docs/UpdateProfileAttributesSchema.md)
  - [UpdateProfileContentReport](docs/UpdateProfileContentReport.md)
+ - [UpdateProfileContentResult](docs/UpdateProfileContentResult.md)
  - [UpdateProfileNameReport](docs/UpdateProfileNameReport.md)
  - [UpdateProfileTextReport](docs/UpdateProfileTextReport.md)
  - [UpdateReportResult](docs/UpdateReportResult.md)

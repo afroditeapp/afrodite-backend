@@ -607,7 +607,7 @@ pub async fn put_content_to_content_slot(configuration: &configuration::Configur
 }
 
 /// This also moves the content to moderation if it is not already in moderation or moderated.  Also profile visibility moves from pending to normal when all profile content is moderated as accepted.  # Restrictions - All content must be owned by the account. - All content must be images.
-pub async fn put_profile_content(configuration: &configuration::Configuration, set_profile_content: models::SetProfileContent) -> Result<(), Error<PutProfileContentError>> {
+pub async fn put_profile_content(configuration: &configuration::Configuration, set_profile_content: models::SetProfileContent) -> Result<models::UpdateProfileContentResult, Error<PutProfileContentError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_set_profile_content = set_profile_content;
 
@@ -626,9 +626,20 @@ pub async fn put_profile_content(configuration: &configuration::Configuration, s
     let resp = configuration.client.execute(req).await?;
 
     let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
 
     if !status.is_client_error() && !status.is_server_error() {
-        Ok(())
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::UpdateProfileContentResult`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::UpdateProfileContentResult`")))),
+        }
     } else {
         let content = resp.text().await?;
         let entity: Option<PutProfileContentError> = serde_json::from_str(&content).ok();

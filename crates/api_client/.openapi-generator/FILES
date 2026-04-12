@@ -361,6 +361,7 @@ src/models/update_news_translation.rs
 src/models/update_news_translation_result.rs
 src/models/update_profile_attributes_schema.rs
 src/models/update_profile_content_report.rs
+src/models/update_profile_content_result.rs
 src/models/update_profile_name_report.rs
 src/models/update_profile_text_report.rs
 src/models/update_report_result.rs

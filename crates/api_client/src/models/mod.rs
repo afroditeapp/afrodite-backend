@@ -686,6 +686,8 @@ pub mod update_profile_attributes_schema;
 pub use self::update_profile_attributes_schema::UpdateProfileAttributesSchema;
 pub mod update_profile_content_report;
 pub use self::update_profile_content_report::UpdateProfileContentReport;
+pub mod update_profile_content_result;
+pub use self::update_profile_content_result::UpdateProfileContentResult;
 pub mod update_profile_name_report;
 pub use self::update_profile_name_report::UpdateProfileNameReport;
 pub mod update_profile_text_report;

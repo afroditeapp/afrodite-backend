@@ -11,7 +11,7 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// RefreshToken : Refresh token is long lived token used for getting new access tokens.  Refresh token is 3072 bit value which is Base64 encoded. The token length in characters is 512.  Why 3072 bits? Microsoft LinkedIn API uses about 500 character refresh tokens and 3072 bits is near that value.  https://learn.microsoft.com/en-us/linkedin/shared/authentication/programmatic-refresh-tokens 
+/// RefreshToken : Refresh token is long lived token used for getting new access tokens.  Refresh token is 256 bit value which is Base64 encoded. The token length in characters is 44. 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct RefreshToken {
     /// Base64 encoded random number.
@@ -20,7 +20,7 @@ pub struct RefreshToken {
 }
 
 impl RefreshToken {
-    /// Refresh token is long lived token used for getting new access tokens.  Refresh token is 3072 bit value which is Base64 encoded. The token length in characters is 512.  Why 3072 bits? Microsoft LinkedIn API uses about 500 character refresh tokens and 3072 bits is near that value.  https://learn.microsoft.com/en-us/linkedin/shared/authentication/programmatic-refresh-tokens 
+    /// Refresh token is long lived token used for getting new access tokens.  Refresh token is 256 bit value which is Base64 encoded. The token length in characters is 44. 
     pub fn new(token: String) -> RefreshToken {
         RefreshToken {
             token,
