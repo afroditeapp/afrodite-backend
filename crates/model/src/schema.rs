@@ -135,6 +135,7 @@ diesel::table! {
         admin_server_view_info -> Bool,
         admin_server_view_bot_config -> Bool,
         admin_server_view_image_processing_config -> Bool,
+        admin_server_view_server_config -> Bool,
         admin_server_software_update -> Bool,
         admin_server_data_reset -> Bool,
         admin_server_restart -> Bool,
@@ -143,6 +144,7 @@ diesel::table! {
         admin_server_scheduled_reboot -> Bool,
         admin_server_edit_bot_config -> Bool,
         admin_server_edit_image_processing_config -> Bool,
+        admin_server_edit_server_config -> Bool,
         admin_server_edit_maintenance_notification -> Bool,
         admin_server_edit_info_banners -> Bool,
         admin_news_create -> Bool,
@@ -371,6 +373,13 @@ diesel::table! {
 
 diesel::table! {
     dynamic_client_features_config (row_type) {
+        row_type -> Int4,
+        config_json -> Text,
+    }
+}
+
+diesel::table! {
+    dynamic_server_config (row_type) {
         row_type -> Int4,
         config_json -> Text,
     }
@@ -990,6 +999,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     daily_likes_left,
     demo_account_owned_accounts,
     dynamic_client_features_config,
+    dynamic_server_config,
     favorite_profile,
     history_client_version_statistics,
     history_client_version_statistics_version_number,

@@ -7,9 +7,14 @@ use axum::{Extension, extract::State};
 use config::bot_config_file::internal::LlmStringModerationConfig;
 use model::{
     AccountIdInternal, AdminBotConfigWarningFlags, BotConfig, BotConfigWarnings,
-    EventToClientInternal, Permissions,
+    DynamicServerConfig, EventToClientInternal, Permissions,
 };
-use server_data::{app::GetConfig, read::GetReadCommandsCommon};
+use server_data::{
+    app::{GetConfig, GetDynamicServerConfig},
+    read::GetReadCommandsCommon,
+    write::GetWriteCommandsCommon,
+};
+use server_state::db_write;
 use simple_backend::{app::GetManagerApi, create_counters};
 use tokio::{
     sync::{Mutex, oneshot},
@@ -18,7 +23,7 @@ use tokio::{
 
 use crate::{
     S,
-    app::{EventManagerProvider, ReadData, ReadDynamicConfig, WriteDynamicConfig},
+    app::{EventManagerProvider, ReadData, ReadDynamicConfig, WriteData, WriteDynamicConfig},
     create_open_api_router,
     utils::{Json, StatusCode},
 };
@@ -224,6 +229,79 @@ pub async fn get_bot_config_warnings(
     Ok(Json(warnings))
 }
 
+const PATH_GET_DYNAMIC_SERVER_CONFIG: &str = "/common_api/dynamic_server_config";
+
+/// Get server config.
+///
+/// # Access
+/// * [Permissions::admin_server_view_server_config]
+#[utoipa::path(
+    get,
+    path = PATH_GET_DYNAMIC_SERVER_CONFIG,
+    responses(
+        (status = 200, description = "Successful.", body = DynamicServerConfig),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_dynamic_server_config(
+    State(state): State<S>,
+    Extension(api_caller_permissions): Extension<Permissions>,
+) -> Result<Json<DynamicServerConfig>, StatusCode> {
+    COMMON_ADMIN.get_dynamic_server_config.incr();
+
+    if !api_caller_permissions.admin_server_view_server_config {
+        return Err(StatusCode::UNAUTHORIZED);
+    }
+
+    let config = state
+        .dynamic_server_config_manager()
+        .dynamic_server_config()
+        .await
+        .unwrap_or_default();
+
+    Ok(config.into())
+}
+
+const PATH_POST_DYNAMIC_SERVER_CONFIG: &str = "/common_api/dynamic_server_config";
+
+/// Save server config.
+///
+/// # Access
+/// * [Permissions::admin_server_edit_server_config]
+#[utoipa::path(
+    post,
+    path = PATH_POST_DYNAMIC_SERVER_CONFIG,
+    request_body(content = DynamicServerConfig),
+    responses(
+        (status = 200, description = "Successful."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_dynamic_server_config(
+    State(state): State<S>,
+    Extension(api_caller_permissions): Extension<Permissions>,
+    Json(config): Json<DynamicServerConfig>,
+) -> Result<(), StatusCode> {
+    COMMON_ADMIN.post_dynamic_server_config.incr();
+
+    if !api_caller_permissions.admin_server_edit_server_config {
+        return Err(StatusCode::UNAUTHORIZED);
+    }
+
+    db_write!(state, move |cmds| {
+        cmds.common()
+            .client_config()
+            .upsert_dynamic_server_config(config)
+            .await
+    })?;
+
+    Ok(())
+}
+
 static REMOTE_BOT_CONFIG_WARNINGS_WAITER: OnceLock<Mutex<Option<RemoteBotConfigWarningsWaiter>>> =
     OnceLock::new();
 
@@ -276,6 +354,8 @@ create_open_api_router!(
     get_bot_config,
     post_bot_config,
     get_bot_config_warnings,
+    get_dynamic_server_config,
+    post_dynamic_server_config,
 );
 
 create_counters!(
@@ -285,4 +365,6 @@ create_counters!(
     get_bot_config,
     post_bot_config,
     get_bot_config_warnings,
+    get_dynamic_server_config,
+    post_dynamic_server_config,
 );

@@ -45,6 +45,12 @@ macro_rules! define_cmd_wrapper_read {
             ) -> &$crate::dynamic_client_features::DynamicClientFeaturesManager {
                 self.0.dynamic_client_features()
             }
+
+            fn dynamic_server_config(
+                &self,
+            ) -> &$crate::dynamic_server_config::DynamicServerConfigManager {
+                self.0.dynamic_server_config()
+            }
         }
     };
 }
@@ -129,6 +135,12 @@ macro_rules! define_cmd_wrapper_write {
                 &self,
             ) -> &$crate::dynamic_client_features::DynamicClientFeaturesManager {
                 $crate::db_manager::InternalWriting::dynamic_client_features(self.0)
+            }
+
+            fn dynamic_server_config(
+                &self,
+            ) -> &$crate::dynamic_server_config::DynamicServerConfigManager {
+                $crate::db_manager::InternalWriting::dynamic_server_config(self.0)
             }
         }
     };

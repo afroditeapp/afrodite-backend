@@ -73,6 +73,7 @@ CREATE TABLE IF NOT EXISTS account_permissions(
     admin_server_view_info                       BOOLEAN NOT NULL DEFAULT FALSE,
     admin_server_view_bot_config                 BOOLEAN NOT NULL DEFAULT FALSE,
     admin_server_view_image_processing_config    BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_server_view_server_config              BOOLEAN NOT NULL DEFAULT FALSE,
     admin_server_software_update                 BOOLEAN NOT NULL DEFAULT FALSE,
     admin_server_data_reset                      BOOLEAN NOT NULL DEFAULT FALSE,
     admin_server_restart                         BOOLEAN NOT NULL DEFAULT FALSE,
@@ -81,6 +82,7 @@ CREATE TABLE IF NOT EXISTS account_permissions(
     admin_server_scheduled_reboot                BOOLEAN NOT NULL DEFAULT FALSE,
     admin_server_edit_bot_config                 BOOLEAN NOT NULL DEFAULT FALSE,
     admin_server_edit_image_processing_config    BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_server_edit_server_config              BOOLEAN NOT NULL DEFAULT FALSE,
     admin_server_edit_maintenance_notification   BOOLEAN NOT NULL DEFAULT FALSE,
     admin_server_edit_info_banners               BOOLEAN NOT NULL DEFAULT FALSE,
     admin_news_create                            BOOLEAN NOT NULL DEFAULT FALSE,
@@ -316,6 +318,13 @@ CREATE TABLE IF NOT EXISTS profile_attributes_schema_attribute(
 -- Store dynamic client features config JSON.
 CREATE TABLE IF NOT EXISTS dynamic_client_features_config(
     -- 0 = dynamic client features config
+    row_type      INTEGER PRIMARY KEY NOT NULL,
+    config_json   TEXT                NOT NULL
+);
+
+-- Store server config JSON.
+CREATE TABLE IF NOT EXISTS dynamic_server_config(
+    -- 0 = server config
     row_type      INTEGER PRIMARY KEY NOT NULL,
     config_json   TEXT                NOT NULL
 );

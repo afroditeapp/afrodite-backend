@@ -99,6 +99,12 @@ pub trait GetDynamicClientFeatures {
     ) -> &crate::dynamic_client_features::DynamicClientFeaturesManager;
 }
 
+pub trait GetDynamicServerConfig {
+    fn dynamic_server_config_manager(
+        &self,
+    ) -> &crate::dynamic_server_config::DynamicServerConfigManager;
+}
+
 pub trait GetEmailSender {
     fn email_sender(&self) -> &EmailSenderImpl;
 }

@@ -20,6 +20,7 @@ use tracing::info;
 use crate::{
     cache::DatabaseCache,
     dynamic_client_features::{DynamicClientFeaturesManager, load_dynamic_client_features_from_db},
+    dynamic_server_config::{DynamicServerConfigManager, load_dynamic_server_config_from_db},
     event::EventManagerWithCacheReference,
     file::utils::FileDir,
     index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle},
@@ -121,6 +122,10 @@ impl DatabaseManager {
             load_dynamic_client_features_from_db(&DbReaderRaw::new(&current_read_handle))
                 .await
                 .into_error_without_context()?;
+        let dynamic_server_config =
+            load_dynamic_server_config_from_db(&DbReaderRaw::new(&current_read_handle))
+                .await
+                .into_error_without_context()?;
 
         let router_write_handle = RouterDatabaseWriteHandle {
             read: RouterDatabaseReadHandle {
@@ -131,6 +136,7 @@ impl DatabaseManager {
                 config: config.clone(),
                 profile_attributes: profile_attributes.clone(),
                 dynamic_client_features: dynamic_client_features.clone(),
+                dynamic_server_config: dynamic_server_config.clone(),
             },
             config: config.clone(),
             current_write_handle: current_write_handle.clone(),
@@ -138,6 +144,7 @@ impl DatabaseManager {
             location: index.into(),
             profile_attributes: profile_attributes.clone(),
             dynamic_client_features: dynamic_client_features.clone(),
+            dynamic_server_config: dynamic_server_config.clone(),
             push_notification_sender,
             email_sender,
         };
@@ -150,6 +157,7 @@ impl DatabaseManager {
             config,
             profile_attributes,
             dynamic_client_features,
+            dynamic_server_config,
         };
 
         let database_manager = DatabaseManager {
@@ -182,6 +190,7 @@ pub struct RouterDatabaseWriteHandle {
     location: Arc<LocationIndexManager>,
     profile_attributes: crate::profile_attributes::ProfileAttributesSchemaManager,
     dynamic_client_features: DynamicClientFeaturesManager,
+    dynamic_server_config: DynamicServerConfigManager,
     push_notification_sender: PushNotificationSender,
     email_sender: EmailSenderImpl,
 }
@@ -228,6 +237,7 @@ pub trait InternalWriting {
     fn events(&self) -> EventManagerWithCacheReference<'_>;
     fn profile_attributes(&self) -> &crate::profile_attributes::ProfileAttributesSchemaManager;
     fn dynamic_client_features(&self) -> &DynamicClientFeaturesManager;
+    fn dynamic_server_config(&self) -> &DynamicServerConfigManager;
 
     fn location_index_write_handle(&self) -> LocationIndexWriteHandle<'_> {
         LocationIndexWriteHandle::new(self.location())
@@ -330,6 +340,10 @@ impl InternalWriting for RouterDatabaseWriteHandle {
         &self.dynamic_client_features
     }
 
+    fn dynamic_server_config(&self) -> &DynamicServerConfigManager {
+        &self.dynamic_server_config
+    }
+
     fn cache(&self) -> &DatabaseCache {
         &self.read.cache
     }
@@ -407,6 +421,10 @@ impl InternalWriting for Cmds {
     fn dynamic_client_features(&self) -> &DynamicClientFeaturesManager {
         InternalWriting::dynamic_client_features(self.write_handle())
     }
+
+    fn dynamic_server_config(&self) -> &DynamicServerConfigManager {
+        InternalWriting::dynamic_server_config(self.write_handle())
+    }
 }
 
 pub trait WriteAccessProvider {
@@ -434,6 +452,7 @@ pub struct RouterDatabaseReadHandle {
     config: Arc<Config>,
     profile_attributes: crate::profile_attributes::ProfileAttributesSchemaManager,
     dynamic_client_features: DynamicClientFeaturesManager,
+    dynamic_server_config: DynamicServerConfigManager,
 }
 
 impl RouterDatabaseReadHandle {
@@ -451,6 +470,10 @@ impl RouterDatabaseReadHandle {
 
     pub fn dynamic_client_features(&self) -> &DynamicClientFeaturesManager {
         &self.dynamic_client_features
+    }
+
+    pub fn dynamic_server_config(&self) -> &DynamicServerConfigManager {
+        &self.dynamic_server_config
     }
 
     pub fn cache_read_write_access(&self) -> &DatabaseCache {
@@ -499,6 +522,7 @@ pub trait InternalReading {
     fn config_arc(&self) -> Arc<Config>;
     fn profile_attributes(&self) -> &crate::profile_attributes::ProfileAttributesSchemaManager;
     fn dynamic_client_features(&self) -> &DynamicClientFeaturesManager;
+    fn dynamic_server_config(&self) -> &DynamicServerConfigManager;
 
     async fn db_read_raw<
         T: FnOnce(database::DbReadMode<'_>) -> error_stack::Result<R, DieselDatabaseError>
@@ -591,6 +615,10 @@ impl InternalReading for &RouterDatabaseReadHandle {
     fn dynamic_client_features(&self) -> &DynamicClientFeaturesManager {
         &self.dynamic_client_features
     }
+
+    fn dynamic_server_config(&self) -> &DynamicServerConfigManager {
+        &self.dynamic_server_config
+    }
 }
 
 impl<I: InternalWriting> InternalReading for I {
@@ -625,6 +653,10 @@ impl<I: InternalWriting> InternalReading for I {
     fn dynamic_client_features(&self) -> &DynamicClientFeaturesManager {
         InternalWriting::dynamic_client_features(self)
     }
+
+    fn dynamic_server_config(&self) -> &DynamicServerConfigManager {
+        InternalWriting::dynamic_server_config(self)
+    }
 }
 
 impl InternalReading for ReadAdapter<'_> {
@@ -658,5 +690,9 @@ impl InternalReading for ReadAdapter<'_> {
 
     fn dynamic_client_features(&self) -> &DynamicClientFeaturesManager {
         &self.cmds.read.dynamic_client_features
+    }
+
+    fn dynamic_server_config(&self) -> &DynamicServerConfigManager {
+        &self.cmds.read.dynamic_server_config
     }
 }

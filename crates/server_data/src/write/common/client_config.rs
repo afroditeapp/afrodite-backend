@@ -1,5 +1,7 @@
 use database::current::write::GetDbWriteCommandsCommon;
-use model::{AccountIdInternal, ClientLanguage, ClientType, DynamicClientFeaturesConfig};
+use model::{
+    AccountIdInternal, ClientLanguage, ClientType, DynamicClientFeaturesConfig, DynamicServerConfig,
+};
 
 use crate::{
     DataError, db_manager::InternalWriting, db_transaction, define_cmd_wrapper_write,
@@ -24,6 +26,21 @@ impl WriteCommandsCommonClientConfig<'_> {
                 .increment_client_config_sync_version_for_every_account()?;
             manager
                 .set_dynamic_client_features_blocking(Some(DynamicClientFeatures { hash, config }));
+            Ok(())
+        })?;
+        Ok(())
+    }
+
+    pub async fn upsert_dynamic_server_config(
+        &self,
+        config: DynamicServerConfig,
+    ) -> Result<(), DataError> {
+        let manager = self.dynamic_server_config().clone();
+        db_transaction!(self, move |mut cmds| {
+            cmds.common()
+                .client_config()
+                .upsert_dynamic_server_config(&config)?;
+            manager.set_dynamic_server_config_blocking(Some(config));
             Ok(())
         })?;
         Ok(())

@@ -114,6 +114,14 @@ impl server_data::app::GetDynamicClientFeatures for S {
     }
 }
 
+impl server_data::app::GetDynamicServerConfig for S {
+    fn dynamic_server_config_manager(
+        &self,
+    ) -> &server_data::dynamic_server_config::DynamicServerConfigManager {
+        self.state.database.dynamic_server_config()
+    }
+}
+
 impl ReadDynamicConfig for S {
     async fn read_config(&self) -> error_stack::Result<BotConfig, ConfigFileError> {
         let config = self

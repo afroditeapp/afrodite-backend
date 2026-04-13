@@ -70,3 +70,6 @@ impl BotConfigWarnings {
         }
     }
 }
+
+#[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]
+pub struct DynamicServerConfig {}

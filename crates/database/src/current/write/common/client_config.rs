@@ -2,7 +2,7 @@ use diesel::{insert_into, prelude::*, update};
 use error_stack::{Result, ResultExt};
 use model::{
     AccountIdInternal, ClientLanguage, ClientType, DynamicClientFeaturesConfig,
-    DynamicClientFeaturesConfigHash, SyncVersion,
+    DynamicClientFeaturesConfigHash, DynamicServerConfig, SyncVersion,
 };
 use simple_backend_utils::db::MyRunQueryDsl;
 
@@ -31,6 +31,26 @@ impl CurrentWriteCommonClientConfig<'_> {
         Ok(DynamicClientFeaturesConfigHash::from_json_string(
             &config_json_value,
         ))
+    }
+
+    pub fn upsert_dynamic_server_config(
+        &mut self,
+        config: &DynamicServerConfig,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::dynamic_server_config::dsl::*;
+
+        let config_json_value =
+            serde_json::to_string(&config).change_context(DieselDatabaseError::SerdeSerialize)?;
+
+        insert_into(dynamic_server_config)
+            .values((row_type.eq(0), config_json.eq(&config_json_value)))
+            .on_conflict(row_type)
+            .do_update()
+            .set(config_json.eq(&config_json_value))
+            .execute_my_conn(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
     }
 
     pub fn increment_client_config_sync_version_for_every_account(
