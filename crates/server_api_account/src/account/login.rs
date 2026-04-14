@@ -6,13 +6,17 @@ use axum::{
     response::Redirect,
 };
 use base64::Engine;
-use model::{AccountIdInternal, EmailLoginToken};
+use model::{AccountIdInternal, ClientType, EmailLoginToken};
 use model_account::{
     AccessToken, AccountId, AppleAccountId, AuthPair, EmailAddress, EmailLogin, GoogleAccountId,
     LoginResult, RefreshToken, RequestEmailLoginToken, RequestEmailLoginTokenResult,
     SignInWithInfo, SignInWithLoginInfo,
 };
-use server_api::{S, app::GetConfig, db_write};
+use server_api::{
+    S,
+    app::{GetConfig, GetDynamicServerConfig},
+    db_write,
+};
 use server_data::{IntoDataError, db_manager::InternalReading, write::GetWriteCommandsCommon};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::{
@@ -144,8 +148,8 @@ impl SignInWithInfoTrait for AppleAccountInfo {
 
 /// Start new session with sign in with Apple or Google.
 ///
-/// Registers new account if it does not exists. That can be disabled
-/// using [SignInWithLoginInfo::disable_registering].
+/// Registers new account if it does not exist, when registration is enabled
+/// for the current client platform in dynamic server config.
 #[utoipa::path(
     post,
     path = PATH_SIGN_IN_WITH_LOGIN,
@@ -177,7 +181,7 @@ pub async fn post_sign_in_with_login(
             .sign_in_with_manager()
             .validate_apple_token(apple.token, nonce_bytes)
             .await?;
-        handle_sign_in_with_info(&state, address, tokens.disable_registering, info).await
+        handle_sign_in_with_info(&state, address, tokens.client_info.client_type, info).await
     } else if let Some(google) = tokens.google {
         let nonce_bytes = base64::engine::general_purpose::URL_SAFE
             .decode(google.nonce)
@@ -186,7 +190,7 @@ pub async fn post_sign_in_with_login(
             .sign_in_with_manager()
             .validate_google_token(google.token, nonce_bytes)
             .await?;
-        handle_sign_in_with_info(&state, address, tokens.disable_registering, info).await
+        handle_sign_in_with_info(&state, address, tokens.client_info.client_type, info).await
     } else {
         Err(StatusCode::INTERNAL_SERVER_ERROR)
     }?;
@@ -208,7 +212,7 @@ pub async fn post_sign_in_with_login(
 async fn handle_sign_in_with_info(
     state: &S,
     address: SocketAddr,
-    disable_registering: bool,
+    client_type: ClientType,
     info: impl SignInWithInfoTrait,
 ) -> Result<LoginResult, StatusCode> {
     if !info.email_verified() {
@@ -219,9 +223,25 @@ async fn handle_sign_in_with_info(
 
     if let Some(already_existing_account) = already_existing_account {
         login_impl(already_existing_account.as_id(), address, state).await
-    } else if disable_registering {
-        Err(StatusCode::INTERNAL_SERVER_ERROR)
     } else {
+        let config = state
+            .dynamic_server_config_manager()
+            .dynamic_server_config()
+            .await
+            .unwrap_or_default()
+            .account_registration_platforms;
+
+        let registration_enabled = match client_type {
+            ClientType::Android => config.android,
+            ClientType::Ios => config.ios,
+            ClientType::Web => config.web,
+            ClientType::Bot => false,
+        };
+
+        if !registration_enabled {
+            return Ok(LoginResult::error_account_registration_disabled());
+        }
+
         let email: EmailAddress = info
             .email()
             .try_into()

@@ -71,5 +71,38 @@ impl BotConfigWarnings {
     }
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct AccountRegistrationPlatforms {
+    #[serde(default = "default_true", skip_serializing_if = "value_is_true")]
+    #[schema(default = true)]
+    pub android: bool,
+    #[serde(default = "default_true", skip_serializing_if = "value_is_true")]
+    #[schema(default = true)]
+    pub ios: bool,
+    #[serde(default = "default_true", skip_serializing_if = "value_is_true")]
+    #[schema(default = true)]
+    pub web: bool,
+}
+
+impl Default for AccountRegistrationPlatforms {
+    fn default() -> Self {
+        Self {
+            android: true,
+            ios: true,
+            web: true,
+        }
+    }
+}
+
+fn default_true() -> bool {
+    true
+}
+
+fn value_is_true(v: &bool) -> bool {
+    *v
+}
+
 #[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]
-pub struct DynamicServerConfig {}
+pub struct DynamicServerConfig {
+    pub account_registration_platforms: AccountRegistrationPlatforms,
+}

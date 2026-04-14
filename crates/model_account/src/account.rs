@@ -66,6 +66,10 @@ pub struct LoginResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     error_invalid_email_login_token: bool,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_account_registration_disabled: bool,
 }
 
 impl LoginResult {
@@ -114,6 +118,14 @@ impl LoginResult {
         Self {
             error: true,
             error_invalid_email_login_token: true,
+            ..Default::default()
+        }
+    }
+
+    pub fn error_account_registration_disabled() -> Self {
+        Self {
+            error: true,
+            error_account_registration_disabled: true,
             ..Default::default()
         }
     }
@@ -290,9 +302,6 @@ pub struct SignInWithLoginInfo {
     pub apple: Option<SignInWithAppleInfo>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub google: Option<SignInWithGoogleInfo>,
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub disable_registering: bool,
 }
 
 #[derive(Deserialize, ToSchema)]
