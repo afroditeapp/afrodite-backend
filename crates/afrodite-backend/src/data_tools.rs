@@ -10,7 +10,9 @@ use database::{
 };
 use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia};
 use error_stack::{Result, report};
-use model::{AccountIdInternal, BotConfig, EmailMessages, ImageProcessingDynamicConfig};
+use model::{
+    AccountIdInternal, BotConfig, DynamicServerConfig, EmailMessages, ImageProcessingDynamicConfig,
+};
 use model_server_data::ProfileAttributesSchemaExport;
 use server_data::{
     db_manager::{DatabaseManager, InternalWriting, RouterDatabaseWriteHandle},
@@ -42,6 +44,10 @@ pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
                     .map_err(|_| report!(GetConfigError::GetWorkingDir))?;
             }
             DataLoadSubMode::DynamicClientFeatures { file } => {
+                *file = abs_path_for_directory_or_file_which_might_not_exists(&*file)
+                    .map_err(|_| report!(GetConfigError::GetWorkingDir))?;
+            }
+            DataLoadSubMode::DynamicServerConfig { file } => {
                 *file = abs_path_for_directory_or_file_which_might_not_exists(&*file)
                     .map_err(|_| report!(GetConfigError::GetWorkingDir))?;
             }
@@ -106,6 +112,9 @@ pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
                 DataViewSubMode::DynamicClientFeatures => {
                     handle_view_dynamic_client_features(&reader).await
                 }
+                DataViewSubMode::DynamicServerConfig => {
+                    handle_view_dynamic_server_config(&reader).await
+                }
             },
             DataModeSubMode::Load { mode: load_mode } => {
                 let writer = DbWriter::new(write_handle.current_write_handle());
@@ -122,6 +131,9 @@ pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
                     }
                     DataLoadSubMode::DynamicClientFeatures { file } => {
                         handle_load_dynamic_client_features(&write_handle, file).await
+                    }
+                    DataLoadSubMode::DynamicServerConfig { file } => {
+                        handle_load_dynamic_server_config(&write_handle, file).await
                     }
                     DataLoadSubMode::ProfileAttributeValuesCsv {
                         attribute_id,
@@ -285,6 +297,41 @@ async fn handle_view_dynamic_client_features(reader: &DbReaderRaw<'_>) {
                 .client_config()
                 .dynamic_client_features()?
                 .map(|(_, config)| config)
+                .unwrap_or_default())
+        })
+        .await
+        .unwrap();
+
+    println!("{}", toml::to_string_pretty(&config).unwrap());
+}
+
+async fn handle_load_dynamic_server_config(
+    write_handle: &RouterDatabaseWriteHandle,
+    file: PathBuf,
+) {
+    let content = std::fs::read_to_string(&file)
+        .unwrap_or_else(|e| panic!("Failed to read file {:?}: {}", file, e));
+
+    let config: DynamicServerConfig =
+        toml::from_str(&content).unwrap_or_else(|e| panic!("Failed to parse TOML: {}", e));
+
+    write_handle
+        .common()
+        .client_config()
+        .upsert_dynamic_server_config(config)
+        .await
+        .unwrap();
+
+    println!("Successfully loaded dynamic server config into database");
+}
+
+async fn handle_view_dynamic_server_config(reader: &DbReaderRaw<'_>) {
+    let config = reader
+        .db_read(|mut mode| {
+            Ok(mode
+                .common()
+                .client_config()
+                .dynamic_server_config()?
                 .unwrap_or_default())
         })
         .await
