@@ -525,10 +525,11 @@ impl From<CurrentAccountMediaInternal> for ProfileContent {
 }
 
 /// Current content in public profile.
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct MyProfileContent {
     /// Primary profile image which is shown in grid view.
     pub c: Vec<ContentInfoWithFd>,
+    pub vs: MediaVerificationStatus,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub grid_crop_size: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -541,6 +542,7 @@ impl From<CurrentAccountMediaInternal> for MyProfileContent {
     fn from(value: CurrentAccountMediaInternal) -> Self {
         Self {
             c: value.iter_current_profile_content_info_fd().collect(),
+            vs: value.media_verification_status_flags().into(),
             grid_crop_size: value.grid_crop_size,
             grid_crop_x: value.grid_crop_x,
             grid_crop_y: value.grid_crop_y,
@@ -618,7 +620,7 @@ impl GetProfileContentResult {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct GetMediaContentResult {
     pub profile_content: MyProfileContent,
     pub profile_content_version: ProfileContentVersion,
