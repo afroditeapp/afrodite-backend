@@ -480,11 +480,30 @@ impl UpdateProfileContentResult {
     }
 }
 
+/// Value for profile verification status flags.
+///
+/// - PROFILE_CONTENT_FACE_VERIFIED_ANY = 0x1. At least one current profile
+///   picture has effective face verified value true.
+/// - PROFILE_CONTENT_FACE_VERIFIED_ALL = 0x2. All current profile pictures
+///   have effective face verified value true. For empty profile picture list
+///   this bit must be unset.
+#[derive(Debug, PartialEq, Serialize, ToSchema)]
+pub struct MediaVerificationStatus {
+    pub v: i16,
+}
+
+impl From<MediaVerificationStatusFlags> for MediaVerificationStatus {
+    fn from(value: MediaVerificationStatusFlags) -> Self {
+        Self { v: value.bits() }
+    }
+}
+
 /// Current content in public profile.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Debug, PartialEq, Serialize, ToSchema)]
 pub struct ProfileContent {
     /// Primary profile image which is shown in grid view.
     pub c: Vec<ContentInfo>,
+    pub vs: MediaVerificationStatus,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub grid_crop_size: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -497,6 +516,7 @@ impl From<CurrentAccountMediaInternal> for ProfileContent {
     fn from(value: CurrentAccountMediaInternal) -> Self {
         Self {
             c: value.iter_current_profile_content_info().collect(),
+            vs: value.media_verification_status_flags().into(),
             grid_crop_size: value.grid_crop_size,
             grid_crop_x: value.grid_crop_x,
             grid_crop_y: value.grid_crop_y,
@@ -570,7 +590,7 @@ impl GetProfileContentQueryParams {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct GetProfileContentResult {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub c: Option<ProfileContent>,
