@@ -1,6 +1,9 @@
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::Result;
-use model::{AccountIdInternal, PendingAppNotification, PendingAppNotificationInternal, UnixTime};
+use model::{
+    AccountIdInternal, PendingAppNotification, PendingAppNotificationInternal,
+    PendingAppNotificationToDelete, UnixTime,
+};
 use simple_backend_utils::db::MyRunQueryDsl;
 
 use crate::{DieselDatabaseError, IntoDatabaseError, define_current_write_commands};
@@ -85,7 +88,7 @@ impl CurrentWriteCommonNotification<'_> {
     pub fn delete_pending_app_notifications(
         &mut self,
         id: AccountIdInternal,
-        notifications: Vec<PendingAppNotification>,
+        notifications: Vec<PendingAppNotificationToDelete>,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::pending_app_notifications::dsl::*;
 
@@ -97,7 +100,6 @@ impl CurrentWriteCommonNotification<'_> {
             delete(pending_app_notifications)
                 .filter(account_id.eq(id.as_db_id()))
                 .filter(notification_type_number.eq(notification.notification_type))
-                .filter(push_notification_sent.eq(notification.push_notification_sent))
                 .filter(data_integer.eq(notification.data_integer))
                 .execute(self.conn())
                 .into_db_error(id)?;

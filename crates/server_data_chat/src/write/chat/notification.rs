@@ -1,7 +1,7 @@
 use database_chat::current::write::GetDbWriteCommandsChat;
 use model::{AccountIdInternal, NewMessagePushNotification};
 use model_chat::{
-    ChatAppNotificationSettings, ChatEmailNotificationSettings, PendingChatNotification,
+    ChatAppNotificationSettings, ChatEmailNotificationSettings, PendingChatNotificationToDelete,
 };
 use server_data::{
     DataError, IntoDataError, cache::CacheWriteCommon, db_transaction, define_cmd_wrapper_write,
@@ -83,7 +83,7 @@ impl WriteCommandsChatNotification<'_> {
     pub async fn delete_pending_chat_notifications(
         &self,
         id: AccountIdInternal,
-        notifications: Vec<PendingChatNotification>,
+        notifications: Vec<PendingChatNotificationToDelete>,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.chat()

@@ -3,7 +3,7 @@ use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{AccountIdDb, AccountIdInternal, NewMessagePushNotification, UnixTime};
 use model_chat::{
-    ChatAppNotificationSettings, ChatEmailNotificationSettings, PendingChatNotification,
+    ChatAppNotificationSettings, ChatEmailNotificationSettings, PendingChatNotificationToDelete,
 };
 use simple_backend_utils::db::MyRunQueryDsl;
 
@@ -123,7 +123,7 @@ impl CurrentWriteChatNotification<'_> {
     pub fn delete_pending_chat_notifications(
         &mut self,
         viewer_id: AccountIdInternal,
-        notifications: Vec<PendingChatNotification>,
+        notifications: Vec<PendingChatNotificationToDelete>,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::{account_id, pending_chat_notifications::dsl::*};
 
@@ -147,7 +147,6 @@ impl CurrentWriteChatNotification<'_> {
                 .filter(account_id_viewer.eq(viewer_id.as_db_id()))
                 .filter(account_id_sender.eq(sender_db_id))
                 .filter(message_count.eq(notification.message_count))
-                .filter(push_notification_sent.eq(notification.push_notification_sent))
                 .execute(self.conn())
                 .into_db_error(viewer_id)?;
         }

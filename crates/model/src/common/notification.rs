@@ -143,6 +143,13 @@ pub struct PendingAppNotificationList {
     pub notifications: Vec<PendingAppNotification>,
 }
 
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema)]
+pub struct PendingAppNotificationToDelete {
+    pub notification_type: PendingAppNotificationType,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub data_integer: Option<i64>,
+}
+
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::pending_app_notifications)]
 #[diesel(check_for_backend(crate::Db))]

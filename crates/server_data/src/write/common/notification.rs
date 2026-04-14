@@ -1,7 +1,7 @@
 use database::current::write::GetDbWriteCommandsCommon;
 use model::{
     AccountIdInternal, PendingAppNotification, PendingAppNotificationInternal,
-    PendingAppNotificationType,
+    PendingAppNotificationToDelete, PendingAppNotificationType,
 };
 
 use crate::{
@@ -56,7 +56,7 @@ impl WriteCommandsCommonNotification<'_> {
     pub async fn delete_pending_app_notifications(
         &self,
         id: AccountIdInternal,
-        notifications: Vec<PendingAppNotification>,
+        notifications: Vec<PendingAppNotificationToDelete>,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.common()

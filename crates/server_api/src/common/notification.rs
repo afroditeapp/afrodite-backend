@@ -1,5 +1,8 @@
 use axum::{Extension, extract::State};
-use model::{AccountIdInternal, PendingAppNotificationList, PushNotificationFlags};
+use model::{
+    AccountIdInternal, PendingAppNotificationList, PendingAppNotificationToDelete,
+    PushNotificationFlags,
+};
 use server_data::{
     app::EventManagerProvider, read::GetReadCommandsCommon, write::GetWriteCommandsCommon,
 };
@@ -54,7 +57,7 @@ const PATH_POST_DELETE_PENDING_APP_NOTIFICATIONS: &str =
 #[utoipa::path(
     post,
     path = PATH_POST_DELETE_PENDING_APP_NOTIFICATIONS,
-    request_body = PendingAppNotificationList,
+    request_body = Vec<PendingAppNotificationToDelete>,
     responses(
         (status = 200, description = "Success."),
         (status = 401, description = "Unauthorized."),
@@ -65,14 +68,14 @@ const PATH_POST_DELETE_PENDING_APP_NOTIFICATIONS: &str =
 pub async fn post_delete_pending_app_notifications(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
-    Json(notifications): Json<PendingAppNotificationList>,
+    Json(notifications): Json<Vec<PendingAppNotificationToDelete>>,
 ) -> Result<(), StatusCode> {
     COMMON.post_delete_pending_app_notifications.incr();
 
     db_write!(state, move |cmds| {
         cmds.common()
             .notification()
-            .delete_pending_app_notifications(id, notifications.notifications)
+            .delete_pending_app_notifications(id, notifications)
             .await
     })?;
 

@@ -2,7 +2,7 @@ use axum::{Extension, extract::State};
 use model::PushNotificationFlags;
 use model_chat::{
     AccountIdInternal, ChatAppNotificationSettings, ChatEmailNotificationSettings,
-    PendingChatNotificationList,
+    PendingChatNotificationList, PendingChatNotificationToDelete,
 };
 use server_api::{
     S,
@@ -172,7 +172,7 @@ const PATH_POST_DELETE_PENDING_CHAT_NOTIFICATIONS: &str = "/chat_api/pending_not
 #[utoipa::path(
     post,
     path = PATH_POST_DELETE_PENDING_CHAT_NOTIFICATIONS,
-    request_body = PendingChatNotificationList,
+    request_body = Vec<PendingChatNotificationToDelete>,
     responses(
         (status = 200, description = "Success."),
         (status = 401, description = "Unauthorized."),
@@ -183,14 +183,14 @@ const PATH_POST_DELETE_PENDING_CHAT_NOTIFICATIONS: &str = "/chat_api/pending_not
 async fn post_delete_pending_chat_notifications(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
-    Json(notifications): Json<PendingChatNotificationList>,
+    Json(notifications): Json<Vec<PendingChatNotificationToDelete>>,
 ) -> Result<(), StatusCode> {
     CHAT.post_delete_pending_chat_notifications.incr();
 
     db_write!(state, move |cmds| {
         cmds.chat()
             .notification()
-            .delete_pending_chat_notifications(id, notifications.notifications)
+            .delete_pending_chat_notifications(id, notifications)
             .await
     })?;
 
