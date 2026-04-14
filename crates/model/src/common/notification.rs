@@ -138,11 +138,6 @@ impl PendingAppNotificationInternal {
     }
 }
 
-#[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
-pub struct PendingAppNotificationList {
-    pub notifications: Vec<PendingAppNotification>,
-}
-
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema)]
 pub struct PendingAppNotificationToDelete {
     pub notification_type: PendingAppNotificationType,

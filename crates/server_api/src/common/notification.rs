@@ -1,6 +1,6 @@
 use axum::{Extension, extract::State};
 use model::{
-    AccountIdInternal, PendingAppNotificationList, PendingAppNotificationToDelete,
+    AccountIdInternal, PendingAppNotification, PendingAppNotificationToDelete,
     PushNotificationFlags,
 };
 use server_data::{
@@ -21,7 +21,7 @@ const PATH_GET_PENDING_APP_NOTIFICATIONS: &str = "/common_api/pending_app_notifi
     get,
     path = PATH_GET_PENDING_APP_NOTIFICATIONS,
     responses(
-        (status = 200, description = "Success.", body = PendingAppNotificationList),
+        (status = 200, description = "Success.", body = Vec<PendingAppNotification>),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -30,7 +30,7 @@ const PATH_GET_PENDING_APP_NOTIFICATIONS: &str = "/common_api/pending_app_notifi
 pub async fn get_pending_app_notifications(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
-) -> Result<Json<PendingAppNotificationList>, StatusCode> {
+) -> Result<Json<Vec<PendingAppNotification>>, StatusCode> {
     COMMON.get_pending_app_notifications.incr();
 
     let notifications = state
@@ -48,7 +48,7 @@ pub async fn get_pending_app_notifications(
         )
         .await;
 
-    Ok(PendingAppNotificationList { notifications }.into())
+    Ok(notifications.into())
 }
 
 const PATH_POST_DELETE_PENDING_APP_NOTIFICATIONS: &str =

@@ -73,11 +73,6 @@ pub struct PendingChatNotification {
     pub push_notification_sent: bool,
 }
 
-#[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
-pub struct PendingChatNotificationList {
-    pub notifications: Vec<PendingChatNotification>,
-}
-
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema)]
 pub struct PendingChatNotificationToDelete {
     pub account_id_sender: AccountId,

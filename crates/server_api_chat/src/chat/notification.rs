@@ -2,7 +2,7 @@ use axum::{Extension, extract::State};
 use model::PushNotificationFlags;
 use model_chat::{
     AccountIdInternal, ChatAppNotificationSettings, ChatEmailNotificationSettings,
-    PendingChatNotificationList, PendingChatNotificationToDelete,
+    PendingChatNotification, PendingChatNotificationToDelete,
 };
 use server_api::{
     S,
@@ -137,7 +137,7 @@ const PATH_GET_PENDING_CHAT_NOTIFICATIONS: &str = "/chat_api/pending_notificatio
     get,
     path = PATH_GET_PENDING_CHAT_NOTIFICATIONS,
     responses(
-        (status = 200, description = "Success.", body = PendingChatNotificationList),
+        (status = 200, description = "Success.", body = Vec<PendingChatNotification>),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -146,7 +146,7 @@ const PATH_GET_PENDING_CHAT_NOTIFICATIONS: &str = "/chat_api/pending_notificatio
 async fn get_pending_chat_notifications(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
-) -> Result<Json<PendingChatNotificationList>, StatusCode> {
+) -> Result<Json<Vec<PendingChatNotification>>, StatusCode> {
     CHAT.get_pending_chat_notifications.incr();
 
     let notifications = state
@@ -164,7 +164,7 @@ async fn get_pending_chat_notifications(
         )
         .await;
 
-    Ok(PendingChatNotificationList { notifications }.into())
+    Ok(notifications.into())
 }
 
 const PATH_POST_DELETE_PENDING_CHAT_NOTIFICATIONS: &str = "/chat_api/pending_notifications/delete";
