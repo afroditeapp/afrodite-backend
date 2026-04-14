@@ -35,7 +35,6 @@ pub struct AdminBotConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub face_verification_enabled: bool,
-    #[serde(default)]
     pub face_verification: AdminFaceVerificationConfig,
 }
 
