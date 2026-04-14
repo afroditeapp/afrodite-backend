@@ -299,6 +299,8 @@ pub struct ProfileConfig {
     pub profile_name_regex: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub first_image: Option<FirstImageConfig>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub verification: Option<VerificationConfig>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -309,6 +311,14 @@ pub struct FirstImageConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub require_face_detected_when_viewing: bool,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct VerificationConfig {
+    /// Show face verification status and filters.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub face: bool,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]
