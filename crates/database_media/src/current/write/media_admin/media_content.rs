@@ -105,7 +105,11 @@ impl CurrentWriteMediaAdminMediaContent<'_> {
 
         update(media_content::table)
             .filter(media_content::id.eq(content_id.as_db_id()))
-            .set(media_content::face_detected_manual.eq(value))
+            .set((
+                media_content::face_detected_manual.eq(value),
+                media_content::face_verified.eq(None::<bool>),
+                media_content::face_verified_manual.eq(None::<bool>),
+            ))
             .execute(self.conn())
             .into_db_error(())?;
 
