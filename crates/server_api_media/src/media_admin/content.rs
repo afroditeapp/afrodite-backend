@@ -5,9 +5,10 @@ use model_media::{
     PostMediaContentFaceDetectedValue, PostMediaContentFaceVerifiedValue,
 };
 use server_api::{
-    S,
+    DataError, S,
     app::{AdminNotificationProvider, GetAccounts, ReadData},
     create_open_api_router,
+    result::WrappedContextExt,
 };
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
@@ -156,6 +157,18 @@ pub async fn post_media_content_face_verified_value(
     let content_owner = state.get_internal_id(data.account_id).await?;
 
     db_write!(state, move |cmds| {
+        let current_security_content = cmds
+            .read()
+            .media()
+            .current_account_media(content_owner)
+            .await?
+            .security_content_id
+            .map(|v| v.content_id());
+
+        if current_security_content != Some(data.security_content) {
+            return Err(DataError::NotAllowed.report());
+        }
+
         let mut values = Vec::with_capacity(data.values.len());
         for value in data.values {
             let content_id = cmds

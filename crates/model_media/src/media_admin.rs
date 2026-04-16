@@ -75,6 +75,7 @@ pub struct PostMediaContentFaceDetectedValue {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema, Queryable)]
 pub struct PostMediaContentFaceVerifiedValue {
     pub account_id: AccountId,
+    pub security_content: ContentId,
     pub values: Vec<PostMediaContentFaceVerifiedValueItem>,
 }
 
