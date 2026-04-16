@@ -179,28 +179,26 @@ impl<'a> NotificationChecker<'a> {
                         self.notification_strings.media_content_deleted(),
                     );
                 }
-                PendingAppNotificationType::ProfileNameModerationAccepted => {
+                PendingAppNotificationType::ProfileNameModerationCompleted => {
+                    let accepted = notification.data_integer.unwrap_or_default() == 1;
                     self.add_notification(
-                        PushNotificationId::ProfileNameModerationAccepted,
-                        self.notification_strings.profile_name_accepted(),
+                        PushNotificationId::ProfileNameModerationCompleted,
+                        if accepted {
+                            self.notification_strings.profile_name_accepted()
+                        } else {
+                            self.notification_strings.profile_name_rejected()
+                        },
                     );
                 }
-                PendingAppNotificationType::ProfileNameModerationRejected => {
+                PendingAppNotificationType::ProfileTextModerationCompleted => {
+                    let accepted = notification.data_integer.unwrap_or_default() == 1;
                     self.add_notification(
-                        PushNotificationId::ProfileNameModerationRejected,
-                        self.notification_strings.profile_name_rejected(),
-                    );
-                }
-                PendingAppNotificationType::ProfileTextModerationAccepted => {
-                    self.add_notification(
-                        PushNotificationId::ProfileTextModerationAccepted,
-                        self.notification_strings.profile_text_accepted(),
-                    );
-                }
-                PendingAppNotificationType::ProfileTextModerationRejected => {
-                    self.add_notification(
-                        PushNotificationId::ProfileTextModerationRejected,
-                        self.notification_strings.profile_text_rejected(),
+                        PushNotificationId::ProfileTextModerationCompleted,
+                        if accepted {
+                            self.notification_strings.profile_text_accepted()
+                        } else {
+                            self.notification_strings.profile_text_rejected()
+                        },
                     );
                 }
                 PendingAppNotificationType::AutomaticProfileSearchCompleted => {

@@ -442,11 +442,9 @@ pub enum PushNotificationId {
     NewsItemAvailable = 20,
 
     // Profile
-    ProfileNameModerationAccepted = 30,
-    ProfileNameModerationRejected = 31,
-    ProfileTextModerationAccepted = 32,
-    ProfileTextModerationRejected = 33,
-    AutomaticProfileSearchCompleted = 34,
+    ProfileNameModerationCompleted = 30,
+    ProfileTextModerationCompleted = 31,
+    AutomaticProfileSearchCompleted = 32,
 
     // Media
     MediaContentModerationAccepted = 40,
@@ -465,10 +463,9 @@ impl PushNotificationId {
     fn to_channel_id(self) -> Option<&'static str> {
         match self {
             Self::AdminNotification | Self::NewsItemAvailable => Some("news_item_available"),
-            Self::ProfileNameModerationAccepted
-            | Self::ProfileNameModerationRejected
-            | Self::ProfileTextModerationAccepted
-            | Self::ProfileTextModerationRejected => Some("profile_string_moderation_completed"),
+            Self::ProfileNameModerationCompleted | Self::ProfileTextModerationCompleted => {
+                Some("profile_string_moderation_completed")
+            }
             Self::AutomaticProfileSearchCompleted => Some("automatic_profile_search"),
             Self::MediaContentModerationAccepted
             | Self::MediaContentModerationRejected

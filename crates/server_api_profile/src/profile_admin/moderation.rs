@@ -159,18 +159,16 @@ pub async fn post_moderate_profile_string(
         if !data.move_to_human.unwrap_or_default() {
             // Accepted or rejected
 
-            let pending_type = match (data.content_type, data.accept) {
-                (ProfileStringModerationContentType::ProfileName, true) => {
-                    PendingAppNotificationInternal::ProfileNameModerationAccepted
+            let pending_type = match data.content_type {
+                ProfileStringModerationContentType::ProfileName => {
+                    PendingAppNotificationInternal::ProfileNameModerationCompleted {
+                        accepted: data.accept,
+                    }
                 }
-                (ProfileStringModerationContentType::ProfileName, false) => {
-                    PendingAppNotificationInternal::ProfileNameModerationRejected
-                }
-                (ProfileStringModerationContentType::ProfileText, true) => {
-                    PendingAppNotificationInternal::ProfileTextModerationAccepted
-                }
-                (ProfileStringModerationContentType::ProfileText, false) => {
-                    PendingAppNotificationInternal::ProfileTextModerationRejected
+                ProfileStringModerationContentType::ProfileText => {
+                    PendingAppNotificationInternal::ProfileTextModerationCompleted {
+                        accepted: data.accept,
+                    }
                 }
             };
 

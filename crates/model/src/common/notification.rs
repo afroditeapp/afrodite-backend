@@ -57,11 +57,9 @@ pub enum PendingAppNotificationType {
     // 20..39: account
     NewsChanged = 20,
     // 40..59: profile
-    ProfileNameModerationAccepted = 40,
-    ProfileNameModerationRejected = 41,
-    ProfileTextModerationAccepted = 42,
-    ProfileTextModerationRejected = 43,
-    AutomaticProfileSearchCompleted = 44,
+    ProfileNameModerationCompleted = 40,
+    ProfileTextModerationCompleted = 41,
+    AutomaticProfileSearchCompleted = 42,
     // 60..79: media
     MediaContentModerationAccepted = 60,
     MediaContentModerationRejected = 61,
@@ -78,10 +76,8 @@ pub enum PendingAppNotificationInternal {
     MediaContentModerationAccepted,
     MediaContentModerationRejected,
     MediaContentModerationDeleted,
-    ProfileNameModerationAccepted,
-    ProfileNameModerationRejected,
-    ProfileTextModerationAccepted,
-    ProfileTextModerationRejected,
+    ProfileNameModerationCompleted { accepted: bool },
+    ProfileTextModerationCompleted { accepted: bool },
     AutomaticProfileSearchCompleted { profile_count: i64 },
 }
 
@@ -114,21 +110,13 @@ impl PendingAppNotificationInternal {
                 PendingAppNotificationType::MediaContentModerationDeleted,
                 None,
             ),
-            Self::ProfileNameModerationAccepted => (
-                PendingAppNotificationType::ProfileNameModerationAccepted,
-                None,
+            Self::ProfileNameModerationCompleted { accepted } => (
+                PendingAppNotificationType::ProfileNameModerationCompleted,
+                Some(i64::from(accepted)),
             ),
-            Self::ProfileNameModerationRejected => (
-                PendingAppNotificationType::ProfileNameModerationRejected,
-                None,
-            ),
-            Self::ProfileTextModerationAccepted => (
-                PendingAppNotificationType::ProfileTextModerationAccepted,
-                None,
-            ),
-            Self::ProfileTextModerationRejected => (
-                PendingAppNotificationType::ProfileTextModerationRejected,
-                None,
+            Self::ProfileTextModerationCompleted { accepted } => (
+                PendingAppNotificationType::ProfileTextModerationCompleted,
+                Some(i64::from(accepted)),
             ),
             Self::AutomaticProfileSearchCompleted { profile_count } => (
                 PendingAppNotificationType::AutomaticProfileSearchCompleted,
