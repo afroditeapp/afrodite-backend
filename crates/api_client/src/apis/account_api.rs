@@ -1540,7 +1540,7 @@ pub async fn post_set_email_login_enabled(configuration: &configuration::Configu
     }
 }
 
-/// Registers new account if it does not exists. That can be disabled using [SignInWithLoginInfo::disable_registering].
+/// Registers new account if it does not exist, when registration is enabled for the current client platform in dynamic server config.
 pub async fn post_sign_in_with_login(configuration: &configuration::Configuration, sign_in_with_login_info: models::SignInWithLoginInfo) -> Result<models::LoginResult, Error<PostSignInWithLoginError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_sign_in_with_login_info = sign_in_with_login_info;

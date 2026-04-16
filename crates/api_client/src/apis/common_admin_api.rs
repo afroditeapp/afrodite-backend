@@ -51,6 +51,15 @@ pub enum GetBotConfigWarningsError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`get_dynamic_server_config`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetDynamicServerConfigError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_latest_report_iterator_start_position`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -137,6 +146,15 @@ pub enum PostAdminNotificationSubscriptionsError {
 #[serde(untagged)]
 pub enum PostBotConfigError {
     Status400(),
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_dynamic_server_config`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostDynamicServerConfigError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -426,6 +444,44 @@ pub async fn get_bot_config_warnings(configuration: &configuration::Configuratio
     } else {
         let content = resp.text().await?;
         let entity: Option<GetBotConfigWarningsError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// # Access * [Permissions::admin_server_view_server_config]
+pub async fn get_dynamic_server_config(configuration: &configuration::Configuration, ) -> Result<models::DynamicServerConfig, Error<GetDynamicServerConfigError>> {
+
+    let uri_str = format!("{}/common_api/dynamic_server_config", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::DynamicServerConfig`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::DynamicServerConfig`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetDynamicServerConfigError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -789,6 +845,36 @@ pub async fn post_bot_config(configuration: &configuration::Configuration, bot_c
     } else {
         let content = resp.text().await?;
         let entity: Option<PostBotConfigError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// # Access * [Permissions::admin_server_edit_server_config]
+pub async fn post_dynamic_server_config(configuration: &configuration::Configuration, dynamic_server_config: models::DynamicServerConfig) -> Result<(), Error<PostDynamicServerConfigError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_dynamic_server_config = dynamic_server_config;
+
+    let uri_str = format!("{}/common_api/dynamic_server_config", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_dynamic_server_config);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostDynamicServerConfigError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

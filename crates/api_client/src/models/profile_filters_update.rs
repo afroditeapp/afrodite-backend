@@ -29,6 +29,8 @@ pub struct ProfileFiltersUpdate {
     pub profile_text_max_characters_filter: Option<Option<Box<models::ProfileTextMaxCharactersFilter>>>,
     #[serde(rename = "profile_text_min_characters_filter", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub profile_text_min_characters_filter: Option<Option<Box<models::ProfileTextMinCharactersFilter>>>,
+    #[serde(rename = "profile_verification_status_filter", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub profile_verification_status_filter: Option<Option<Box<models::ProfileVerificationStatusFilter>>>,
     #[serde(rename = "random_profile_order", skip_serializing_if = "Option::is_none")]
     pub random_profile_order: Option<bool>,
     #[serde(rename = "unlimited_likes_filter", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -46,6 +48,7 @@ impl ProfileFiltersUpdate {
             profile_edited_filter: None,
             profile_text_max_characters_filter: None,
             profile_text_min_characters_filter: None,
+            profile_verification_status_filter: None,
             random_profile_order: None,
             unlimited_likes_filter: None,
         }

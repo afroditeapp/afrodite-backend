@@ -364,7 +364,7 @@ pub async fn get_data_export_state(configuration: &configuration::Configuration,
     }
 }
 
-pub async fn get_pending_app_notifications(configuration: &configuration::Configuration, ) -> Result<models::PendingAppNotificationList, Error<GetPendingAppNotificationsError>> {
+pub async fn get_pending_app_notifications(configuration: &configuration::Configuration, ) -> Result<Vec<models::PendingAppNotification>, Error<GetPendingAppNotificationsError>> {
 
     let uri_str = format!("{}/common_api/pending_app_notifications", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
@@ -391,8 +391,8 @@ pub async fn get_pending_app_notifications(configuration: &configuration::Config
         let content = resp.text().await?;
         match content_type {
             ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::PendingAppNotificationList`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::PendingAppNotificationList`")))),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `Vec&lt;models::PendingAppNotification&gt;`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `Vec&lt;models::PendingAppNotification&gt;`")))),
         }
     } else {
         let content = resp.text().await?;
@@ -579,9 +579,9 @@ pub async fn post_client_language(configuration: &configuration::Configuration, 
     }
 }
 
-pub async fn post_delete_pending_app_notifications(configuration: &configuration::Configuration, pending_app_notification_list: models::PendingAppNotificationList) -> Result<(), Error<PostDeletePendingAppNotificationsError>> {
+pub async fn post_delete_pending_app_notifications(configuration: &configuration::Configuration, pending_app_notification_to_delete: Vec<models::PendingAppNotificationToDelete>) -> Result<(), Error<PostDeletePendingAppNotificationsError>> {
     // add a prefix to parameters to efficiently prevent name collisions
-    let p_body_pending_app_notification_list = pending_app_notification_list;
+    let p_body_pending_app_notification_to_delete = pending_app_notification_to_delete;
 
     let uri_str = format!("{}/common_api/pending_app_notifications/delete", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
@@ -592,7 +592,7 @@ pub async fn post_delete_pending_app_notifications(configuration: &configuration
     if let Some(ref token) = configuration.bearer_access_token {
         req_builder = req_builder.bearer_auth(token.to_owned());
     };
-    req_builder = req_builder.json(&p_body_pending_app_notification_list);
+    req_builder = req_builder.json(&p_body_pending_app_notification_to_delete);
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;

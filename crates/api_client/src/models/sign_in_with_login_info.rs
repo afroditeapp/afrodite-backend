@@ -17,8 +17,6 @@ pub struct SignInWithLoginInfo {
     pub apple: Option<Option<Box<models::SignInWithAppleInfo>>>,
     #[serde(rename = "client_info")]
     pub client_info: Box<models::ClientInfo>,
-    #[serde(rename = "disable_registering", skip_serializing_if = "Option::is_none")]
-    pub disable_registering: Option<bool>,
     #[serde(rename = "google", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub google: Option<Option<Box<models::SignInWithGoogleInfo>>>,
 }
@@ -28,7 +26,6 @@ impl SignInWithLoginInfo {
         SignInWithLoginInfo {
             apple: None,
             client_info: Box::new(client_info),
-            disable_registering: None,
             google: None,
         }
     }

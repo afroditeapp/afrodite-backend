@@ -66,6 +66,8 @@ pub struct Permissions {
     pub admin_server_edit_info_banners: Option<bool>,
     #[serde(rename = "admin_server_edit_maintenance_notification", skip_serializing_if = "Option::is_none")]
     pub admin_server_edit_maintenance_notification: Option<bool>,
+    #[serde(rename = "admin_server_edit_server_config", skip_serializing_if = "Option::is_none")]
+    pub admin_server_edit_server_config: Option<bool>,
     #[serde(rename = "admin_server_reboot", skip_serializing_if = "Option::is_none")]
     pub admin_server_reboot: Option<bool>,
     #[serde(rename = "admin_server_restart", skip_serializing_if = "Option::is_none")]
@@ -83,6 +85,8 @@ pub struct Permissions {
     /// View server infrastructure related info like logs and software versions.
     #[serde(rename = "admin_server_view_info", skip_serializing_if = "Option::is_none")]
     pub admin_server_view_info: Option<bool>,
+    #[serde(rename = "admin_server_view_server_config", skip_serializing_if = "Option::is_none")]
+    pub admin_server_view_server_config: Option<bool>,
     #[serde(rename = "admin_subscribe_admin_notifications", skip_serializing_if = "Option::is_none")]
     pub admin_subscribe_admin_notifications: Option<bool>,
     #[serde(rename = "admin_view_account_api_usage", skip_serializing_if = "Option::is_none")]
@@ -131,6 +135,7 @@ impl Permissions {
             admin_server_edit_image_processing_config: None,
             admin_server_edit_info_banners: None,
             admin_server_edit_maintenance_notification: None,
+            admin_server_edit_server_config: None,
             admin_server_reboot: None,
             admin_server_restart: None,
             admin_server_scheduled_reboot: None,
@@ -139,6 +144,7 @@ impl Permissions {
             admin_server_view_bot_config: None,
             admin_server_view_image_processing_config: None,
             admin_server_view_info: None,
+            admin_server_view_server_config: None,
             admin_subscribe_admin_notifications: None,
             admin_view_account_api_usage: None,
             admin_view_account_ip_address_usage: None,

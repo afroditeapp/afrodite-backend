@@ -26,6 +26,7 @@ src/models/account_content.rs
 src/models/account_id.rs
 src/models/account_id_db_value.rs
 src/models/account_locked_state.rs
+src/models/account_registration_platforms.rs
 src/models/account_setup.rs
 src/models/account_state_container.rs
 src/models/account_sync_version.rs
@@ -114,6 +115,7 @@ src/models/demo_account_register_account_result.rs
 src/models/demo_account_token.rs
 src/models/dynamic_client_features_config.rs
 src/models/dynamic_client_features_config_hash.rs
+src/models/dynamic_server_config.rs
 src/models/email_address_state.rs
 src/models/email_address_state_admin.rs
 src/models/email_login.rs
@@ -205,6 +207,7 @@ src/models/media_content_pending_moderation.rs
 src/models/media_content_sync_version.rs
 src/models/media_content_type.rs
 src/models/media_content_upload_type.rs
+src/models/media_verification_status.rs
 src/models/message_delivery_info.rs
 src/models/message_delivery_info_id_list.rs
 src/models/message_delivery_info_list.rs
@@ -228,10 +231,10 @@ src/models/news_translation_version.rs
 src/models/nsfw_detection_thresholds.rs
 src/models/partial_profile_attributes_config.rs
 src/models/pending_app_notification.rs
-src/models/pending_app_notification_list.rs
+src/models/pending_app_notification_to_delete.rs
 src/models/pending_app_notification_type.rs
 src/models/pending_chat_notification.rs
-src/models/pending_chat_notification_list.rs
+src/models/pending_chat_notification_to_delete.rs
 src/models/pending_message_acknowledgement_list.rs
 src/models/pending_message_id.rs
 src/models/perf_metric_query.rs
@@ -284,6 +287,7 @@ src/models/profile_sync_version.rs
 src/models/profile_text_max_characters_filter.rs
 src/models/profile_text_min_characters_filter.rs
 src/models/profile_update.rs
+src/models/profile_verification_status_filter.rs
 src/models/profile_version.rs
 src/models/profile_visibility.rs
 src/models/public_key_id.rs
@@ -367,3 +371,4 @@ src/models/update_profile_text_report.rs
 src/models/update_report_result.rs
 src/models/vapid_public_key.rs
 src/models/verification_action.rs
+src/models/verification_config.rs

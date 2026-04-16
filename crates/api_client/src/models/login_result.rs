@@ -22,6 +22,8 @@ pub struct LoginResult {
     pub error: Option<bool>,
     #[serde(rename = "error_account_locked", skip_serializing_if = "Option::is_none")]
     pub error_account_locked: Option<bool>,
+    #[serde(rename = "error_account_registration_disabled", skip_serializing_if = "Option::is_none")]
+    pub error_account_registration_disabled: Option<bool>,
     /// This might be true, when registering new account using sign in with login method.
     #[serde(rename = "error_email_already_used", skip_serializing_if = "Option::is_none")]
     pub error_email_already_used: Option<bool>,
@@ -43,6 +45,7 @@ impl LoginResult {
             email: None,
             error: None,
             error_account_locked: None,
+            error_account_registration_disabled: None,
             error_email_already_used: None,
             error_invalid_email_login_token: None,
             error_sign_in_with_email_unverified: None,

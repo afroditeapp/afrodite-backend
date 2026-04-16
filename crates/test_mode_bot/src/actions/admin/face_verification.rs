@@ -147,6 +147,7 @@ impl AdminBotFaceVerificationLogic {
                 &api.api(),
                 PostMediaContentFaceVerifiedValue {
                     account_id: values_by_account.account_id,
+                    security_content: values_by_account.security_content.clone(),
                     values,
                 },
             )

@@ -19,14 +19,10 @@ pub enum PendingAppNotificationType {
     AdminNotification,
     #[serde(rename = "NewsChanged")]
     NewsChanged,
-    #[serde(rename = "ProfileNameModerationAccepted")]
-    ProfileNameModerationAccepted,
-    #[serde(rename = "ProfileNameModerationRejected")]
-    ProfileNameModerationRejected,
-    #[serde(rename = "ProfileTextModerationAccepted")]
-    ProfileTextModerationAccepted,
-    #[serde(rename = "ProfileTextModerationRejected")]
-    ProfileTextModerationRejected,
+    #[serde(rename = "ProfileNameModerationCompleted")]
+    ProfileNameModerationCompleted,
+    #[serde(rename = "ProfileTextModerationCompleted")]
+    ProfileTextModerationCompleted,
     #[serde(rename = "AutomaticProfileSearchCompleted")]
     AutomaticProfileSearchCompleted,
     #[serde(rename = "MediaContentModerationAccepted")]
@@ -45,10 +41,8 @@ impl std::fmt::Display for PendingAppNotificationType {
         match self {
             Self::AdminNotification => write!(f, "AdminNotification"),
             Self::NewsChanged => write!(f, "NewsChanged"),
-            Self::ProfileNameModerationAccepted => write!(f, "ProfileNameModerationAccepted"),
-            Self::ProfileNameModerationRejected => write!(f, "ProfileNameModerationRejected"),
-            Self::ProfileTextModerationAccepted => write!(f, "ProfileTextModerationAccepted"),
-            Self::ProfileTextModerationRejected => write!(f, "ProfileTextModerationRejected"),
+            Self::ProfileNameModerationCompleted => write!(f, "ProfileNameModerationCompleted"),
+            Self::ProfileTextModerationCompleted => write!(f, "ProfileTextModerationCompleted"),
             Self::AutomaticProfileSearchCompleted => write!(f, "AutomaticProfileSearchCompleted"),
             Self::MediaContentModerationAccepted => write!(f, "MediaContentModerationAccepted"),
             Self::MediaContentModerationRejected => write!(f, "MediaContentModerationRejected"),

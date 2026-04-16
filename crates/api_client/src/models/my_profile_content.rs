@@ -23,16 +23,19 @@ pub struct MyProfileContent {
     pub grid_crop_x: Option<Option<f64>>,
     #[serde(rename = "grid_crop_y", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub grid_crop_y: Option<Option<f64>>,
+    #[serde(rename = "vs")]
+    pub vs: Box<models::MediaVerificationStatus>,
 }
 
 impl MyProfileContent {
     /// Current content in public profile.
-    pub fn new(c: Vec<models::ContentInfoWithFd>) -> MyProfileContent {
+    pub fn new(c: Vec<models::ContentInfoWithFd>, vs: models::MediaVerificationStatus) -> MyProfileContent {
         MyProfileContent {
             c,
             grid_crop_size: None,
             grid_crop_x: None,
             grid_crop_y: None,
+            vs: Box::new(vs),
         }
     }
 }

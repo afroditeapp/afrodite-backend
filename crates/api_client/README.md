@@ -148,6 +148,7 @@ Class | Method | HTTP request | Description
 *CommonAdminApi* | [**get_admin_notification_subscriptions**](docs/CommonAdminApi.md#get_admin_notification_subscriptions) | **GET** /common_api/admin_notification_subscriptions | Get admin notification subscriptions.
 *CommonAdminApi* | [**get_bot_config**](docs/CommonAdminApi.md#get_bot_config) | **GET** /common_api/bot_config | Get bot config.
 *CommonAdminApi* | [**get_bot_config_warnings**](docs/CommonAdminApi.md#get_bot_config_warnings) | **GET** /common_api/bot_config_warnings | Get bot config warnings.
+*CommonAdminApi* | [**get_dynamic_server_config**](docs/CommonAdminApi.md#get_dynamic_server_config) | **GET** /common_api/dynamic_server_config | Get server config.
 *CommonAdminApi* | [**get_latest_report_iterator_start_position**](docs/CommonAdminApi.md#get_latest_report_iterator_start_position) | **GET** /common_api/latest_report_iterator_start_position | 
 *CommonAdminApi* | [**get_maintenance_notification**](docs/CommonAdminApi.md#get_maintenance_notification) | **GET** /common_api/maintenance_notification | Get maintenance notification.
 *CommonAdminApi* | [**get_manager_instance_names**](docs/CommonAdminApi.md#get_manager_instance_names) | **GET** /common_api/manager_instance_names | Get available manager instances.
@@ -158,6 +159,7 @@ Class | Method | HTTP request | Description
 *CommonAdminApi* | [**post_admin_notification_settings**](docs/CommonAdminApi.md#post_admin_notification_settings) | **POST** /common_api/admin_notification_settings | Save admin notification settings.
 *CommonAdminApi* | [**post_admin_notification_subscriptions**](docs/CommonAdminApi.md#post_admin_notification_subscriptions) | **POST** /common_api/admin_notification_subscriptions | Save admin notification subscriptions.
 *CommonAdminApi* | [**post_bot_config**](docs/CommonAdminApi.md#post_bot_config) | **POST** /common_api/bot_config | Save bot config.
+*CommonAdminApi* | [**post_dynamic_server_config**](docs/CommonAdminApi.md#post_dynamic_server_config) | **POST** /common_api/dynamic_server_config | Save server config.
 *CommonAdminApi* | [**post_edit_maintenance_notification**](docs/CommonAdminApi.md#post_edit_maintenance_notification) | **POST** /common_api/edit_maintenance_notification | Edit maintenance notification
 *CommonAdminApi* | [**post_get_api_usage_data**](docs/CommonAdminApi.md#post_get_api_usage_data) | **POST** /common_api/api_usage_data | Get API usage data for account
 *CommonAdminApi* | [**post_get_chat_message_reports**](docs/CommonAdminApi.md#post_get_chat_message_reports) | **POST** /chat_api/get_chat_message_reports | Get all chat message reports. The reports are ordered by message sending order from oldest to latest.
@@ -246,6 +248,7 @@ Class | Method | HTTP request | Description
  - [AccountId](docs/AccountId.md)
  - [AccountIdDbValue](docs/AccountIdDbValue.md)
  - [AccountLockedState](docs/AccountLockedState.md)
+ - [AccountRegistrationPlatforms](docs/AccountRegistrationPlatforms.md)
  - [AccountSetup](docs/AccountSetup.md)
  - [AccountStateContainer](docs/AccountStateContainer.md)
  - [AccountSyncVersion](docs/AccountSyncVersion.md)
@@ -334,6 +337,7 @@ Class | Method | HTTP request | Description
  - [DemoAccountToken](docs/DemoAccountToken.md)
  - [DynamicClientFeaturesConfig](docs/DynamicClientFeaturesConfig.md)
  - [DynamicClientFeaturesConfigHash](docs/DynamicClientFeaturesConfigHash.md)
+ - [DynamicServerConfig](docs/DynamicServerConfig.md)
  - [EmailAddressState](docs/EmailAddressState.md)
  - [EmailAddressStateAdmin](docs/EmailAddressStateAdmin.md)
  - [EmailLogin](docs/EmailLogin.md)
@@ -425,6 +429,7 @@ Class | Method | HTTP request | Description
  - [MediaContentSyncVersion](docs/MediaContentSyncVersion.md)
  - [MediaContentType](docs/MediaContentType.md)
  - [MediaContentUploadType](docs/MediaContentUploadType.md)
+ - [MediaVerificationStatus](docs/MediaVerificationStatus.md)
  - [MessageDeliveryInfo](docs/MessageDeliveryInfo.md)
  - [MessageDeliveryInfoIdList](docs/MessageDeliveryInfoIdList.md)
  - [MessageDeliveryInfoList](docs/MessageDeliveryInfoList.md)
@@ -447,10 +452,10 @@ Class | Method | HTTP request | Description
  - [NsfwDetectionThresholds](docs/NsfwDetectionThresholds.md)
  - [PartialProfileAttributesConfig](docs/PartialProfileAttributesConfig.md)
  - [PendingAppNotification](docs/PendingAppNotification.md)
- - [PendingAppNotificationList](docs/PendingAppNotificationList.md)
+ - [PendingAppNotificationToDelete](docs/PendingAppNotificationToDelete.md)
  - [PendingAppNotificationType](docs/PendingAppNotificationType.md)
  - [PendingChatNotification](docs/PendingChatNotification.md)
- - [PendingChatNotificationList](docs/PendingChatNotificationList.md)
+ - [PendingChatNotificationToDelete](docs/PendingChatNotificationToDelete.md)
  - [PendingMessageAcknowledgementList](docs/PendingMessageAcknowledgementList.md)
  - [PendingMessageId](docs/PendingMessageId.md)
  - [PerfMetricQuery](docs/PerfMetricQuery.md)
@@ -503,6 +508,7 @@ Class | Method | HTTP request | Description
  - [ProfileTextMaxCharactersFilter](docs/ProfileTextMaxCharactersFilter.md)
  - [ProfileTextMinCharactersFilter](docs/ProfileTextMinCharactersFilter.md)
  - [ProfileUpdate](docs/ProfileUpdate.md)
+ - [ProfileVerificationStatusFilter](docs/ProfileVerificationStatusFilter.md)
  - [ProfileVersion](docs/ProfileVersion.md)
  - [ProfileVisibility](docs/ProfileVisibility.md)
  - [PublicKeyId](docs/PublicKeyId.md)
@@ -586,6 +592,7 @@ Class | Method | HTTP request | Description
  - [UpdateReportResult](docs/UpdateReportResult.md)
  - [VapidPublicKey](docs/VapidPublicKey.md)
  - [VerificationAction](docs/VerificationAction.md)
+ - [VerificationConfig](docs/VerificationConfig.md)
 
 
 To get access to the crate's generated documentation, use:

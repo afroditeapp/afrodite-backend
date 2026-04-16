@@ -15,14 +15,17 @@ use serde::{Deserialize, Serialize};
 pub struct PostMediaContentFaceVerifiedValue {
     #[serde(rename = "account_id")]
     pub account_id: Box<models::AccountId>,
+    #[serde(rename = "security_content")]
+    pub security_content: Box<models::ContentId>,
     #[serde(rename = "values")]
     pub values: Vec<models::PostMediaContentFaceVerifiedValueItem>,
 }
 
 impl PostMediaContentFaceVerifiedValue {
-    pub fn new(account_id: models::AccountId, values: Vec<models::PostMediaContentFaceVerifiedValueItem>) -> PostMediaContentFaceVerifiedValue {
+    pub fn new(account_id: models::AccountId, security_content: models::ContentId, values: Vec<models::PostMediaContentFaceVerifiedValueItem>) -> PostMediaContentFaceVerifiedValue {
         PostMediaContentFaceVerifiedValue {
             account_id: Box::new(account_id),
+            security_content: Box::new(security_content),
             values,
         }
     }
