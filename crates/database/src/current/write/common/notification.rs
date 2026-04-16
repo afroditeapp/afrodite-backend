@@ -54,14 +54,25 @@ impl CurrentWriteCommonNotification<'_> {
         }
 
         for notification in notifications {
-            update(pending_app_notifications)
+            let query = update(pending_app_notifications)
                 .filter(account_id.eq(id.as_db_id()))
                 .filter(notification_type_number.eq(notification.notification_type))
                 .filter(push_notification_sent.eq(notification.push_notification_sent))
-                .filter(data_integer.eq(notification.data_integer))
-                .set(push_notification_sent.eq(true))
-                .execute(self.conn())
-                .into_db_error(id)?;
+                .set(push_notification_sent.eq(true));
+            match notification.data_integer {
+                Some(value) => {
+                    query
+                        .filter(data_integer.eq(Some(value)))
+                        .execute(self.conn())
+                        .into_db_error(id)?;
+                }
+                None => {
+                    query
+                        .filter(data_integer.is_null())
+                        .execute(self.conn())
+                        .into_db_error(id)?;
+                }
+            }
         }
 
         Ok(())
