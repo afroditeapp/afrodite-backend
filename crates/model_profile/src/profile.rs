@@ -375,21 +375,21 @@ impl GetProfileQueryParam {
 pub struct GetProfileResult {
     /// Profile data if it is newer than the version in the query.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub p: Option<Profile>,
+    pub profile: Option<Profile>,
     /// If empty then profile does not exist or current account does
     /// not have access to the profile.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub v: Option<ProfileVersion>,
+    pub profile_version: Option<ProfileVersion>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    lst: Option<LastSeenTime>,
+    last_seen_time: Option<LastSeenTime>,
 }
 
 impl GetProfileResult {
     pub fn profile_with_version_response(info: ProfileAndProfileVersion) -> Self {
         Self {
-            p: Some(info.profile),
-            v: Some(info.version),
-            lst: info.last_seen_time,
+            profile: Some(info.profile),
+            profile_version: Some(info.version),
+            last_seen_time: info.last_seen_time,
         }
     }
 
@@ -398,17 +398,17 @@ impl GetProfileResult {
         last_seen_time: Option<LastSeenTime>,
     ) -> Self {
         Self {
-            p: None,
-            v: Some(version),
-            lst: last_seen_time,
+            profile: None,
+            profile_version: Some(version),
+            last_seen_time,
         }
     }
 
     pub fn empty() -> Self {
         Self {
-            p: None,
-            v: None,
-            lst: None,
+            profile: None,
+            profile_version: None,
+            last_seen_time: None,
         }
     }
 }
