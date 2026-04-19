@@ -38,6 +38,14 @@ pub trait RpcTask: GetConfig + GetTaskManager {
                     return Ok(JsonRpcResponse::successful());
                 }
             }
+            ManualTaskType::SystemShutdown => {
+                if !self.config().manual_tasks_config().allow_system_shutdown {
+                    warn!(
+                        "Skipping system shutdown request because it is disabled from config file"
+                    );
+                    return Ok(JsonRpcResponse::successful());
+                }
+            }
         }
 
         self.task_manager()

@@ -27,6 +27,7 @@ const PATH_GET_MANAGER_INSTANCE_NAMES: &str = "/common_api/manager_instance_name
 /// * Permission [model::Permissions::admin_server_data_reset]
 /// * Permission [model::Permissions::admin_server_restart]
 /// * Permission [model::Permissions::admin_server_reboot]
+/// * Permission [model::Permissions::admin_server_shutdown]
 /// * Permission [model::Permissions::admin_server_scheduled_restart]
 /// * Permission [model::Permissions::admin_server_scheduled_reboot]
 #[utoipa::path(
@@ -50,6 +51,7 @@ pub async fn get_manager_instance_names(
         || api_caller_permissions.admin_server_data_reset
         || api_caller_permissions.admin_server_restart
         || api_caller_permissions.admin_server_reboot
+        || api_caller_permissions.admin_server_shutdown
         || api_caller_permissions.admin_server_scheduled_restart
         || api_caller_permissions.admin_server_scheduled_reboot
     {
@@ -341,6 +343,42 @@ pub async fn post_trigger_system_reboot(
     }
 }
 
+const PATH_POST_TRIGGER_SYSTEM_SHUTDOWN: &str = "/common_api/trigger_system_shutdown";
+
+/// Trigger system shutdown.
+///
+/// # Access
+/// * Permission [model::Permissions::admin_server_shutdown]
+#[utoipa::path(
+    post,
+    path = PATH_POST_TRIGGER_SYSTEM_SHUTDOWN,
+    params(ManagerInstanceNameValue),
+    responses(
+        (status = 200, description = "Successful."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_trigger_system_shutdown(
+    State(state): State<S>,
+    Extension(api_caller_permissions): Extension<Permissions>,
+    Query(manager): Query<ManagerInstanceNameValue>,
+) -> Result<(), StatusCode> {
+    COMMON_ADMIN.post_trigger_system_shutdown.incr();
+
+    if api_caller_permissions.admin_server_shutdown {
+        state
+            .manager_request_to(manager)
+            .await?
+            .trigger_manual_task(ManualTaskType::SystemShutdown)
+            .await?;
+        Ok(())
+    } else {
+        Err(StatusCode::UNAUTHORIZED)
+    }
+}
+
 const PATH_GET_SCHEDULED_TASKS_STATUS: &str = "/common_api/scheduled_tasks_status";
 
 /// Get scheduled tasks status from manager instance.
@@ -477,6 +515,7 @@ create_open_api_router!(
         post_trigger_backend_data_reset,
         post_trigger_backend_restart,
         post_trigger_system_reboot,
+        post_trigger_system_shutdown,
         get_scheduled_tasks_status,
         post_schedule_task,
         post_unschedule_task,
@@ -496,6 +535,7 @@ create_counters!(
     post_trigger_backend_data_reset,
     post_trigger_backend_restart,
     post_trigger_system_reboot,
+    post_trigger_system_shutdown,
     get_scheduled_tasks_status,
     post_schedule_task,
     post_unschedule_task,

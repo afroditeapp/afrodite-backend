@@ -84,6 +84,7 @@ public_api = "127.0.0.1:4000"
 # [manual_tasks]
 # allow_backend_restart = true
 # allow_system_reboot = true
+# allow_system_shutdown = true
 
 # [manual_tasks.allow_backend_data_reset]
 # backend_data_dir = "/path/to/backend/data"
@@ -306,9 +307,14 @@ pub struct ManualTasksConfig {
     /// Allow manual backend data reset
     pub allow_backend_data_reset: Option<BackendDataResetConfig>,
     /// Allow manual backend restart
+    #[serde(default)]
     pub allow_backend_restart: bool,
     /// Allow manaual system reboot
+    #[serde(default)]
     pub allow_system_reboot: bool,
+    /// Allow manual system shutdown
+    #[serde(default)]
+    pub allow_system_shutdown: bool,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

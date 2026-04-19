@@ -26,6 +26,7 @@ pub enum ManualTaskType {
     BackendDataReset,
     BackendRestart,
     SystemReboot,
+    SystemShutdown,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, ToSchema)]

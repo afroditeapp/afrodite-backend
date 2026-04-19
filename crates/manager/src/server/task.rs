@@ -152,6 +152,7 @@ impl TaskManager {
     pub async fn handle_message(&self, message: ManualTaskType) {
         let result = match message {
             ManualTaskType::SystemReboot => self.run_reboot().await,
+            ManualTaskType::SystemShutdown => self.run_shutdown().await,
             ManualTaskType::BackendRestart => {
                 self.backend_restart_and_optional_data_reset(false).await
             }
@@ -194,6 +195,28 @@ impl TaskManager {
 
         let status = Command::new("sudo")
             .arg("reboot")
+            .status()
+            .await
+            .change_context(TaskError::ProcessStartFailed)?;
+
+        if !status.success() {
+            return Err(TaskError::CommandFailed(status).into());
+        }
+
+        Ok(())
+    }
+
+    pub async fn run_shutdown(&self) -> Result<(), TaskError> {
+        info!("Shutting down system");
+
+        if self.state.config().debug_mode() {
+            warn!("Skipping shutdown because debug mode is enabled");
+            return Ok(());
+        }
+
+        let status = Command::new("sudo")
+            .arg("shutdown")
+            .arg("now")
             .status()
             .await
             .change_context(TaskError::ProcessStartFailed)?;
