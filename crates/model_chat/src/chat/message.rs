@@ -19,7 +19,7 @@ pub struct SignedMessageData {
     pub message_id: MessageId,
     pub sender_public_key_id: PublicKeyId,
     pub recipient_public_key_id: PublicKeyId,
-    pub m: MessageNumber,
+    pub message_number: MessageNumber,
     /// Unix time when server received the message.
     pub unix_time: UnixTime,
     pub message: Vec<u8>,
@@ -56,7 +56,7 @@ impl SignedMessageData {
             recipient_public_key_id: PublicKeyId {
                 id: recipient_public_key_id,
             },
-            m: MessageNumber { mn },
+            message_number: MessageNumber { mn },
             unix_time: UnixTime { ut },
             message,
         }))
@@ -74,7 +74,7 @@ impl SignedMessageData {
         bytes.extend_from_slice(self.message_id.id().as_bytes());
         minimal_i64::add_minimal_i64(&mut bytes, self.sender_public_key_id.id);
         minimal_i64::add_minimal_i64(&mut bytes, self.recipient_public_key_id.id);
-        minimal_i64::add_minimal_i64(&mut bytes, self.m.mn);
+        minimal_i64::add_minimal_i64(&mut bytes, self.message_number.mn);
         minimal_i64::add_minimal_i64(&mut bytes, self.unix_time.ut);
         // Sent message data
         bytes.extend_from_slice(&self.message);

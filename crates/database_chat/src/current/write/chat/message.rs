@@ -126,7 +126,7 @@ impl CurrentWriteChatMessage<'_> {
             message_id: message_id_value,
             sender_public_key_id: sender_public_key_id_value,
             recipient_public_key_id,
-            m: new_message_number,
+            message_number: new_message_number,
             unix_time: time,
             message,
         };

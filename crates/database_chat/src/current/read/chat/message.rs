@@ -346,7 +346,7 @@ impl CurrentReadChatMessage<'_> {
             result.map(|(private_key, message_number_value)| PendingMessageInfo {
                 id: private_key,
                 sender,
-                m: message_number_value,
+                message_number: message_number_value,
                 message_id: message_id_value,
             }),
         )
