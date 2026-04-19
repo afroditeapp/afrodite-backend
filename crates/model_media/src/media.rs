@@ -41,14 +41,14 @@ pub struct ContentInfo {
     #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
     #[schema(default = true)]
     /// Accepted
-    pub a: bool,
+    pub accepted: bool,
     #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
     #[schema(default = true)]
     /// Face detected (automatic or manual)
-    pub fd: bool,
+    pub face_detected: bool,
     /// Face verified against current security content (automatic or manual)
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub fv: Option<bool>,
+    pub face_verified: Option<bool>,
 }
 
 fn value_bool_true() -> bool {
@@ -68,13 +68,13 @@ fn value_is_jpeg_image(v: &MediaContentType) -> bool {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
-pub struct ContentInfoWithFd {
+pub struct MyContentInfo {
     pub cid: ContentId,
     pub ctype: MediaContentType,
     /// Face detected (automatic or manual)
-    pub fd: bool,
+    pub face_detected: bool,
     /// Face verified against current security content (automatic or manual)
-    pub fv: Option<bool>,
+    pub face_verified: Option<bool>,
     pub state: ContentModerationState,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rejected_reason_category: Option<MediaContentModerationRejectedReasonCategory>,
@@ -91,16 +91,16 @@ pub struct ContentInfoDetailed {
     pub slot: Option<ContentSlot>,
     pub secure_capture: bool,
     /// Face detected (automatic)
-    fd: bool,
+    face_detected: bool,
     /// Manual face detected value set by admin
     #[serde(skip_serializing_if = "Option::is_none")]
-    fd_manual: Option<bool>,
+    face_detected_manual: Option<bool>,
     /// Face verified against current security content (automatic or manual)
     #[serde(skip_serializing_if = "Option::is_none")]
-    fv: Option<bool>,
+    face_verified: Option<bool>,
     /// Manual face verified value set by admin
     #[serde(skip_serializing_if = "Option::is_none")]
-    fv_manual: Option<bool>,
+    face_verified_manual: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub usage_start_time: Option<UnixTime>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -298,13 +298,13 @@ impl From<MediaContentRaw> for ContentId {
     }
 }
 
-impl From<MediaContentRaw> for ContentInfoWithFd {
+impl From<MediaContentRaw> for MyContentInfo {
     fn from(value: MediaContentRaw) -> Self {
-        ContentInfoWithFd {
+        MyContentInfo {
             cid: value.uuid,
             ctype: value.content_type_number,
-            fd: value.effective_face_detected(),
-            fv: value.effective_face_verified(),
+            face_detected: value.effective_face_detected(),
+            face_verified: value.effective_face_verified(),
             state: value.state(),
             rejected_reason_category: value.moderation_rejected_reason_category,
             rejected_reason_details: value.moderation_rejected_reason_details,
@@ -320,10 +320,10 @@ impl From<MediaContentRaw> for ContentInfoDetailed {
             state: value.moderation_state,
             slot: value.slot_number(),
             secure_capture: value.secure_capture,
-            fd: value.face_detected,
-            fd_manual: value.face_detected_manual,
-            fv: value.face_verified,
-            fv_manual: value.face_verified_manual,
+            face_detected: value.face_detected,
+            face_detected_manual: value.face_detected_manual,
+            face_verified: value.face_verified,
+            face_verified_manual: value.face_verified_manual,
             usage_end_time: value.usage_end_unix_time,
             usage_start_time: value.usage_start_unix_time,
             rejected_reason_category: value.moderation_rejected_reason_category,
@@ -390,25 +390,22 @@ impl CurrentAccountMediaInternal {
         self.iter_current_profile_content().map(|v| ContentInfo {
             cid: v.content_id(),
             ctype: v.content_type(),
-            a: v.state().is_accepted(),
-            fd: v.effective_face_detected(),
-            fv: v.effective_face_verified(),
+            accepted: v.state().is_accepted(),
+            face_detected: v.effective_face_detected(),
+            face_verified: v.effective_face_verified(),
         })
     }
 
-    pub fn iter_current_profile_content_info_fd(
-        &self,
-    ) -> impl Iterator<Item = ContentInfoWithFd> + '_ {
-        self.iter_current_profile_content()
-            .map(|v| ContentInfoWithFd {
-                cid: v.content_id(),
-                ctype: v.content_type(),
-                fd: v.effective_face_detected(),
-                fv: v.effective_face_verified(),
-                state: v.state(),
-                rejected_reason_category: v.moderation_rejected_reason_category,
-                rejected_reason_details: v.moderation_rejected_reason_details.clone(),
-            })
+    pub fn iter_current_profile_content_info_fd(&self) -> impl Iterator<Item = MyContentInfo> + '_ {
+        self.iter_current_profile_content().map(|v| MyContentInfo {
+            cid: v.content_id(),
+            ctype: v.content_type(),
+            face_detected: v.effective_face_detected(),
+            face_verified: v.effective_face_verified(),
+            state: v.state(),
+            rejected_reason_category: v.moderation_rejected_reason_category,
+            rejected_reason_details: v.moderation_rejected_reason_details.clone(),
+        })
     }
 
     pub fn media_verification_status_flags(&self) -> MediaVerificationStatusFlags {
@@ -438,12 +435,12 @@ impl CurrentAccountMediaInternal {
 /// Update normal or pending profile content
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct SetProfileContent {
-    /// Primary profile image which is shown in grid view.
+    /// First image is primary profile image which is shown in grid view.
     ///
     /// One content ID is required.
     ///
     /// Max item count is 6. Extra items are ignored.
-    pub c: Vec<ContentId>,
+    pub content: Vec<ContentId>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub grid_crop_size: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -454,7 +451,7 @@ pub struct SetProfileContent {
 
 impl SetProfileContent {
     pub fn iter(&self) -> impl Iterator<Item = ContentId> + '_ {
-        self.c.iter().copied()
+        self.content.iter().copied()
     }
 }
 
@@ -501,9 +498,9 @@ impl From<MediaVerificationStatusFlags> for MediaVerificationStatus {
 /// Current content in public profile.
 #[derive(Debug, PartialEq, Serialize, ToSchema)]
 pub struct ProfileContent {
-    /// Primary profile image which is shown in grid view.
-    pub c: Vec<ContentInfo>,
-    pub vs: MediaVerificationStatus,
+    /// First image is primary profile image which is shown in grid view.
+    pub content: Vec<ContentInfo>,
+    pub verification_status: MediaVerificationStatus,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub grid_crop_size: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -515,8 +512,8 @@ pub struct ProfileContent {
 impl From<CurrentAccountMediaInternal> for ProfileContent {
     fn from(value: CurrentAccountMediaInternal) -> Self {
         Self {
-            c: value.iter_current_profile_content_info().collect(),
-            vs: value.media_verification_status_flags().into(),
+            content: value.iter_current_profile_content_info().collect(),
+            verification_status: value.media_verification_status_flags().into(),
             grid_crop_size: value.grid_crop_size,
             grid_crop_x: value.grid_crop_x,
             grid_crop_y: value.grid_crop_y,
@@ -527,9 +524,9 @@ impl From<CurrentAccountMediaInternal> for ProfileContent {
 /// Current content in public profile.
 #[derive(Debug, Serialize, ToSchema)]
 pub struct MyProfileContent {
-    /// Primary profile image which is shown in grid view.
-    pub c: Vec<ContentInfoWithFd>,
-    pub vs: MediaVerificationStatus,
+    /// First image is primary profile image which is shown in grid view.
+    pub content: Vec<MyContentInfo>,
+    pub verification_status: MediaVerificationStatus,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub grid_crop_size: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -541,8 +538,8 @@ pub struct MyProfileContent {
 impl From<CurrentAccountMediaInternal> for MyProfileContent {
     fn from(value: CurrentAccountMediaInternal) -> Self {
         Self {
-            c: value.iter_current_profile_content_info_fd().collect(),
-            vs: value.media_verification_status_flags().into(),
+            content: value.iter_current_profile_content_info_fd().collect(),
+            verification_status: value.media_verification_status_flags().into(),
             grid_crop_size: value.grid_crop_size,
             grid_crop_x: value.grid_crop_x,
             grid_crop_y: value.grid_crop_y,
@@ -553,7 +550,7 @@ impl From<CurrentAccountMediaInternal> for MyProfileContent {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct SecurityContent {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub c: Option<ContentInfoWithFd>,
+    pub c: Option<MyContentInfo>,
 }
 
 impl SecurityContent {
@@ -595,28 +592,31 @@ impl GetProfileContentQueryParams {
 #[derive(Debug, Serialize, ToSchema)]
 pub struct GetProfileContentResult {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub c: Option<ProfileContent>,
+    pub content: Option<ProfileContent>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub v: Option<ProfileContentVersion>,
+    pub version: Option<ProfileContentVersion>,
 }
 
 impl GetProfileContentResult {
     pub fn current_version_latest_response(version: ProfileContentVersion) -> Self {
         Self {
-            c: None,
-            v: Some(version),
+            content: None,
+            version: Some(version),
         }
     }
 
     pub fn content_with_version(content: ProfileContent, version: ProfileContentVersion) -> Self {
         Self {
-            c: Some(content),
-            v: Some(version),
+            content: Some(content),
+            version: Some(version),
         }
     }
 
     pub fn empty() -> Self {
-        Self { c: None, v: None }
+        Self {
+            content: None,
+            version: None,
+        }
     }
 }
 
@@ -625,7 +625,7 @@ pub struct GetMediaContentResult {
     pub profile_content: MyProfileContent,
     pub profile_content_version: ProfileContentVersion,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub security_content: Option<ContentInfoWithFd>,
+    pub security_content: Option<MyContentInfo>,
     pub sync_version: MediaContentSyncVersion,
 }
 

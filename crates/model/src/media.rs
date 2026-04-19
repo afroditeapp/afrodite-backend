@@ -208,9 +208,14 @@ pub enum ContentProcessingStateType {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ContentProcessingStateInternal {
     Empty,
-    InQueue { wait_queue_position: i64 },
+    InQueue {
+        wait_queue_position: i64,
+    },
     Processing,
-    Completed { content_id: ContentId, fd: bool },
+    Completed {
+        content_id: ContentId,
+        face_detected: bool,
+    },
     Failed,
     NsfwDetected,
 }
@@ -233,7 +238,7 @@ impl ContentProcessingStateInternal {
                 state: ContentProcessingStateType::Empty,
                 wait_queue_position: None,
                 cid: None,
-                fd: None,
+                face_detected: None,
             },
             Self::InQueue {
                 wait_queue_position,
@@ -241,31 +246,34 @@ impl ContentProcessingStateInternal {
                 state: ContentProcessingStateType::InQueue,
                 wait_queue_position: Some(*wait_queue_position),
                 cid: None,
-                fd: None,
+                face_detected: None,
             },
             Self::Processing => ContentProcessingState {
                 state: ContentProcessingStateType::Processing,
                 wait_queue_position: None,
                 cid: None,
-                fd: None,
+                face_detected: None,
             },
-            Self::Completed { content_id, fd } => ContentProcessingState {
+            Self::Completed {
+                content_id,
+                face_detected,
+            } => ContentProcessingState {
                 state: ContentProcessingStateType::Completed,
                 wait_queue_position: None,
                 cid: Some(*content_id),
-                fd: Some(*fd),
+                face_detected: Some(*face_detected),
             },
             Self::Failed => ContentProcessingState {
                 state: ContentProcessingStateType::Failed,
                 wait_queue_position: None,
                 cid: None,
-                fd: None,
+                face_detected: None,
             },
             Self::NsfwDetected => ContentProcessingState {
                 state: ContentProcessingStateType::NsfwDetected,
                 wait_queue_position: None,
                 cid: None,
-                fd: None,
+                face_detected: None,
             },
         }
     }
@@ -287,7 +295,7 @@ pub struct ContentProcessingState {
     pub cid: Option<ContentId>,
     /// Face detected info of the processed content.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub fd: Option<bool>,
+    pub face_detected: Option<bool>,
 }
 
 /// Version UUID for public profile content.

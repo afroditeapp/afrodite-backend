@@ -196,9 +196,12 @@ fn convert_content_processing_state(
         } => {
             converted.wait_queue_position = Some(Some(wait_queue_position));
         }
-        ContentProcessingStateInternal::Completed { content_id, fd } => {
+        ContentProcessingStateInternal::Completed {
+            content_id,
+            face_detected,
+        } => {
             converted.cid = Some(Some(Box::new(ContentId::new(content_id.cid.to_string()))));
-            converted.fd = Some(Some(fd));
+            converted.fd = Some(Some(face_detected));
         }
         ContentProcessingStateInternal::Empty
         | ContentProcessingStateInternal::Processing

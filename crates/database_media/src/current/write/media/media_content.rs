@@ -90,7 +90,7 @@ impl CurrentWriteMediaContent<'_> {
             Self::check_content_id(content_id.copied(), &all_content, |_| true)
         };
 
-        let c = &new.c;
+        let c = &new.content;
 
         if c.is_empty() {
             return Err(DieselDatabaseError::NotAllowed.report());

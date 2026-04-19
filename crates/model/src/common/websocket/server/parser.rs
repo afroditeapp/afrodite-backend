@@ -347,10 +347,10 @@ fn parse_content_processing_state_changed_payload(
         },
         ContentProcessingStateType::Completed => {
             let content_id = parse_content_id_payload(payload_iter)?;
-            let fd_byte = next_payload_byte(payload_iter, "face detection")?;
+            let face_detected_byte = next_payload_byte(payload_iter, "face detection")?;
             ContentProcessingStateInternal::Completed {
                 content_id,
-                fd: fd_byte != 0,
+                face_detected: face_detected_byte != 0,
             }
         }
         ContentProcessingStateType::Empty => ContentProcessingStateInternal::Empty,
@@ -739,7 +739,7 @@ mod tests {
             id: 42,
             new_state: ContentProcessingStateInternal::Completed {
                 content_id: crate::ContentId { cid: test_uuid(9) },
-                fd: true,
+                face_detected: true,
             },
         };
 

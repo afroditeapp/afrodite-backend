@@ -130,7 +130,7 @@ impl ContentProcessingManager {
                 }) => {
                     state.processing_state = ContentProcessingStateInternal::Completed {
                         content_id,
-                        fd: face_detected,
+                        face_detected,
                     };
                 }
                 Ok(ImgInfo::NsfwDetected) => {

@@ -362,9 +362,12 @@ fn append_content_processing_state_changed_payload(
         } => {
             minimal_i64::add_minimal_i64(buffer, wait_queue_position);
         }
-        ContentProcessingStateInternal::Completed { content_id, fd } => {
+        ContentProcessingStateInternal::Completed {
+            content_id,
+            face_detected,
+        } => {
             buffer.extend_from_slice(content_id.cid.as_bytes());
-            buffer.push(u8::from(fd));
+            buffer.push(u8::from(face_detected));
         }
         ContentProcessingStateInternal::Empty
         | ContentProcessingStateInternal::Processing

@@ -170,14 +170,14 @@ pub async fn put_profile_content(
         .await?;
     let available_content_ids: HashSet<_> =
         account_content.iter().map(|v| v.content_id()).collect();
-    if let Some(missing_index) = new
-        .c
-        .iter()
-        .take(6)
-        .enumerate()
-        .find_map(|(index, content_id)| {
-            (!available_content_ids.contains(content_id)).then_some(index as i64)
-        })
+    if let Some(missing_index) =
+        new.content
+            .iter()
+            .take(6)
+            .enumerate()
+            .find_map(|(index, content_id)| {
+                (!available_content_ids.contains(content_id)).then_some(index as i64)
+            })
     {
         return Ok(UpdateProfileContentResult::error_content_does_not_exist(missing_index).into());
     }
