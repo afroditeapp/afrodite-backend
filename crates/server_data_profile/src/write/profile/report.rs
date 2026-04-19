@@ -26,7 +26,7 @@ impl WriteCommandsProfileReport<'_> {
             .db_read(move |mut cmds| cmds.profile().data().my_profile(target))
             .await?;
 
-        if Some(&profile_name) != target_data.p.name.as_ref() {
+        if Some(&profile_name) != target_data.profile.name.as_ref() {
             return Ok(UpdateReportResult::outdated_report_content());
         }
 
@@ -96,7 +96,7 @@ impl WriteCommandsProfileReport<'_> {
             .db_read(move |mut cmds| cmds.profile().data().my_profile(target))
             .await?;
 
-        if Some(&profile_text) != target_data.p.ptext.as_ref() {
+        if Some(&profile_text) != target_data.profile.ptext.as_ref() {
             return Ok(UpdateReportResult::outdated_report_content());
         }
 

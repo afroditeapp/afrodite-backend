@@ -246,11 +246,11 @@ pub async fn get_profile_string_state(
     let r = state.read().profile().my_profile(string_owner_id).await?;
     let r = match params.content_type {
         ProfileStringModerationContentType::ProfileName => GetProfileStringState {
-            value: r.p.name,
+            value: r.profile.name,
             moderation_info: r.name_moderation_info,
         },
         ProfileStringModerationContentType::ProfileText => GetProfileStringState {
-            value: r.p.ptext,
+            value: r.profile.ptext,
             moderation_info: r.text_moderation_info,
         },
     };

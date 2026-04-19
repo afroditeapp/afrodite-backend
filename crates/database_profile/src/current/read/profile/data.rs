@@ -84,9 +84,9 @@ impl CurrentReadProfileData<'_> {
             other_shared_state.unlimited_likes,
         );
         let r = GetMyProfileResult {
-            p,
-            v: profile_version,
-            sv: profile_state.profile_sync_version,
+            profile: p,
+            profile_version,
+            profile_sync_version: profile_state.profile_sync_version,
             name_moderation_info: profile_name_moderation_state,
             text_moderation_info: profile_text_moderation_state,
         };

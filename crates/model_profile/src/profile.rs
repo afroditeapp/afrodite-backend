@@ -415,9 +415,9 @@ impl GetProfileResult {
 
 #[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct GetMyProfileResult {
-    pub p: Profile,
-    pub v: ProfileVersion,
-    pub sv: ProfileSyncVersion,
+    pub profile: Profile,
+    pub profile_version: ProfileVersion,
+    pub profile_sync_version: ProfileSyncVersion,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name_moderation_info: Option<ProfileStringModerationInfo>,
     #[serde(skip_serializing_if = "Option::is_none")]
