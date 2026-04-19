@@ -286,6 +286,15 @@ pub enum PostTriggerSystemRebootError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`post_trigger_system_shutdown`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostTriggerSystemShutdownError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`post_unschedule_task`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -561,7 +570,7 @@ pub async fn get_maintenance_notification(configuration: &configuration::Configu
     }
 }
 
-/// # Access * Permission [model::Permissions::admin_server_view_info] * Permission [model::Permissions::admin_server_software_update] * Permission [model::Permissions::admin_server_data_reset] * Permission [model::Permissions::admin_server_restart] * Permission [model::Permissions::admin_server_reboot] * Permission [model::Permissions::admin_server_scheduled_restart] * Permission [model::Permissions::admin_server_scheduled_reboot]
+/// # Access * Permission [model::Permissions::admin_server_view_info] * Permission [model::Permissions::admin_server_software_update] * Permission [model::Permissions::admin_server_data_reset] * Permission [model::Permissions::admin_server_restart] * Permission [model::Permissions::admin_server_reboot] * Permission [model::Permissions::admin_server_shutdown] * Permission [model::Permissions::admin_server_scheduled_restart] * Permission [model::Permissions::admin_server_scheduled_reboot]
 pub async fn get_manager_instance_names(configuration: &configuration::Configuration, ) -> Result<models::ManagerInstanceNameList, Error<GetManagerInstanceNamesError>> {
 
     let uri_str = format!("{}/common_api/manager_instance_names", configuration.base_path);
@@ -1367,6 +1376,36 @@ pub async fn post_trigger_system_reboot(configuration: &configuration::Configura
     } else {
         let content = resp.text().await?;
         let entity: Option<PostTriggerSystemRebootError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// # Access * Permission [model::Permissions::admin_server_shutdown]
+pub async fn post_trigger_system_shutdown(configuration: &configuration::Configuration, manager_name: &str) -> Result<(), Error<PostTriggerSystemShutdownError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_manager_name = manager_name;
+
+    let uri_str = format!("{}/common_api/trigger_system_shutdown", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    req_builder = req_builder.query(&[("manager_name", &p_query_manager_name.to_string())]);
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostTriggerSystemShutdownError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

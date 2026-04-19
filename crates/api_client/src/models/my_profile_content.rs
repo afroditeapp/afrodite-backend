@@ -14,28 +14,28 @@ use serde::{Deserialize, Serialize};
 /// MyProfileContent : Current content in public profile.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct MyProfileContent {
-    /// Primary profile image which is shown in grid view.
-    #[serde(rename = "c")]
-    pub c: Vec<models::ContentInfoWithFd>,
+    /// First image is primary profile image which is shown in grid view.
+    #[serde(rename = "content")]
+    pub content: Vec<models::MyContentInfo>,
     #[serde(rename = "grid_crop_size", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub grid_crop_size: Option<Option<f64>>,
     #[serde(rename = "grid_crop_x", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub grid_crop_x: Option<Option<f64>>,
     #[serde(rename = "grid_crop_y", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub grid_crop_y: Option<Option<f64>>,
-    #[serde(rename = "vs")]
-    pub vs: Box<models::MediaVerificationStatus>,
+    #[serde(rename = "verification_status")]
+    pub verification_status: Box<models::MediaVerificationStatus>,
 }
 
 impl MyProfileContent {
     /// Current content in public profile.
-    pub fn new(c: Vec<models::ContentInfoWithFd>, vs: models::MediaVerificationStatus) -> MyProfileContent {
+    pub fn new(content: Vec<models::MyContentInfo>, verification_status: models::MediaVerificationStatus) -> MyProfileContent {
         MyProfileContent {
-            c,
+            content,
             grid_crop_size: None,
             grid_crop_x: None,
             grid_crop_y: None,
-            vs: Box::new(vs),
+            verification_status: Box::new(verification_status),
         }
     }
 }

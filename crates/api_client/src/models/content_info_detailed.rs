@@ -18,17 +18,17 @@ pub struct ContentInfoDetailed {
     #[serde(rename = "ctype")]
     pub ctype: models::MediaContentType,
     /// Face detected (automatic)
-    #[serde(rename = "fd")]
-    pub fd: bool,
+    #[serde(rename = "face_detected")]
+    pub face_detected: bool,
     /// Manual face detected value set by admin
-    #[serde(rename = "fd_manual", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub fd_manual: Option<Option<bool>>,
+    #[serde(rename = "face_detected_manual", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub face_detected_manual: Option<Option<bool>>,
     /// Face verified against current security content (automatic or manual)
-    #[serde(rename = "fv", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub fv: Option<Option<bool>>,
+    #[serde(rename = "face_verified", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub face_verified: Option<Option<bool>>,
     /// Manual face verified value set by admin
-    #[serde(rename = "fv_manual", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub fv_manual: Option<Option<bool>>,
+    #[serde(rename = "face_verified_manual", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub face_verified_manual: Option<Option<bool>>,
     #[serde(rename = "rejected_reason_category", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub rejected_reason_category: Option<Option<Box<models::MediaContentModerationRejectedReasonCategory>>>,
     #[serde(rename = "rejected_reason_details", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -46,14 +46,14 @@ pub struct ContentInfoDetailed {
 }
 
 impl ContentInfoDetailed {
-    pub fn new(cid: models::ContentId, ctype: models::MediaContentType, fd: bool, secure_capture: bool, state: models::ContentModerationState) -> ContentInfoDetailed {
+    pub fn new(cid: models::ContentId, ctype: models::MediaContentType, face_detected: bool, secure_capture: bool, state: models::ContentModerationState) -> ContentInfoDetailed {
         ContentInfoDetailed {
             cid: Box::new(cid),
             ctype,
-            fd,
-            fd_manual: None,
-            fv: None,
-            fv_manual: None,
+            face_detected,
+            face_detected_manual: None,
+            face_verified: None,
+            face_verified_manual: None,
             rejected_reason_category: None,
             rejected_reason_details: None,
             secure_capture,

@@ -25,7 +25,7 @@ async fn updating_profile_works(mut context: TestContext) -> TestResult {
             None,
         )
         .await?
-        .p
+        .profile
         .flatten()
         .ok_or(TestError::MissingValue.report())?
         .name,

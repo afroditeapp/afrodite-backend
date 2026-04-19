@@ -14,29 +14,29 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ContentInfo {
     /// Accepted
-    #[serde(rename = "a", skip_serializing_if = "Option::is_none")]
-    pub a: Option<bool>,
+    #[serde(rename = "accepted", skip_serializing_if = "Option::is_none")]
+    pub accepted: Option<bool>,
     #[serde(rename = "cid")]
     pub cid: Box<models::ContentId>,
     /// Default value is not set to API doc as the API doc will then have \"oneOf\" property and Dart code generator does not support it.  Default value is [MediaContentType::JpegImage].
     #[serde(rename = "ctype", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub ctype: Option<Option<models::MediaContentType>>,
     /// Face detected (automatic or manual)
-    #[serde(rename = "fd", skip_serializing_if = "Option::is_none")]
-    pub fd: Option<bool>,
+    #[serde(rename = "face_detected", skip_serializing_if = "Option::is_none")]
+    pub face_detected: Option<bool>,
     /// Face verified against current security content (automatic or manual)
-    #[serde(rename = "fv", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub fv: Option<Option<bool>>,
+    #[serde(rename = "face_verified", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub face_verified: Option<Option<bool>>,
 }
 
 impl ContentInfo {
     pub fn new(cid: models::ContentId) -> ContentInfo {
         ContentInfo {
-            a: None,
+            accepted: None,
             cid: Box::new(cid),
             ctype: None,
-            fd: None,
-            fv: None,
+            face_detected: None,
+            face_verified: None,
         }
     }
 }

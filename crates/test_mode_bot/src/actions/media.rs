@@ -203,7 +203,7 @@ impl BotAction for SetContent {
             let bot_info = state.get_bot_config();
 
             let info = SetProfileContent {
-                c: vec![content_id],
+                content: vec![content_id],
                 grid_crop_size: bot_info.grid_crop_size.into(),
                 grid_crop_x: bot_info.grid_crop_x.into(),
                 grid_crop_y: bot_info.grid_crop_y.into(),

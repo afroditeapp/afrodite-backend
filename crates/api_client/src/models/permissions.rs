@@ -76,6 +76,8 @@ pub struct Permissions {
     pub admin_server_scheduled_reboot: Option<bool>,
     #[serde(rename = "admin_server_scheduled_restart", skip_serializing_if = "Option::is_none")]
     pub admin_server_scheduled_restart: Option<bool>,
+    #[serde(rename = "admin_server_shutdown", skip_serializing_if = "Option::is_none")]
+    pub admin_server_shutdown: Option<bool>,
     #[serde(rename = "admin_server_software_update", skip_serializing_if = "Option::is_none")]
     pub admin_server_software_update: Option<bool>,
     #[serde(rename = "admin_server_view_bot_config", skip_serializing_if = "Option::is_none")]
@@ -140,6 +142,7 @@ impl Permissions {
             admin_server_restart: None,
             admin_server_scheduled_reboot: None,
             admin_server_scheduled_restart: None,
+            admin_server_shutdown: None,
             admin_server_software_update: None,
             admin_server_view_bot_config: None,
             admin_server_view_image_processing_config: None,

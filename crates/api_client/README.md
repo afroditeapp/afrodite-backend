@@ -174,6 +174,7 @@ Class | Method | HTTP request | Description
 *CommonAdminApi* | [**post_trigger_software_update_download**](docs/CommonAdminApi.md#post_trigger_software_update_download) | **POST** /common_api/trigger_software_update_download | Trigger software update download.
 *CommonAdminApi* | [**post_trigger_software_update_install**](docs/CommonAdminApi.md#post_trigger_software_update_install) | **POST** /common_api/trigger_software_update_install | Trigger software update install.
 *CommonAdminApi* | [**post_trigger_system_reboot**](docs/CommonAdminApi.md#post_trigger_system_reboot) | **POST** /common_api/trigger_system_reboot | Trigger system reboot.
+*CommonAdminApi* | [**post_trigger_system_shutdown**](docs/CommonAdminApi.md#post_trigger_system_shutdown) | **POST** /common_api/trigger_system_shutdown | Trigger system shutdown.
 *CommonAdminApi* | [**post_unschedule_task**](docs/CommonAdminApi.md#post_unschedule_task) | **POST** /common_api/unschedule_task | Unschedule task.
 *MediaApi* | [**delete_content**](docs/MediaApi.md#delete_content) | **DELETE** /media_api/content/{aid}/{cid} | Delete content data.
 *MediaApi* | [**get_all_account_media_content**](docs/MediaApi.md#get_all_account_media_content) | **GET** /media_api/all_account_media_content/{aid} | Get list of all media content on the server for one account.
@@ -307,7 +308,6 @@ Class | Method | HTTP request | Description
  - [ContentId](docs/ContentId.md)
  - [ContentInfo](docs/ContentInfo.md)
  - [ContentInfoDetailed](docs/ContentInfoDetailed.md)
- - [ContentInfoWithFd](docs/ContentInfoWithFd.md)
  - [ContentModerationState](docs/ContentModerationState.md)
  - [ContentProcessingId](docs/ContentProcessingId.md)
  - [ContentProcessingState](docs/ContentProcessingState.md)
@@ -438,6 +438,7 @@ Class | Method | HTTP request | Description
  - [MinDistanceKm](docs/MinDistanceKm.md)
  - [ModerationAction](docs/ModerationAction.md)
  - [ModerationQueueType](docs/ModerationQueueType.md)
+ - [MyContentInfo](docs/MyContentInfo.md)
  - [MyProfileContent](docs/MyProfileContent.md)
  - [NewReceivedLikesCount](docs/NewReceivedLikesCount.md)
  - [NewReceivedLikesCountResult](docs/NewReceivedLikesCountResult.md)

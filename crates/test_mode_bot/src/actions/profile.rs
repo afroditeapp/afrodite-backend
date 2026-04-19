@@ -58,7 +58,7 @@ impl BotAction for ChangeProfileText {
         let current_profile = get_profile(&state.api(), &id, None, None)
             .await
             .change_context(TestError::ApiRequest)?
-            .p
+            .profile
             .flatten()
             .ok_or(TestError::MissingValue.report())?
             .as_ref()
@@ -150,7 +150,7 @@ impl BotAction for GetProfile {
         let profile = get_profile(&state.api(), &state.account_id_string()?, None, None)
             .await
             .change_context(TestError::ApiRequest)?
-            .p
+            .profile
             .flatten()
             .ok_or(TestError::MissingValue.report())?
             .as_ref()

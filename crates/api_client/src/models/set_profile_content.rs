@@ -14,9 +14,9 @@ use serde::{Deserialize, Serialize};
 /// SetProfileContent : Update normal or pending profile content
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SetProfileContent {
-    /// Primary profile image which is shown in grid view.  One content ID is required.  Max item count is 6. Extra items are ignored.
-    #[serde(rename = "c")]
-    pub c: Vec<models::ContentId>,
+    /// First image is primary profile image which is shown in grid view.  One content ID is required.  Max item count is 6. Extra items are ignored.
+    #[serde(rename = "content")]
+    pub content: Vec<models::ContentId>,
     #[serde(rename = "grid_crop_size", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub grid_crop_size: Option<Option<f64>>,
     #[serde(rename = "grid_crop_x", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -27,9 +27,9 @@ pub struct SetProfileContent {
 
 impl SetProfileContent {
     /// Update normal or pending profile content
-    pub fn new(c: Vec<models::ContentId>) -> SetProfileContent {
+    pub fn new(content: Vec<models::ContentId>) -> SetProfileContent {
         SetProfileContent {
-            c,
+            content,
             grid_crop_size: None,
             grid_crop_x: None,
             grid_crop_y: None,

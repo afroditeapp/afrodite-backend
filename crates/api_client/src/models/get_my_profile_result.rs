@@ -15,24 +15,24 @@ use serde::{Deserialize, Serialize};
 pub struct GetMyProfileResult {
     #[serde(rename = "name_moderation_info", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub name_moderation_info: Option<Option<Box<models::ProfileStringModerationInfo>>>,
-    #[serde(rename = "p")]
-    pub p: Box<models::Profile>,
-    #[serde(rename = "sv")]
-    pub sv: Box<models::ProfileSyncVersion>,
+    #[serde(rename = "profile")]
+    pub profile: Box<models::Profile>,
+    #[serde(rename = "profile_sync_version")]
+    pub profile_sync_version: Box<models::ProfileSyncVersion>,
+    #[serde(rename = "profile_version")]
+    pub profile_version: Box<models::ProfileVersion>,
     #[serde(rename = "text_moderation_info", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub text_moderation_info: Option<Option<Box<models::ProfileStringModerationInfo>>>,
-    #[serde(rename = "v")]
-    pub v: Box<models::ProfileVersion>,
 }
 
 impl GetMyProfileResult {
-    pub fn new(p: models::Profile, sv: models::ProfileSyncVersion, v: models::ProfileVersion) -> GetMyProfileResult {
+    pub fn new(profile: models::Profile, profile_sync_version: models::ProfileSyncVersion, profile_version: models::ProfileVersion) -> GetMyProfileResult {
         GetMyProfileResult {
             name_moderation_info: None,
-            p: Box::new(p),
-            sv: Box::new(sv),
+            profile: Box::new(profile),
+            profile_sync_version: Box::new(profile_sync_version),
+            profile_version: Box::new(profile_version),
             text_moderation_info: None,
-            v: Box::new(v),
         }
     }
 }

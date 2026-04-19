@@ -85,7 +85,6 @@ src/models/connection_statistics.rs
 src/models/content_id.rs
 src/models/content_info.rs
 src/models/content_info_detailed.rs
-src/models/content_info_with_fd.rs
 src/models/content_moderation_state.rs
 src/models/content_processing_id.rs
 src/models/content_processing_state.rs
@@ -217,6 +216,7 @@ src/models/min_distance_km.rs
 src/models/mod.rs
 src/models/moderation_action.rs
 src/models/moderation_queue_type.rs
+src/models/my_content_info.rs
 src/models/my_profile_content.rs
 src/models/new_received_likes_count.rs
 src/models/new_received_likes_count_result.rs
