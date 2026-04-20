@@ -4,6 +4,8 @@ use axum::{
     Extension,
     extract::{Path, Query, State},
 };
+use axum_extra::TypedHeader;
+use headers::ContentType;
 use model::{AdminNotificationTypes, EventToClientInternal};
 use model_media::{
     AccountId, AccountIdInternal, AccountState, GetProfileContentQueryParams,
@@ -26,6 +28,71 @@ use crate::{
     app::{GetAccounts, ReadData, WriteData},
     utils::{Json, StatusCode},
 };
+
+async fn read_profile_content_info_result(
+    state: &S,
+    account_id: AccountIdInternal,
+    account_state: AccountState,
+    permissions: Permissions,
+    requested_profile: AccountIdInternal,
+    params: GetProfileContentQueryParams,
+) -> Result<GetProfileContentResult, StatusCode> {
+    if account_id.as_id() == requested_profile.as_id() {
+        return read_profile_content_info_result_for_account(state, requested_profile, params)
+            .await;
+    }
+
+    if account_state != AccountState::Normal {
+        return Ok(GetProfileContentResult::empty());
+    }
+
+    let visibility = state
+        .read()
+        .common()
+        .account(requested_profile)
+        .await?
+        .profile_visibility()
+        .is_currently_public();
+
+    if visibility
+        || permissions.admin_view_all_profiles
+        || (params.allow_get_content_if_match()
+            && state
+                .data_all_access()
+                .is_match(account_id, requested_profile)
+                .await?)
+    {
+        read_profile_content_info_result_for_account(state, requested_profile, params).await
+    } else {
+        Ok(GetProfileContentResult::empty())
+    }
+}
+
+async fn read_profile_content_info_result_for_account(
+    state: &S,
+    requested_profile: AccountIdInternal,
+    params: GetProfileContentQueryParams,
+) -> Result<GetProfileContentResult, StatusCode> {
+    let internal = state
+        .read()
+        .media()
+        .current_account_media(requested_profile)
+        .await?;
+
+    let info: ProfileContent = internal.clone().into();
+
+    Ok(match params.version() {
+        Some(param_version) if param_version == internal.profile_content_version_uuid => {
+            GetProfileContentResult::current_version_latest_response(
+                internal.profile_content_version_uuid,
+            )
+        }
+        _ => GetProfileContentResult::content_with_version(
+            info,
+            internal.profile_content_version_uuid,
+        ),
+    })
+}
 
 const PATH_GET_PROFILE_CONTENT_INFO: &str = "/media_api/profile_content_info/{aid}";
 
@@ -77,59 +144,89 @@ pub async fn get_profile_content_info(
         .await?;
 
     let requested_profile = state.get_internal_id(requested_profile).await?;
+    let result = read_profile_content_info_result(
+        &state,
+        account_id,
+        account_state,
+        permissions,
+        requested_profile,
+        params,
+    )
+    .await?;
 
-    let read_profile_action = || async {
-        let internal = state
-            .read()
-            .media()
-            .current_account_media(requested_profile)
-            .await?;
+    Ok(result.into())
+}
 
-        let info: ProfileContent = internal.clone().into();
+const PATH_GET_PROFILE_CONTENT_INFO_BINARY: &str = "/media_api/profile_content_info_binary/{aid}";
 
-        match params.version() {
-            Some(param_version) if param_version == internal.profile_content_version_uuid => {
-                Ok(GetProfileContentResult::current_version_latest_response(
-                    internal.profile_content_version_uuid,
-                )
-                .into())
-            }
-            _ => Ok(GetProfileContentResult::content_with_version(
-                info,
-                internal.profile_content_version_uuid,
-            )
-            .into()),
-        }
-    };
+/// Get current profile content for selected profile as compact binary payload.
+///
+/// The first byte is result variant:
+/// - 0 = Empty
+/// - 1 = VersionOnly
+/// - 2 = ContentWithVersion
+///
+/// Variant payloads:
+/// - Empty: no payload
+/// - VersionOnly: 16-byte profile content version UUID
+/// - ContentWithVersion:
+///   - 16-byte profile content version UUID
+///   - 1-byte verification status (low 8 bits of internal flags)
+///   - 1-byte content count (max 6)
+///   - repeated content entries:
+///     - 16-byte content UUID
+///     - 1-byte packed content info
+///   - 1-byte crop presence mask (bit0 size, bit1 x, bit2 y)
+///   - optional crop values in order size, x, y as little-endian f32
+///
+/// Packed content info byte layout:
+/// - bits 0..2: face verified (0 None, 1 false, 2 true)
+/// - bit 3: face detected
+/// - bit 4: accepted
+/// - bits 5..7: media content type
+#[utoipa::path(
+    get,
+    path = PATH_GET_PROFILE_CONTENT_INFO_BINARY,
+    params(AccountId, GetProfileContentQueryParams),
+    responses(
+        (status = 200, description = "Get profile content info as binary.", body = inline(model::BinaryData), content_type = "application/octet-stream"),
+        (status = 401, description = "Unauthorized."),
+        (status = 429, description = "Too many requests."),
+        (status = 500),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_profile_content_info_binary(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+    Extension(account_state): Extension<AccountState>,
+    Extension(permissions): Extension<Permissions>,
+    Path(requested_profile): Path<AccountId>,
+    Query(params): Query<GetProfileContentQueryParams>,
+) -> Result<(TypedHeader<ContentType>, Vec<u8>), StatusCode> {
+    MEDIA.get_profile_content_info_binary.incr();
+    state
+        .api_usage_tracker()
+        .incr(account_id, |u| &u.get_profile_content_info)
+        .await;
+    state
+        .api_limits(account_id)
+        .media()
+        .get_profile_content_info()
+        .await?;
 
-    if account_id.as_id() == requested_profile.as_id() {
-        return read_profile_action().await;
-    }
+    let requested_profile = state.get_internal_id(requested_profile).await?;
+    let result = read_profile_content_info_result(
+        &state,
+        account_id,
+        account_state,
+        permissions,
+        requested_profile,
+        params,
+    )
+    .await?;
 
-    if account_state != AccountState::Normal {
-        return Ok(GetProfileContentResult::empty().into());
-    }
-
-    let visibility = state
-        .read()
-        .common()
-        .account(requested_profile)
-        .await?
-        .profile_visibility()
-        .is_currently_public();
-
-    if visibility
-        || permissions.admin_view_all_profiles
-        || (params.allow_get_content_if_match()
-            && state
-                .data_all_access()
-                .is_match(account_id, requested_profile)
-                .await?)
-    {
-        read_profile_action().await
-    } else {
-        Ok(GetProfileContentResult::empty().into())
-    }
+    Ok((TypedHeader(ContentType::octet_stream()), result.to_binary()))
 }
 
 const PATH_PUT_PROFILE_CONTENT: &str = "/media_api/profile_content";
@@ -217,9 +314,10 @@ pub async fn put_profile_content(
 }
 
 create_open_api_router!(
-        fn router_profile_content,
-        get_profile_content_info,
-        put_profile_content,
+    fn router_profile_content,
+    get_profile_content_info,
+    get_profile_content_info_binary,
+    put_profile_content,
 );
 
 create_counters!(
@@ -227,5 +325,6 @@ create_counters!(
     MEDIA,
     MEDIA_PROFILE_CONTENT_COUNTERS_LIST,
     get_profile_content_info,
+    get_profile_content_info_binary,
     put_profile_content,
 );
