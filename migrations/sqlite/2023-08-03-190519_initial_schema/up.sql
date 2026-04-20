@@ -883,13 +883,13 @@ CREATE TABLE IF NOT EXISTS current_account_media(
     profile_content_id_5         BIGINT,
     -- Image's max square size multipler.
     -- Value 1.0 is the max size and the size of the original image.
-    grid_crop_size       DOUBLE PRECISION,
+    grid_crop_size       REAL                NOT NULL DEFAULT 1.0,
     -- X coordinate for square top left corner.
     -- Counted from top left corner of the original image.
-    grid_crop_x          DOUBLE PRECISION,
+    grid_crop_x          REAL                NOT NULL DEFAULT 0.0,
     -- Y coordinate for square top left corner.
     -- Counted from top left corner of the original image.
-    grid_crop_y          DOUBLE PRECISION,
+    grid_crop_y          REAL                NOT NULL DEFAULT 0.0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

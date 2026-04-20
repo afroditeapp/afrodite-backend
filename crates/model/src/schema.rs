@@ -343,9 +343,9 @@ diesel::table! {
         profile_content_id_3 -> Nullable<Int8>,
         profile_content_id_4 -> Nullable<Int8>,
         profile_content_id_5 -> Nullable<Int8>,
-        grid_crop_size -> Nullable<Float8>,
-        grid_crop_x -> Nullable<Float8>,
-        grid_crop_y -> Nullable<Float8>,
+        grid_crop_size -> Float4,
+        grid_crop_x -> Float4,
+        grid_crop_y -> Float4,
     }
 }
 

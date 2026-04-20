@@ -176,8 +176,9 @@ const PATH_GET_PROFILE_CONTENT_INFO_BINARY: &str = "/media_api/profile_content_i
 ///   - repeated content entries:
 ///     - 16-byte content UUID
 ///     - 1-byte packed content info
-///   - 1-byte crop presence mask (bit0 size, bit1 x, bit2 y)
-///   - optional crop values in order size, x, y as little-endian f32
+///   - 4-byte crop size as little-endian f32
+///   - 4-byte crop x as little-endian f32
+///   - 4-byte crop y as little-endian f32
 ///
 /// Packed content info byte layout:
 /// - bits 0..2: face verified (0 None, 1 false, 2 true)

@@ -47,27 +47,10 @@ fn append_profile_content(buffer: &mut Vec<u8>, content: &ProfileContent) {
         buffer.push(pack_content_info(item));
     }
 
-    let mut crop_presence_mask = 0u8;
-    if content.grid_crop_size.is_some() {
-        crop_presence_mask |= 0x01;
-    }
-    if content.grid_crop_x.is_some() {
-        crop_presence_mask |= 0x02;
-    }
-    if content.grid_crop_y.is_some() {
-        crop_presence_mask |= 0x04;
-    }
-    buffer.push(crop_presence_mask);
-
-    if let Some(value) = content.grid_crop_size {
-        buffer.extend_from_slice(&(value as f32).to_le_bytes());
-    }
-    if let Some(value) = content.grid_crop_x {
-        buffer.extend_from_slice(&(value as f32).to_le_bytes());
-    }
-    if let Some(value) = content.grid_crop_y {
-        buffer.extend_from_slice(&(value as f32).to_le_bytes());
-    }
+    // Crop values are always present.
+    buffer.extend_from_slice(&content.grid_crop_size.to_le_bytes());
+    buffer.extend_from_slice(&content.grid_crop_x.to_le_bytes());
+    buffer.extend_from_slice(&content.grid_crop_y.to_le_bytes());
 }
 
 fn pack_content_info(info: &ContentInfo) -> u8 {
@@ -137,9 +120,9 @@ mod tests {
                 },
             ],
             verification_status: MediaVerificationStatus { v: 0x0102 },
-            grid_crop_size: Some(1.5),
-            grid_crop_x: None,
-            grid_crop_y: Some(-2.0),
+            grid_crop_size: 1.5,
+            grid_crop_x: 0.0,
+            grid_crop_y: -2.0,
         };
 
         let data = GetProfileContentResult::content_with_version(content, version).to_binary();
@@ -157,13 +140,12 @@ mod tests {
         // => 0000_0001b = 0x01
         assert_eq!(data[52], 0x01);
 
-        // Crop mask: size + y
-        assert_eq!(data[53], 0x05);
-
         let size_bytes = f32::to_le_bytes(1.5);
+        let x_bytes = f32::to_le_bytes(0.0);
         let y_bytes = f32::to_le_bytes(-2.0);
-        assert_eq!(&data[54..58], size_bytes);
-        assert_eq!(&data[58..62], y_bytes);
+        assert_eq!(&data[53..57], size_bytes);
+        assert_eq!(&data[57..61], x_bytes);
+        assert_eq!(&data[61..65], y_bytes);
     }
 
     #[test]

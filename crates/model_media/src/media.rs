@@ -67,6 +67,22 @@ fn value_is_jpeg_image(v: &MediaContentType) -> bool {
     *v == MediaContentType::JpegImage
 }
 
+fn value_default_grid_crop_size() -> f32 {
+    1.0
+}
+
+fn value_default_grid_crop_xy() -> f32 {
+    0.0
+}
+
+fn value_is_default_grid_crop_size(v: &f32) -> bool {
+    *v == value_default_grid_crop_size()
+}
+
+fn value_is_default_grid_crop_xy(v: &f32) -> bool {
+    *v == value_default_grid_crop_xy()
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct MyContentInfo {
     pub cid: ContentId,
@@ -346,9 +362,9 @@ pub struct CurrentAccountMediaRaw {
     pub profile_content_id_3: Option<ContentIdDb>,
     pub profile_content_id_4: Option<ContentIdDb>,
     pub profile_content_id_5: Option<ContentIdDb>,
-    pub grid_crop_size: Option<f64>,
-    pub grid_crop_x: Option<f64>,
-    pub grid_crop_y: Option<f64>,
+    pub grid_crop_size: f32,
+    pub grid_crop_x: f32,
+    pub grid_crop_y: f32,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -362,9 +378,9 @@ pub struct CurrentAccountMediaInternal {
     pub profile_content_id_3: Option<MediaContentRaw>,
     pub profile_content_id_4: Option<MediaContentRaw>,
     pub profile_content_id_5: Option<MediaContentRaw>,
-    pub grid_crop_size: Option<f64>,
-    pub grid_crop_x: Option<f64>,
-    pub grid_crop_y: Option<f64>,
+    pub grid_crop_size: f32,
+    pub grid_crop_x: f32,
+    pub grid_crop_y: f32,
 }
 
 impl CurrentAccountMediaInternal {
@@ -441,12 +457,24 @@ pub struct SetProfileContent {
     ///
     /// Max item count is 6. Extra items are ignored.
     pub content: Vec<ContentId>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub grid_crop_size: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub grid_crop_x: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub grid_crop_y: Option<f64>,
+    #[serde(
+        default = "value_default_grid_crop_size",
+        skip_serializing_if = "value_is_default_grid_crop_size"
+    )]
+    #[schema(default = value_default_grid_crop_size)]
+    pub grid_crop_size: f32,
+    #[serde(
+        default = "value_default_grid_crop_xy",
+        skip_serializing_if = "value_is_default_grid_crop_xy"
+    )]
+    #[schema(default = value_default_grid_crop_xy)]
+    pub grid_crop_x: f32,
+    #[serde(
+        default = "value_default_grid_crop_xy",
+        skip_serializing_if = "value_is_default_grid_crop_xy"
+    )]
+    #[schema(default = value_default_grid_crop_xy)]
+    pub grid_crop_y: f32,
 }
 
 impl SetProfileContent {
@@ -501,12 +529,24 @@ pub struct ProfileContent {
     /// First image is primary profile image which is shown in grid view.
     pub content: Vec<ContentInfo>,
     pub verification_status: MediaVerificationStatus,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub grid_crop_size: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub grid_crop_x: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub grid_crop_y: Option<f64>,
+    #[serde(
+        default = "value_default_grid_crop_size",
+        skip_serializing_if = "value_is_default_grid_crop_size"
+    )]
+    #[schema(default = value_default_grid_crop_size)]
+    pub grid_crop_size: f32,
+    #[serde(
+        default = "value_default_grid_crop_xy",
+        skip_serializing_if = "value_is_default_grid_crop_xy"
+    )]
+    #[schema(default = value_default_grid_crop_xy)]
+    pub grid_crop_x: f32,
+    #[serde(
+        default = "value_default_grid_crop_xy",
+        skip_serializing_if = "value_is_default_grid_crop_xy"
+    )]
+    #[schema(default = value_default_grid_crop_xy)]
+    pub grid_crop_y: f32,
 }
 
 impl From<CurrentAccountMediaInternal> for ProfileContent {
@@ -527,12 +567,24 @@ pub struct MyProfileContent {
     /// First image is primary profile image which is shown in grid view.
     pub content: Vec<MyContentInfo>,
     pub verification_status: MediaVerificationStatus,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub grid_crop_size: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub grid_crop_x: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub grid_crop_y: Option<f64>,
+    #[serde(
+        default = "value_default_grid_crop_size",
+        skip_serializing_if = "value_is_default_grid_crop_size"
+    )]
+    #[schema(default = value_default_grid_crop_size)]
+    pub grid_crop_size: f32,
+    #[serde(
+        default = "value_default_grid_crop_xy",
+        skip_serializing_if = "value_is_default_grid_crop_xy"
+    )]
+    #[schema(default = value_default_grid_crop_xy)]
+    pub grid_crop_x: f32,
+    #[serde(
+        default = "value_default_grid_crop_xy",
+        skip_serializing_if = "value_is_default_grid_crop_xy"
+    )]
+    #[schema(default = value_default_grid_crop_xy)]
+    pub grid_crop_y: f32,
 }
 
 impl From<CurrentAccountMediaInternal> for MyProfileContent {
