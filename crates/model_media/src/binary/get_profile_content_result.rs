@@ -1,29 +1,25 @@
-use crate::{ContentInfo, GetProfileContentResult, ProfileContent, ProfileContentVersion};
+use crate::{ContentInfo, GetProfileContentResultInternal, ProfileContent, ProfileContentVersion};
 
 const RESULT_VARIANT_EMPTY: u8 = 0;
 const RESULT_VARIANT_VERSION_ONLY: u8 = 1;
 const RESULT_VARIANT_CONTENT_WITH_VERSION: u8 = 2;
 
-impl GetProfileContentResult {
+impl GetProfileContentResultInternal {
     pub fn to_binary(&self) -> Vec<u8> {
         let mut buffer = Vec::new();
 
-        match (&self.content, &self.version) {
-            (None, None) => {
+        match self {
+            Self::Empty => {
                 buffer.push(RESULT_VARIANT_EMPTY);
             }
-            (None, Some(version)) => {
+            Self::VersionOnly(version) => {
                 buffer.push(RESULT_VARIANT_VERSION_ONLY);
                 append_profile_content_version(&mut buffer, version);
             }
-            (Some(content), Some(version)) => {
+            Self::ContentWithVersion { content, version } => {
                 buffer.push(RESULT_VARIANT_CONTENT_WITH_VERSION);
                 append_profile_content_version(&mut buffer, version);
                 append_profile_content(&mut buffer, content);
-            }
-            (Some(_), None) => {
-                // Keep wire format consistent: content payload requires version.
-                buffer.push(RESULT_VARIANT_EMPTY);
             }
         }
 
@@ -85,14 +81,14 @@ mod tests {
 
     #[test]
     fn get_profile_content_result_binary_empty() {
-        let data = GetProfileContentResult::empty().to_binary();
+        let data = GetProfileContentResultInternal::Empty.to_binary();
         assert_eq!(data, vec![RESULT_VARIANT_EMPTY]);
     }
 
     #[test]
     fn get_profile_content_result_binary_version_only() {
         let version = test_profile_content_version(7);
-        let data = GetProfileContentResult::current_version_latest_response(version).to_binary();
+        let data = GetProfileContentResultInternal::VersionOnly(version).to_binary();
 
         assert_eq!(data[0], RESULT_VARIANT_VERSION_ONLY);
         assert_eq!(data.len(), 1 + 16);
@@ -125,7 +121,8 @@ mod tests {
             grid_crop_y: -2.0,
         };
 
-        let data = GetProfileContentResult::content_with_version(content, version).to_binary();
+        let data =
+            GetProfileContentResultInternal::ContentWithVersion { content, version }.to_binary();
 
         assert_eq!(data[0], RESULT_VARIANT_CONTENT_WITH_VERSION);
         assert_eq!(&data[1..17], test_uuid(9).as_bytes());

@@ -672,6 +672,33 @@ impl GetProfileContentResult {
     }
 }
 
+/// Internal profile content read result.
+///
+/// This keeps result variants explicit for internal handling and wire encoding.
+#[derive(Debug)]
+pub enum GetProfileContentResultInternal {
+    Empty,
+    VersionOnly(ProfileContentVersion),
+    ContentWithVersion {
+        content: ProfileContent,
+        version: ProfileContentVersion,
+    },
+}
+
+impl From<GetProfileContentResultInternal> for GetProfileContentResult {
+    fn from(value: GetProfileContentResultInternal) -> Self {
+        match value {
+            GetProfileContentResultInternal::Empty => Self::empty(),
+            GetProfileContentResultInternal::VersionOnly(version) => {
+                Self::current_version_latest_response(version)
+            }
+            GetProfileContentResultInternal::ContentWithVersion { content, version } => {
+                Self::content_with_version(content, version)
+            }
+        }
+    }
+}
+
 #[derive(Debug, Serialize, ToSchema)]
 pub struct GetMediaContentResult {
     pub profile_content: MyProfileContent,

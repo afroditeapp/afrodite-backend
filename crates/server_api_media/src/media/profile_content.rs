@@ -9,8 +9,8 @@ use headers::ContentType;
 use model::{AdminNotificationTypes, EventToClientInternal};
 use model_media::{
     AccountId, AccountIdInternal, AccountState, GetProfileContentQueryParams,
-    GetProfileContentResult, Permissions, ProfileContent, SetProfileContent,
-    UpdateProfileContentResult,
+    GetProfileContentResult, GetProfileContentResultInternal, Permissions, ProfileContent,
+    SetProfileContent, UpdateProfileContentResult,
 };
 use server_api::{
     S,
@@ -36,14 +36,14 @@ async fn read_profile_content_info_result(
     permissions: Permissions,
     requested_profile: AccountIdInternal,
     params: GetProfileContentQueryParams,
-) -> Result<GetProfileContentResult, StatusCode> {
+) -> Result<GetProfileContentResultInternal, StatusCode> {
     if account_id.as_id() == requested_profile.as_id() {
         return read_profile_content_info_result_for_account(state, requested_profile, params)
             .await;
     }
 
     if account_state != AccountState::Normal {
-        return Ok(GetProfileContentResult::empty());
+        return Ok(GetProfileContentResultInternal::Empty);
     }
 
     let visibility = state
@@ -64,7 +64,7 @@ async fn read_profile_content_info_result(
     {
         read_profile_content_info_result_for_account(state, requested_profile, params).await
     } else {
-        Ok(GetProfileContentResult::empty())
+        Ok(GetProfileContentResultInternal::Empty)
     }
 }
 
@@ -72,7 +72,7 @@ async fn read_profile_content_info_result_for_account(
     state: &S,
     requested_profile: AccountIdInternal,
     params: GetProfileContentQueryParams,
-) -> Result<GetProfileContentResult, StatusCode> {
+) -> Result<GetProfileContentResultInternal, StatusCode> {
     let internal = state
         .read()
         .media()
@@ -83,14 +83,12 @@ async fn read_profile_content_info_result_for_account(
 
     Ok(match params.version() {
         Some(param_version) if param_version == internal.profile_content_version_uuid => {
-            GetProfileContentResult::current_version_latest_response(
-                internal.profile_content_version_uuid,
-            )
+            GetProfileContentResultInternal::VersionOnly(internal.profile_content_version_uuid)
         }
-        _ => GetProfileContentResult::content_with_version(
-            info,
-            internal.profile_content_version_uuid,
-        ),
+        _ => GetProfileContentResultInternal::ContentWithVersion {
+            content: info,
+            version: internal.profile_content_version_uuid,
+        },
     })
 }
 
@@ -154,7 +152,7 @@ pub async fn get_profile_content_info(
     )
     .await?;
 
-    Ok(result.into())
+    Ok(GetProfileContentResult::from(result).into())
 }
 
 const PATH_GET_PROFILE_CONTENT_INFO_BINARY: &str = "/media_api/profile_content_info_binary/{aid}";
