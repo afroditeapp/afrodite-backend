@@ -7,6 +7,8 @@ bitflags::bitflags! {
         /// All current profile pictures have effective face verified value true.
         /// For empty profile picture list this bit must be unset.
         const PROFILE_CONTENT_FACE_VERIFIED_ALL = 0x2;
+        /// Current security content has effective security verified value true.
+        const SECURITY_CONTENT_VERIFIED = 0x4;
     }
 }
 
@@ -25,6 +27,8 @@ bitflags::bitflags! {
         /// All current profile pictures have effective face verified value true.
         /// For empty profile picture list this bit must be unset.
         const PROFILE_CONTENT_FACE_VERIFIED_ALL = MediaVerificationStatusFlags::PROFILE_CONTENT_FACE_VERIFIED_ALL.bits();
+        /// Current security content has effective security verified value true.
+        const SECURITY_CONTENT_VERIFIED = MediaVerificationStatusFlags::SECURITY_CONTENT_VERIFIED.bits();
     }
 }
 

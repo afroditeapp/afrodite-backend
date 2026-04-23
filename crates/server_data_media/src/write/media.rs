@@ -184,7 +184,7 @@ impl WriteCommandsMedia<'_> {
         let cache_update = db_transaction!(self, move |mut cmds| {
             cmds.media()
                 .media_content()
-                .update_security_content(content_id)?;
+                .update_security_content_and_its_verification_status(content_id)?;
 
             cmds.media()
                 .media_content()
@@ -195,7 +195,8 @@ impl WriteCommandsMedia<'_> {
                 .increment_media_content_sync_version(content_id.content_owner())?;
 
             // Face verified is public info and ususally profile contains at
-            // least one face picture.
+            // least one face picture. Also security content verified is public
+            // info.
             let modification = ProfileContentModificationMetadata::generate();
             cmds.media()
                 .media_content()
@@ -251,6 +252,9 @@ impl WriteCommandsMedia<'_> {
                 cmds.media()
                     .media_content()
                     .reset_face_verified_values(content_id.content_owner())?;
+                cmds.media()
+                    .media_content()
+                    .reset_security_content_verified_values(content_id.content_owner())?;
                 cmds.read()
                     .media()
                     .media_content()

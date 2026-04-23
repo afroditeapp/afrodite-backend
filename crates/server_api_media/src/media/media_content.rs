@@ -39,6 +39,7 @@ pub async fn get_media_content_info(
         .security_content_id
         .as_ref()
         .map(|v| v.clone().into());
+    let security_content_verified = internal.effective_security_content_verified();
     let info: MyProfileContent = internal.into();
 
     let sync_version = state
@@ -51,6 +52,7 @@ pub async fn get_media_content_info(
         profile_content: info,
         profile_content_version,
         security_content,
+        security_content_verified,
         sync_version,
     };
 

@@ -72,6 +72,8 @@ impl CurrentReadMediaMediaContent<'_> {
             grid_crop_y: raw.grid_crop_y,
             profile_content_version_uuid: raw.profile_content_version_uuid,
             security_content_id,
+            security_content_verified: raw.security_content_verified,
+            security_content_verified_manual: raw.security_content_verified_manual,
             security_content_set_time: raw.security_content_set_unix_time,
             profile_content_id_0,
             profile_content_id_1,

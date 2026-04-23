@@ -354,6 +354,8 @@ impl From<MediaContentRaw> for ContentInfoDetailed {
 pub struct CurrentAccountMediaRaw {
     pub account_id: AccountIdDb,
     pub security_content_id: Option<ContentIdDb>,
+    pub security_content_verified: Option<bool>,
+    pub security_content_verified_manual: Option<bool>,
     pub security_content_set_unix_time: Option<UnixTime>,
     pub profile_content_version_uuid: ProfileContentVersion,
     pub profile_content_id_0: Option<ContentIdDb>,
@@ -370,6 +372,8 @@ pub struct CurrentAccountMediaRaw {
 #[derive(Debug, Clone, PartialEq)]
 pub struct CurrentAccountMediaInternal {
     pub security_content_id: Option<MediaContentRaw>,
+    pub security_content_verified: Option<bool>,
+    pub security_content_verified_manual: Option<bool>,
     pub security_content_set_time: Option<UnixTime>,
     pub profile_content_version_uuid: ProfileContentVersion,
     pub profile_content_id_0: Option<MediaContentRaw>,
@@ -384,6 +388,11 @@ pub struct CurrentAccountMediaInternal {
 }
 
 impl CurrentAccountMediaInternal {
+    pub fn effective_security_content_verified(&self) -> Option<bool> {
+        self.security_content_verified_manual
+            .or(self.security_content_verified)
+    }
+
     pub fn iter_all_content(&self) -> impl Iterator<Item = &MediaContentRaw> {
         self.iter_current_profile_content()
             .chain(self.security_content_id.iter())
@@ -442,6 +451,11 @@ impl CurrentAccountMediaInternal {
         }
         if profile_content_exists && all_face_verified {
             flags |= MediaVerificationStatusFlags::PROFILE_CONTENT_FACE_VERIFIED_ALL;
+        }
+        if self.security_content_id.is_some()
+            && self.effective_security_content_verified() == Some(true)
+        {
+            flags |= MediaVerificationStatusFlags::SECURITY_CONTENT_VERIFIED;
         }
 
         flags
@@ -512,6 +526,8 @@ impl UpdateProfileContentResult {
 /// - PROFILE_CONTENT_FACE_VERIFIED_ALL = 0x2. All current profile pictures
 ///   have effective face verified value true. For empty profile picture list
 ///   this bit must be unset.
+/// - SECURITY_CONTENT_VERIFIED = 0x4. Current security content has effective
+///   security verified value true.
 #[derive(Debug, PartialEq, Serialize, ToSchema)]
 pub struct MediaVerificationStatus {
     pub v: i16,
@@ -705,6 +721,8 @@ pub struct GetMediaContentResult {
     pub profile_content_version: ProfileContentVersion,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub security_content: Option<MyContentInfo>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub security_content_verified: Option<bool>,
     pub sync_version: MediaContentSyncVersion,
 }
 

@@ -145,7 +145,7 @@ impl CurrentWriteMediaContent<'_> {
     /// - The content must be in the account's media content.
     /// - The content must have secure capture flag enabled.
     /// - The content must have face detected flag enabled.
-    pub fn update_security_content(
+    pub fn update_security_content_and_its_verification_status(
         &mut self,
         content_id: ContentIdInternal,
     ) -> Result<(), DieselDatabaseError> {
@@ -169,6 +169,8 @@ impl CurrentWriteMediaContent<'_> {
         update(current_account_media.find(content_id.content_owner().as_db_id()))
             .set((
                 security_content_id.eq(content_id.as_db_id()),
+                security_content_verified.eq(None::<bool>),
+                security_content_verified_manual.eq(None::<bool>),
                 security_content_set_unix_time.eq(current_time),
             ))
             .execute(self.conn())
@@ -183,6 +185,23 @@ impl CurrentWriteMediaContent<'_> {
                     ContentModerationState::WaitingBotOrHumanModeration,
                 )?;
         }
+
+        Ok(())
+    }
+
+    pub fn reset_security_content_verified_values(
+        &mut self,
+        account: AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::current_account_media::dsl::*;
+
+        update(current_account_media.filter(account_id.eq(account.as_db_id())))
+            .set((
+                security_content_verified.eq(None::<bool>),
+                security_content_verified_manual.eq(None::<bool>),
+            ))
+            .execute(self.conn())
+            .into_db_error(account)?;
 
         Ok(())
     }

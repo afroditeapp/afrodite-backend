@@ -335,6 +335,8 @@ diesel::table! {
     current_account_media (account_id) {
         account_id -> Int8,
         security_content_id -> Nullable<Int8>,
+        security_content_verified -> Nullable<Bool>,
+        security_content_verified_manual -> Nullable<Bool>,
         security_content_set_unix_time -> Nullable<Int8>,
         profile_content_version_uuid -> Bytea,
         profile_content_id_0 -> Nullable<Int8>,
