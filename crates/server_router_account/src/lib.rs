@@ -31,6 +31,10 @@ impl CommonRoutes {
                 get(server_api::common::get_version),
             )
             .route(
+                api::common::PATH_GET_MANUAL_SERVER_MAINTENANCE_INFO_FOR_ANOTHER_SERVER,
+                get(server_api::common::get_manual_server_maintenance_info_for_another_server),
+            )
+            .route(
                 api::common::PATH_FILE_PACKAGE_ACCESS,
                 get(server_api::common::get_file_package_access),
             )

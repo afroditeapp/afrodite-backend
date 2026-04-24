@@ -31,7 +31,7 @@ use file::{
 use file_email_content::EmailContentFile;
 use file_web_content::WebContentFile;
 pub use model::{AdminBotConfig, BotConfig, ClientFeaturesConfig, ClientFeaturesConfigInternal};
-use model::{CustomReportsConfig, ScheduledTasksConfig};
+use model::{CustomReportsConfig, ScheduledTasksConfig, StringResourceInternal};
 use sha2::{Digest, Sha256};
 use simple_backend_config::{SimpleBackendConfig, args::ServerMode, file::SimpleBackendConfigFile};
 use simple_backend_utils::{
@@ -256,6 +256,14 @@ impl Config {
 
     pub fn automatic_profile_search(&self) -> &AutomaticProfileSearchConfig {
         &self.file.automatic_profile_search
+    }
+
+    pub fn manual_server_maintenance_info_for_another_server(
+        &self,
+    ) -> Option<&StringResourceInternal> {
+        self.file
+            .manual_server_maintenance_info_for_another_server
+            .as_ref()
     }
 
     pub fn general(&self) -> &GeneralConfig {

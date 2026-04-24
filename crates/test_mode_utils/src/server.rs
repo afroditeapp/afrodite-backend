@@ -144,6 +144,7 @@ fn new_config(config: &TestMode, bot_api_port: u16) -> (ConfigFile, SimpleBacken
         demo_accounts: None,
         limits: None,
         profile_name_allowlists: None,
+        manual_server_maintenance_info_for_another_server: None,
     };
 
     let simple_backend_config = SimpleBackendConfigFile {

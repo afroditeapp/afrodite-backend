@@ -4,7 +4,7 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
-use model::ClientVersion;
+use model::{ClientVersion, StringResourceInternal};
 // Re-export for test-mode crate
 pub use model_server_data::EmailAddress;
 use model_server_state::DemoAccountId;
@@ -90,6 +90,9 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # daily_start_time = "9:00"
 # daily_end_time = "21:00"
 
+# [manual_server_maintenance_info_for_another_server]
+# default = "Server maintenance in progress"
+
 # Uncomment to enable client version tracking
 # [api.client_version_tracking]
 # major_min = 0
@@ -135,6 +138,7 @@ pub struct ConfigFile {
     pub demo_accounts: Option<Vec<DemoAccountConfig>>,
     pub limits: Option<LimitsConfig>,
     pub profile_name_allowlists: Option<Vec<ProfiletNameAllowlistConfig>>,
+    pub manual_server_maintenance_info_for_another_server: Option<StringResourceInternal>,
 }
 
 impl ConfigFile {
@@ -151,6 +155,7 @@ impl ConfigFile {
             demo_accounts: None,
             limits: None,
             profile_name_allowlists: None,
+            manual_server_maintenance_info_for_another_server: None,
         }
     }
 

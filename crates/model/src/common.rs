@@ -56,6 +56,12 @@ pub struct BackendVersion {
     pub protocol_version: String,
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct ManualServerMaintenanceInfoForAnotherServer {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub text: Option<crate::StringResource>,
+}
+
 #[derive(Debug, Clone)]
 pub struct ContentProcessingStateChanged {
     /// Server process specific unique ID.

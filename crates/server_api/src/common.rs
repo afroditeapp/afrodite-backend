@@ -14,8 +14,8 @@ use axum::{
 use http::HeaderMap;
 use model::{
     AccessToken, AccessTokenType, AccountIdInternal, BackendVersion, ClientVersion,
-    EventToClientInternal, NotificationEvent, RefreshToken, WebSocketClientInfo,
-    WebSocketClientTypeNumber,
+    EventToClientInternal, ManualServerMaintenanceInfoForAnotherServer, NotificationEvent,
+    RefreshToken, WebSocketClientInfo, WebSocketClientTypeNumber,
 };
 use model_server_data::AuthPair;
 use server_common::websocket::WebSocketError;
@@ -82,6 +82,36 @@ pub const PATH_GET_VERSION: &str = "/common_api/version";
 pub async fn get_version(State(state): State<S>) -> Json<BackendVersion> {
     COMMON.get_version.incr();
     state.backend_version().into()
+}
+
+pub const PATH_GET_MANUAL_SERVER_MAINTENANCE_INFO_FOR_ANOTHER_SERVER: &str =
+    "/common_api/manual_server_maintenance_info_for_another_server";
+
+/// Get manual server maintenance info for another server.
+///
+/// The client uses this API route when connecting to production server
+/// fails and client has demo account server URL configured.
+#[utoipa::path(
+    get,
+    path = PATH_GET_MANUAL_SERVER_MAINTENANCE_INFO_FOR_ANOTHER_SERVER,
+    security(),
+    responses(
+        (status = 200, description = "Successful", body = ManualServerMaintenanceInfoForAnotherServer),
+    )
+)]
+pub async fn get_manual_server_maintenance_info_for_another_server(
+    State(state): State<S>,
+) -> Json<ManualServerMaintenanceInfoForAnotherServer> {
+    COMMON
+        .get_manual_server_maintenance_info_for_another_server
+        .incr();
+
+    let text = state
+        .config()
+        .manual_server_maintenance_info_for_another_server()
+        .map(|v| v.clone().into());
+
+    ManualServerMaintenanceInfoForAnotherServer { text }.into()
 }
 
 pub use utils::api::PATH_CONNECT;
@@ -624,6 +654,7 @@ create_counters!(
     COMMON,
     COMMON_COUNTERS_LIST,
     get_version,
+    get_manual_server_maintenance_info_for_another_server,
     get_connect_websocket,
     websocket_access_token_not_found,
     websocket_refresh_token_not_found,
