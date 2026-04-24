@@ -261,6 +261,71 @@ impl WriteCommandsProfileAdminContent<'_> {
 
         Ok(())
     }
+
+    pub async fn change_security_content_verified_value(
+        &self,
+        moderator_id: AccountIdInternal,
+        account: AccountIdInternal,
+        value: Option<bool>,
+    ) -> Result<(), DataError> {
+        let current_account_media = self
+            .db_read(move |mut cmds| cmds.media().media_content().current_account_media(account))
+            .await?;
+
+        let moderator_is_bot = self
+            .db_read(move |mut cmds| {
+                cmds.common()
+                    .state()
+                    .other_shared_state(moderator_id)
+                    .map(|v| v.is_bot())
+            })
+            .await?;
+
+        let value_already_set = if moderator_is_bot {
+            current_account_media.security_content_verified == value
+        } else {
+            current_account_media.security_content_verified_manual == value
+        };
+        if value_already_set {
+            return Ok(());
+        }
+
+        let modification = db_transaction!(self, move |mut cmds| {
+            cmds.media()
+                .media_content()
+                .increment_media_content_sync_version(account)?;
+
+            if moderator_is_bot {
+                cmds.media_admin()
+                    .media_content()
+                    .change_security_content_verified_value(account, value)?;
+            } else {
+                cmds.media_admin()
+                    .media_content()
+                    .change_security_content_verified_manual_value(account, value)?;
+            }
+
+            // Security content verified value is public info, so update
+            // public profile content version and edit time.
+            let modification = ProfileContentModificationMetadata::generate();
+            cmds.media()
+                .media_content()
+                .required_changes_for_public_profile_content_update(account, &modification)?;
+
+            Ok(modification)
+        })?;
+
+        self.handle()
+            .media()
+            .public_profile_content_cache_update(account, &modification)
+            .await?;
+
+        self.events()
+            .send_connected_event(account, EventToClientInternal::MediaContentChanged)
+            .await?;
+
+        Ok(())
+    }
 }
 
 pub enum ContentModerationMode {

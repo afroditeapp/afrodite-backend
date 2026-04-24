@@ -147,4 +147,36 @@ impl CurrentWriteMediaAdminMediaContent<'_> {
 
         Ok(())
     }
+
+    pub fn change_security_content_verified_value(
+        &mut self,
+        account: AccountIdInternal,
+        value: Option<bool>,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::current_account_media;
+
+        update(current_account_media::table)
+            .filter(current_account_media::account_id.eq(account.as_db_id()))
+            .set(current_account_media::security_content_verified.eq(value))
+            .execute(self.conn())
+            .into_db_error(account)?;
+
+        Ok(())
+    }
+
+    pub fn change_security_content_verified_manual_value(
+        &mut self,
+        account: AccountIdInternal,
+        value: Option<bool>,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::current_account_media;
+
+        update(current_account_media::table)
+            .filter(current_account_media::account_id.eq(account.as_db_id()))
+            .set(current_account_media::security_content_verified_manual.eq(value))
+            .execute(self.conn())
+            .into_db_error(account)?;
+
+        Ok(())
+    }
 }
