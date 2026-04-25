@@ -24,6 +24,9 @@ impl PrivateRoutes {
             .merge(api::media::router_notification(self.state.clone()))
             // Media admin
             .merge(api::media_admin::router_admin_content(self.state.clone()))
+            .merge(api::media_admin::router_admin_security_content(
+                self.state.clone(),
+            ))
             .merge(api::media_admin::router_admin_moderation(
                 self.state.clone(),
             ))

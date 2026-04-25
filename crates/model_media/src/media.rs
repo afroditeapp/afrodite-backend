@@ -616,15 +616,21 @@ impl From<CurrentAccountMediaInternal> for MyProfileContent {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
-pub struct SecurityContent {
+pub struct SecurityContentAdminInfo {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub c: Option<MyContentInfo>,
+    pub content: Option<MyContentInfo>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub security_content_verified: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub security_content_verified_manual: Option<bool>,
 }
 
-impl SecurityContent {
+impl SecurityContentAdminInfo {
     pub fn new(value: CurrentAccountMediaInternal) -> Self {
         Self {
-            c: value.security_content_id.map(|c| c.into()),
+            content: value.security_content_id.map(|c| c.into()),
+            security_content_verified: value.security_content_verified,
+            security_content_verified_manual: value.security_content_verified_manual,
         }
     }
 }
