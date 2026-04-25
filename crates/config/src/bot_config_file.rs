@@ -282,9 +282,9 @@ pub struct BaseBotConfig {
     /// Overrides image file configs and use randomly generated single color
     /// image as profile image.
     random_color_image: Option<bool>,
-    pub grid_crop_size: Option<f64>,
-    pub grid_crop_x: Option<f64>,
-    pub grid_crop_y: Option<f64>,
+    pub grid_crop_size: Option<f32>,
+    pub grid_crop_x: Option<f32>,
+    pub grid_crop_y: Option<f32>,
     /// Latitude
     pub lat: Option<f64>,
     /// Longitude

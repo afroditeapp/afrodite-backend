@@ -11,7 +11,7 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// MediaVerificationStatus : Value for profile verification status flags.  - PROFILE_CONTENT_FACE_VERIFIED_ANY = 0x1. At least one current profile   picture has effective face verified value true. - PROFILE_CONTENT_FACE_VERIFIED_ALL = 0x2. All current profile pictures   have effective face verified value true. For empty profile picture list   this bit must be unset.
+/// MediaVerificationStatus : Value for profile verification status flags.  - PROFILE_CONTENT_FACE_VERIFIED_ANY = 0x1. At least one current profile   picture has effective face verified value true. - PROFILE_CONTENT_FACE_VERIFIED_ALL = 0x2. All current profile pictures   have effective face verified value true. For empty profile picture list   this bit must be unset. - SECURITY_CONTENT_VERIFIED = 0x4. Current security content has effective   security verified value true.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct MediaVerificationStatus {
     #[serde(rename = "v")]
@@ -19,7 +19,7 @@ pub struct MediaVerificationStatus {
 }
 
 impl MediaVerificationStatus {
-    /// Value for profile verification status flags.  - PROFILE_CONTENT_FACE_VERIFIED_ANY = 0x1. At least one current profile   picture has effective face verified value true. - PROFILE_CONTENT_FACE_VERIFIED_ALL = 0x2. All current profile pictures   have effective face verified value true. For empty profile picture list   this bit must be unset.
+    /// Value for profile verification status flags.  - PROFILE_CONTENT_FACE_VERIFIED_ANY = 0x1. At least one current profile   picture has effective face verified value true. - PROFILE_CONTENT_FACE_VERIFIED_ALL = 0x2. All current profile pictures   have effective face verified value true. For empty profile picture list   this bit must be unset. - SECURITY_CONTENT_VERIFIED = 0x4. Current security content has effective   security verified value true.
     pub fn new(v: i32) -> MediaVerificationStatus {
         MediaVerificationStatus {
             v,

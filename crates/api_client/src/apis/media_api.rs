@@ -92,11 +92,12 @@ pub enum GetProfileContentInfoError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`get_security_content_info`]
+/// struct for typed errors of method [`get_profile_content_info_binary`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum GetSecurityContentInfoError {
+pub enum GetProfileContentInfoBinaryError {
     Status401(),
+    Status429(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
@@ -448,14 +449,22 @@ pub async fn get_profile_content_info(configuration: &configuration::Configurati
     }
 }
 
-/// # Access  - Own account - Permission [model::Permissions::admin_moderate_media_content]
-pub async fn get_security_content_info(configuration: &configuration::Configuration, aid: &str) -> Result<models::SecurityContent, Error<GetSecurityContentInfoError>> {
+/// The first byte is result variant: - 0 = Empty - 1 = VersionOnly - 2 = ContentWithVersion  Variant payloads: - Empty: no payload - VersionOnly: 16-byte profile content version UUID - ContentWithVersion:   - 16-byte profile content version UUID   - 1-byte verification status (low 8 bits of internal flags)   - 1-byte content count (max 6)   - repeated content entries:     - 16-byte content UUID     - 1-byte packed content info   - 4-byte crop size as little-endian f32   - 4-byte crop x as little-endian f32   - 4-byte crop y as little-endian f32  Packed content info byte layout: - bits 0..2: face verified (0 None, 1 false, 2 true) - bit 3: face detected - bit 4: accepted - bits 5..7: media content type
+pub async fn get_profile_content_info_binary(configuration: &configuration::Configuration, aid: &str, version: Option<&str>, is_match: Option<bool>) -> Result<reqwest::Response, Error<GetProfileContentInfoBinaryError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_aid = aid;
+    let p_query_version = version;
+    let p_query_is_match = is_match;
 
-    let uri_str = format!("{}/media_api/security_content_info/{aid}", configuration.base_path, aid=crate::apis::urlencode(p_path_aid));
+    let uri_str = format!("{}/media_api/profile_content_info_binary/{aid}", configuration.base_path, aid=crate::apis::urlencode(p_path_aid));
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
+    if let Some(ref param_value) = p_query_version {
+        req_builder = req_builder.query(&[("version", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_is_match {
+        req_builder = req_builder.query(&[("is_match", &param_value.to_string())]);
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -467,23 +476,12 @@ pub async fn get_security_content_info(configuration: &configuration::Configurat
     let resp = configuration.client.execute(req).await?;
 
     let status = resp.status();
-    let content_type = resp
-        .headers()
-        .get("content-type")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("application/octet-stream");
-    let content_type = super::ContentType::from(content_type);
 
     if !status.is_client_error() && !status.is_server_error() {
-        let content = resp.text().await?;
-        match content_type {
-            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::SecurityContent`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::SecurityContent`")))),
-        }
+        Ok(resp)
     } else {
         let content = resp.text().await?;
-        let entity: Option<GetSecurityContentInfoError> = serde_json::from_str(&content).ok();
+        let entity: Option<GetProfileContentInfoBinaryError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

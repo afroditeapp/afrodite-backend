@@ -17,12 +17,12 @@ pub struct MyProfileContent {
     /// First image is primary profile image which is shown in grid view.
     #[serde(rename = "content")]
     pub content: Vec<models::MyContentInfo>,
-    #[serde(rename = "grid_crop_size", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub grid_crop_size: Option<Option<f64>>,
-    #[serde(rename = "grid_crop_x", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub grid_crop_x: Option<Option<f64>>,
-    #[serde(rename = "grid_crop_y", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub grid_crop_y: Option<Option<f64>>,
+    #[serde(rename = "grid_crop_size", skip_serializing_if = "Option::is_none")]
+    pub grid_crop_size: Option<f32>,
+    #[serde(rename = "grid_crop_x", skip_serializing_if = "Option::is_none")]
+    pub grid_crop_x: Option<f32>,
+    #[serde(rename = "grid_crop_y", skip_serializing_if = "Option::is_none")]
+    pub grid_crop_y: Option<f32>,
     #[serde(rename = "verification_status")]
     pub verification_status: Box<models::MediaVerificationStatus>,
 }

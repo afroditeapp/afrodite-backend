@@ -189,6 +189,7 @@ src/models/location.rs
 src/models/login_result.rs
 src/models/maintenance_task.rs
 src/models/manager_instance_name_list.rs
+src/models/manual_server_maintenance_info_for_another_server.rs
 src/models/map_bounds.rs
 src/models/map_config.rs
 src/models/map_coordinate.rs
@@ -247,6 +248,7 @@ src/models/post_media_content_face_verified_value.rs
 src/models/post_media_content_face_verified_value_item.rs
 src/models/post_moderate_media_content.rs
 src/models/post_moderate_profile_string.rs
+src/models/post_security_content_verified_value.rs
 src/models/post_start_data_export.rs
 src/models/post_video_call_url_result.rs
 src/models/predefined_banner.rs
@@ -322,10 +324,9 @@ src/models/save_info_banners.rs
 src/models/scheduled_task_status.rs
 src/models/scheduled_task_type.rs
 src/models/scheduled_task_type_value.rs
-src/models/scheduled_tasks_config.rs
 src/models/search_age_range.rs
 src/models/search_groups.rs
-src/models/security_content.rs
+src/models/security_content_admin_info.rs
 src/models/seen_message.rs
 src/models/send_like.rs
 src/models/send_like_result.rs
@@ -333,7 +334,6 @@ src/models/send_message_result.rs
 src/models/send_verify_email_message_result.rs
 src/models/sent_blocks_page.rs
 src/models/sent_message_id_list.rs
-src/models/server_config.rs
 src/models/server_maintenance_status.rs
 src/models/server_message_type.rs
 src/models/set_account_ban_state.rs

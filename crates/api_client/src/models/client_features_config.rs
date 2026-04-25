@@ -27,8 +27,6 @@ pub struct ClientFeaturesConfig {
     pub news: Option<Option<Box<models::NewsConfig>>>,
     #[serde(rename = "profile", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub profile: Option<Option<Box<models::ProfileConfig>>>,
-    #[serde(rename = "server", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub server: Option<Option<Box<models::ServerConfig>>>,
 }
 
 impl ClientFeaturesConfig {
@@ -41,7 +39,6 @@ impl ClientFeaturesConfig {
             map: None,
             news: None,
             profile: None,
-            server: None,
         }
     }
 }

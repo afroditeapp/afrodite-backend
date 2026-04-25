@@ -204,9 +204,9 @@ impl BotAction for SetContent {
 
             let info = SetProfileContent {
                 content: vec![content_id],
-                grid_crop_size: bot_info.grid_crop_size.into(),
-                grid_crop_x: bot_info.grid_crop_x.into(),
-                grid_crop_y: bot_info.grid_crop_y.into(),
+                grid_crop_size: bot_info.grid_crop_size,
+                grid_crop_x: bot_info.grid_crop_x,
+                grid_crop_y: bot_info.grid_crop_y,
             };
             put_profile_content(&state.api(), info)
                 .await

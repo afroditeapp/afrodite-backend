@@ -133,6 +133,7 @@ Class | Method | HTTP request | Description
 *CommonApi* | [**get_connect_websocket**](docs/CommonApi.md#get_connect_websocket) | **GET** /common_api/connect | Connect to server using WebSocket after getting refresh and access tokens.
 *CommonApi* | [**get_data_export_archive**](docs/CommonApi.md#get_data_export_archive) | **GET** /common_api/data_export_archive | Download current data export archive
 *CommonApi* | [**get_data_export_state**](docs/CommonApi.md#get_data_export_state) | **GET** /common_api/data_export_state | 
+*CommonApi* | [**get_manual_server_maintenance_info_for_another_server**](docs/CommonApi.md#get_manual_server_maintenance_info_for_another_server) | **GET** /common_api/manual_server_maintenance_info_for_another_server | Get manual server maintenance info for another server.
 *CommonApi* | [**get_pending_app_notifications**](docs/CommonApi.md#get_pending_app_notifications) | **GET** /common_api/pending_app_notifications | 
 *CommonApi* | [**get_push_notification_info**](docs/CommonApi.md#get_push_notification_info) | **GET** /common_api/get_push_notification_info | 
 *CommonApi* | [**get_version**](docs/CommonApi.md#get_version) | **GET** /common_api/version | Get backend version.
@@ -184,7 +185,7 @@ Class | Method | HTTP request | Description
 *MediaApi* | [**get_media_app_notification_settings**](docs/MediaApi.md#get_media_app_notification_settings) | **GET** /media_api/get_media_app_notification_settings | 
 *MediaApi* | [**get_media_content_info**](docs/MediaApi.md#get_media_content_info) | **GET** /media_api/media_content_info | Get my profile and security content
 *MediaApi* | [**get_profile_content_info**](docs/MediaApi.md#get_profile_content_info) | **GET** /media_api/profile_content_info/{aid} | Get current profile content for selected profile.
-*MediaApi* | [**get_security_content_info**](docs/MediaApi.md#get_security_content_info) | **GET** /media_api/security_content_info/{aid} | Get current security content for selected profile.
+*MediaApi* | [**get_profile_content_info_binary**](docs/MediaApi.md#get_profile_content_info_binary) | **GET** /media_api/profile_content_info_binary/{aid} | Get current profile content for selected profile as compact binary payload.
 *MediaApi* | [**post_media_app_notification_settings**](docs/MediaApi.md#post_media_app_notification_settings) | **POST** /media_api/post_media_app_notification_settings | 
 *MediaApi* | [**post_profile_content_report**](docs/MediaApi.md#post_profile_content_report) | **POST** /media_api/profile_content_report | Report profile content.
 *MediaApi* | [**put_content_to_content_slot**](docs/MediaApi.md#put_content_to_content_slot) | **PUT** /media_api/content_slot/{slot_id} | Upload content to server. The content is saved to content processing slot when account state is [model::AccountState::InitialSetup]. In other states the slot number is ignored and content goes directly to moderation.
@@ -194,10 +195,12 @@ Class | Method | HTTP request | Description
 *MediaAdminApi* | [**get_image_processing_config_warnings**](docs/MediaAdminApi.md#get_image_processing_config_warnings) | **GET** /media_api/image_processing_config_warnings | Get image processing config warnings
 *MediaAdminApi* | [**get_media_content_face_verified_null_list**](docs/MediaAdminApi.md#get_media_content_face_verified_null_list) | **GET** /media_api/media_content_face_verified_null_list | Get first page of accounts with security selfie and content where `face_verified` is NULL and `face_detected` is true or `face_detected_manual` is true. Oldest security content set time is first and count 25.
 *MediaAdminApi* | [**get_media_content_pending_moderation_list**](docs/MediaAdminApi.md#get_media_content_pending_moderation_list) | **GET** /media_api/media_content_pending_moderation | Get first page of pending media content moderations. Oldest item is first and count 25.
+*MediaAdminApi* | [**get_security_content_info**](docs/MediaAdminApi.md#get_security_content_info) | **GET** /media_api/security_content_info/{aid} | Get current security content for selected profile.
 *MediaAdminApi* | [**post_image_processing_config**](docs/MediaAdminApi.md#post_image_processing_config) | **POST** /media_api/image_processing_config | Update image processing configuration
 *MediaAdminApi* | [**post_media_content_face_detected_value**](docs/MediaAdminApi.md#post_media_content_face_detected_value) | **POST** /media_api/media_content_face_detected_value | Change media content face detected value
 *MediaAdminApi* | [**post_media_content_face_verified_value**](docs/MediaAdminApi.md#post_media_content_face_verified_value) | **POST** /media_api/media_content_face_verified_value | Change media content face verified value
 *MediaAdminApi* | [**post_moderate_media_content**](docs/MediaAdminApi.md#post_moderate_media_content) | **POST** /media_api/moderate_media_content | Rejected category and details can be set only when the content is rejected.
+*MediaAdminApi* | [**post_security_content_verified_value**](docs/MediaAdminApi.md#post_security_content_verified_value) | **POST** /media_api/security_content_verified_value | Change security content verified value
 *ProfileApi* | [**delete_favorite_profile**](docs/ProfileApi.md#delete_favorite_profile) | **DELETE** /profile_api/favorite_profile | Delete favorite profile
 *ProfileApi* | [**get_automatic_profile_search_settings**](docs/ProfileApi.md#get_automatic_profile_search_settings) | **GET** /profile_api/automatic_profile_search_settings | 
 *ProfileApi* | [**get_favorite_profiles**](docs/ProfileApi.md#get_favorite_profiles) | **GET** /profile_api/favorite_profiles | Get list of all favorite profiles.
@@ -412,6 +415,7 @@ Class | Method | HTTP request | Description
  - [LoginResult](docs/LoginResult.md)
  - [MaintenanceTask](docs/MaintenanceTask.md)
  - [ManagerInstanceNameList](docs/ManagerInstanceNameList.md)
+ - [ManualServerMaintenanceInfoForAnotherServer](docs/ManualServerMaintenanceInfoForAnotherServer.md)
  - [MapBounds](docs/MapBounds.md)
  - [MapConfig](docs/MapConfig.md)
  - [MapCoordinate](docs/MapCoordinate.md)
@@ -469,6 +473,7 @@ Class | Method | HTTP request | Description
  - [PostMediaContentFaceVerifiedValueItem](docs/PostMediaContentFaceVerifiedValueItem.md)
  - [PostModerateMediaContent](docs/PostModerateMediaContent.md)
  - [PostModerateProfileString](docs/PostModerateProfileString.md)
+ - [PostSecurityContentVerifiedValue](docs/PostSecurityContentVerifiedValue.md)
  - [PostStartDataExport](docs/PostStartDataExport.md)
  - [PostVideoCallUrlResult](docs/PostVideoCallUrlResult.md)
  - [PredefinedBanner](docs/PredefinedBanner.md)
@@ -544,10 +549,9 @@ Class | Method | HTTP request | Description
  - [ScheduledTaskStatus](docs/ScheduledTaskStatus.md)
  - [ScheduledTaskType](docs/ScheduledTaskType.md)
  - [ScheduledTaskTypeValue](docs/ScheduledTaskTypeValue.md)
- - [ScheduledTasksConfig](docs/ScheduledTasksConfig.md)
  - [SearchAgeRange](docs/SearchAgeRange.md)
  - [SearchGroups](docs/SearchGroups.md)
- - [SecurityContent](docs/SecurityContent.md)
+ - [SecurityContentAdminInfo](docs/SecurityContentAdminInfo.md)
  - [SeenMessage](docs/SeenMessage.md)
  - [SendLike](docs/SendLike.md)
  - [SendLikeResult](docs/SendLikeResult.md)
@@ -555,7 +559,6 @@ Class | Method | HTTP request | Description
  - [SendVerifyEmailMessageResult](docs/SendVerifyEmailMessageResult.md)
  - [SentBlocksPage](docs/SentBlocksPage.md)
  - [SentMessageIdList](docs/SentMessageIdList.md)
- - [ServerConfig](docs/ServerConfig.md)
  - [ServerMaintenanceStatus](docs/ServerMaintenanceStatus.md)
  - [ServerMessageType](docs/ServerMessageType.md)
  - [SetAccountBanState](docs/SetAccountBanState.md)
