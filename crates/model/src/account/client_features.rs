@@ -319,6 +319,10 @@ pub struct VerificationConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub face: bool,
+    /// Show security content verification status and filters.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub security_content: bool,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]
