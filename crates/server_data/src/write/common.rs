@@ -14,10 +14,15 @@ mod client_config;
 mod data_export;
 mod notification;
 mod push_notification;
+mod server_info;
 
 define_cmd_wrapper_write!(WriteCommandsCommon);
 
 impl WriteCommandsCommon<'_> {
+    pub fn server_info(&mut self) -> server_info::WriteCommandsCommonServerInfo<'_> {
+        server_info::WriteCommandsCommonServerInfo::new(self.handle())
+    }
+
     pub fn bot_config(&mut self) -> bot_config::WriteCommandsCommonBotConfig<'_> {
         bot_config::WriteCommandsCommonBotConfig::new(self.handle())
     }

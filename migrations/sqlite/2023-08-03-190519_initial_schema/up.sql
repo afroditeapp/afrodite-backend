@@ -2,6 +2,21 @@
 
 ---------- Tables for server component common ----------
 
+CREATE TABLE IF NOT EXISTS info_server_version(
+    row_type INTEGER PRIMARY KEY NOT NULL,
+    version  TEXT                NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS info_server_start_time(
+    row_type  INTEGER PRIMARY KEY NOT NULL,
+    unix_time BIGINT              NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS info_scheduled_tasks_start_time(
+    row_type  INTEGER PRIMARY KEY NOT NULL,
+    unix_time BIGINT              NOT NULL
+);
+
 -- All used account IDs. Account ID is not removed from here
 -- when account data is removed.
 CREATE TABLE IF NOT EXISTS used_account_ids(

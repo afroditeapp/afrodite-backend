@@ -128,6 +128,16 @@ impl ScheduledTaskManager {
         &self,
         quit_notification: &mut ServerQuitWatcher,
     ) -> Result<(), ScheduledTaskError> {
+        let start_time = UnixTime::current_time();
+        db_write_raw!(self.state, move |cmds| {
+            cmds.common()
+                .server_info()
+                .update_scheduled_tasks_start_time(start_time)
+                .await
+        })
+        .await
+        .change_context(ScheduledTaskError::DatabaseError)?;
+
         self.run_tasks_for_individual_accounts(quit_notification)
             .await?;
         self.run_tasks_for_logged_in_clients(quit_notification)

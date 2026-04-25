@@ -31,19 +31,24 @@ use config::Config;
 use content_processing::{ContentProcessingManager, ContentProcessingManagerQuitHandle};
 use email::ServerEmailDataProvider;
 use hourly_tasks::{HourlyTaskManager, HourlyTaskManagerQuitHandle};
-use model::{AccountIdInternal, EmailMessages};
+use model::{AccountIdInternal, EmailMessages, UnixTime};
 use perf::ALL_COUNTERS;
 use profile_search::{ProfileSearchManager, ProfileSearchManagerQuitHandle};
 use push_notifications::ServerPushNotificationStateProvider;
 use scheduled_tasks::{ScheduledTaskManager, ScheduledTaskManagerQuitHandle};
-use server_api::app::{DataSignerProvider, GetConfig, WriteDynamicConfig};
+use server_api::{
+    app::{DataSignerProvider, GetConfig, WriteDynamicConfig},
+    db_write_raw,
+};
 use server_common::push_notifications::{
     PushNotificationManager, PushNotificationManagerQuitHandle,
 };
 use server_data::{
+    app::WriteData,
     content_processing::ContentProcessingManagerData,
     data_export::DataExportManagerData,
     db_manager::DatabaseManager,
+    write::GetWriteCommandsCommon,
     write_commands::{WriteCmdWatcher, WriteCommandRunnerHandle},
 };
 use server_data_all::{app::DataAllUtilsImpl, load::DbDataToCacheLoader};
@@ -262,6 +267,13 @@ impl BusinessLogic for DatingAppBusinessLogic {
         simple_state: SimpleBackendAppState,
         server_quit_watcher: ServerQuitWatcher,
     ) -> Self::AppState {
+        let server_start_time = UnixTime::current_time();
+        let server_version = self
+            .config
+            .simple_backend()
+            .backend_semver_version()
+            .to_string();
+
         let (push_notification_sender, push_notification_receiver) =
             server_common::push_notifications::channel();
         let (email_sender, email_receiver) =
@@ -325,6 +337,15 @@ impl BusinessLogic for DatingAppBusinessLogic {
             .load_or_generate_keys(self.config.simple_backend())
             .await
             .expect("Data signer init failed");
+
+        db_write_raw!(app_state, move |cmds| {
+            cmds.common()
+                .server_info()
+                .upsert_server_info(server_version, server_start_time)
+                .await
+        })
+        .await
+        .expect("Saving server info failed");
 
         let dynamic_config_manager_quit_handle =
             DynamicConfigManager::new_manager(dynamic_config_manager_receiver, app_state.clone());

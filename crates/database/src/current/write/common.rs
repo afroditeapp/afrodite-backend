@@ -11,12 +11,17 @@ mod notification;
 pub mod profile_attributes;
 mod push_notification;
 mod report;
+mod server_info;
 mod state;
 mod token;
 
 define_current_write_commands!(CurrentWriteCommon);
 
 impl<'a> CurrentWriteCommon<'a> {
+    pub fn server_info(self) -> server_info::CurrentWriteCommonServerInfo<'a> {
+        server_info::CurrentWriteCommonServerInfo::new(self.cmds)
+    }
+
     pub fn profile_attributes(self) -> profile_attributes::CurrentWriteCommonProfileAttributes<'a> {
         profile_attributes::CurrentWriteCommonProfileAttributes::new(self.cmds)
     }

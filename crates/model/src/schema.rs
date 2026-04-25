@@ -532,6 +532,27 @@ diesel::table! {
 }
 
 diesel::table! {
+    info_scheduled_tasks_start_time (row_type) {
+        row_type -> Int4,
+        unix_time -> Int8,
+    }
+}
+
+diesel::table! {
+    info_server_start_time (row_type) {
+        row_type -> Int4,
+        unix_time -> Int8,
+    }
+}
+
+diesel::table! {
+    info_server_version (row_type) {
+        row_type -> Int4,
+        version -> Text,
+    }
+}
+
+diesel::table! {
     ip_address_usage_statistics (account_id, ip_address) {
         account_id -> Int8,
         ip_address -> Bytea,
@@ -1023,6 +1044,9 @@ diesel::allow_tables_to_appear_in_same_query!(
     history_profile_statistics_count_changes_non_binary,
     history_profile_statistics_count_changes_woman,
     image_processing_config,
+    info_scheduled_tasks_start_time,
+    info_server_start_time,
+    info_server_version,
     ip_address_usage_statistics,
     latest_seen_message,
     latest_seen_message_pending_delivery,
