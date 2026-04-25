@@ -21,7 +21,7 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-const PATH_GET_SECURITY_CONTENT_INFO: &str = "/media_api/security_content_info/{aid}";
+const PATH_GET_SECURITY_CONTENT_ADMIN_INFO: &str = "/media_api/security_content_admin_info/{aid}";
 
 /// Get current security content for selected profile.
 ///
@@ -32,7 +32,7 @@ const PATH_GET_SECURITY_CONTENT_INFO: &str = "/media_api/security_content_info/{
 /// - Permission [model::Permissions::admin_edit_security_content_verified_value]
 #[utoipa::path(
     get,
-    path = PATH_GET_SECURITY_CONTENT_INFO,
+    path = PATH_GET_SECURITY_CONTENT_ADMIN_INFO,
     params(AccountId),
     responses(
         (status = 200, description = "Successful.", body = SecurityContentAdminInfo),
@@ -41,12 +41,12 @@ const PATH_GET_SECURITY_CONTENT_INFO: &str = "/media_api/security_content_info/{
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_security_content_info(
+pub async fn get_security_content_admin_info(
     State(state): State<S>,
     Path(requested_account_id): Path<AccountId>,
     Extension(permissions): Extension<Permissions>,
 ) -> Result<Json<SecurityContentAdminInfo>, StatusCode> {
-    MEDIA_ADMIN.get_security_content_info.incr();
+    MEDIA_ADMIN.get_security_content_admin_info.incr();
 
     let access_allowed = permissions.admin_moderate_media_content
         || permissions.admin_edit_media_content_face_verified_value
@@ -131,7 +131,7 @@ pub async fn post_security_content_verified_value(
 
 create_open_api_router!(
     fn router_admin_security_content,
-    get_security_content_info,
+    get_security_content_admin_info,
     post_security_content_verified_value,
 );
 
@@ -139,6 +139,6 @@ create_counters!(
     MediaAdminCounters,
     MEDIA_ADMIN,
     MEDIA_ADMIN_SECURITY_CONTENT_COUNTERS_LIST,
-    get_security_content_info,
+    get_security_content_admin_info,
     post_security_content_verified_value,
 );
