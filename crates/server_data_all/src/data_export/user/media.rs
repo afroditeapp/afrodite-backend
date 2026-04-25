@@ -3,7 +3,8 @@ use database_media::current::read::GetDbReadCommandsMedia;
 use model::{ContentId, ContentIdDb, ProfileContentVersion, UnixTime};
 use model_chat::MediaAppNotificationSettings;
 use model_media::{
-    ContentInfoDetailed, MediaContentRaw, MediaStateRaw, MyProfileContent, SecurityContentAdminInfo,
+    ContentInfoDetailed, MediaContentRaw, MediaStateRaw, MyProfileContent,
+    SecurityContentUserDataExport,
 };
 use serde::Serialize;
 use server_data::data_export::SourceAccount;
@@ -11,8 +12,7 @@ use server_data::data_export::SourceAccount;
 #[derive(Serialize)]
 pub struct UserDataExportJsonMedia {
     media_state: MediaStateRaw,
-    security_content: SecurityContentAdminInfo,
-    security_content_set_time: Option<UnixTime>,
+    security_content: SecurityContentUserDataExport,
     profile_content_version: ProfileContentVersion,
     profile_content: MyProfileContent,
     content_extra_info: Vec<DataExportMediaContent>,
@@ -33,8 +33,7 @@ impl UserDataExportJsonMedia {
             .get_account_media_content(id)?;
         let data = Self {
             media_state: current.media().get_media_state(id)?,
-            security_content: SecurityContentAdminInfo::new(current_media.clone()),
-            security_content_set_time: current_media.security_content_set_time,
+            security_content: SecurityContentUserDataExport::new(current_media.clone()),
             profile_content_version: current_media.profile_content_version_uuid,
             profile_content: current_media.into(),
             content_extra_info: media_content_raw

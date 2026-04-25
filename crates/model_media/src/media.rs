@@ -635,6 +635,29 @@ impl SecurityContentAdminInfo {
     }
 }
 
+#[derive(Serialize)]
+pub struct SecurityContentUserDataExport {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub content: Option<MyContentInfo>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub security_content_verified: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub security_content_verified_manual: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub security_content_set_time: Option<UnixTime>,
+}
+
+impl SecurityContentUserDataExport {
+    pub fn new(value: CurrentAccountMediaInternal) -> Self {
+        Self {
+            content: value.security_content_id.map(|c| c.into()),
+            security_content_verified: value.security_content_verified,
+            security_content_verified_manual: value.security_content_verified_manual,
+            security_content_set_time: value.security_content_set_time,
+        }
+    }
+}
+
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct GetContentQueryParams {
     /// If false media content access is allowed when profile is set as public.
