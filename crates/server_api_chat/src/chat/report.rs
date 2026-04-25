@@ -44,7 +44,7 @@ pub async fn post_chat_message_report(
     state.api_limits(account_id).common().send_report().await?;
 
     let signed_message = base64::engine::general_purpose::STANDARD
-        .decode(update.backend_signed_message_base64)
+        .decode(update.server_signed_message_base64)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     let decryption_key = base64::engine::general_purpose::STANDARD
@@ -75,7 +75,7 @@ pub async fn post_chat_message_report(
         message_unix_time: data.unix_time,
         message_symmetric_key: decryption_key,
         client_message_bytes,
-        backend_signed_message_bytes: signed_message,
+        server_signed_message_bytes: signed_message,
     };
 
     let result = db_write!(state, move |cmds| cmds

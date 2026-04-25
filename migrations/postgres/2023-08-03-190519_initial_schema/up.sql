@@ -1225,7 +1225,7 @@ CREATE TABLE IF NOT EXISTS chat_report_chat_message(
     message_number                     BIGINT              NOT NULL,
     message_symmetric_key              BYTEA               NOT NULL,
     client_message_bytes               BYTEA               NOT NULL,
-    backend_signed_message_bytes       BYTEA               NOT NULL,
+    server_signed_message_bytes        BYTEA               NOT NULL,
     FOREIGN KEY (report_id)
         REFERENCES common_report (id)
             ON DELETE CASCADE

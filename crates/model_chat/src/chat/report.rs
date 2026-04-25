@@ -7,7 +7,7 @@ use utoipa::ToSchema;
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct UpdateChatMessageReport {
     pub target: AccountId,
-    pub backend_signed_message_base64: String,
+    pub server_signed_message_base64: String,
     pub decryption_key_base64: String,
 }
 
@@ -21,7 +21,7 @@ pub struct NewChatMessageReportInternal {
     pub message_number: MessageNumber,
     pub message_symmetric_key: Vec<u8>,
     pub client_message_bytes: Vec<u8>,
-    pub backend_signed_message_bytes: Vec<u8>,
+    pub server_signed_message_bytes: Vec<u8>,
 }
 
 impl NewChatMessageReportInternal {

@@ -279,7 +279,7 @@ diesel::table! {
         message_number -> Int8,
         message_symmetric_key -> Bytea,
         client_message_bytes -> Bytea,
-        backend_signed_message_bytes -> Bytea,
+        server_signed_message_bytes -> Bytea,
     }
 }
 
