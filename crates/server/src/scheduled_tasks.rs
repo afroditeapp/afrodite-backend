@@ -1,7 +1,8 @@
 use std::time::Duration;
 
 use backup::backup_data;
-use model::{ReportTypeNumberInternal, ScheduledTasksConfig, UnixTime};
+use config::file::ScheduledTasksConfig;
+use model::{ReportTypeNumberInternal, UnixTime};
 use model_profile::{
     AccountIdInternal, AccountState, EventToClientInternal, ProfileAge, ProfileUpdateInternal,
 };

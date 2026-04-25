@@ -150,8 +150,6 @@ pub struct ClientFeaturesConfig {
     profile: Option<ProfileConfig>,
     #[serde(skip_serializing_if = "Option::is_none")]
     chat: Option<ChatConfig>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    server: Option<ServerConfig>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
@@ -374,28 +372,6 @@ impl Default for CheckOnlineStatusConfig {
         Self {
             min_wait_seconds_between_requests_server: 4,
             min_wait_seconds_between_requests_client: 8,
-        }
-    }
-}
-
-#[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]
-pub struct ServerConfig {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    scheduled_tasks: Option<ScheduledTasksConfig>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct ScheduledTasksConfig {
-    pub daily_start_time: UtcTimeValue,
-}
-
-impl Default for ScheduledTasksConfig {
-    fn default() -> Self {
-        use simple_backend_utils::time::TimeValue;
-        const DEFAULT_SCHEDULED_TASKS_TIME: TimeValue = TimeValue::new(3, 0);
-
-        Self {
-            daily_start_time: UtcTimeValue(DEFAULT_SCHEDULED_TASKS_TIME),
         }
     }
 }

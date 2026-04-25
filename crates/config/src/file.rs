@@ -90,6 +90,9 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # daily_start_time = "9:00"
 # daily_end_time = "21:00"
 
+# [scheduled_tasks]
+# daily_start_time = "3:00"
+
 # [manual_server_maintenance_info_for_another_server]
 # default = "Server maintenance in progress"
 
@@ -131,6 +134,8 @@ pub struct ConfigFile {
     #[serde(default)]
     pub automatic_profile_search: AutomaticProfileSearchConfig,
     #[serde(default)]
+    pub scheduled_tasks: ScheduledTasksConfig,
+    #[serde(default)]
     pub remote_bot_login: RemoteBotLoginConfig,
 
     pub grant_admin_access: Option<GrantAdminAccessConfig>,
@@ -149,6 +154,7 @@ impl ConfigFile {
             general: Default::default(),
             api: ApiConfig::default(),
             automatic_profile_search: AutomaticProfileSearchConfig::default(),
+            scheduled_tasks: ScheduledTasksConfig::default(),
             remote_bot_login: RemoteBotLoginConfig::default(),
             grant_admin_access: None,
             location: None,
@@ -498,6 +504,21 @@ impl Default for AutomaticProfileSearchConfig {
         Self {
             daily_start_time: UtcTimeValue(DEFAULT_START_TIME),
             daily_end_time: UtcTimeValue(DEFAULT_END_TIME),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ScheduledTasksConfig {
+    pub daily_start_time: UtcTimeValue,
+}
+
+impl Default for ScheduledTasksConfig {
+    fn default() -> Self {
+        const DEFAULT_START_TIME: TimeValue = TimeValue::new(3, 0);
+
+        Self {
+            daily_start_time: UtcTimeValue(DEFAULT_START_TIME),
         }
     }
 }

@@ -27,11 +27,12 @@ use error_stack::{Result, ResultExt};
 use file::{
     AccountLimitsConfig, AutomaticProfileSearchConfig, ChatLimitsConfig, CommonLimitsConfig,
     DemoAccountConfig, GrantAdminAccessConfig, MediaLimitsConfig, RemoteBotLoginConfig,
+    ScheduledTasksConfig,
 };
 use file_email_content::EmailContentFile;
 use file_web_content::WebContentFile;
 pub use model::{AdminBotConfig, BotConfig, ClientFeaturesConfig, ClientFeaturesConfigInternal};
-use model::{CustomReportsConfig, ScheduledTasksConfig, StringResourceInternal};
+use model::{CustomReportsConfig, StringResourceInternal};
 use sha2::{Digest, Sha256};
 use simple_backend_config::{SimpleBackendConfig, args::ServerMode, file::SimpleBackendConfigFile};
 use simple_backend_utils::{
@@ -203,7 +204,7 @@ impl Config {
     }
 
     pub fn scheduled_tasks(&self) -> ScheduledTasksConfig {
-        self.client_features_internal().scheduled_tasks()
+        self.file.scheduled_tasks.clone()
     }
 
     pub fn email_content(&self) -> &EmailContentFile {

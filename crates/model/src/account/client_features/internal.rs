@@ -3,10 +3,8 @@ use std::collections::BTreeMap;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
-use super::{
-    ChatConfig, FeaturesConfig, LikesConfig, MapConfig, NewsConfig, ProfileConfig, ServerConfig,
-};
-use crate::{ClientFeaturesConfig, ScheduledTasksConfig};
+use super::{ChatConfig, FeaturesConfig, LikesConfig, MapConfig, NewsConfig, ProfileConfig};
+use crate::ClientFeaturesConfig;
 
 const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 [attribution.generic]
@@ -59,9 +57,6 @@ start_event_ttl_seconds = 10
 min_wait_seconds_between_requests_server = 4
 min_wait_seconds_between_requests_client = 8
 
-[server.scheduled_tasks]
-daily_start_time = "3:00"
-
 "#;
 
 /// Client features config file
@@ -80,8 +75,6 @@ pub struct ClientFeaturesConfigInternal {
     pub profile: ProfileConfig,
     #[serde(default)]
     pub chat: ChatConfig,
-    #[serde(default)]
-    pub server: ServerConfig,
 }
 
 impl ClientFeaturesConfigInternal {
@@ -113,12 +106,7 @@ impl ClientFeaturesConfigInternal {
             likes: self.likes.into(),
             profile: self.profile.into(),
             chat: self.chat.into(),
-            server: self.server.into(),
         })
-    }
-
-    pub fn scheduled_tasks(&self) -> ScheduledTasksConfig {
-        self.server.scheduled_tasks.clone().unwrap_or_default()
     }
 }
 
