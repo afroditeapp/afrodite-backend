@@ -3,7 +3,6 @@ use model::AdminBotNotificationTypes;
 use model_media::{
     AccountIdInternal, GetMediaContentFaceVerifiedNullList, Permissions,
     PostMediaContentFaceDetectedValue, PostMediaContentFaceVerifiedValue,
-    PostSecurityContentVerifiedValue,
 };
 use server_api::{
     DataError, S,
@@ -191,73 +190,11 @@ pub async fn post_media_content_face_verified_value(
     Ok(())
 }
 
-const PATH_POST_SECURITY_CONTENT_VERIFIED_VALUE: &str =
-    "/media_api/security_content_verified_value";
-
-/// Change security content verified value
-///
-/// Bot account sets automatic value and human admin account sets manual override value.
-///
-/// # Access
-/// * Permission [model::Permissions::admin_edit_security_content_verified_value]
-#[utoipa::path(
-    post,
-    path = PATH_POST_SECURITY_CONTENT_VERIFIED_VALUE,
-    request_body = PostSecurityContentVerifiedValue,
-    responses(
-        (status = 200, description = "Successful"),
-        (status = 401, description = "Unauthorized"),
-        (
-            status = 500,
-            description = "Internal server error",
-        ),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn post_security_content_verified_value(
-    State(state): State<S>,
-    Extension(permissions): Extension<Permissions>,
-    Extension(moderator_id): Extension<AccountIdInternal>,
-    Json(data): Json<PostSecurityContentVerifiedValue>,
-) -> Result<(), StatusCode> {
-    MEDIA_ADMIN.post_security_content_verified_value.incr();
-
-    if !permissions.admin_edit_security_content_verified_value {
-        return Err(StatusCode::INTERNAL_SERVER_ERROR);
-    }
-
-    let content_owner = state.get_internal_id(data.account_id).await?;
-
-    db_write!(state, move |cmds| {
-        let current_security_content = cmds
-            .read()
-            .media()
-            .current_account_media(content_owner)
-            .await?
-            .security_content_id
-            .map(|v| v.content_id());
-
-        if current_security_content != Some(data.security_content) {
-            return Err(DataError::NotAllowed.report());
-        }
-
-        cmds.media_admin()
-            .content()
-            .change_security_content_verified_value(moderator_id, content_owner, data.value)
-            .await?;
-
-        Ok(())
-    })?;
-
-    Ok(())
-}
-
 create_open_api_router!(
         fn router_admin_content,
         post_media_content_face_detected_value,
         get_media_content_face_verified_null_list,
         post_media_content_face_verified_value,
-        post_security_content_verified_value,
 );
 
 create_counters!(
@@ -267,5 +204,4 @@ create_counters!(
     post_media_content_face_detected_value,
     get_media_content_face_verified_null_list,
     post_media_content_face_verified_value,
-    post_security_content_verified_value,
 );
