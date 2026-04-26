@@ -213,27 +213,27 @@ pub async fn post_trigger_software_update_install(
     }
 }
 
-const PATH_POST_TRIGGER_BACKEND_DATA_RESET: &str = "/common_api/trigger_backend_data_reset";
+const PATH_POST_TRIGGER_SERVER_DATA_RESET: &str = "/common_api/trigger_server_data_reset";
 
-/// Trigger backend data reset
+/// Trigger server data reset.
 ///
-/// This API route will fail if backend config file field
+/// This API route will fail if server config file field
 /// debug_allow_backend_data_reset is not true.
 ///
 /// Registering new accounts will be prevented and all accounts will be deleted.
-/// After that manager will stop the backend, delete backend's data directory
-/// and start the backend.
+/// After that manager will stop the server, delete server's data directory
+/// and start the server.
 ///
-/// This can be requested only once per backend process.
+/// This can be requested only once per server process.
 ///
 /// Account registering prevention is process specific, so restarting
-/// backend will disable that.
+/// server will disable that.
 ///
 /// # Access
 /// * Permission [model::Permissions::admin_server_data_reset]
 #[utoipa::path(
     post,
-    path = PATH_POST_TRIGGER_BACKEND_DATA_RESET,
+    path = PATH_POST_TRIGGER_SERVER_DATA_RESET,
     params(ManagerInstanceNameValue),
     responses(
         (status = 200, description = "Successful."),
@@ -242,12 +242,12 @@ const PATH_POST_TRIGGER_BACKEND_DATA_RESET: &str = "/common_api/trigger_backend_
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_trigger_backend_data_reset(
+pub async fn post_trigger_server_data_reset(
     State(state): State<S>,
     Extension(api_caller_permissions): Extension<Permissions>,
     Query(manager): Query<ManagerInstanceNameValue>,
 ) -> Result<(), StatusCode> {
-    COMMON_ADMIN.post_trigger_backend_data_reset.incr();
+    COMMON_ADMIN.post_trigger_server_data_reset.incr();
 
     if !api_caller_permissions.admin_server_data_reset {
         return Err(StatusCode::UNAUTHORIZED);
@@ -271,15 +271,15 @@ pub async fn post_trigger_backend_data_reset(
     Ok(())
 }
 
-const PATH_POST_TRIGGER_BACKEND_RESTART: &str = "/common_api/trigger_backend_restart";
+const PATH_POST_TRIGGER_SERVER_RESTART: &str = "/common_api/trigger_server_restart";
 
-/// Trigger backend restart.
+/// Trigger server restart.
 ///
 /// # Access
 /// * Permission [model::Permissions::admin_server_restart]
 #[utoipa::path(
     post,
-    path = PATH_POST_TRIGGER_BACKEND_RESTART,
+    path = PATH_POST_TRIGGER_SERVER_RESTART,
     params(ManagerInstanceNameValue),
     responses(
         (status = 200, description = "Successful."),
@@ -288,12 +288,12 @@ const PATH_POST_TRIGGER_BACKEND_RESTART: &str = "/common_api/trigger_backend_res
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_trigger_backend_restart(
+pub async fn post_trigger_server_restart(
     State(state): State<S>,
     Extension(api_caller_permissions): Extension<Permissions>,
     Query(manager): Query<ManagerInstanceNameValue>,
 ) -> Result<(), StatusCode> {
-    COMMON_ADMIN.post_trigger_backend_restart.incr();
+    COMMON_ADMIN.post_trigger_server_restart.incr();
 
     if api_caller_permissions.admin_server_restart {
         state
@@ -512,8 +512,8 @@ create_open_api_router!(
         get_software_update_status,
         post_trigger_software_update_download,
         post_trigger_software_update_install,
-        post_trigger_backend_data_reset,
-        post_trigger_backend_restart,
+        post_trigger_server_data_reset,
+        post_trigger_server_restart,
         post_trigger_system_reboot,
         post_trigger_system_shutdown,
         get_scheduled_tasks_status,
@@ -532,8 +532,8 @@ create_counters!(
     post_request_build_software,
     post_trigger_software_update_download,
     post_trigger_software_update_install,
-    post_trigger_backend_data_reset,
-    post_trigger_backend_restart,
+    post_trigger_server_data_reset,
+    post_trigger_server_restart,
     post_trigger_system_reboot,
     post_trigger_system_shutdown,
     get_scheduled_tasks_status,
