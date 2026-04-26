@@ -11,6 +11,8 @@ use utoipa::ToSchema;
 /// - PROFILE_CONTENT_FACE_VERIFIED_ALL = 0x2. All current profile pictures
 ///   have effective face verified value true. For empty profile picture list
 ///   this bit must be unset.
+/// - SECURITY_CONTENT_VERIFIED = 0x4. Current security content has effective
+///   security verified value true.
 #[derive(
     Debug,
     Clone,
