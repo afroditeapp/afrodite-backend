@@ -28,7 +28,6 @@ pub mod app {
 #[openapi(
     paths(
         // Common
-        common::get_version,
         common::get_manual_server_maintenance_info_for_another_server,
         common::get_connect_websocket,
     ),

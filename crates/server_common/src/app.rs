@@ -1,11 +1,11 @@
 use error_stack::Result;
-use model::{AccountId, AccountIdInternal, BackendVersion, EmailMessages};
+use model::{AccountId, AccountIdInternal, EmailMessages, ServerVersion};
 use simple_backend::email::EmailSender;
 
 use crate::data::DataError;
 
-pub trait BackendVersionProvider {
-    fn backend_version(&self) -> BackendVersion;
+pub trait ServerVersionProvider {
+    fn server_version(&self) -> ServerVersion;
 }
 
 /// All accounts registered in the service.

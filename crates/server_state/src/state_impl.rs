@@ -4,8 +4,8 @@ use config::{Config, file::ConfigFileError};
 use error_stack::ResultExt;
 use futures::Future;
 use model::{
-    AccessToken, AccessTokenType, AccountId, AccountIdInternal, AccountState, BackendVersion,
-    BotConfig, EventToClientInternal, Permissions, ScheduledMaintenanceStatus,
+    AccessToken, AccessTokenType, AccountId, AccountIdInternal, AccountState, BotConfig,
+    EventToClientInternal, Permissions, ScheduledMaintenanceStatus, ServerVersion,
 };
 use server_data::{
     DataError,
@@ -73,18 +73,17 @@ impl GetAccounts for S {
     }
 }
 
-impl BackendVersionProvider for S {
-    fn backend_version(&self) -> BackendVersion {
-        BackendVersion {
-            backend_code_version: self
+impl ServerVersionProvider for S {
+    fn server_version(&self) -> ServerVersion {
+        ServerVersion {
+            server_code_version: self
                 .simple_backend_config()
                 .backend_code_version()
                 .to_string(),
-            backend_version: self
+            server_version: self
                 .simple_backend_config()
                 .backend_semver_version()
                 .to_string(),
-            protocol_version: "1.0.0".to_string(),
         }
     }
 }

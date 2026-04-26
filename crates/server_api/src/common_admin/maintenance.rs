@@ -1,12 +1,41 @@
 use axum::{Extension, extract::State};
-use model::{EventToClientInternal, Permissions, ServerMaintenanceStatus};
-use server_data::app::EventManagerProvider;
+use model::{EventToClientInternal, Permissions, ServerMaintenanceStatus, ServerVersion};
+use server_data::app::{EventManagerProvider, ServerVersionProvider};
 use simple_backend::{app::GetManagerApi, create_counters};
 
 use crate::{
     S, create_open_api_router,
     utils::{Json, StatusCode},
 };
+
+const PATH_GET_SERVER_VERSION: &str = "/common_api/server_version";
+
+/// Get server version.
+///
+/// # Permissions
+/// Requires admin_server_view_info.
+#[utoipa::path(
+    get,
+    path = PATH_GET_SERVER_VERSION,
+    responses(
+        (status = 200, description = "Successful.", body = ServerVersion),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_server_version(
+    State(state): State<S>,
+    Extension(api_caller_permissions): Extension<Permissions>,
+) -> Result<Json<ServerVersion>, StatusCode> {
+    COMMON_ADMIN.get_server_version.incr();
+
+    if api_caller_permissions.admin_server_view_info {
+        Ok(state.server_version().into())
+    } else {
+        Err(StatusCode::INTERNAL_SERVER_ERROR)
+    }
+}
 
 const PATH_GET_MAINTENANCE_NOTIFICATION: &str = "/common_api/maintenance_notification";
 
@@ -87,6 +116,7 @@ pub async fn post_edit_maintenance_notification(
 
 create_open_api_router!(
     fn router_maintenance,
+    get_server_version,
     get_maintenance_notification,
     post_edit_maintenance_notification,
 );
@@ -95,6 +125,7 @@ create_counters!(
     CommonAdminCounters,
     COMMON_ADMIN,
     COMMON_ADMIN_MAINTENANCE_COUNTERS_LIST,
+    get_server_version,
     get_maintenance_notification,
     post_edit_maintenance_notification,
 );

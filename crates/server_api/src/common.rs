@@ -13,14 +13,14 @@ use axum::{
 };
 use http::HeaderMap;
 use model::{
-    AccessToken, AccessTokenType, AccountIdInternal, BackendVersion, ClientVersion,
-    EventToClientInternal, ManualServerMaintenanceInfoForAnotherServer, NotificationEvent,
-    RefreshToken, WebSocketClientInfo, WebSocketClientTypeNumber,
+    AccessToken, AccessTokenType, AccountIdInternal, ClientVersion, EventToClientInternal,
+    ManualServerMaintenanceInfoForAnotherServer, NotificationEvent, RefreshToken,
+    WebSocketClientInfo, WebSocketClientTypeNumber,
 };
 use model_server_data::AuthPair;
 use server_common::websocket::WebSocketError;
 use server_data::{
-    app::{BackendVersionProvider, EventManagerProvider, GetConfig},
+    app::{EventManagerProvider, GetConfig},
     event::InternalEventType,
     read::GetReadCommandsCommon,
     write::GetWriteCommandsCommon,
@@ -67,22 +67,6 @@ mod push_notification;
 pub use push_notification::*;
 
 mod websocket;
-
-pub const PATH_GET_VERSION: &str = "/common_api/version";
-
-/// Get backend version.
-#[utoipa::path(
-    get,
-    path = PATH_GET_VERSION,
-    security(),
-    responses(
-        (status = 200, description = "Version information.", body = BackendVersion),
-    )
-)]
-pub async fn get_version(State(state): State<S>) -> Json<BackendVersion> {
-    COMMON.get_version.incr();
-    state.backend_version().into()
-}
 
 pub const PATH_GET_MANUAL_SERVER_MAINTENANCE_INFO_FOR_ANOTHER_SERVER: &str =
     "/common_api/manual_server_maintenance_info_for_another_server";
@@ -653,7 +637,6 @@ create_counters!(
     CommonCounters,
     COMMON,
     COMMON_COUNTERS_LIST,
-    get_version,
     get_manual_server_maintenance_info_for_another_server,
     get_connect_websocket,
     websocket_access_token_not_found,
