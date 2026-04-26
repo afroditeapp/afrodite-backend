@@ -68,6 +68,21 @@ pub use push_notification::*;
 
 mod websocket;
 
+pub const PATH_GET_SERVER_ONLINE: &str = "/common_api/server_online";
+
+/// Check if server is online.
+#[utoipa::path(
+    get,
+    path = PATH_GET_SERVER_ONLINE,
+    security(),
+    responses(
+        (status = 200, description = "Server is online."),
+    )
+)]
+pub async fn get_server_online() {
+    COMMON.get_server_online.incr();
+}
+
 pub const PATH_GET_MANUAL_SERVER_MAINTENANCE_INFO_FOR_ANOTHER_SERVER: &str =
     "/common_api/manual_server_maintenance_info_for_another_server";
 
@@ -637,6 +652,7 @@ create_counters!(
     CommonCounters,
     COMMON,
     COMMON_COUNTERS_LIST,
+    get_server_online,
     get_manual_server_maintenance_info_for_another_server,
     get_connect_websocket,
     websocket_access_token_not_found,

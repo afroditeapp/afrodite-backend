@@ -27,6 +27,10 @@ impl CommonRoutes {
     ) -> Router {
         Router::new()
             .route(
+                api::common::PATH_GET_SERVER_ONLINE,
+                get(server_api::common::get_server_online),
+            )
+            .route(
                 api::common::PATH_GET_MANUAL_SERVER_MAINTENANCE_INFO_FOR_ANOTHER_SERVER,
                 get(server_api::common::get_manual_server_maintenance_info_for_another_server),
             )
