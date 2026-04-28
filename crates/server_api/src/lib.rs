@@ -16,7 +16,10 @@ pub mod common_admin;
 pub mod utils;
 
 pub use server_common::{data::DataError, result};
-pub use server_state::{S, create_open_api_router, db_write, db_write_raw};
+pub use server_state::{
+    S, create_open_api_router, db_write, db_write_raw,
+    security_content_verification_queue::SecurityContentVerificationQueueAddError,
+};
 
 pub mod app {
     pub use server_state::app::*;

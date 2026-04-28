@@ -10,6 +10,7 @@ use server_data_all::app::DataAllUtilsImpl;
 use server_state::{
     S, StateForRouterCreation, admin_notifications::AdminNotificationManagerData,
     demo::DemoAccountManager, dynamic_config::DynamicConfigManagerData,
+    security_content_verification_queue::SecurityContentVerificationQueueData,
 };
 use simple_backend::{
     app::SimpleBackendAppState, manager_client::ManagerApiClient, maxmind_db::MaxMindDbManagerData,
@@ -248,6 +249,7 @@ impl ApiDoc {
             WriteCommandRunnerHandle::new(router_database_write_handle.into()).await;
 
         let (content_processing, _) = ContentProcessingManagerData::new();
+        let security_content_verification_queue = SecurityContentVerificationQueueData::new();
         let (admin_notification, _) = AdminNotificationManagerData::new();
         let (data_export, _) = DataExportManagerData::new();
         let (dynamic_config_manager, _) = DynamicConfigManagerData::new();
@@ -261,6 +263,7 @@ impl ApiDoc {
             write_cmd_runner_handle,
             config.clone(),
             content_processing.into(),
+            security_content_verification_queue.into(),
             admin_notification.into(),
             demo,
             push_notification_sender,

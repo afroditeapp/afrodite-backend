@@ -658,6 +658,66 @@ impl SecurityContentUserDataExport {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct PostSecurityContentVerificationQueueItem {
+    pub security_content: ContentId,
+    pub verification_method: String,
+    pub verification_data: String,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ToSchema)]
+pub struct PostSecurityContentVerificationQueueItemResult {
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_security_content_not_current: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_already_in_queue: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_queue_full: bool,
+}
+
+impl PostSecurityContentVerificationQueueItemResult {
+    pub fn success() -> Self {
+        Self::default()
+    }
+
+    pub fn error_security_content_not_current() -> Self {
+        Self {
+            error: true,
+            error_security_content_not_current: true,
+            ..Default::default()
+        }
+    }
+
+    pub fn error_already_in_queue() -> Self {
+        Self {
+            error: true,
+            error_already_in_queue: true,
+            ..Default::default()
+        }
+    }
+
+    pub fn error_queue_full() -> Self {
+        Self {
+            error: true,
+            error_queue_full: true,
+            ..Default::default()
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ToSchema)]
+pub struct SecurityContentVerificationQueueStatus {
+    /// The first queue position is 1
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub queue_position: Option<u32>,
+}
+
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct GetContentQueryParams {
     /// If false media content access is allowed when profile is set as public.

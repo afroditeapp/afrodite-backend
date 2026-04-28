@@ -194,6 +194,20 @@ impl MediaApiLimits<'_> {
             })
             .await
     }
+
+    pub async fn post_security_content_verification_queue_item(&self) -> Result<(), ApiLimitError> {
+        self.limits
+            .check(|state, config| {
+                state
+                    .post_security_content_verification_queue_item
+                    .increment_and_check_is_limit_reached(
+                        config
+                            .limits_media()
+                            .post_security_content_verification_queue_item_daily_max_count,
+                    )
+            })
+            .await
+    }
 }
 
 pub struct ChatApiLimits<'a> {

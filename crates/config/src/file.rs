@@ -70,6 +70,8 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # max_content_count = 20
 # unused_content_wait_duration = "90d"
 # get_profile_content_info_daily_max_count = 2000
+# post_security_content_verification_queue_item_daily_max_count = 10
+# security_content_verification_queue_max_length = 100
 
 # [limits.profile]
 # profile_iterator_reset_daily_max_count = 200
@@ -388,6 +390,8 @@ pub struct MediaLimitsConfig {
     pub max_content_count: u8,
     pub unused_content_wait_duration: DurationValue,
     pub get_profile_content_info_daily_max_count: u16,
+    pub post_security_content_verification_queue_item_daily_max_count: u16,
+    pub security_content_verification_queue_max_length: u16,
 }
 
 impl Default for MediaLimitsConfig {
@@ -396,6 +400,8 @@ impl Default for MediaLimitsConfig {
             max_content_count: 20,
             unused_content_wait_duration: DurationValue::from_days(90),
             get_profile_content_info_daily_max_count: 2000,
+            post_security_content_verification_queue_item_daily_max_count: 10,
+            security_content_verification_queue_max_length: 100,
         }
     }
 }

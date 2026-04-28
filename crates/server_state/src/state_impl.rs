@@ -266,6 +266,14 @@ impl ContentProcessingProvider for S {
     }
 }
 
+impl SecurityContentVerificationQueueProvider for S {
+    fn security_content_verification_queue(
+        &self,
+    ) -> &crate::security_content_verification_queue::SecurityContentVerificationQueueData {
+        &self.state.security_content_verification_queue
+    }
+}
+
 impl ClientVersionTrackerProvider for S {
     fn client_version_tracker(&self) -> &ClientVersionTracker {
         &self.state.client_version_tracker

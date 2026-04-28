@@ -28,7 +28,8 @@ use simple_backend::app::SimpleBackendAppState;
 
 use crate::{
     admin_bot_status::AdminBotStatusManagerData, admin_notifications::AdminNotificationManagerData,
-    demo::DemoAccountManager, dynamic_config::DynamicConfigManagerData, utils::ETagUtils,
+    demo::DemoAccountManager, dynamic_config::DynamicConfigManagerData,
+    security_content_verification_queue::SecurityContentVerificationQueueData, utils::ETagUtils,
 };
 
 pub mod admin_bot_status;
@@ -41,6 +42,7 @@ pub mod data_signer;
 pub mod demo;
 pub mod dynamic_config;
 pub mod ip_address;
+pub mod security_content_verification_queue;
 pub mod state_impl;
 pub mod utils;
 
@@ -60,6 +62,7 @@ struct AppStateInternal {
     write_queue: Arc<WriteCommandRunnerHandle>,
     config: Arc<Config>,
     content_processing: Arc<ContentProcessingManagerData>,
+    security_content_verification_queue: Arc<SecurityContentVerificationQueueData>,
     admin_notification: Arc<AdminNotificationManagerData>,
     demo: DemoAccountManager,
     push_notification_sender: PushNotificationSender,
@@ -83,6 +86,7 @@ impl AppState {
         write_queue: WriteCommandRunnerHandle,
         config: Arc<Config>,
         content_processing: Arc<ContentProcessingManagerData>,
+        security_content_verification_queue: Arc<SecurityContentVerificationQueueData>,
         admin_notification: Arc<AdminNotificationManagerData>,
         demo: DemoAccountManager,
         push_notification_sender: PushNotificationSender,
@@ -97,6 +101,7 @@ impl AppState {
             database: database.clone(),
             write_queue: Arc::new(write_queue),
             content_processing,
+            security_content_verification_queue,
             admin_notification,
             demo,
             push_notification_sender,
