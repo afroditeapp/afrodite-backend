@@ -172,6 +172,8 @@ const PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT: &str = "/media_api/all_account_media_c
 ///
 /// - Own account
 /// - Permission [model::Permissions::admin_moderate_media_content]
+/// - Permission [model::Permissions::admin_edit_media_content_face_detected_value]
+/// - Permission [model::Permissions::admin_edit_media_content_face_verified_value]
 #[utoipa::path(
     get,
     path = PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT,
@@ -193,8 +195,10 @@ pub async fn get_all_account_media_content(
 
     let internal_id = state.get_internal_id(account_id).await?;
 
-    let access_allowed =
-        api_caller_account_id == internal_id || api_caller_permissions.admin_moderate_media_content;
+    let access_allowed = api_caller_account_id == internal_id
+        || api_caller_permissions.admin_moderate_media_content
+        || api_caller_permissions.admin_edit_media_content_face_detected_value
+        || api_caller_permissions.admin_edit_media_content_face_verified_value;
     if !access_allowed {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
