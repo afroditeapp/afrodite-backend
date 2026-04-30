@@ -177,7 +177,16 @@ pub async fn post_security_content_verification_queue_item(
         .await;
 
     let result = match add_result {
-        Ok(()) => PostSecurityContentVerificationQueueItemResult::success(),
+        Ok(()) => {
+            state
+                .admin_notification()
+                .send_bot_notification_if_needed(
+                    AdminBotNotificationTypes::VERIFY_SECURITY_CONTENT_BOT,
+                )
+                .await;
+
+            PostSecurityContentVerificationQueueItemResult::success()
+        }
         Err(SecurityContentVerificationQueueAddError::AlreadyQueued) => {
             PostSecurityContentVerificationQueueItemResult::error_already_in_queue()
         }
