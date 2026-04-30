@@ -17,6 +17,7 @@ use utoipa::ToSchema;
 ///     - bit 1: profile text moderation file config missing
 ///     - bit 2: content moderation file config missing
 ///     - bit 3: face verification file config missing
+///     - bit 4: security content verification file config missing
 /// - `RequestResetProfilePaging` (60): payload format:
 ///   - request id byte (u8)
 /// - `RequestGetNextProfilePage` (61): payload format:
@@ -73,5 +74,6 @@ bitflags::bitflags! {
         const PROFILE_TEXT_MODERATION_FILE_CONFIG_MISSING = 0b0000_0010;
         const CONTENT_MODERATION_FILE_CONFIG_MISSING = 0b0000_0100;
         const FACE_VERIFICATION_FILE_CONFIG_MISSING = 0b0000_1000;
+        const SECURITY_CONTENT_VERIFICATION_FILE_CONFIG_MISSING = 0b0001_0000;
     }
 }

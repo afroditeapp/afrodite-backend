@@ -36,6 +36,10 @@ pub struct AdminBotConfig {
     #[schema(default = false)]
     pub face_verification_enabled: bool,
     pub face_verification: AdminFaceVerificationConfig,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub security_content_verification_enabled: bool,
+    pub security_content_verification: AdminSecurityContentVerificationConfig,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
@@ -63,6 +67,37 @@ impl Default for LlmFaceVerificationConfig {
     fn default() -> Self {
         Self {
             system_text: "You are verifying whether two dating app profile images contain the same person. Output 'accepted' only when they clearly show the same person. Otherwise output 'rejected'.".to_string(),
+            expected_response: "accepted".to_string(),
+            max_tokens: MAX_TOKENS_DEFAULT,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
+pub struct AdminSecurityContentVerificationConfig {
+    /// Large language model based security content verification.
+    /// Actions: reject and accept.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub llm_enabled: bool,
+    pub llm: LlmSecurityContentVerificationConfig,
+    pub default_action: VerificationAction,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct LlmSecurityContentVerificationConfig {
+    pub system_text: String,
+    /// If LLM response starts with this text or the first
+    /// line of the response contains this text, the verification
+    /// is moderated as accepted. The comparisons are case insensitive.
+    pub expected_response: String,
+    pub max_tokens: u32,
+}
+
+impl Default for LlmSecurityContentVerificationConfig {
+    fn default() -> Self {
+        Self {
+            system_text: "You are verifying whether a dating app profile security selfie and a user-provided verification image show the same person. Output 'accepted' only when they clearly show the same person. Otherwise output 'rejected'.".to_string(),
             expected_response: "accepted".to_string(),
             max_tokens: MAX_TOKENS_DEFAULT,
         }

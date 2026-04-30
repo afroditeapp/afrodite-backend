@@ -3,6 +3,7 @@ use super::{BotAction, BotState};
 pub mod content;
 pub mod face_verification;
 pub mod profile_string;
+pub mod security_content_verification;
 
 struct EmptyPage;
 

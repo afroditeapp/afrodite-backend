@@ -27,6 +27,7 @@ use crate::{
         notification::{ModerationHandler, NotificationSender},
         profile_name::ProfileNameModerationHandler,
         profile_text::ProfileTextModerationHandler,
+        security_content_verification::SecurityContentVerificationHandler,
     },
 };
 
@@ -35,6 +36,7 @@ mod face_verification;
 mod notification;
 mod profile_name;
 mod profile_text;
+mod security_content_verification;
 
 pub struct AdminBot {
     state: BotState,
@@ -170,9 +172,19 @@ impl AdminBot {
             admin_bot_config.face_verification_enabled,
             file_config.face_verification.is_some(),
         );
+        Self::warn_missing_file_config(
+            "security_content_verification",
+            admin_bot_config.security_content_verification_enabled,
+            file_config.security_content_verification.is_some(),
+        );
 
-        let (profile_name_config, profile_text_config, content_config, face_verification_config) =
-            config::bot_config_file::internal::merge(admin_bot_config, file_config.clone());
+        let (
+            profile_name_config,
+            profile_text_config,
+            content_config,
+            face_verification_config,
+            security_content_verification_config,
+        ) = config::bot_config_file::internal::merge(admin_bot_config, file_config.clone());
 
         // Create separate notification pipelines for each content type
         let (content_sender, mut content_receiver) = ContentModerationHandler::new(
@@ -204,6 +216,14 @@ impl AdminBot {
             )
             .create_notification_channel();
 
+        let (security_content_verification_sender, mut security_content_verification_receiver) =
+            SecurityContentVerificationHandler::new(
+                state.api.clone(),
+                security_content_verification_config,
+                state.reqwest_client.clone(),
+            )
+            .create_notification_channel();
+
         select! {
             result = Self::run_admin_main_logic(
                 state.connections,
@@ -211,6 +231,7 @@ impl AdminBot {
                 profile_name_sender,
                 profile_text_sender,
                 face_verification_sender,
+                security_content_verification_sender,
                 file_config,
             ) => {
                 if let Err(e) = result {
@@ -237,6 +258,11 @@ impl AdminBot {
                     error!("Face verification pipeline error: {:?}", e);
                 }
             },
+            result = security_content_verification_receiver.process_notifications_loop() => {
+                if let Err(e) = result {
+                    error!("Security content verification pipeline error: {:?}", e);
+                }
+            },
         };
 
         Ok(())
@@ -248,6 +274,7 @@ impl AdminBot {
         profile_name_sender: NotificationSender,
         profile_text_sender: NotificationSender,
         face_verification_sender: NotificationSender,
+        security_content_verification_sender: NotificationSender,
         file_config: BotConfigFile,
     ) -> Result<(), TestError> {
         // Hourly fallback timer in case there is some event related bug or
@@ -279,6 +306,10 @@ impl AdminBot {
                             if notification.verify_media_content_face_bot.unwrap_or(false) {
                                 face_verification_sender.notify().await;
                             }
+
+                            if notification.verify_security_content_bot.unwrap_or(false) {
+                                security_content_verification_sender.notify().await;
+                            }
                         } else if event.event == EventType::RequestAdminBotConfigWarnings
                             && let Some(request) = event.request_admin_bot_config_warnings
                         {
@@ -295,6 +326,7 @@ impl AdminBot {
                     profile_name_sender.notify().await;
                     profile_text_sender.notify().await;
                     face_verification_sender.notify().await;
+                    security_content_verification_sender.notify().await;
                 }
             }
         }
@@ -319,6 +351,9 @@ fn create_response_admin_bot_config_warnings_message(
     }
     if file_config.face_verification.is_none() {
         flags.insert(AdminBotConfigWarningFlags::FACE_VERIFICATION_FILE_CONFIG_MISSING);
+    }
+    if file_config.security_content_verification.is_none() {
+        flags.insert(AdminBotConfigWarningFlags::SECURITY_CONTENT_VERIFICATION_FILE_CONFIG_MISSING);
     }
 
     vec![RESPONSE_ADMIN_BOT_CONFIG_WARNINGS, request_id, flags.bits()]
