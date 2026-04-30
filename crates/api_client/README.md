@@ -136,7 +136,7 @@ Class | Method | HTTP request | Description
 *CommonApi* | [**get_manual_server_maintenance_info_for_another_server**](docs/CommonApi.md#get_manual_server_maintenance_info_for_another_server) | **GET** /common_api/manual_server_maintenance_info_for_another_server | Get manual server maintenance info for another server.
 *CommonApi* | [**get_pending_app_notifications**](docs/CommonApi.md#get_pending_app_notifications) | **GET** /common_api/pending_app_notifications | 
 *CommonApi* | [**get_push_notification_info**](docs/CommonApi.md#get_push_notification_info) | **GET** /common_api/get_push_notification_info | 
-*CommonApi* | [**get_version**](docs/CommonApi.md#get_version) | **GET** /common_api/version | Get backend version.
+*CommonApi* | [**get_server_online**](docs/CommonApi.md#get_server_online) | **GET** /common_api/server_online | Check if server is online.
 *CommonApi* | [**post_automatic_profile_search_get_next_profile_page**](docs/CommonApi.md#post_automatic_profile_search_get_next_profile_page) | **POST** /common_api/automatic_profile_search/next | Post (updates iterator) to get next page of automatic profile search profile list.
 *CommonApi* | [**post_automatic_profile_search_reset_profile_paging**](docs/CommonApi.md#post_automatic_profile_search_reset_profile_paging) | **POST** /common_api/automatic_profile_search/reset | Reset automatic profile search profile paging.
 *CommonApi* | [**post_client_language**](docs/CommonApi.md#post_client_language) | **POST** /common_api/client_language | 
@@ -154,6 +154,7 @@ Class | Method | HTTP request | Description
 *CommonAdminApi* | [**get_maintenance_notification**](docs/CommonAdminApi.md#get_maintenance_notification) | **GET** /common_api/maintenance_notification | Get maintenance notification.
 *CommonAdminApi* | [**get_manager_instance_names**](docs/CommonAdminApi.md#get_manager_instance_names) | **GET** /common_api/manager_instance_names | Get available manager instances.
 *CommonAdminApi* | [**get_scheduled_tasks_status**](docs/CommonAdminApi.md#get_scheduled_tasks_status) | **GET** /common_api/scheduled_tasks_status | Get scheduled tasks status from manager instance.
+*CommonAdminApi* | [**get_server_version**](docs/CommonAdminApi.md#get_server_version) | **GET** /common_api/server_version | Get server version.
 *CommonAdminApi* | [**get_software_update_status**](docs/CommonAdminApi.md#get_software_update_status) | **GET** /common_api/software_info | Get software version information from manager instance.
 *CommonAdminApi* | [**get_system_info**](docs/CommonAdminApi.md#get_system_info) | **GET** /common_api/system_info | Get system information from manager instance.
 *CommonAdminApi* | [**get_waiting_report_page**](docs/CommonAdminApi.md#get_waiting_report_page) | **GET** /common_api/waiting_report_page | 
@@ -170,8 +171,8 @@ Class | Method | HTTP request | Description
 *CommonAdminApi* | [**post_get_report_iterator_page**](docs/CommonAdminApi.md#post_get_report_iterator_page) | **POST** /common_api/report_iterator_page | Get report iterator page.
 *CommonAdminApi* | [**post_process_report**](docs/CommonAdminApi.md#post_process_report) | **POST** /common_api/process_report | 
 *CommonAdminApi* | [**post_schedule_task**](docs/CommonAdminApi.md#post_schedule_task) | **POST** /common_api/schedule_task | Schedule task.
-*CommonAdminApi* | [**post_trigger_backend_data_reset**](docs/CommonAdminApi.md#post_trigger_backend_data_reset) | **POST** /common_api/trigger_backend_data_reset | Trigger backend data reset
-*CommonAdminApi* | [**post_trigger_backend_restart**](docs/CommonAdminApi.md#post_trigger_backend_restart) | **POST** /common_api/trigger_backend_restart | Trigger backend restart.
+*CommonAdminApi* | [**post_trigger_server_data_reset**](docs/CommonAdminApi.md#post_trigger_server_data_reset) | **POST** /common_api/trigger_server_data_reset | Trigger server data reset.
+*CommonAdminApi* | [**post_trigger_server_restart**](docs/CommonAdminApi.md#post_trigger_server_restart) | **POST** /common_api/trigger_server_restart | Trigger server restart.
 *CommonAdminApi* | [**post_trigger_software_update_download**](docs/CommonAdminApi.md#post_trigger_software_update_download) | **POST** /common_api/trigger_software_update_download | Trigger software update download.
 *CommonAdminApi* | [**post_trigger_software_update_install**](docs/CommonAdminApi.md#post_trigger_software_update_install) | **POST** /common_api/trigger_software_update_install | Trigger software update install.
 *CommonAdminApi* | [**post_trigger_system_reboot**](docs/CommonAdminApi.md#post_trigger_system_reboot) | **POST** /common_api/trigger_system_reboot | Trigger system reboot.
@@ -186,8 +187,10 @@ Class | Method | HTTP request | Description
 *MediaApi* | [**get_media_content_info**](docs/MediaApi.md#get_media_content_info) | **GET** /media_api/media_content_info | Get my profile and security content
 *MediaApi* | [**get_profile_content_info**](docs/MediaApi.md#get_profile_content_info) | **GET** /media_api/profile_content_info/{aid} | Get current profile content for selected profile.
 *MediaApi* | [**get_profile_content_info_binary**](docs/MediaApi.md#get_profile_content_info_binary) | **GET** /media_api/profile_content_info_binary/{aid} | Get current profile content for selected profile as compact binary payload.
+*MediaApi* | [**get_security_content_verification_queue_status**](docs/MediaApi.md#get_security_content_verification_queue_status) | **GET** /media_api/security_content_verification_queue | Get security content verification queue status for current account.
 *MediaApi* | [**post_media_app_notification_settings**](docs/MediaApi.md#post_media_app_notification_settings) | **POST** /media_api/post_media_app_notification_settings | 
 *MediaApi* | [**post_profile_content_report**](docs/MediaApi.md#post_profile_content_report) | **POST** /media_api/profile_content_report | Report profile content.
+*MediaApi* | [**post_security_content_verification_queue_item**](docs/MediaApi.md#post_security_content_verification_queue_item) | **POST** /media_api/security_content_verification_queue | Add security content verification request to queue for current account.
 *MediaApi* | [**put_content_to_content_slot**](docs/MediaApi.md#put_content_to_content_slot) | **PUT** /media_api/content_slot/{slot_id} | Upload content to server. The content is saved to content processing slot when account state is [model::AccountState::InitialSetup]. In other states the slot number is ignored and content goes directly to moderation.
 *MediaApi* | [**put_profile_content**](docs/MediaApi.md#put_profile_content) | **PUT** /media_api/profile_content | Set new profile content for current account.
 *MediaApi* | [**put_security_content_info**](docs/MediaApi.md#put_security_content_info) | **PUT** /media_api/security_content_info | Set current security content for current account.
@@ -195,11 +198,13 @@ Class | Method | HTTP request | Description
 *MediaAdminApi* | [**get_image_processing_config_warnings**](docs/MediaAdminApi.md#get_image_processing_config_warnings) | **GET** /media_api/image_processing_config_warnings | Get image processing config warnings
 *MediaAdminApi* | [**get_media_content_face_verified_null_list**](docs/MediaAdminApi.md#get_media_content_face_verified_null_list) | **GET** /media_api/media_content_face_verified_null_list | Get first page of accounts with security selfie and content where `face_verified` is NULL and `face_detected` is true or `face_detected_manual` is true. Oldest security content set time is first and count 25.
 *MediaAdminApi* | [**get_media_content_pending_moderation_list**](docs/MediaAdminApi.md#get_media_content_pending_moderation_list) | **GET** /media_api/media_content_pending_moderation | Get first page of pending media content moderations. Oldest item is first and count 25.
-*MediaAdminApi* | [**get_security_content_info**](docs/MediaAdminApi.md#get_security_content_info) | **GET** /media_api/security_content_info/{aid} | Get current security content for selected profile.
+*MediaAdminApi* | [**get_security_content_admin_info**](docs/MediaAdminApi.md#get_security_content_admin_info) | **GET** /media_api/security_content_admin_info/{aid} | Get current security content for selected profile.
+*MediaAdminApi* | [**get_security_content_verification_queue_next_item**](docs/MediaAdminApi.md#get_security_content_verification_queue_next_item) | **GET** /media_api/security_content_verification_queue_admin_next | Get next item in security content verification queue.
 *MediaAdminApi* | [**post_image_processing_config**](docs/MediaAdminApi.md#post_image_processing_config) | **POST** /media_api/image_processing_config | Update image processing configuration
 *MediaAdminApi* | [**post_media_content_face_detected_value**](docs/MediaAdminApi.md#post_media_content_face_detected_value) | **POST** /media_api/media_content_face_detected_value | Change media content face detected value
 *MediaAdminApi* | [**post_media_content_face_verified_value**](docs/MediaAdminApi.md#post_media_content_face_verified_value) | **POST** /media_api/media_content_face_verified_value | Change media content face verified value
 *MediaAdminApi* | [**post_moderate_media_content**](docs/MediaAdminApi.md#post_moderate_media_content) | **POST** /media_api/moderate_media_content | Rejected category and details can be set only when the content is rejected.
+*MediaAdminApi* | [**post_security_content_verification_queue_remove_next_item**](docs/MediaAdminApi.md#post_security_content_verification_queue_remove_next_item) | **POST** /media_api/security_content_verification_queue_admin_next_remove | Remove next item from security content verification queue if possible.
 *MediaAdminApi* | [**post_security_content_verified_value**](docs/MediaAdminApi.md#post_security_content_verified_value) | **POST** /media_api/security_content_verified_value | Change security content verified value
 *ProfileApi* | [**delete_favorite_profile**](docs/ProfileApi.md#delete_favorite_profile) | **DELETE** /profile_api/favorite_profile | Delete favorite profile
 *ProfileApi* | [**get_automatic_profile_search_settings**](docs/ProfileApi.md#get_automatic_profile_search_settings) | **GET** /profile_api/automatic_profile_search_settings | 
@@ -278,7 +283,6 @@ Class | Method | HTTP request | Description
  - [AuthPair](docs/AuthPair.md)
  - [AutomaticProfileSearchIteratorSessionId](docs/AutomaticProfileSearchIteratorSessionId.md)
  - [AutomaticProfileSearchSettings](docs/AutomaticProfileSearchSettings.md)
- - [BackendVersion](docs/BackendVersion.md)
  - [BackupTransferByteCount](docs/BackupTransferByteCount.md)
  - [BackupTransferClientRole](docs/BackupTransferClientRole.md)
  - [BackupTransferInitialMessage](docs/BackupTransferInitialMessage.md)
@@ -385,6 +389,7 @@ Class | Method | HTTP request | Description
  - [GetProfileStringState](docs/GetProfileStringState.md)
  - [GetPushNotificationInfo](docs/GetPushNotificationInfo.md)
  - [GetReportList](docs/GetReportList.md)
+ - [GetSecurityContentVerificationQueueNextItemResult](docs/GetSecurityContentVerificationQueueNextItemResult.md)
  - [GetSentMessage](docs/GetSentMessage.md)
  - [ImageProcessingDynamicConfig](docs/ImageProcessingDynamicConfig.md)
  - [ImageProcessingWarnings](docs/ImageProcessingWarnings.md)
@@ -473,6 +478,9 @@ Class | Method | HTTP request | Description
  - [PostMediaContentFaceVerifiedValueItem](docs/PostMediaContentFaceVerifiedValueItem.md)
  - [PostModerateMediaContent](docs/PostModerateMediaContent.md)
  - [PostModerateProfileString](docs/PostModerateProfileString.md)
+ - [PostSecurityContentVerificationQueueItem](docs/PostSecurityContentVerificationQueueItem.md)
+ - [PostSecurityContentVerificationQueueItemResult](docs/PostSecurityContentVerificationQueueItemResult.md)
+ - [PostSecurityContentVerificationQueueRemoveNextItem](docs/PostSecurityContentVerificationQueueRemoveNextItem.md)
  - [PostSecurityContentVerifiedValue](docs/PostSecurityContentVerifiedValue.md)
  - [PostStartDataExport](docs/PostStartDataExport.md)
  - [PostVideoCallUrlResult](docs/PostVideoCallUrlResult.md)
@@ -552,6 +560,8 @@ Class | Method | HTTP request | Description
  - [SearchAgeRange](docs/SearchAgeRange.md)
  - [SearchGroups](docs/SearchGroups.md)
  - [SecurityContentAdminInfo](docs/SecurityContentAdminInfo.md)
+ - [SecurityContentVerificationQueueAdminItem](docs/SecurityContentVerificationQueueAdminItem.md)
+ - [SecurityContentVerificationQueueStatus](docs/SecurityContentVerificationQueueStatus.md)
  - [SeenMessage](docs/SeenMessage.md)
  - [SendLike](docs/SendLike.md)
  - [SendLikeResult](docs/SendLikeResult.md)
@@ -561,6 +571,7 @@ Class | Method | HTTP request | Description
  - [SentMessageIdList](docs/SentMessageIdList.md)
  - [ServerMaintenanceStatus](docs/ServerMaintenanceStatus.md)
  - [ServerMessageType](docs/ServerMessageType.md)
+ - [ServerVersion](docs/ServerVersion.md)
  - [SetAccountBanState](docs/SetAccountBanState.md)
  - [SetAccountSetup](docs/SetAccountSetup.md)
  - [SetEmailLoginEnabled](docs/SetEmailLoginEnabled.md)

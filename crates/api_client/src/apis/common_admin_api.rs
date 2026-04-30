@@ -96,6 +96,15 @@ pub enum GetScheduledTasksStatusError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`get_server_version`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetServerVersionError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_software_update_status`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -241,19 +250,19 @@ pub enum PostScheduleTaskError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_trigger_backend_data_reset`]
+/// struct for typed errors of method [`post_trigger_server_data_reset`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostTriggerBackendDataResetError {
+pub enum PostTriggerServerDataResetError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_trigger_backend_restart`]
+/// struct for typed errors of method [`post_trigger_server_restart`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostTriggerBackendRestartError {
+pub enum PostTriggerServerRestartError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -645,6 +654,44 @@ pub async fn get_scheduled_tasks_status(configuration: &configuration::Configura
     } else {
         let content = resp.text().await?;
         let entity: Option<GetScheduledTasksStatusError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// # Permissions Requires admin_server_view_info.
+pub async fn get_server_version(configuration: &configuration::Configuration, ) -> Result<models::ServerVersion, Error<GetServerVersionError>> {
+
+    let uri_str = format!("{}/common_api/server_version", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::ServerVersion`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::ServerVersion`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetServerVersionError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -1226,12 +1273,12 @@ pub async fn post_schedule_task(configuration: &configuration::Configuration, ma
     }
 }
 
-/// This API route will fail if backend config file field debug_allow_backend_data_reset is not true.  Registering new accounts will be prevented and all accounts will be deleted. After that manager will stop the backend, delete backend's data directory and start the backend.  This can be requested only once per backend process.  Account registering prevention is process specific, so restarting backend will disable that.  # Access * Permission [model::Permissions::admin_server_data_reset]
-pub async fn post_trigger_backend_data_reset(configuration: &configuration::Configuration, manager_name: &str) -> Result<(), Error<PostTriggerBackendDataResetError>> {
+/// This API route will fail if server config file field debug_allow_backend_data_reset is not true.  Registering new accounts will be prevented and all accounts will be deleted. After that manager will stop the server, delete server's data directory and start the server.  This can be requested only once per server process.  Account registering prevention is process specific, so restarting server will disable that.  # Access * Permission [model::Permissions::admin_server_data_reset]
+pub async fn post_trigger_server_data_reset(configuration: &configuration::Configuration, manager_name: &str) -> Result<(), Error<PostTriggerServerDataResetError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_query_manager_name = manager_name;
 
-    let uri_str = format!("{}/common_api/trigger_backend_data_reset", configuration.base_path);
+    let uri_str = format!("{}/common_api/trigger_server_data_reset", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
 
     req_builder = req_builder.query(&[("manager_name", &p_query_manager_name.to_string())]);
@@ -1251,17 +1298,17 @@ pub async fn post_trigger_backend_data_reset(configuration: &configuration::Conf
         Ok(())
     } else {
         let content = resp.text().await?;
-        let entity: Option<PostTriggerBackendDataResetError> = serde_json::from_str(&content).ok();
+        let entity: Option<PostTriggerServerDataResetError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
 
 /// # Access * Permission [model::Permissions::admin_server_restart]
-pub async fn post_trigger_backend_restart(configuration: &configuration::Configuration, manager_name: &str) -> Result<(), Error<PostTriggerBackendRestartError>> {
+pub async fn post_trigger_server_restart(configuration: &configuration::Configuration, manager_name: &str) -> Result<(), Error<PostTriggerServerRestartError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_query_manager_name = manager_name;
 
-    let uri_str = format!("{}/common_api/trigger_backend_restart", configuration.base_path);
+    let uri_str = format!("{}/common_api/trigger_server_restart", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
 
     req_builder = req_builder.query(&[("manager_name", &p_query_manager_name.to_string())]);
@@ -1281,7 +1328,7 @@ pub async fn post_trigger_backend_restart(configuration: &configuration::Configu
         Ok(())
     } else {
         let content = resp.text().await?;
-        let entity: Option<PostTriggerBackendRestartError> = serde_json::from_str(&content).ok();
+        let entity: Option<PostTriggerServerRestartError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

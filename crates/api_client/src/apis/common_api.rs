@@ -94,10 +94,10 @@ pub enum GetPushNotificationInfoError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`get_version`]
+/// struct for typed errors of method [`get_server_online`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum GetVersionError {
+pub enum GetServerOnlineError {
     UnknownValue(serde_json::Value),
 }
 
@@ -480,9 +480,9 @@ pub async fn get_push_notification_info(configuration: &configuration::Configura
     }
 }
 
-pub async fn get_version(configuration: &configuration::Configuration, ) -> Result<models::BackendVersion, Error<GetVersionError>> {
+pub async fn get_server_online(configuration: &configuration::Configuration, ) -> Result<(), Error<GetServerOnlineError>> {
 
-    let uri_str = format!("{}/common_api/version", configuration.base_path);
+    let uri_str = format!("{}/common_api/server_online", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -493,23 +493,12 @@ pub async fn get_version(configuration: &configuration::Configuration, ) -> Resu
     let resp = configuration.client.execute(req).await?;
 
     let status = resp.status();
-    let content_type = resp
-        .headers()
-        .get("content-type")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("application/octet-stream");
-    let content_type = super::ContentType::from(content_type);
 
     if !status.is_client_error() && !status.is_server_error() {
-        let content = resp.text().await?;
-        match content_type {
-            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::BackendVersion`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::BackendVersion`")))),
-        }
+        Ok(())
     } else {
         let content = resp.text().await?;
-        let entity: Option<GetVersionError> = serde_json::from_str(&content).ok();
+        let entity: Option<GetServerOnlineError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
