@@ -112,6 +112,7 @@ pub struct FaceVerificationConfig {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SecurityContentVerificationConfig {
+    pub allowed_methods: model::account::SecurityContentVerificationMethodsConfig,
     pub llm: Option<LlmSecurityContentVerificationConfig>,
     pub default_action: VerificationAction,
     pub concurrency: u8,
@@ -129,6 +130,7 @@ impl SecurityContentVerificationConfig {
         let file = file.unwrap_or_default();
 
         Some(Self {
+            allowed_methods: file.allowed_methods.unwrap_or_default(),
             llm: LlmSecurityContentVerificationConfig::new(db.llm, db.llm_enabled, file.llm),
             default_action: db.default_action,
             concurrency: file.concurrency.unwrap_or(LLM_CONCURRENCY_DEFAULT),

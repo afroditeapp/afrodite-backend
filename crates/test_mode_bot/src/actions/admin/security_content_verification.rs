@@ -3,8 +3,8 @@ use std::{fmt::Debug, sync::Arc};
 use api_client::{
     apis::{media_admin_api, media_api},
     models::{
-        PostSecurityContentVerificationQueueRemoveNextItem, PostSecurityContentVerifiedValue,
-        SecurityContentVerificationQueueAdminItem,
+        AccountId, ContentId, PostSecurityContentVerificationQueueRemoveNextItem,
+        PostSecurityContentVerifiedValue, SecurityContentVerificationQueueAdminItem,
     },
 };
 use async_openai::{
@@ -59,6 +59,12 @@ impl SecurityContentVerificationState {
 #[derive(Debug)]
 pub struct AdminBotSecurityContentVerificationLogic;
 
+enum VerificationMethodAction {
+    Accept,
+    Reject,
+    _CheckImage(Vec<u8>),
+}
+
 impl AdminBotSecurityContentVerificationLogic {
     async fn verify_one_page(
         api: &ApiClient,
@@ -70,39 +76,25 @@ impl AdminBotSecurityContentVerificationLogic {
             None => return Ok(Some(EmptyPage)),
         };
 
-        let verification_image =
-            Self::parse_verification_image(&item.verification_method, &item.verification_data)?;
-
-        let security_image = media_api::get_content(
-            &api.api(),
-            &item.account_id.aid,
-            &item.security_content.cid,
-            Some(false),
-        )
-        .await
-        .change_context(TestError::ApiRequest)?
-        .bytes()
-        .await
-        .change_context(TestError::ApiRequest)?
-        .to_vec();
-
-        let result = if let Some(llm) = state.llm.clone() {
-            Self::llm_security_content_verification_and_retry(
-                &security_image,
-                &verification_image,
-                llm,
-            )
-            .await?
-        } else {
-            None
+        let value = match Self::parse_verification_method_action(
+            config,
+            &item.verification_method,
+            &item.verification_data,
+        )? {
+            VerificationMethodAction::Accept => Some(true),
+            VerificationMethodAction::Reject => Some(false),
+            VerificationMethodAction::_CheckImage(verification_image) => {
+                Self::handle_check_image_method(
+                    api,
+                    config,
+                    state,
+                    &item.account_id,
+                    &item.security_content,
+                    verification_image,
+                )
+                .await?
+            }
         };
-
-        let value = result
-            .map(|r| Some(r.accept))
-            .unwrap_or_else(|| match config.default_action {
-                VerificationAction::Accept => Some(true),
-                VerificationAction::Reject => Some(false),
-            });
 
         let account_id = (*item.account_id).clone();
         let security_content = (*item.security_content).clone();
@@ -219,6 +211,41 @@ impl AdminBotSecurityContentVerificationLogic {
         }))
     }
 
+    async fn handle_check_image_method(
+        api: &ApiClient,
+        config: &SecurityContentVerificationConfig,
+        state: &SecurityContentVerificationState,
+        aid: &AccountId,
+        cid: &ContentId,
+        verification_image: Vec<u8>,
+    ) -> Result<Option<bool>, TestError> {
+        let security_image = media_api::get_content(&api.api(), &aid.aid, &cid.cid, Some(false))
+            .await
+            .change_context(TestError::ApiRequest)?
+            .bytes()
+            .await
+            .change_context(TestError::ApiRequest)?
+            .to_vec();
+
+        let result = if let Some(llm) = state.llm.clone() {
+            Self::llm_security_content_verification_and_retry(
+                &security_image,
+                &verification_image,
+                llm,
+            )
+            .await?
+        } else {
+            None
+        };
+
+        Ok(result
+            .map(|r| Some(r.accept))
+            .unwrap_or_else(|| match config.default_action {
+                VerificationAction::Accept => Some(true),
+                VerificationAction::Reject => Some(false),
+            }))
+    }
+
     async fn llm_security_content_verification_and_retry(
         security_image_data: &[u8],
         verification_image_data: &[u8],
@@ -255,13 +282,23 @@ impl AdminBotSecurityContentVerificationLogic {
         }
     }
 
-    fn parse_verification_image(
-        _verification_method: &str,
+    fn parse_verification_method_action(
+        config: &SecurityContentVerificationConfig,
+        verification_method: &str,
         _verification_data: &str,
-    ) -> Result<Vec<u8>, TestError> {
-        Err(TestError::AdminBotInternalError).attach_printable(
-            "Security content verification method/data image parsing is not defined yet",
-        )
+    ) -> Result<VerificationMethodAction, TestError> {
+        match verification_method.trim().to_lowercase().as_str() {
+            "debug_accept" if config.allowed_methods.debug_accept => {
+                Ok(VerificationMethodAction::Accept)
+            }
+            "debug_reject" if config.allowed_methods.debug_reject => {
+                Ok(VerificationMethodAction::Reject)
+            }
+            // TODO: eudi
+            _ => Err(TestError::AdminBotInternalError).attach_printable(
+                "Unsupported or disabled security content verification method".to_string(),
+            ),
+        }
     }
 
     async fn get_next_queue_item(

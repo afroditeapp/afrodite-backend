@@ -150,6 +150,8 @@ pub struct ClientFeaturesConfig {
     profile: Option<ProfileConfig>,
     #[serde(skip_serializing_if = "Option::is_none")]
     chat: Option<ChatConfig>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    verification_methods: Option<VerificationMethodsConfig>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
@@ -321,6 +323,25 @@ pub struct VerificationConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub security_content: bool,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
+pub struct VerificationMethodsConfig {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    security_content: Option<SecurityContentVerificationMethodsConfig>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
+pub struct SecurityContentVerificationMethodsConfig {
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub debug_accept: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub debug_reject: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub eudi: bool,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]

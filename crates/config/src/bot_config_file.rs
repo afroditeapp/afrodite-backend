@@ -411,6 +411,7 @@ pub struct FaceVerificationFileConfig {
 
 #[derive(Debug, Clone, Deserialize, Default)]
 pub struct SecurityContentVerificationFileConfig {
+    pub allowed_methods: Option<model::account::SecurityContentVerificationMethodsConfig>,
     pub llm: Option<LlmContentModerationFileConfig>,
     /// Default value is 4.
     pub concurrency: Option<u8>,
