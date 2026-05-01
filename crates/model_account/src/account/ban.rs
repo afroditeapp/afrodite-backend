@@ -31,6 +31,13 @@ pub enum AccountBannedAdminType {
     Bot = 1,
 }
 
+/// Numeric category for account ban reason.
+///
+/// Known values:
+/// - `0` = profile name
+/// - `1` = profile text
+/// - `2` = media content
+/// - `3` = chat message
 #[derive(
     Debug,
     Serialize,
