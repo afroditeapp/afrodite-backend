@@ -432,7 +432,7 @@ impl PushNotification {
 /// Notification IDs from client
 #[derive(Clone, Copy)]
 pub enum PushNotificationId {
-    // Backend does not use this
+    // Server does not use this
     // NotificationDecryptingFailed = 0,
 
     // Common
@@ -453,7 +453,7 @@ pub enum PushNotificationId {
 
     // Chat
     LikeReceived = 50,
-    // Backend does not use this
+    // Server does not use this
     // GenericMessageReceived = 51,
     FirstNewMessageNotificationId = 1000,
 }

@@ -23,10 +23,10 @@ use crate::EmailMessages;
 #[repr(i16)]
 #[derive(Default)]
 pub enum EmailSendingState {
-    /// Backend has not yet tried to send the email.
+    /// Server has not yet tried to send the email.
     #[default]
     NotSent = 0,
-    /// Backend moved the email to send queue.
+    /// Server moved the email to send queue.
     SendRequested = 1,
     /// SMTP server returned a positive response.
     SentSuccessfully = 2,

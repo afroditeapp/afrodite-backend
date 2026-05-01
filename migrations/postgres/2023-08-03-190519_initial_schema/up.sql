@@ -371,7 +371,7 @@ CREATE TABLE IF NOT EXISTS account_email_address_state(
     -- Verification request email is sent when email_change is set.
     email_change_verification_token           BYTEA         UNIQUE,
     -- Verification status of email_change.
-    -- This is required to be TRUE when backend logic changes the pending
+    -- This is required to be TRUE when server logic changes the pending
     -- email to account's email address.
     email_change_verified           BOOLEAN   NOT NULL DEFAULT FALSE,
     email_login_enabled             BOOLEAN   NOT NULL DEFAULT TRUE,
