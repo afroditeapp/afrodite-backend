@@ -29,10 +29,14 @@ pub struct AdminBotConfig {
     pub profile_text_moderation: Box<models::AdminProfileStringModerationConfig>,
     #[serde(rename = "profile_text_moderation_enabled", skip_serializing_if = "Option::is_none")]
     pub profile_text_moderation_enabled: Option<bool>,
+    #[serde(rename = "security_content_verification")]
+    pub security_content_verification: Box<models::AdminSecurityContentVerificationConfig>,
+    #[serde(rename = "security_content_verification_enabled", skip_serializing_if = "Option::is_none")]
+    pub security_content_verification_enabled: Option<bool>,
 }
 
 impl AdminBotConfig {
-    pub fn new(content_moderation: models::AdminContentModerationConfig, face_verification: models::AdminFaceVerificationConfig, profile_name_moderation: models::AdminProfileStringModerationConfig, profile_text_moderation: models::AdminProfileStringModerationConfig) -> AdminBotConfig {
+    pub fn new(content_moderation: models::AdminContentModerationConfig, face_verification: models::AdminFaceVerificationConfig, profile_name_moderation: models::AdminProfileStringModerationConfig, profile_text_moderation: models::AdminProfileStringModerationConfig, security_content_verification: models::AdminSecurityContentVerificationConfig) -> AdminBotConfig {
         AdminBotConfig {
             content_moderation: Box::new(content_moderation),
             content_moderation_enabled: None,
@@ -42,6 +46,8 @@ impl AdminBotConfig {
             profile_name_moderation_enabled: None,
             profile_text_moderation: Box::new(profile_text_moderation),
             profile_text_moderation_enabled: None,
+            security_content_verification: Box::new(security_content_verification),
+            security_content_verification_enabled: None,
         }
     }
 }

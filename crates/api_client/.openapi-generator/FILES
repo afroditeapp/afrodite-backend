@@ -22,6 +22,7 @@ src/models/account.rs
 src/models/account_app_notification_settings.rs
 src/models/account_ban_reason_category.rs
 src/models/account_ban_reason_details.rs
+src/models/account_banned_admin_type.rs
 src/models/account_content.rs
 src/models/account_id.rs
 src/models/account_id_db_value.rs
@@ -40,6 +41,7 @@ src/models/admin_notification.rs
 src/models/admin_notification_settings.rs
 src/models/admin_nsfw_detection_config.rs
 src/models/admin_profile_string_moderation_config.rs
+src/models/admin_security_content_verification_config.rs
 src/models/api_usage_count.rs
 src/models/api_usage_statistics.rs
 src/models/attribute.rs
@@ -184,6 +186,7 @@ src/models/likes_config.rs
 src/models/limited_action_status.rs
 src/models/llm_content_moderation_config.rs
 src/models/llm_face_verification_config.rs
+src/models/llm_security_content_verification_config.rs
 src/models/llm_string_moderation_config.rs
 src/models/location.rs
 src/models/login_result.rs
@@ -318,7 +321,7 @@ src/models/report_id.rs
 src/models/report_iterator_mode.rs
 src/models/report_iterator_query.rs
 src/models/report_processing_state.rs
-src/models/report_type_number.rs
+src/models/report_type.rs
 src/models/request_email_login_token.rs
 src/models/request_email_login_token_result.rs
 src/models/reset_news_iterator_result.rs

@@ -20,13 +20,13 @@ pub struct ReportDetailedInfo {
     #[serde(rename = "processing_state")]
     pub processing_state: models::ReportProcessingState,
     #[serde(rename = "report_type")]
-    pub report_type: Box<models::ReportTypeNumber>,
+    pub report_type: Box<models::ReportType>,
     #[serde(rename = "target")]
     pub target: Box<models::AccountId>,
 }
 
 impl ReportDetailedInfo {
-    pub fn new(creator: models::AccountId, id: models::ReportId, processing_state: models::ReportProcessingState, report_type: models::ReportTypeNumber, target: models::AccountId) -> ReportDetailedInfo {
+    pub fn new(creator: models::AccountId, id: models::ReportId, processing_state: models::ReportProcessingState, report_type: models::ReportType, target: models::AccountId) -> ReportDetailedInfo {
         ReportDetailedInfo {
             creator: Box::new(creator),
             id: Box::new(id),

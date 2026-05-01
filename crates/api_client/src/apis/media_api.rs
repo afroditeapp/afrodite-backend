@@ -199,7 +199,7 @@ pub async fn delete_content(configuration: &configuration::Configuration, aid: &
     }
 }
 
-/// # Access  - Own account - Permission [model::Permissions::admin_moderate_media_content]
+/// # Access  - Own account - Permission [model::Permissions::admin_moderate_media_content] - Permission [model::Permissions::admin_edit_media_content_face_detected_value] - Permission [model::Permissions::admin_edit_media_content_face_verified_value]
 pub async fn get_all_account_media_content(configuration: &configuration::Configuration, aid: &str) -> Result<models::AccountContent, Error<GetAllAccountMediaContentError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_aid = aid;

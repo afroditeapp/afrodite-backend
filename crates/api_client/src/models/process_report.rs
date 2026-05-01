@@ -18,13 +18,13 @@ pub struct ProcessReport {
     #[serde(rename = "creator")]
     pub creator: Box<models::AccountId>,
     #[serde(rename = "report_type")]
-    pub report_type: Box<models::ReportTypeNumber>,
+    pub report_type: Box<models::ReportType>,
     #[serde(rename = "target")]
     pub target: Box<models::AccountId>,
 }
 
 impl ProcessReport {
-    pub fn new(content: models::ReportContent, creator: models::AccountId, report_type: models::ReportTypeNumber, target: models::AccountId) -> ProcessReport {
+    pub fn new(content: models::ReportContent, creator: models::AccountId, report_type: models::ReportType, target: models::AccountId) -> ProcessReport {
         ProcessReport {
             content: Box::new(content),
             creator: Box::new(creator),

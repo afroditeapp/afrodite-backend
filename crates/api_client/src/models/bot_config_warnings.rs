@@ -26,6 +26,8 @@ pub struct BotConfigWarnings {
     pub profile_name_moderation_file_config_missing: Option<bool>,
     #[serde(rename = "profile_text_moderation_file_config_missing", skip_serializing_if = "Option::is_none")]
     pub profile_text_moderation_file_config_missing: Option<bool>,
+    #[serde(rename = "security_content_verification_file_config_missing", skip_serializing_if = "Option::is_none")]
+    pub security_content_verification_file_config_missing: Option<bool>,
 }
 
 impl BotConfigWarnings {
@@ -37,6 +39,7 @@ impl BotConfigWarnings {
             face_verification_file_config_missing: None,
             profile_name_moderation_file_config_missing: None,
             profile_text_moderation_file_config_missing: None,
+            security_content_verification_file_config_missing: None,
         }
     }
 }

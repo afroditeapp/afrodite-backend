@@ -13,6 +13,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetAccountBanTimeResult {
+    #[serde(rename = "admin_type", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub admin_type: Option<Option<models::AccountBannedAdminType>>,
     /// If `None` the account is not banned.
     #[serde(rename = "banned_until", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub banned_until: Option<Option<Box<models::UnixTime>>>,
@@ -25,6 +27,7 @@ pub struct GetAccountBanTimeResult {
 impl GetAccountBanTimeResult {
     pub fn new() -> GetAccountBanTimeResult {
         GetAccountBanTimeResult {
+            admin_type: None,
             banned_until: None,
             reason_category: None,
             reason_details: None,
