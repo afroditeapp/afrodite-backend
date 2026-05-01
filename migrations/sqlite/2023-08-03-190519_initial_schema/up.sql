@@ -462,6 +462,7 @@ CREATE TABLE IF NOT EXISTS account_state(
     -- Null or non-empty string
     account_banned_reason_details      TEXT,
     account_banned_admin_account_id    BIGINT,
+    account_banned_admin_type_number   SMALLINT,
     account_banned_until_unix_time     BIGINT,
     account_banned_state_change_unix_time BIGINT,
     -- Sync version for news.

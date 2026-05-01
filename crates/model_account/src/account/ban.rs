@@ -3,8 +3,33 @@ use diesel::{
     sql_types::{SmallInt, Text},
 };
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{NonEmptyString, diesel_i16_wrapper, diesel_non_empty_string_wrapper};
+use simple_backend_model::{
+    NonEmptyString, SimpleDieselEnum, diesel_i16_wrapper, diesel_non_empty_string_wrapper,
+};
 use utoipa::{IntoParams, ToSchema};
+
+#[derive(
+    Debug,
+    Default,
+    Deserialize,
+    Serialize,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    ToSchema,
+    SimpleDieselEnum,
+    diesel::FromSqlRow,
+    diesel::AsExpression,
+    num_enum::TryFromPrimitive,
+)]
+#[diesel(sql_type = SmallInt)]
+#[repr(i16)]
+pub enum AccountBannedAdminType {
+    #[default]
+    Human = 0,
+    Bot = 1,
+}
 
 #[derive(
     Debug,

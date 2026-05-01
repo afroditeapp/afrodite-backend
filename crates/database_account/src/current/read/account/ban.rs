@@ -19,16 +19,20 @@ impl CurrentReadAccountBan<'_> {
             .filter(account_id.eq(id.as_db_id()))
             .select((
                 account_banned_until_unix_time,
+                account_banned_admin_type_number,
                 account_banned_reason_category,
                 account_banned_reason_details,
             ))
             .first(self.conn())
             .into_db_error(id)
             .map(
-                |(banned_until, reason_category, reason_details)| GetAccountBanTimeResult {
-                    banned_until,
-                    reason_category,
-                    reason_details,
+                |(banned_until, admin_type, reason_category, reason_details)| {
+                    GetAccountBanTimeResult {
+                        banned_until,
+                        admin_type,
+                        reason_category,
+                        reason_details,
+                    }
                 },
             )
     }

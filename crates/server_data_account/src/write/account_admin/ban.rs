@@ -1,7 +1,9 @@
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
 use database_account::current::{read::GetDbReadCommandsAccount, write::GetDbWriteCommandsAccount};
 use model::{Account, UnixTime};
-use model_account::{AccountBanReasonCategory, AccountBanReasonDetails, AccountIdInternal};
+use model_account::{
+    AccountBanReasonCategory, AccountBanReasonDetails, AccountBannedAdminType, AccountIdInternal,
+};
 use server_data::{
     DataError, db_transaction, define_cmd_wrapper_write,
     read::DbRead,
@@ -20,11 +22,29 @@ impl WriteCommandsAccountBan<'_> {
         reason_category: Option<AccountBanReasonCategory>,
         reason_details: Option<AccountBanReasonDetails>,
     ) -> Result<Option<Account>, DataError> {
-        let (ban_state, current_account) = self
+        let (ban_state, current_account, admin_type) = self
             .db_read(move |mut cmds| {
                 let ban_state = cmds.account().ban().account_ban_time(id)?;
                 let current_account = cmds.common().account(id)?;
-                Ok((ban_state, current_account))
+                let admin_type = if banned_until.is_some() {
+                    admin_id
+                        .map(|admin_id| {
+                            cmds.common()
+                                .state()
+                                .other_shared_state(admin_id)
+                                .map(|state| {
+                                    if state.is_bot() {
+                                        AccountBannedAdminType::Bot
+                                    } else {
+                                        AccountBannedAdminType::Human
+                                    }
+                                })
+                        })
+                        .transpose()?
+                } else {
+                    None
+                };
+                Ok((ban_state, current_account, admin_type))
             })
             .await?;
         if banned_until == ban_state.banned_until {
@@ -48,6 +68,7 @@ impl WriteCommandsAccountBan<'_> {
             cmds.account_admin().ban().set_banned_state(
                 id,
                 admin_id,
+                admin_type,
                 banned_until,
                 reason_category,
                 reason_details,

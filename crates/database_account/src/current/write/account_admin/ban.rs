@@ -2,7 +2,7 @@ use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::{prelude::*, update};
 use error_stack::Result;
 use model::{AccountIdInternal, UnixTime};
-use model_account::{AccountBanReasonCategory, AccountBanReasonDetails};
+use model_account::{AccountBanReasonCategory, AccountBanReasonDetails, AccountBannedAdminType};
 
 use crate::IntoDatabaseError;
 
@@ -13,6 +13,7 @@ impl CurrentWriteAccountBanAdmin<'_> {
         &mut self,
         id: AccountIdInternal,
         admin_id: Option<AccountIdInternal>,
+        admin_type: Option<AccountBannedAdminType>,
         banned_until: Option<UnixTime>,
         reason_category: Option<AccountBanReasonCategory>,
         reason_details: Option<AccountBanReasonDetails>,
@@ -27,6 +28,7 @@ impl CurrentWriteAccountBanAdmin<'_> {
                 account_banned_until_unix_time.eq(banned_until),
                 account_banned_state_change_unix_time.eq(current_time),
                 account_banned_admin_account_id.eq(admin_id.map(|v| v.into_db_id())),
+                account_banned_admin_type_number.eq(admin_type),
                 account_banned_reason_category.eq(reason_category),
                 account_banned_reason_details.eq(reason_details),
             ))
