@@ -1,8 +1,6 @@
 use database::current::read::GetDbReadCommandsCommon;
 use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia};
-use model::{
-    ContentId, ContentIdInternal, ReportTypeNumber, ReportTypeNumberInternal, UpdateReportResult,
-};
+use model::{ContentId, ContentIdInternal, ReportType, ReportTypeInternal, UpdateReportResult};
 use model_media::{
     AccountIdInternal, ContentModerationState, EventToClientInternal,
     MediaContentModerationRejectedReasonDetails,
@@ -67,11 +65,11 @@ impl WriteCommandsMediaReport<'_> {
                 cmds.common().report().get_all_detailed_reports(
                     creator,
                     target,
-                    ReportTypeNumberInternal::ProfileContent,
+                    ReportTypeInternal::ProfileContent,
                 )
             })
             .await?;
-        if reports.len() >= ReportTypeNumber::MAX_COUNT {
+        if reports.len() >= ReportType::MAX_COUNT {
             return Ok(UpdateReportResult::too_many_reports());
         }
 

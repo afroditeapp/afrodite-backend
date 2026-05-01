@@ -1,8 +1,8 @@
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
 use database_account::current::{read::GetDbReadCommandsAccount, write::GetDbWriteCommandsAccount};
 use model::{
-    AccountIdInternal, CustomReportId, CustomReportType, ReportTypeNumber,
-    ReportTypeNumberInternal, UpdateReportResult,
+    AccountIdInternal, CustomReportId, CustomReportType, ReportType, ReportTypeInternal,
+    UpdateReportResult,
 };
 use server_data::{
     DataError,
@@ -25,7 +25,7 @@ impl WriteCommandsAccountReport<'_> {
         custom_report_id: CustomReportId,
     ) -> Result<UpdateReportResult, DataError> {
         let custom_report_type_number = custom_report_id
-            .to_report_type_number_value()
+            .to_report_type_value()
             .map_err(|e| DataError::NotAllowed.report().attach_printable(e))?;
 
         let custom_report_type = self
@@ -42,11 +42,11 @@ impl WriteCommandsAccountReport<'_> {
                 cmds.common().report().get_all_detailed_reports(
                     creator,
                     target,
-                    ReportTypeNumberInternal::CustomReport(custom_report_type_number),
+                    ReportTypeInternal::CustomReport(custom_report_type_number),
                 )
             })
             .await?;
-        if reports.len() >= ReportTypeNumber::MAX_COUNT {
+        if reports.len() >= ReportType::MAX_COUNT {
             return Ok(UpdateReportResult::too_many_reports());
         }
 

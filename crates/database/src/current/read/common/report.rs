@@ -5,8 +5,8 @@ use model::{
     AccountId, AccountIdDb, AccountIdInternal, AccountInteractionInternal, ChatMessageReport,
     ContentId, MessageNumber, ReportAccountInfo, ReportChatInfo, ReportChatInfoInteractionState,
     ReportContent, ReportDetailed, ReportDetailedInfo, ReportDetailedInfoInternal,
-    ReportDetailedWithId, ReportIdDb, ReportInternal, ReportProcessingState,
-    ReportTypeNumberInternal, UnixTime,
+    ReportDetailedWithId, ReportIdDb, ReportInternal, ReportProcessingState, ReportTypeInternal,
+    UnixTime,
 };
 use simple_backend_model::NonEmptyString;
 
@@ -19,7 +19,7 @@ impl CurrentReadCommonReport<'_> {
         &mut self,
         creator: AccountIdInternal,
         target: AccountIdInternal,
-        report_type: ReportTypeNumberInternal,
+        report_type: ReportTypeInternal,
     ) -> Result<Vec<ReportInternal>, DieselDatabaseError> {
         use crate::schema::{account_id, common_report::dsl::*};
 
@@ -84,7 +84,7 @@ impl CurrentReadCommonReport<'_> {
         &mut self,
         creator: AccountIdInternal,
         target: AccountIdInternal,
-        report_type: ReportTypeNumberInternal,
+        report_type: ReportTypeInternal,
     ) -> Result<Vec<ReportDetailedWithId>, DieselDatabaseError> {
         let internal = self.get_all_internal_reports(creator, target, report_type)?;
 
@@ -107,19 +107,19 @@ impl CurrentReadCommonReport<'_> {
         let mut chat_message = None;
 
         match report.info.report_type {
-            ReportTypeNumberInternal::ProfileName => {
+            ReportTypeInternal::ProfileName => {
                 profile_name = self.profile_name_report(report.id)?
             }
-            ReportTypeNumberInternal::ProfileText => {
+            ReportTypeInternal::ProfileText => {
                 profile_text = self.profile_text_report(report.id)?
             }
-            ReportTypeNumberInternal::ProfileContent => {
+            ReportTypeInternal::ProfileContent => {
                 profile_content = self.profile_content_report(report.id)?
             }
-            ReportTypeNumberInternal::ChatMessage => {
+            ReportTypeInternal::ChatMessage => {
                 chat_message = self.chat_message_report(report.id)?
             }
-            ReportTypeNumberInternal::CustomReport(_) => {
+            ReportTypeInternal::CustomReport(_) => {
                 // Currently custom reports don't support any content
             }
         }

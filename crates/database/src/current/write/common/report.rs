@@ -1,8 +1,6 @@
 use diesel::{delete, insert_into, prelude::*};
 use error_stack::Result;
-use model::{
-    AccountIdInternal, ReportIdDb, ReportProcessingState, ReportTypeNumberInternal, UnixTime,
-};
+use model::{AccountIdInternal, ReportIdDb, ReportProcessingState, ReportTypeInternal, UnixTime};
 use simple_backend_utils::current_unix_time;
 
 use crate::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands};
@@ -14,7 +12,7 @@ impl CurrentWriteCommonReport<'_> {
         &mut self,
         creator: AccountIdInternal,
         target: AccountIdInternal,
-        type_number: ReportTypeNumberInternal,
+        type_number: ReportTypeInternal,
         state: ReportProcessingState,
     ) -> Result<ReportIdDb, DieselDatabaseError> {
         use model::schema::common_report::dsl::*;
@@ -39,7 +37,7 @@ impl CurrentWriteCommonReport<'_> {
 
     pub fn delete_old_reports(
         &mut self,
-        type_number: ReportTypeNumberInternal,
+        type_number: ReportTypeInternal,
         deletion_allowed_time: UnixTime,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::common_report::dsl::*;

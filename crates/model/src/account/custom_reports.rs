@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::{CustomReportTypeNumberValue, ReportTypeNumber};
+use crate::{CustomReportTypeValue, ReportType};
 
 const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 report_order = "OrderNumber"
@@ -24,8 +24,8 @@ pub struct CustomReportId(u8);
 
 impl CustomReportId {
     /// 63
-    const MAX_VALUE: u8 = (ReportTypeNumber::LAST_CUSTOM_REPORT_TYPE_NUMBER
-        - ReportTypeNumber::FIRST_CUSTOM_REPORT_TYPE_NUMBER) as u8;
+    const MAX_VALUE: u8 = (ReportType::LAST_CUSTOM_REPORT_TYPE_NUMBER
+        - ReportType::FIRST_CUSTOM_REPORT_TYPE_NUMBER) as u8;
 
     pub fn new(value: u8) -> Result<Self, String> {
         if value > Self::MAX_VALUE {
@@ -42,10 +42,8 @@ impl CustomReportId {
         self.0.into()
     }
 
-    pub fn to_report_type_number_value(&self) -> Result<CustomReportTypeNumberValue, String> {
-        CustomReportTypeNumberValue::new(
-            self.0 + ReportTypeNumber::FIRST_CUSTOM_REPORT_TYPE_NUMBER as u8,
-        )
+    pub fn to_report_type_value(&self) -> Result<CustomReportTypeValue, String> {
+        CustomReportTypeValue::new(self.0 + ReportType::FIRST_CUSTOM_REPORT_TYPE_NUMBER as u8)
     }
 }
 

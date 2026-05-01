@@ -2,8 +2,8 @@ use database::current::read::GetDbReadCommandsCommon;
 use database_profile::current::{read::GetDbReadCommandsProfile, write::GetDbWriteCommandsProfile};
 use model_profile::{
     AccountIdInternal, EventToClientInternal, ProfileStringModerationContentType,
-    ProfileStringModerationRejectedReasonDetails, ProfileStringModerationState, ReportTypeNumber,
-    ReportTypeNumberInternal, UpdateReportResult,
+    ProfileStringModerationRejectedReasonDetails, ProfileStringModerationState, ReportType,
+    ReportTypeInternal, UpdateReportResult,
 };
 use server_data::{
     DataError, db_transaction, define_cmd_wrapper_write, read::DbRead, result::Result,
@@ -60,11 +60,11 @@ impl WriteCommandsProfileReport<'_> {
                 cmds.common().report().get_all_detailed_reports(
                     creator,
                     target,
-                    ReportTypeNumberInternal::ProfileName,
+                    ReportTypeInternal::ProfileName,
                 )
             })
             .await?;
-        if reports.len() >= ReportTypeNumber::MAX_COUNT {
+        if reports.len() >= ReportType::MAX_COUNT {
             return Ok(UpdateReportResult::too_many_reports());
         }
 
@@ -130,11 +130,11 @@ impl WriteCommandsProfileReport<'_> {
                 cmds.common().report().get_all_detailed_reports(
                     creator,
                     target,
-                    ReportTypeNumberInternal::ProfileText,
+                    ReportTypeInternal::ProfileText,
                 )
             })
             .await?;
-        if reports.len() >= ReportTypeNumber::MAX_COUNT {
+        if reports.len() >= ReportType::MAX_COUNT {
             return Ok(UpdateReportResult::too_many_reports());
         }
 

@@ -3,7 +3,7 @@ use database::{
 };
 use diesel::{ExpressionMethods, insert_into, prelude::*};
 use error_stack::Result;
-use model::{AccountIdInternal, ContentId, ReportProcessingState, ReportTypeNumberInternal};
+use model::{AccountIdInternal, ContentId, ReportProcessingState, ReportTypeInternal};
 
 use crate::IntoDatabaseError;
 
@@ -19,7 +19,7 @@ impl CurrentWriteMediaReport<'_> {
         let id = self.write().common().report().insert_report_content(
             creator,
             target,
-            ReportTypeNumberInternal::ProfileContent,
+            ReportTypeInternal::ProfileContent,
             ReportProcessingState::Waiting,
         )?;
 

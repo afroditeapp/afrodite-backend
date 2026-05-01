@@ -4,7 +4,7 @@ use utoipa::ToSchema;
 
 use crate::{
     AccountId, AccountIdDb, AccountIdInternal, ChatMessageReport, ContentId, ProfileAge, ReportId,
-    ReportIdDb, ReportProcessingState, ReportTypeNumber, ReportTypeNumberInternal,
+    ReportIdDb, ReportProcessingState, ReportType, ReportTypeInternal,
 };
 
 pub struct ReportInternal {
@@ -25,7 +25,7 @@ pub struct ReportDetailedInfoInternal {
     pub creator: AccountId,
     pub target: AccountId,
     pub processing_state: ReportProcessingState,
-    pub report_type: ReportTypeNumberInternal,
+    pub report_type: ReportTypeInternal,
     pub creation_time: UnixTime,
 }
 
@@ -35,7 +35,7 @@ pub struct ReportDetailedInfo {
     pub creator: AccountId,
     pub target: AccountId,
     pub processing_state: ReportProcessingState,
-    pub report_type: ReportTypeNumber,
+    pub report_type: ReportType,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -121,7 +121,7 @@ pub struct GetReportList {
 pub struct ProcessReport {
     pub creator: AccountId,
     pub target: AccountId,
-    pub report_type: ReportTypeNumber,
+    pub report_type: ReportType,
     pub content: ReportContent,
 }
 

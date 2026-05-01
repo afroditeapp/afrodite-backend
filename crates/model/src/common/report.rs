@@ -50,12 +50,12 @@ impl From<ReportIdDb> for ReportId {
 
 /// Values from 64 to 127
 #[derive(Debug, Clone, Copy)]
-pub struct CustomReportTypeNumberValue(i8);
+pub struct CustomReportTypeValue(i8);
 
-impl CustomReportTypeNumberValue {
+impl CustomReportTypeValue {
     pub fn new(value: u8) -> Result<Self, String> {
-        let min = ReportTypeNumber::FIRST_CUSTOM_REPORT_TYPE_NUMBER as u8;
-        let max = ReportTypeNumber::LAST_CUSTOM_REPORT_TYPE_NUMBER as u8;
+        let min = ReportType::FIRST_CUSTOM_REPORT_TYPE_NUMBER as u8;
+        let max = ReportType::LAST_CUSTOM_REPORT_TYPE_NUMBER as u8;
         if value < min || value > max {
             Err(format!(
                 "Invalid custom report type number value {value}, min: {min}, max: {max}"
@@ -65,12 +65,12 @@ impl CustomReportTypeNumberValue {
         }
     }
 
-    pub fn to_report_type_number(&self) -> ReportTypeNumber {
-        ReportTypeNumber { n: self.0 }
+    pub fn to_report_type(&self) -> ReportType {
+        ReportType { n: self.0 }
     }
 
-    pub fn to_report_type_number_internal(&self) -> ReportTypeNumberInternal {
-        ReportTypeNumberInternal::CustomReport(*self)
+    pub fn to_report_type_internal(&self) -> ReportTypeInternal {
+        ReportTypeInternal::CustomReport(*self)
     }
 
     pub fn to_custom_report_id(&self) -> Result<CustomReportId, String> {
@@ -80,16 +80,16 @@ impl CustomReportTypeNumberValue {
 
 #[derive(Debug, Clone, Copy, diesel::FromSqlRow, diesel::AsExpression)]
 #[diesel(sql_type = SmallInt)]
-pub enum ReportTypeNumberInternal {
+pub enum ReportTypeInternal {
     ProfileName,
     ProfileText,
     ProfileContent,
     ChatMessage,
     /// Values from 64 to 127
-    CustomReport(CustomReportTypeNumberValue),
+    CustomReport(CustomReportTypeValue),
 }
 
-impl ReportTypeNumberInternal {
+impl ReportTypeInternal {
     pub fn db_value(&self) -> i16 {
         self.to_i8().into()
     }
@@ -105,7 +105,7 @@ impl ReportTypeNumberInternal {
     }
 }
 
-impl TryFrom<i16> for ReportTypeNumberInternal {
+impl TryFrom<i16> for ReportTypeInternal {
     type Error = String;
     fn try_from(value: i16) -> Result<Self, Self::Error> {
         let value = TryInto::<i8>::try_into(value).map_err(|e| e.to_string())?;
@@ -114,7 +114,7 @@ impl TryFrom<i16> for ReportTypeNumberInternal {
             1 => Self::ProfileText,
             2 => Self::ProfileContent,
             3 => Self::ChatMessage,
-            64..=127 => Self::CustomReport(CustomReportTypeNumberValue(value)),
+            64..=127 => Self::CustomReport(CustomReportTypeValue(value)),
             v => return Err(format!("Unknown report type number value {v}")),
         };
         Ok(v)
@@ -122,7 +122,7 @@ impl TryFrom<i16> for ReportTypeNumberInternal {
 }
 
 impl<DB: diesel::backend::Backend> diesel::deserialize::FromSql<diesel::sql_types::SmallInt, DB>
-    for ReportTypeNumberInternal
+    for ReportTypeInternal
 where
     i16: diesel::deserialize::FromSql<diesel::sql_types::SmallInt, DB>,
 {
@@ -134,8 +134,8 @@ where
     }
 }
 
-impl From<ReportTypeNumberInternal> for ReportTypeNumber {
-    fn from(value: ReportTypeNumberInternal) -> Self {
+impl From<ReportTypeInternal> for ReportType {
+    fn from(value: ReportTypeInternal) -> Self {
         Self { n: value.to_i8() }
     }
 }
@@ -148,13 +148,13 @@ impl From<ReportTypeNumberInternal> for ReportTypeNumber {
 /// * ChatMessage = 3
 /// * CustomReport = values from 64 to 127
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema)]
-pub struct ReportTypeNumber {
+pub struct ReportType {
     /// This is i8 so that max value is 127. That makes SQLite to
     /// store the value using single byte.
     pub n: i8,
 }
 
-impl ReportTypeNumber {
+impl ReportType {
     pub const FIRST_CUSTOM_REPORT_TYPE_NUMBER: i8 = 64;
     pub const LAST_CUSTOM_REPORT_TYPE_NUMBER: i8 = 127;
     /// Max count for reports related to some account with specific type.

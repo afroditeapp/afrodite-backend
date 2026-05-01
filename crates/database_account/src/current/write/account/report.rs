@@ -3,9 +3,7 @@ use database::{
 };
 use diesel::{insert_into, prelude::*};
 use error_stack::Result;
-use model::{
-    AccountIdInternal, CustomReportTypeNumberValue, ReportProcessingState, ReportTypeNumberInternal,
-};
+use model::{AccountIdInternal, CustomReportTypeValue, ReportProcessingState, ReportTypeInternal};
 use simple_backend_utils::db::MyRunQueryDsl;
 
 use crate::IntoDatabaseError;
@@ -17,12 +15,12 @@ impl CurrentWriteAccountReport<'_> {
         &mut self,
         creator: AccountIdInternal,
         target: AccountIdInternal,
-        custom_report_type_number: CustomReportTypeNumberValue,
+        custom_report_type: CustomReportTypeValue,
     ) -> Result<(), DieselDatabaseError> {
         self.write().common().report().insert_report_content(
             creator,
             target,
-            ReportTypeNumberInternal::CustomReport(custom_report_type_number),
+            ReportTypeInternal::CustomReport(custom_report_type),
             ReportProcessingState::Waiting,
         )?;
 

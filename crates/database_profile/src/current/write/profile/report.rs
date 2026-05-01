@@ -3,7 +3,7 @@ use database::{
 };
 use diesel::{ExpressionMethods, insert_into, prelude::*};
 use error_stack::Result;
-use model::{AccountIdInternal, ReportProcessingState, ReportTypeNumberInternal};
+use model::{AccountIdInternal, ReportProcessingState, ReportTypeInternal};
 use simple_backend_model::NonEmptyString;
 
 use crate::IntoDatabaseError;
@@ -20,7 +20,7 @@ impl CurrentWriteProfileReport<'_> {
         let id = self.write().common().report().insert_report_content(
             creator,
             target,
-            ReportTypeNumberInternal::ProfileName,
+            ReportTypeInternal::ProfileName,
             ReportProcessingState::Waiting,
         )?;
 
@@ -45,7 +45,7 @@ impl CurrentWriteProfileReport<'_> {
         let id = self.write().common().report().insert_report_content(
             creator,
             target,
-            ReportTypeNumberInternal::ProfileText,
+            ReportTypeInternal::ProfileText,
             ReportProcessingState::Waiting,
         )?;
 

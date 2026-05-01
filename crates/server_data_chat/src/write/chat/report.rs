@@ -1,6 +1,6 @@
 use database::current::read::GetDbReadCommandsCommon;
 use database_chat::current::write::GetDbWriteCommandsChat;
-use model::{AccountIdInternal, ReportTypeNumber, ReportTypeNumberInternal, UpdateReportResult};
+use model::{AccountIdInternal, ReportType, ReportTypeInternal, UpdateReportResult};
 use model_chat::NewChatMessageReportInternal;
 use server_data::{
     DataError, db_transaction, define_cmd_wrapper_write,
@@ -37,12 +37,12 @@ impl WriteCommandsChatReport<'_> {
                 cmds.common().report().get_all_detailed_reports(
                     creator,
                     target,
-                    ReportTypeNumberInternal::ChatMessage,
+                    ReportTypeInternal::ChatMessage,
                 )
             })
             .await?;
 
-        if reports.len() >= ReportTypeNumber::MAX_COUNT {
+        if reports.len() >= ReportType::MAX_COUNT {
             return Ok(UpdateReportResult::too_many_reports());
         }
 

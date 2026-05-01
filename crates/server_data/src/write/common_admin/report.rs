@@ -1,5 +1,5 @@
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
-use model::{AccountIdInternal, ReportContent, ReportTypeNumber, ReportTypeNumberInternal};
+use model::{AccountIdInternal, ReportContent, ReportType, ReportTypeInternal};
 use simple_backend_utils::IntoReportFromString;
 
 use crate::{
@@ -17,12 +17,11 @@ impl WriteCommandsCommonAdminReport<'_> {
         moderator_id: AccountIdInternal,
         creator: AccountIdInternal,
         target: AccountIdInternal,
-        report_type: ReportTypeNumber,
+        report_type: ReportType,
         content: ReportContent,
     ) -> Result<(), DataError> {
-        let report_type =
-            TryInto::<ReportTypeNumberInternal>::try_into(Into::<i16>::into(report_type.n))
-                .into_error_string(DataError::NotAllowed)?;
+        let report_type = TryInto::<ReportTypeInternal>::try_into(Into::<i16>::into(report_type.n))
+            .into_error_string(DataError::NotAllowed)?;
 
         let current_reports = self
             .db_read(move |mut cmds| {

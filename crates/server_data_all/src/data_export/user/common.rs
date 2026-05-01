@@ -4,7 +4,7 @@ use model::{
     ClientConfigSyncVersion, ClientLanguage, ClientType, GetApiUsageStatisticsResult,
     GetApiUsageStatisticsSettings, GetIpAddressStatisticsResult, InitialSetupCompletedTime,
     LatestBirthdate, OtherSharedState, PendingAppNotification, PushNotificationDbState, ReportId,
-    ReportIteratorQueryInternal, ReportProcessingState, ReportTypeNumber, UnixTime,
+    ReportIteratorQueryInternal, ReportProcessingState, ReportType, UnixTime,
 };
 use serde::Serialize;
 use server_data::data_export::SourceAccount;
@@ -85,7 +85,7 @@ impl DataExportSharedState {
 struct DataExportReport {
     pub id: ReportId,
     pub processing_state: ReportProcessingState,
-    pub report_type: ReportTypeNumber,
+    pub report_type: ReportType,
     pub creation_time: UnixTime,
 }
 

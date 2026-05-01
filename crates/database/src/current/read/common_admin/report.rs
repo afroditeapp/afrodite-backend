@@ -3,7 +3,7 @@ use error_stack::Result;
 use model::{
     AccountId, AccountIdDb, GetChatMessageReportsInternal, GetReportList,
     ReportDetailedInfoInternal, ReportIdDb, ReportInternal, ReportIteratorMode,
-    ReportIteratorQueryInternal, ReportProcessingState, ReportTypeNumberInternal, UnixTime,
+    ReportIteratorQueryInternal, ReportProcessingState, ReportTypeInternal, UnixTime,
 };
 
 use crate::{
@@ -46,7 +46,7 @@ impl CurrentReadCommonAdminReport<'_> {
             AccountId,
             AccountIdDb,
             ReportIdDb,
-            ReportTypeNumberInternal,
+            ReportTypeInternal,
             UnixTime,
         )> = common_report
             .inner_join(creator_aid.on(creator_account_id.eq(creator_aid.field(account_id::id))))
@@ -141,7 +141,7 @@ impl CurrentReadCommonAdminReport<'_> {
             AccountIdDb,
             ReportIdDb,
             ReportProcessingState,
-            ReportTypeNumberInternal,
+            ReportTypeInternal,
             UnixTime,
         )> = match query.mode {
             ReportIteratorMode::Received => db_query
@@ -263,13 +263,13 @@ impl CurrentReadCommonAdminReport<'_> {
             AccountIdDb,
             ReportIdDb,
             ReportProcessingState,
-            ReportTypeNumberInternal,
+            ReportTypeInternal,
             UnixTime,
         )> = {
             db_query
                 .filter(creator_account_id.eq(query.creator.as_db_id()))
                 .filter(target_account_id.eq(query.target.as_db_id()))
-                .filter(report_type_number.eq(ReportTypeNumberInternal::ChatMessage.db_value()))
+                .filter(report_type_number.eq(ReportTypeInternal::ChatMessage.db_value()))
                 .filter(
                     (!query.only_not_processed)
                         .as_sql::<Bool>()

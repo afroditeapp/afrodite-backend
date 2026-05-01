@@ -3,7 +3,7 @@ use database::{
 };
 use diesel::{ExpressionMethods, insert_into, prelude::*};
 use error_stack::Result;
-use model::{AccountIdInternal, ReportProcessingState, ReportTypeNumberInternal};
+use model::{AccountIdInternal, ReportProcessingState, ReportTypeInternal};
 use model_chat::NewChatMessageReportInternal;
 
 use crate::IntoDatabaseError;
@@ -20,7 +20,7 @@ impl CurrentWriteChatReport<'_> {
         let id = self.write().common().report().insert_report_content(
             creator,
             target,
-            ReportTypeNumberInternal::ChatMessage,
+            ReportTypeInternal::ChatMessage,
             ReportProcessingState::Waiting,
         )?;
 

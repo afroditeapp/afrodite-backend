@@ -1,5 +1,5 @@
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
-use model::{Account, AccountIdInternal, BotAccountType, ReportTypeNumberInternal, UnixTime};
+use model::{Account, AccountIdInternal, BotAccountType, ReportTypeInternal, UnixTime};
 use server_common::data::cache::CacheError;
 use simple_backend_utils::time::DurationValue;
 
@@ -169,7 +169,7 @@ impl WriteCommandsCommon<'_> {
 
     pub async fn delete_processed_reports_if_needed(
         &self,
-        report_type: ReportTypeNumberInternal,
+        report_type: ReportTypeInternal,
         deletion_wait_time: DurationValue,
     ) -> Result<(), DataError> {
         let automatic_deletion_allowed =

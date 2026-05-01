@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use backup::backup_data;
 use config::file::ScheduledTasksConfig;
-use model::{ReportTypeNumberInternal, UnixTime};
+use model::{ReportTypeInternal, UnixTime};
 use model_profile::{
     AccountIdInternal, AccountState, EventToClientInternal, ProfileAge, ProfileUpdateInternal,
 };
@@ -186,16 +186,8 @@ impl ScheduledTaskManager {
             .config()
             .limits_common()
             .processed_report_deletion_wait_duration;
-        run_delete(
-            ReportTypeNumberInternal::ProfileName,
-            durations.profile_name,
-        )
-        .await?;
-        run_delete(
-            ReportTypeNumberInternal::ProfileText,
-            durations.profile_text,
-        )
-        .await?;
+        run_delete(ReportTypeInternal::ProfileName, durations.profile_name).await?;
+        run_delete(ReportTypeInternal::ProfileText, durations.profile_text).await?;
         Ok(())
     }
 
