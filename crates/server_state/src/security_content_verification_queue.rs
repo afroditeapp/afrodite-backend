@@ -1,7 +1,9 @@
 use std::collections::{HashMap, VecDeque};
 
 use model::{AccountId, AccountIdInternal, ContentId};
+use server_data::event::EventManagerWithCacheReference;
 use tokio::sync::RwLock;
+use tracing::warn;
 
 #[derive(Debug)]
 pub enum SecurityContentVerificationQueueAddError {
@@ -94,6 +96,7 @@ impl SecurityContentVerificationQueueData {
     pub async fn remove_next_item(
         &self,
         expected_account_id: AccountIdInternal,
+        event_manager: &EventManagerWithCacheReference<'_>,
     ) -> Result<(), SecurityContentVerificationQueueRemoveNextError> {
         let mut write = self.data.write().await;
         let expected_account_id = expected_account_id.as_id();
@@ -108,6 +111,38 @@ impl SecurityContentVerificationQueueData {
 
         write.queue.pop_front();
         write.items.remove(&next_account_id);
+
+        let queue_position_change_for_expected_account = [(next_account_id, Option::<u8>::None)];
+        let queue_position_changes_for_other_accounts = write
+            .queue
+            .iter()
+            .take(10)
+            .enumerate()
+            .filter_map(|(index, account_id)| {
+                u8::try_from(index + 1)
+                    .ok()
+                    .map(|queue_position| (*account_id, Some(queue_position)))
+            });
+        let all_queue_position_changes = queue_position_change_for_expected_account
+            .into_iter()
+            .chain(queue_position_changes_for_other_accounts);
+
+        for (account_id, queue_position) in all_queue_position_changes {
+            let result = event_manager
+                .send_connected_event(
+                    account_id,
+                    model::EventToClientInternal::SecurityContentVerificationQueuePositionChanged {
+                        queue_position,
+                    },
+                )
+                .await;
+            if result.is_err() {
+                warn!("Sending SecurityContentVerificationQueuePositionChanged event failed");
+            }
+        }
+
+        // Make sure that update events are sequential
+        drop(write);
 
         Ok(())
     }

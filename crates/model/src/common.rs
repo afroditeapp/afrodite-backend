@@ -125,6 +125,9 @@ pub enum EventToClientInternal {
     },
     NewsChanged,
     MediaContentChanged,
+    SecurityContentVerificationQueuePositionChanged {
+        queue_position: Option<u8>,
+    },
     DailyLikesLeftChanged,
     ScheduledMaintenanceStatus(ScheduledMaintenanceStatus),
     AdminBotNotification(crate::AdminBotNotificationTypes),

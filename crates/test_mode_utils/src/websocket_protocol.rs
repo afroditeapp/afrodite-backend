@@ -178,6 +178,7 @@ fn convert_server_event_to_client_for_test_mode(
         | EventToClientInternal::ResponseAutomaticProfileSearchNextProfilePage { .. }
         | EventToClientInternal::NewsChanged
         | EventToClientInternal::MediaContentChanged
+        | EventToClientInternal::SecurityContentVerificationQueuePositionChanged { .. }
         | EventToClientInternal::DailyLikesLeftChanged
         | EventToClientInternal::ScheduledMaintenanceStatus(_)
         | EventToClientInternal::PushNotificationInfoChanged

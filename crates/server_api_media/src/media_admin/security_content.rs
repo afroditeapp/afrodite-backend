@@ -9,7 +9,7 @@ use model_media::{
 };
 use server_api::{
     DataError, S,
-    app::{GetAccounts, ReadData, SecurityContentVerificationQueueProvider},
+    app::{EventManagerProvider, GetAccounts, ReadData, SecurityContentVerificationQueueProvider},
     create_open_api_router,
     result::WrappedContextExt,
 };
@@ -219,7 +219,7 @@ pub async fn post_security_content_verification_queue_remove_next_item(
 
     let _ = state
         .security_content_verification_queue()
-        .remove_next_item(expected_account_id)
+        .remove_next_item(expected_account_id, &state.event_manager())
         .await;
 
     Ok(())
