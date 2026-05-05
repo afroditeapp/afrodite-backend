@@ -8,6 +8,7 @@ mod email;
 mod news;
 mod permissions;
 mod search;
+mod verification;
 
 pub use client_features::*;
 pub use client_version::*;
@@ -15,6 +16,7 @@ pub use email::*;
 pub use news::*;
 pub use permissions::*;
 pub use search::*;
+pub use verification::*;
 
 use crate::{AccountBanReasonCategory, AccountBanReasonDetails};
 

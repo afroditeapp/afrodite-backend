@@ -8,10 +8,10 @@ pub use server_data::app::*;
 use server_data::{DataError, content_processing::ContentProcessingManagerData};
 
 use crate::{
+    account_verification_queue::AccountVerificationQueueData,
     admin_bot_status::AdminBotStatusManagerData, admin_notifications::AdminNotificationManagerData,
     api_limits::ApiLimits, api_usage::ApiUsageTracker, client_version::ClientVersionTracker,
     data_signer::DataSigner, ip_address::IpAddressUsageTracker,
-    security_content_verification_queue::SecurityContentVerificationQueueData,
 };
 
 pub trait GetAccessTokens {
@@ -32,8 +32,8 @@ pub trait ContentProcessingProvider {
     fn content_processing(&self) -> &ContentProcessingManagerData;
 }
 
-pub trait SecurityContentVerificationQueueProvider {
-    fn security_content_verification_queue(&self) -> &SecurityContentVerificationQueueData;
+pub trait AccountVerificationQueueProvider {
+    fn account_verification_queue(&self) -> &AccountVerificationQueueData;
 }
 
 pub trait IsMatch: ReadData {

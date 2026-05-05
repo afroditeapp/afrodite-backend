@@ -57,9 +57,9 @@ use server_router_chat::ChatRoutes;
 use server_router_media::MediaRoutes;
 use server_router_profile::ProfileRoutes;
 use server_state::{
-    AppState, StateForRouterCreation, admin_notifications::AdminNotificationManagerData,
-    demo::DemoAccountManager, dynamic_config::DynamicConfigManagerData,
-    security_content_verification_queue::SecurityContentVerificationQueueData,
+    AppState, StateForRouterCreation, account_verification_queue::AccountVerificationQueueData,
+    admin_notifications::AdminNotificationManagerData, demo::DemoAccountManager,
+    dynamic_config::DynamicConfigManagerData,
 };
 use shutdown_tasks::ShutdownTasks;
 use simple_backend::{
@@ -302,8 +302,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
         let (content_processing, content_processing_receiver) = ContentProcessingManagerData::new();
         let content_processing = Arc::new(content_processing);
 
-        let security_content_verification_queue =
-            Arc::new(SecurityContentVerificationQueueData::new());
+        let account_verification_queue = Arc::new(AccountVerificationQueueData::new());
 
         let (admin_notification, admin_notification_receiver) = AdminNotificationManagerData::new();
         let admin_notification = Arc::new(admin_notification);
@@ -326,7 +325,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
             write_cmd_runner_handle,
             self.config.clone(),
             content_processing.clone(),
-            security_content_verification_queue,
+            account_verification_queue,
             admin_notification.clone(),
             demo,
             push_notification_sender,

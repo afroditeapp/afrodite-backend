@@ -266,11 +266,11 @@ impl ContentProcessingProvider for S {
     }
 }
 
-impl SecurityContentVerificationQueueProvider for S {
-    fn security_content_verification_queue(
+impl AccountVerificationQueueProvider for S {
+    fn account_verification_queue(
         &self,
-    ) -> &crate::security_content_verification_queue::SecurityContentVerificationQueueData {
-        &self.state.security_content_verification_queue
+    ) -> &crate::account_verification_queue::AccountVerificationQueueData {
+        &self.state.account_verification_queue
     }
 }
 

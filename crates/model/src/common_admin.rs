@@ -61,7 +61,10 @@ pub struct BotConfigWarnings {
     pub face_verification_file_config_missing: bool,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
-    pub security_content_verification_file_config_missing: bool,
+    pub account_verification_file_config_missing: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub account_verification_security_content_file_config_missing: bool,
 }
 
 impl BotConfigWarnings {

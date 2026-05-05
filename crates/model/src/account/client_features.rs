@@ -328,11 +328,11 @@ pub struct VerificationConfig {
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
 pub struct VerificationMethodsConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
-    security_content: Option<SecurityContentVerificationMethodsConfig>,
+    account: Option<AccountVerificationMethodsConfig>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
-pub struct SecurityContentVerificationMethodsConfig {
+pub struct AccountVerificationMethodsConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub debug_accept: bool,

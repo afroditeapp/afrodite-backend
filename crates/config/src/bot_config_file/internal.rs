@@ -1,9 +1,8 @@
 use std::path::PathBuf;
 
 use model::common_admin::{
-    AdminBotConfig, AdminContentModerationConfig, AdminFaceVerificationConfig,
-    AdminNsfwDetectionConfig, AdminProfileStringModerationConfig,
-    AdminSecurityContentVerificationConfig,
+    AdminAccountVerificationConfig, AdminBotConfig, AdminContentModerationConfig,
+    AdminFaceVerificationConfig, AdminNsfwDetectionConfig, AdminProfileStringModerationConfig,
     LlmContentModerationConfig as AdminLlmContentModerationConfig,
     LlmFaceVerificationConfig as AdminLlmFaceVerificationConfig,
     LlmSecurityContentVerificationConfig as AdminLlmSecurityContentVerificationConfig,
@@ -111,8 +110,35 @@ pub struct FaceVerificationConfig {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct AccountVerificationConfig {
+    pub allowed_methods: model::account::AccountVerificationMethodsConfig,
+    pub security_content: Option<SecurityContentVerificationConfig>,
+}
+
+impl AccountVerificationConfig {
+    pub fn new(
+        db: AdminAccountVerificationConfig,
+        db_enabled: bool,
+        file: Option<crate::bot_config_file::AccountVerificationFileConfig>,
+    ) -> Option<Self> {
+        if !db_enabled {
+            return None;
+        }
+        let file = file.unwrap_or_default();
+
+        Some(Self {
+            allowed_methods: file.allowed_methods.unwrap_or_default(),
+            security_content: SecurityContentVerificationConfig::new(
+                db.security_content,
+                db.security_content_enabled,
+                file.security_content,
+            ),
+        })
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SecurityContentVerificationConfig {
-    pub allowed_methods: model::account::SecurityContentVerificationMethodsConfig,
     pub llm: Option<LlmSecurityContentVerificationConfig>,
     pub default_action: VerificationAction,
     pub concurrency: u8,
@@ -120,7 +146,7 @@ pub struct SecurityContentVerificationConfig {
 
 impl SecurityContentVerificationConfig {
     pub fn new(
-        db: AdminSecurityContentVerificationConfig,
+        db: model::common_admin::AdminSecurityContentVerificationConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::SecurityContentVerificationFileConfig>,
     ) -> Option<Self> {
@@ -130,7 +156,6 @@ impl SecurityContentVerificationConfig {
         let file = file.unwrap_or_default();
 
         Some(Self {
-            allowed_methods: file.allowed_methods.unwrap_or_default(),
             llm: LlmSecurityContentVerificationConfig::new(db.llm, db.llm_enabled, file.llm),
             default_action: db.default_action,
             concurrency: file.concurrency.unwrap_or(LLM_CONCURRENCY_DEFAULT),
@@ -359,7 +384,7 @@ pub fn merge(
     Option<ProfileStringModerationConfig>,
     Option<ContentModerationConfig>,
     Option<FaceVerificationConfig>,
-    Option<SecurityContentVerificationConfig>,
+    Option<AccountVerificationConfig>,
 ) {
     let name = ProfileStringModerationConfig::new(
         db.profile_name_moderation,
@@ -381,16 +406,10 @@ pub fn merge(
         db.face_verification_enabled,
         file.face_verification,
     );
-    let security_content_verification = SecurityContentVerificationConfig::new(
-        db.security_content_verification,
-        db.security_content_verification_enabled,
-        file.security_content_verification,
+    let account_verification = AccountVerificationConfig::new(
+        db.account_verification,
+        db.account_verification_enabled,
+        file.account_verification,
     );
-    (
-        name,
-        text,
-        content,
-        face_verification,
-        security_content_verification,
-    )
+    (name, text, content, face_verification, account_verification)
 }

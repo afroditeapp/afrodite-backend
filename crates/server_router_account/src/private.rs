@@ -44,6 +44,7 @@ impl PrivateRoutes {
             .merge(api::account::router_settings(self.state.clone()))
             .merge(api::account::router_state(self.state.clone()))
             .merge(api::account::router_news(self.state.clone()))
+            .merge(api::account::router_verification(self.state.clone()))
             .merge(api::account::router_account_report(self.state.clone()))
             .merge(api::account::router_client_features(self.state.clone()))
             .merge(api::account::router_notification(self.state.clone()))
@@ -64,7 +65,10 @@ impl PrivateRoutes {
             ))
             .merge(api::account_admin::router_admin_email(self.state.clone()))
             .merge(api::account_admin::router_admin_login(self.state.clone()))
-            .merge(api::account_admin::router_admin_logout(self.state.clone()));
+            .merge(api::account_admin::router_admin_logout(self.state.clone()))
+            .merge(api::account_admin::router_admin_verification(
+                self.state.clone(),
+            ));
 
         private.route_layer({
             middleware::from_fn_with_state(

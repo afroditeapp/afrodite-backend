@@ -38,8 +38,8 @@ pub struct AdminBotConfig {
     pub face_verification: AdminFaceVerificationConfig,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
-    pub security_content_verification_enabled: bool,
-    pub security_content_verification: AdminSecurityContentVerificationConfig,
+    pub account_verification_enabled: bool,
+    pub account_verification: AdminAccountVerificationConfig,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
@@ -71,6 +71,14 @@ impl Default for LlmFaceVerificationConfig {
             max_tokens: MAX_TOKENS_DEFAULT,
         }
     }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
+pub struct AdminAccountVerificationConfig {
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub security_content_enabled: bool,
+    pub security_content: AdminSecurityContentVerificationConfig,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]

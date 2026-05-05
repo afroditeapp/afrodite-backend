@@ -179,6 +179,7 @@ define_permissions!(
     admin_edit_media_content_face_detected_value,
     admin_edit_media_content_face_verified_value,
     admin_edit_security_content_verified_value,
+    admin_verify_account,
     admin_export_data,
     admin_moderate_media_content,
     admin_moderate_profile_names,

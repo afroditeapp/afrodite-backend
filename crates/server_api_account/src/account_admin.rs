@@ -9,6 +9,7 @@ pub mod news;
 pub mod permissions;
 pub mod search;
 pub mod state;
+pub mod verification;
 
 pub use ban::*;
 pub use client_features::*;
@@ -21,3 +22,4 @@ pub use news::*;
 pub use permissions::*;
 pub use search::*;
 pub use state::*;
+pub use verification::*;

@@ -35,13 +35,14 @@ pub struct AllApiLimits {
     // Common
     pub send_report: ApiLimitState,
     pub websocket_connection_attempts: ApiLimitState,
+    // Account
+    pub post_account_verification_queue_item: ApiLimitState,
     // Profile
     pub post_reset_profile_paging: ApiLimitState,
     pub post_get_next_profile_page: ApiLimitState,
     pub get_profile: ApiLimitState,
     // Media
     pub get_profile_content_info: ApiLimitState,
-    pub post_security_content_verification_queue_item: ApiLimitState,
     // Chat
     pub post_send_message: ApiLimitState,
 }

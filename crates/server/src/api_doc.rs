@@ -8,9 +8,9 @@ use server_data::{
 };
 use server_data_all::app::DataAllUtilsImpl;
 use server_state::{
-    S, StateForRouterCreation, admin_notifications::AdminNotificationManagerData,
-    demo::DemoAccountManager, dynamic_config::DynamicConfigManagerData,
-    security_content_verification_queue::SecurityContentVerificationQueueData,
+    S, StateForRouterCreation, account_verification_queue::AccountVerificationQueueData,
+    admin_notifications::AdminNotificationManagerData, demo::DemoAccountManager,
+    dynamic_config::DynamicConfigManagerData,
 };
 use simple_backend::{
     app::SimpleBackendAppState, manager_client::ManagerApiClient, maxmind_db::MaxMindDbManagerData,
@@ -60,6 +60,9 @@ impl ApiDoc {
             .merge_from(server_api_account::account::router_demo(state.clone()).into_openapi())
             .merge_from(server_api_account::account::router_logout(state.clone()).into_openapi())
             .merge_from(server_api_account::account::router_news(state.clone()).into_openapi())
+            .merge_from(
+                server_api_account::account::router_verification(state.clone()).into_openapi(),
+            )
             .merge_from(server_api_account::account::router_register(state.clone()).into_openapi())
             .merge_from(server_api_account::account::router_settings(state.clone()).into_openapi())
             .merge_from(server_api_account::account::router_state(state.clone()).into_openapi())
@@ -115,6 +118,10 @@ impl ApiDoc {
             )
             .merge_from(
                 server_api_account::account_admin::router_admin_logout(state.clone())
+                    .into_openapi(),
+            )
+            .merge_from(
+                server_api_account::account_admin::router_admin_verification(state.clone())
                     .into_openapi(),
             )
             .tag_routes("account_admin");
@@ -249,7 +256,7 @@ impl ApiDoc {
             WriteCommandRunnerHandle::new(router_database_write_handle.into()).await;
 
         let (content_processing, _) = ContentProcessingManagerData::new();
-        let security_content_verification_queue = SecurityContentVerificationQueueData::new();
+        let account_verification_queue = AccountVerificationQueueData::new();
         let (admin_notification, _) = AdminNotificationManagerData::new();
         let (data_export, _) = DataExportManagerData::new();
         let (dynamic_config_manager, _) = DynamicConfigManagerData::new();
@@ -263,7 +270,7 @@ impl ApiDoc {
             write_cmd_runner_handle,
             config.clone(),
             content_processing.into(),
-            security_content_verification_queue.into(),
+            account_verification_queue.into(),
             admin_notification.into(),
             demo,
             push_notification_sender,

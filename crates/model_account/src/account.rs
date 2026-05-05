@@ -26,6 +26,9 @@ pub use report::*;
 mod client_features;
 pub use client_features::*;
 
+mod verification;
+pub use verification::*;
+
 #[derive(Debug, Default, Deserialize, Serialize, ToSchema, Clone, PartialEq)]
 pub struct LoginResult {
     /// If `None`, the client is unsupported.

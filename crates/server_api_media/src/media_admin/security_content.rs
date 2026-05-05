@@ -3,13 +3,12 @@ use axum::{
     extract::{Path, State},
 };
 use model_media::{
-    AccountId, AccountIdInternal, GetSecurityContentVerificationQueueNextItemResult, Permissions,
-    PostSecurityContentVerificationQueueRemoveNextItem, PostSecurityContentVerifiedValue,
-    SecurityContentAdminInfo, SecurityContentVerificationQueueAdminItem,
+    AccountId, AccountIdInternal, Permissions, PostSecurityContentVerifiedValue,
+    SecurityContentAdminInfo,
 };
 use server_api::{
     DataError, S,
-    app::{EventManagerProvider, GetAccounts, ReadData, SecurityContentVerificationQueueProvider},
+    app::{GetAccounts, ReadData},
     create_open_api_router,
     result::WrappedContextExt,
 };
@@ -31,6 +30,7 @@ const PATH_GET_SECURITY_CONTENT_ADMIN_INFO: &str = "/media_api/security_content_
 /// - Permission [model::Permissions::admin_moderate_media_content]
 /// - Permission [model::Permissions::admin_edit_media_content_face_verified_value]
 /// - Permission [model::Permissions::admin_edit_security_content_verified_value]
+/// - Permission [model::Permissions::admin_verify_account]
 #[utoipa::path(
     get,
     path = PATH_GET_SECURITY_CONTENT_ADMIN_INFO,
@@ -51,7 +51,8 @@ pub async fn get_security_content_admin_info(
 
     let access_allowed = permissions.admin_moderate_media_content
         || permissions.admin_edit_media_content_face_verified_value
-        || permissions.admin_edit_security_content_verified_value;
+        || permissions.admin_edit_security_content_verified_value
+        || permissions.admin_verify_account;
 
     if !access_allowed {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
@@ -130,106 +131,10 @@ pub async fn post_security_content_verified_value(
     Ok(())
 }
 
-const PATH_GET_SECURITY_CONTENT_VERIFICATION_QUEUE_NEXT_ITEM: &str =
-    "/media_api/security_content_verification_queue_admin_next";
-
-/// Get next item in security content verification queue.
-///
-/// # Access
-/// * Permission [model::Permissions::admin_edit_security_content_verified_value]
-#[utoipa::path(
-    get,
-    path = PATH_GET_SECURITY_CONTENT_VERIFICATION_QUEUE_NEXT_ITEM,
-    responses(
-        (status = 200, description = "Successful", body = GetSecurityContentVerificationQueueNextItemResult),
-        (status = 401, description = "Unauthorized"),
-        (
-            status = 500,
-            description = "Internal server error",
-        ),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn get_security_content_verification_queue_next_item(
-    State(state): State<S>,
-    Extension(permissions): Extension<Permissions>,
-) -> Result<Json<GetSecurityContentVerificationQueueNextItemResult>, StatusCode> {
-    MEDIA_ADMIN
-        .get_security_content_verification_queue_next_item
-        .incr();
-
-    if !permissions.admin_edit_security_content_verified_value {
-        return Err(StatusCode::INTERNAL_SERVER_ERROR);
-    }
-
-    let item = state
-        .security_content_verification_queue()
-        .next_item()
-        .await
-        .map(
-            |(account_id, value)| SecurityContentVerificationQueueAdminItem {
-                account_id,
-                security_content: value.security_content,
-                verification_method: value.verification_method,
-                verification_data: value.verification_data,
-            },
-        );
-
-    Ok(GetSecurityContentVerificationQueueNextItemResult { item }.into())
-}
-
-const PATH_POST_SECURITY_CONTENT_VERIFICATION_QUEUE_REMOVE_NEXT_ITEM: &str =
-    "/media_api/security_content_verification_queue_admin_next_remove";
-
-/// Remove next item from security content verification queue if possible.
-///
-/// Removal succeeds only when the provided account id matches queue head item owner.
-/// No error is returned is there is a mismatch.
-///
-/// # Access
-/// * Permission [model::Permissions::admin_edit_security_content_verified_value]
-#[utoipa::path(
-    post,
-    path = PATH_POST_SECURITY_CONTENT_VERIFICATION_QUEUE_REMOVE_NEXT_ITEM,
-    request_body = PostSecurityContentVerificationQueueRemoveNextItem,
-    responses(
-        (status = 200, description = "Successful"),
-        (status = 401, description = "Unauthorized"),
-        (
-            status = 500,
-            description = "Internal server error",
-        ),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn post_security_content_verification_queue_remove_next_item(
-    State(state): State<S>,
-    Extension(permissions): Extension<Permissions>,
-    Json(data): Json<PostSecurityContentVerificationQueueRemoveNextItem>,
-) -> Result<(), StatusCode> {
-    MEDIA_ADMIN
-        .post_security_content_verification_queue_remove_next_item
-        .incr();
-
-    if !permissions.admin_edit_security_content_verified_value {
-        return Err(StatusCode::INTERNAL_SERVER_ERROR);
-    }
-
-    let expected_account_id = state.get_internal_id(data.account_id).await?;
-
-    let _ = state
-        .security_content_verification_queue()
-        .remove_next_item(expected_account_id, &state.event_manager())
-        .await;
-
-    Ok(())
-}
 create_open_api_router!(
     fn router_admin_security_content,
     get_security_content_admin_info,
     post_security_content_verified_value,
-    get_security_content_verification_queue_next_item,
-    post_security_content_verification_queue_remove_next_item,
 );
 
 create_counters!(
@@ -238,6 +143,4 @@ create_counters!(
     MEDIA_ADMIN_SECURITY_CONTENT_COUNTERS_LIST,
     get_security_content_admin_info,
     post_security_content_verified_value,
-    get_security_content_verification_queue_next_item,
-    post_security_content_verification_queue_remove_next_item,
 );

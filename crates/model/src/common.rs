@@ -125,7 +125,7 @@ pub enum EventToClientInternal {
     },
     NewsChanged,
     MediaContentChanged,
-    SecurityContentVerificationQueuePositionChanged {
+    AccountVerificationQueuePositionChanged {
         queue_position: Option<u8>,
     },
     DailyLikesLeftChanged,

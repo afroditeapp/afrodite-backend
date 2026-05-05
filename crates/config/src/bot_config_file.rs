@@ -52,7 +52,7 @@ pub struct BotConfigFile {
     pub profile_text_moderation: Option<ProfileStringModerationFileConfig>,
     pub content_moderation: Option<ContentModerationFileConfig>,
     pub face_verification: Option<FaceVerificationFileConfig>,
-    pub security_content_verification: Option<SecurityContentVerificationFileConfig>,
+    pub account_verification: Option<AccountVerificationFileConfig>,
     /// Config required for starting backend in remote bot mode.
     pub remote_bot_mode: Option<RemoteBotModeConfig>,
     /// If None, reading location from server config file next
@@ -410,8 +410,13 @@ pub struct FaceVerificationFileConfig {
 }
 
 #[derive(Debug, Clone, Deserialize, Default)]
+pub struct AccountVerificationFileConfig {
+    pub allowed_methods: Option<model::account::AccountVerificationMethodsConfig>,
+    pub security_content: Option<SecurityContentVerificationFileConfig>,
+}
+
+#[derive(Debug, Clone, Deserialize, Default)]
 pub struct SecurityContentVerificationFileConfig {
-    pub allowed_methods: Option<model::account::SecurityContentVerificationMethodsConfig>,
     pub llm: Option<LlmContentModerationFileConfig>,
     /// Default value is 4.
     pub concurrency: Option<u8>,

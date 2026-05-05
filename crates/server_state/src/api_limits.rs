@@ -41,6 +41,10 @@ impl<'a> ApiLimits<'a> {
         CommonApiLimits { limits: self }
     }
 
+    pub fn account(self) -> AccountApiLimits<'a> {
+        AccountApiLimits { limits: self }
+    }
+
     pub fn profile(self) -> ProfileApiLimits<'a> {
         ProfileApiLimits { limits: self }
     }
@@ -132,6 +136,26 @@ impl CommonApiLimits<'_> {
     }
 }
 
+pub struct AccountApiLimits<'a> {
+    limits: ApiLimits<'a>,
+}
+
+impl AccountApiLimits<'_> {
+    pub async fn post_account_verification_queue_item(&self) -> Result<(), ApiLimitError> {
+        self.limits
+            .check(|state, config| {
+                state
+                    .post_account_verification_queue_item
+                    .increment_and_check_is_limit_reached(
+                        config
+                            .limits_account()
+                            .post_account_verification_queue_item_daily_max_count,
+                    )
+            })
+            .await
+    }
+}
+
 pub struct ProfileApiLimits<'a> {
     limits: ApiLimits<'a>,
 }
@@ -190,20 +214,6 @@ impl MediaApiLimits<'_> {
                         config
                             .limits_media()
                             .get_profile_content_info_daily_max_count,
-                    )
-            })
-            .await
-    }
-
-    pub async fn post_security_content_verification_queue_item(&self) -> Result<(), ApiLimitError> {
-        self.limits
-            .check(|state, config| {
-                state
-                    .post_security_content_verification_queue_item
-                    .increment_and_check_is_limit_reached(
-                        config
-                            .limits_media()
-                            .post_security_content_verification_queue_item_daily_max_count,
                     )
             })
             .await

@@ -1,25 +1,24 @@
 use std::collections::{HashMap, VecDeque};
 
-use model::{AccountId, AccountIdInternal, ContentId};
+use model::{AccountId, AccountIdInternal};
 use server_data::event::EventManagerWithCacheReference;
 use tokio::sync::RwLock;
 use tracing::warn;
 
 #[derive(Debug)]
-pub enum SecurityContentVerificationQueueAddError {
+pub enum AccountVerificationQueueAddError {
     AlreadyQueued,
     QueueFull,
 }
 
 #[derive(Debug, Clone)]
-pub struct SecurityContentVerificationQueueItem {
-    pub security_content: ContentId,
+pub struct AccountVerificationQueueItem {
     pub verification_method: String,
     pub verification_data: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SecurityContentVerificationQueueRemoveNextError {
+pub enum AccountVerificationQueueRemoveNextError {
     QueueEmpty,
     AccountIdMismatch,
 }
@@ -27,15 +26,15 @@ pub enum SecurityContentVerificationQueueRemoveNextError {
 #[derive(Default)]
 struct QueueData {
     queue: VecDeque<AccountId>,
-    items: HashMap<AccountId, SecurityContentVerificationQueueItem>,
+    items: HashMap<AccountId, AccountVerificationQueueItem>,
 }
 
 #[derive(Default)]
-pub struct SecurityContentVerificationQueueData {
+pub struct AccountVerificationQueueData {
     data: RwLock<QueueData>,
 }
 
-impl SecurityContentVerificationQueueData {
+impl AccountVerificationQueueData {
     pub fn new() -> Self {
         Self::default()
     }
@@ -43,24 +42,22 @@ impl SecurityContentVerificationQueueData {
     pub async fn add(
         &self,
         account_id: AccountIdInternal,
-        security_content: ContentId,
         verification_method: String,
         verification_data: String,
         max_queue_length: u16,
-    ) -> Result<(), SecurityContentVerificationQueueAddError> {
+    ) -> Result<(), AccountVerificationQueueAddError> {
         let mut write = self.data.write().await;
         let account_id = account_id.as_id();
 
         if write.items.contains_key(&account_id) {
-            return Err(SecurityContentVerificationQueueAddError::AlreadyQueued);
+            return Err(AccountVerificationQueueAddError::AlreadyQueued);
         }
 
         if write.queue.len() >= usize::from(max_queue_length) {
-            return Err(SecurityContentVerificationQueueAddError::QueueFull);
+            return Err(AccountVerificationQueueAddError::QueueFull);
         }
 
-        let item = SecurityContentVerificationQueueItem {
-            security_content,
+        let item = AccountVerificationQueueItem {
             verification_method,
             verification_data,
         };
@@ -84,7 +81,7 @@ impl SecurityContentVerificationQueueData {
             .and_then(|i| u32::try_from(i + 1).ok())
     }
 
-    pub async fn next_item(&self) -> Option<(AccountId, SecurityContentVerificationQueueItem)> {
+    pub async fn next_item(&self) -> Option<(AccountId, AccountVerificationQueueItem)> {
         let read = self.data.read().await;
 
         let account_id = *read.queue.front()?;
@@ -97,16 +94,16 @@ impl SecurityContentVerificationQueueData {
         &self,
         expected_account_id: AccountIdInternal,
         event_manager: &EventManagerWithCacheReference<'_>,
-    ) -> Result<(), SecurityContentVerificationQueueRemoveNextError> {
+    ) -> Result<(), AccountVerificationQueueRemoveNextError> {
         let mut write = self.data.write().await;
         let expected_account_id = expected_account_id.as_id();
 
         let Some(next_account_id) = write.queue.front().copied() else {
-            return Err(SecurityContentVerificationQueueRemoveNextError::QueueEmpty);
+            return Err(AccountVerificationQueueRemoveNextError::QueueEmpty);
         };
 
         if next_account_id != expected_account_id {
-            return Err(SecurityContentVerificationQueueRemoveNextError::AccountIdMismatch);
+            return Err(AccountVerificationQueueRemoveNextError::AccountIdMismatch);
         }
 
         write.queue.pop_front();
@@ -131,13 +128,13 @@ impl SecurityContentVerificationQueueData {
             let result = event_manager
                 .send_connected_event(
                     account_id,
-                    model::EventToClientInternal::SecurityContentVerificationQueuePositionChanged {
+                    model::EventToClientInternal::AccountVerificationQueuePositionChanged {
                         queue_position,
                     },
                 )
                 .await;
             if result.is_err() {
-                warn!("Sending SecurityContentVerificationQueuePositionChanged event failed");
+                warn!("Sending AccountVerificationQueuePositionChanged event failed");
             }
         }
 

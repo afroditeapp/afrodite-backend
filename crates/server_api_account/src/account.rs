@@ -11,6 +11,7 @@ pub mod register;
 pub mod report;
 pub mod settings;
 pub mod state;
+pub mod verification;
 
 pub use ban::*;
 pub use client_features::*;
@@ -25,3 +26,4 @@ pub use register::*;
 pub use report::*;
 pub use settings::*;
 pub use state::*;
+pub use verification::*;

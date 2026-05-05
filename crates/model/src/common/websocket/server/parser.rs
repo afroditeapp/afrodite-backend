@@ -92,8 +92,8 @@ pub fn parse_server_binary_message(message: &[u8]) -> Result<EventToClientIntern
             )
         }
         ServerMessageType::MediaContentChanged => EventToClientInternal::MediaContentChanged,
-        ServerMessageType::SecurityContentVerificationQueuePositionChanged => {
-            EventToClientInternal::SecurityContentVerificationQueuePositionChanged {
+        ServerMessageType::AccountVerificationQueuePositionChanged => {
+            EventToClientInternal::AccountVerificationQueuePositionChanged {
                 queue_position: message_iter.next(),
             }
         }
@@ -494,18 +494,18 @@ mod tests {
     );
 
     #[test]
-    fn roundtrip_security_content_verification_queue_position_changed_with_value_message() {
+    fn roundtrip_account_verification_queue_position_changed_with_value_message() {
         let queue_position = 8;
         let message = create_server_binary_message(
-            &EventToClientInternal::SecurityContentVerificationQueuePositionChanged {
+            &EventToClientInternal::AccountVerificationQueuePositionChanged {
                 queue_position: Some(queue_position),
             },
         );
         let parsed = parse_server_binary_message(&message)
-            .expect("security content verification queue position should parse");
+            .expect("account verification queue position should parse");
 
         match parsed {
-            EventToClientInternal::SecurityContentVerificationQueuePositionChanged {
+            EventToClientInternal::AccountVerificationQueuePositionChanged {
                 queue_position: parsed_queue_position,
             } => {
                 assert_eq!(parsed_queue_position, Some(queue_position));
@@ -515,19 +515,17 @@ mod tests {
     }
 
     #[test]
-    fn roundtrip_security_content_verification_queue_position_changed_none_message() {
+    fn roundtrip_account_verification_queue_position_changed_none_message() {
         let message = create_server_binary_message(
-            &EventToClientInternal::SecurityContentVerificationQueuePositionChanged {
+            &EventToClientInternal::AccountVerificationQueuePositionChanged {
                 queue_position: None,
             },
         );
         let parsed = parse_server_binary_message(&message)
-            .expect("security content verification queue position none should parse");
+            .expect("account verification queue position none should parse");
 
         match parsed {
-            EventToClientInternal::SecurityContentVerificationQueuePositionChanged {
-                queue_position,
-            } => {
+            EventToClientInternal::AccountVerificationQueuePositionChanged { queue_position } => {
                 assert_eq!(queue_position, None);
             }
             _ => panic!("unexpected event parsed"),

@@ -32,6 +32,8 @@ pub use parser::parse_server_binary_message;
 /// - `WebSocketConnectionAttemptsRemaining` (7): payload format:
 ///   - remaining daily websocket connection attempts as u8
 /// - `AccountStateChanged` (30): payload is empty.
+/// - `AccountVerificationQueuePositionChanged` (31): payload format:
+///   - optional queue position as 1 byte (empty payload means `None`)
 /// - `ProfileChanged` (60): payload is empty.
 /// - `ResponseResetProfilePaging` (61): payload format:
 ///   - request id byte (u8)
@@ -90,8 +92,6 @@ pub use parser::parse_server_binary_message;
 ///       - content ID as 16 byte big-endian UUID (16 bytes)
 ///       - face detection bool (1 byte, 0 or 1)
 /// - `MediaContentChanged` (91): payload is empty.
-/// - `SecurityContentVerificationQueuePositionChanged` (92): payload format:
-///   - optional queue position as 1 byte (empty payload means `None`)
 /// - `NewMessageReceived` (120): payload is empty.
 /// - `PendingChatNotificationsChanged` (121): payload is empty.
 /// - `ReceivedLikesChanged` (122): payload is empty.
@@ -128,6 +128,7 @@ pub enum ServerMessageType {
     // - account: 30..=59
     /// Account state, profile visibility or permissions changed
     AccountStateChanged = 30,
+    AccountVerificationQueuePositionChanged = 31,
     // - profile: 60..=89
     ProfileChanged = 60,
     ResponseResetProfilePaging = 61,
@@ -137,7 +138,6 @@ pub enum ServerMessageType {
     // - media: 90..=119
     ContentProcessingStateChanged = 90,
     MediaContentChanged = 91,
-    SecurityContentVerificationQueuePositionChanged = 92,
     // - chat: 120..=149
     NewMessageReceived = 120,
     PendingChatNotificationsChanged = 121,
@@ -180,8 +180,8 @@ pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
         }
         EventToClientInternal::NewsChanged => ServerMessageType::NewsCountChanged,
         EventToClientInternal::MediaContentChanged => ServerMessageType::MediaContentChanged,
-        EventToClientInternal::SecurityContentVerificationQueuePositionChanged { .. } => {
-            ServerMessageType::SecurityContentVerificationQueuePositionChanged
+        EventToClientInternal::AccountVerificationQueuePositionChanged { .. } => {
+            ServerMessageType::AccountVerificationQueuePositionChanged
         }
         EventToClientInternal::DailyLikesLeftChanged => ServerMessageType::DailyLikesLeftChanged,
         EventToClientInternal::ScheduledMaintenanceStatus(_) => {
@@ -214,9 +214,7 @@ pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
         EventToClientInternal::ContentProcessingStateChanged(value) => {
             append_content_processing_state_changed_payload(&mut message, value);
         }
-        EventToClientInternal::SecurityContentVerificationQueuePositionChanged {
-            queue_position,
-        } => {
+        EventToClientInternal::AccountVerificationQueuePositionChanged { queue_position } => {
             if let Some(queue_position) = queue_position {
                 message.push(*queue_position);
             }

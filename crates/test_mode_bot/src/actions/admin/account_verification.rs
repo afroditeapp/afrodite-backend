@@ -18,7 +18,8 @@ use async_openai::{
 };
 use base64::display::Base64Display;
 use config::bot_config_file::internal::{
-    LlmSecurityContentVerificationConfig, SecurityContentVerificationConfig, VerificationAction,
+    AccountVerificationConfig, LlmSecurityContentVerificationConfig,
+    SecurityContentVerificationConfig, VerificationAction,
 };
 use error_stack::{Result, ResultExt};
 use test_mode_utils::client::{ApiClient, TestError};
@@ -33,31 +34,32 @@ struct LlmConfigAndClient {
 }
 
 #[derive(Debug, Default)]
-pub struct SecurityContentVerificationState {
+pub struct AccountVerificationState {
     llm: Option<LlmConfigAndClient>,
 }
 
-impl SecurityContentVerificationState {
-    pub fn new(
-        config: &SecurityContentVerificationConfig,
-        reqwest_client: reqwest::Client,
-    ) -> Self {
-        let llm = config.llm.as_ref().map(|config| LlmConfigAndClient {
-            client: Client::with_config(
-                OpenAIConfig::new()
-                    .with_api_base(config.openai_api_url.to_string())
-                    .with_api_key(""),
-            )
-            .with_http_client(reqwest_client.clone()),
-            config: config.clone().into(),
-        });
+impl AccountVerificationState {
+    pub fn new(config: &AccountVerificationConfig, reqwest_client: reqwest::Client) -> Self {
+        let llm = config
+            .security_content
+            .as_ref()
+            .and_then(|v| v.llm.clone())
+            .map(|config| LlmConfigAndClient {
+                client: Client::with_config(
+                    OpenAIConfig::new()
+                        .with_api_base(config.openai_api_url.to_string())
+                        .with_api_key(""),
+                )
+                .with_http_client(reqwest_client.clone()),
+                config: config.into(),
+            });
 
         Self { llm }
     }
 }
 
 #[derive(Debug)]
-pub struct AdminBotSecurityContentVerificationLogic;
+pub struct AdminBotAccountVerificationLogic;
 
 enum VerificationMethodAction {
     Accept,
@@ -65,11 +67,11 @@ enum VerificationMethodAction {
     _CheckImage(Vec<u8>),
 }
 
-impl AdminBotSecurityContentVerificationLogic {
+impl AdminBotAccountVerificationLogic {
     async fn verify_one_page(
         api: &ApiClient,
-        config: &SecurityContentVerificationConfig,
-        state: &mut SecurityContentVerificationState,
+        config: &AccountVerificationConfig,
+        state: &mut AccountVerificationState,
     ) -> Result<Option<EmptyPage>, TestError> {
         let item = match Self::get_next_queue_item(api).await? {
             Some(item) => item,
@@ -84,15 +86,19 @@ impl AdminBotSecurityContentVerificationLogic {
             VerificationMethodAction::Accept => Some(true),
             VerificationMethodAction::Reject => Some(false),
             VerificationMethodAction::_CheckImage(verification_image) => {
-                Self::handle_check_image_method(
-                    api,
-                    config,
-                    state,
-                    &item.account_id,
-                    &item.security_content,
-                    verification_image,
-                )
-                .await?
+                if let Some(config) = &config.security_content {
+                    Self::handle_check_image_method(
+                        api,
+                        config,
+                        state,
+                        &item.account_id,
+                        &item.security_content,
+                        verification_image,
+                    )
+                    .await?
+                } else {
+                    None
+                }
             }
         };
 
@@ -116,19 +122,19 @@ impl AdminBotSecurityContentVerificationLogic {
     }
 
     async fn llm_security_content_verification(
-        security_image_data: &[u8],
+        security_content_data: &[u8],
         verification_image_data: &[u8],
         llm: LlmConfigAndClient,
     ) -> Result<Option<ModerationResult>, TestError> {
         let config = &llm.config;
         let expected_response_lowercase = config.expected_response.to_lowercase();
 
-        let security_image = ChatCompletionRequestMessageContentPartImage {
+        let security_content = ChatCompletionRequestMessageContentPartImage {
             image_url: ImageUrl {
                 url: format!(
                     "data:image/jpeg;base64,{}",
                     Base64Display::new(
-                        security_image_data,
+                        security_content_data,
                         &base64::engine::general_purpose::STANDARD
                     ),
                 ),
@@ -151,7 +157,7 @@ impl AdminBotSecurityContentVerificationLogic {
 
         let user_message = ChatCompletionRequestUserMessage {
             content: ChatCompletionRequestUserMessageContent::Array(vec![
-                security_image.into(),
+                security_content.into(),
                 verification_image.into(),
             ]),
             name: None,
@@ -214,12 +220,12 @@ impl AdminBotSecurityContentVerificationLogic {
     async fn handle_check_image_method(
         api: &ApiClient,
         config: &SecurityContentVerificationConfig,
-        state: &SecurityContentVerificationState,
+        state: &AccountVerificationState,
         aid: &AccountId,
         cid: &ContentId,
         verification_image: Vec<u8>,
     ) -> Result<Option<bool>, TestError> {
-        let security_image = media_api::get_content(&api.api(), &aid.aid, &cid.cid, Some(false))
+        let security_content = media_api::get_content(&api.api(), &aid.aid, &cid.cid, Some(false))
             .await
             .change_context(TestError::ApiRequest)?
             .bytes()
@@ -229,7 +235,7 @@ impl AdminBotSecurityContentVerificationLogic {
 
         let result = if let Some(llm) = state.llm.clone() {
             Self::llm_security_content_verification_and_retry(
-                &security_image,
+                &security_content,
                 &verification_image,
                 llm,
             )
@@ -247,7 +253,7 @@ impl AdminBotSecurityContentVerificationLogic {
     }
 
     async fn llm_security_content_verification_and_retry(
-        security_image_data: &[u8],
+        security_content_data: &[u8],
         verification_image_data: &[u8],
         llm: LlmConfigAndClient,
     ) -> Result<Option<ModerationResult>, TestError> {
@@ -256,7 +262,7 @@ impl AdminBotSecurityContentVerificationLogic {
 
         loop {
             match Self::llm_security_content_verification(
-                security_image_data,
+                security_content_data,
                 verification_image_data,
                 llm.clone(),
             )
@@ -283,7 +289,7 @@ impl AdminBotSecurityContentVerificationLogic {
     }
 
     fn parse_verification_method_action(
-        config: &SecurityContentVerificationConfig,
+        config: &AccountVerificationConfig,
         verification_method: &str,
         _verification_data: &str,
     ) -> Result<VerificationMethodAction, TestError> {
@@ -296,7 +302,7 @@ impl AdminBotSecurityContentVerificationLogic {
             }
             // TODO: eudi
             _ => Err(TestError::AdminBotInternalError).attach_printable(
-                "Unsupported or disabled security content verification method".to_string(),
+                "Unsupported or disabled account verification method".to_string(),
             ),
         }
     }
@@ -331,10 +337,10 @@ impl AdminBotSecurityContentVerificationLogic {
         Ok(())
     }
 
-    pub async fn run_security_content_verification(
+    pub async fn run_account_verification(
         api: &ApiClient,
-        config: &SecurityContentVerificationConfig,
-        state: &mut SecurityContentVerificationState,
+        config: &AccountVerificationConfig,
+        state: &mut AccountVerificationState,
     ) -> Result<(), TestError> {
         loop {
             if Self::verify_one_page(api, config, state).await?.is_some() {

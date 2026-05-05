@@ -97,22 +97,3 @@ pub struct PostSecurityContentVerifiedValue {
     /// Set to None to clear the currently applicable value.
     pub value: Option<bool>,
 }
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct SecurityContentVerificationQueueAdminItem {
-    pub account_id: AccountId,
-    pub security_content: ContentId,
-    pub verification_method: String,
-    pub verification_data: String,
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize, ToSchema)]
-pub struct GetSecurityContentVerificationQueueNextItemResult {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub item: Option<SecurityContentVerificationQueueAdminItem>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct PostSecurityContentVerificationQueueRemoveNextItem {
-    pub account_id: AccountId,
-}

@@ -206,10 +206,14 @@ pub async fn get_bot_config_warnings(
             face_verification_file_config_missing: config.face_verification_enabled
                 && warning_flags
                     .contains(AdminBotConfigWarningFlags::FACE_VERIFICATION_FILE_CONFIG_MISSING),
-            security_content_verification_file_config_missing: config
-                .security_content_verification_enabled
+            account_verification_file_config_missing: config.account_verification_enabled
+                && warning_flags
+                    .contains(AdminBotConfigWarningFlags::ACCOUNT_VERIFICATION_FILE_CONFIG_MISSING),
+            account_verification_security_content_file_config_missing: config
+                .account_verification_enabled
+                && config.account_verification.security_content_enabled
                 && warning_flags.contains(
-                    AdminBotConfigWarningFlags::SECURITY_CONTENT_VERIFICATION_FILE_CONFIG_MISSING,
+                    AdminBotConfigWarningFlags::ACCOUNT_VERIFICATION_SECURITY_CONTENT_FILE_CONFIG_MISSING,
                 ),
         };
 
@@ -229,9 +233,16 @@ pub async fn get_bot_config_warnings(
             && bot_config_file.content_moderation.is_none(),
         face_verification_file_config_missing: config.face_verification_enabled
             && bot_config_file.face_verification.is_none(),
-        security_content_verification_file_config_missing: config
-            .security_content_verification_enabled
-            && bot_config_file.security_content_verification.is_none(),
+        account_verification_file_config_missing: config.account_verification_enabled
+            && bot_config_file.account_verification.is_none(),
+        account_verification_security_content_file_config_missing: config
+            .account_verification_enabled
+            && config.account_verification.security_content_enabled
+            && bot_config_file
+                .account_verification
+                .as_ref()
+                .and_then(|v| v.security_content.as_ref())
+                .is_none(),
     };
 
     Ok(Json(warnings))
