@@ -38,6 +38,7 @@ pub enum AccountBannedAdminType {
 /// - `1` = profile text
 /// - `2` = media content
 /// - `3` = chat message
+/// - `4` = report spam
 #[derive(
     Debug,
     Serialize,
