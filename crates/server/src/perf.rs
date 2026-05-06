@@ -52,7 +52,7 @@ use server_api_profile::{
     profile_admin::{
         PROFILE_ADMIN_ITERATE_PROFILES_COUNTERS_LIST, PROFILE_ADMIN_MODERATION_COUNTERS_LIST,
         PROFILE_ADMIN_PROFILE_ATTRIBUTES_COUNTERS_LIST, PROFILE_ADMIN_PROFILE_DATA_COUNTERS_LIST,
-        PROFILE_ADMIN_STATISTICS_COUNTERS_LIST,
+        PROFILE_ADMIN_STATISTICS_COUNTERS_LIST, PROFILE_ADMIN_VERIFICATION_COUNTERS_LIST,
     },
 };
 use simple_backend::{SIMPLE_CONNECTION_COUNTERS_LIST, perf::counters::CounterCategory};
@@ -204,6 +204,10 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
     &CounterCategory::new(
         "profile_admin_profile_data",
         PROFILE_ADMIN_PROFILE_DATA_COUNTERS_LIST,
+    ),
+    &CounterCategory::new(
+        "profile_admin_verification",
+        PROFILE_ADMIN_VERIFICATION_COUNTERS_LIST,
     ),
     &CounterCategory::new(
         "profile_admin_moderation",

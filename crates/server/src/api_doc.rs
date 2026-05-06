@@ -198,6 +198,10 @@ impl ApiDoc {
                     .into_openapi(),
             )
             .merge_from(
+                server_api_profile::profile_admin::router_admin_verification(state.clone())
+                    .into_openapi(),
+            )
+            .merge_from(
                 server_api_profile::profile_admin::router_admin_moderation(state.clone())
                     .into_openapi(),
             )

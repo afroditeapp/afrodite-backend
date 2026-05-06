@@ -2,7 +2,7 @@ use database_profile::current::read::GetDbReadCommandsProfile;
 use model_profile::{
     AccountIdInternal, GetMyProfileResult, GetProfileFilters, InitialProfileAge, LastSeenTime,
     LastSeenUnixTime, Location, Profile, ProfileAndProfileVersion, ProfileInternal,
-    ProfileStateInternal,
+    ProfileStateInternal, ProfileVerificationStatusFlags,
 };
 use server_data::{
     DataError, IntoDataError, define_cmd_wrapper_read, read::DbRead, result::Result,
@@ -47,6 +47,11 @@ impl ReadCommandsProfile<'_> {
         id: AccountIdInternal,
     ) -> Result<ProfileAndProfileVersion, DataError> {
         self.read_cache_profile_and_common(id, move |data, c| {
+            let verification_status =
+                ProfileVerificationStatusFlags::from_profile_age_range_verified(
+                    data.state.effective_profile_age_range_verified(),
+                )
+                .into();
             Ok(ProfileAndProfileVersion {
                 profile: Profile::new(
                     data.profile_internal().clone(),
@@ -54,6 +59,7 @@ impl ReadCommandsProfile<'_> {
                     data.profile_text_moderation_state(),
                     data.attributes.attributes().clone(),
                     c.other_shared_state.unlimited_likes,
+                    verification_status,
                 ),
                 version: data.profile_internal().version_uuid,
                 last_seen_time: data.last_seen_time().last_seen_time_public(),

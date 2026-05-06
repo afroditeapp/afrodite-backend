@@ -1,7 +1,9 @@
 use std::collections::{HashMap, HashSet};
 
 use diesel::prelude::*;
-use model::{AttributeId, LastSeenTime, ProfileAge, ProfileVersion};
+use model::{
+    AttributeId, LastSeenTime, ProfileAge, ProfileVerificationStatusFlags, ProfileVersion,
+};
 use model_server_data::{
     LastSeenTimeFilter, MaxDistanceKm, MinDistanceKm, ProfileAttributeValue,
     ProfileAttributeValueUpdate, ProfileAttributesInternal, ProfileCreatedTimeFilter,
@@ -61,6 +63,7 @@ pub struct Profile {
     #[serde(skip_serializing_if = "is_true")]
     #[schema(default = true)]
     ptext_accepted: bool,
+    verification_status: ProfileVerificationStatus,
 }
 
 fn is_true(value: &bool) -> bool {
@@ -74,6 +77,7 @@ impl Profile {
         profile_text_moderation_state: Option<ProfileTextModerationState>,
         attributes: Vec<ProfileAttributeValue>,
         unlimited_likes: bool,
+        verification_status: ProfileVerificationStatus,
     ) -> Self {
         Self {
             name: value.profile_name,
@@ -87,6 +91,7 @@ impl Profile {
             ptext_accepted: profile_text_moderation_state
                 .map(|v| v.0.is_accepted())
                 .unwrap_or_default(),
+            verification_status,
         }
     }
 
@@ -115,6 +120,8 @@ pub struct ProfileStateInternal {
     pub search_age_range_max: ProfileAge,
     #[diesel(deserialize_as = i16, serialize_as = i16)]
     pub search_group_flags: SearchGroupFlags,
+    pub profile_age_range_verified: Option<bool>,
+    pub profile_age_range_verified_manual: Option<bool>,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
     pub unlimited_likes_filter: Option<bool>,
     pub min_distance_km_filter: Option<MinDistanceKm>,
@@ -135,6 +142,8 @@ impl From<ProfileStateInternal> for ProfileStateCached {
             search_age_range_min: value.search_age_range_min,
             search_age_range_max: value.search_age_range_max,
             search_group_flags: value.search_group_flags,
+            profile_age_range_verified: value.profile_age_range_verified,
+            profile_age_range_verified_manual: value.profile_age_range_verified_manual,
             last_seen_time_filter: value.last_seen_time_filter,
             unlimited_likes_filter: value.unlimited_likes_filter,
             min_distance_km_filter: value.min_distance_km_filter,
@@ -147,6 +156,28 @@ impl From<ProfileStateInternal> for ProfileStateCached {
             random_profile_order: value.random_profile_order,
             profile_edited_time: value.profile_edited_unix_time,
         }
+    }
+}
+
+impl ProfileStateInternal {
+    pub fn effective_profile_age_range_verified(&self) -> Option<bool> {
+        self.profile_age_range_verified_manual
+            .or(self.profile_age_range_verified)
+    }
+}
+
+/// Value for profile verification status flags.
+///
+/// - PROFILE_AGE_RANGE_VERIFIED = 0x8. Profile age range has effective
+///   verification value true.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, ToSchema)]
+pub struct ProfileVerificationStatus {
+    pub v: i16,
+}
+
+impl From<ProfileVerificationStatusFlags> for ProfileVerificationStatus {
+    fn from(value: ProfileVerificationStatusFlags) -> Self {
+        Self { v: value.bits() }
     }
 }
 
@@ -418,6 +449,10 @@ pub struct GetMyProfileResult {
     pub profile: Profile,
     pub profile_version: ProfileVersion,
     pub profile_sync_version: ProfileSyncVersion,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub profile_age_range_verified: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub profile_age_range_verified_manual: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name_moderation_info: Option<ProfileStringModerationInfo>,
     #[serde(skip_serializing_if = "Option::is_none")]

@@ -3,6 +3,7 @@ use server_data::define_cmd_wrapper_write;
 pub mod moderation;
 pub mod notification;
 pub mod profile_attributes;
+pub mod verification;
 
 define_cmd_wrapper_write!(WriteCommandsProfileAdmin);
 
@@ -19,5 +20,9 @@ impl<'a> WriteCommandsProfileAdmin<'a> {
 
     pub fn notification(self) -> notification::WriteCommandsProfileAdminNotification<'a> {
         notification::WriteCommandsProfileAdminNotification::new(self.0)
+    }
+
+    pub fn verification(self) -> verification::WriteCommandsProfileAdminVerification<'a> {
+        verification::WriteCommandsProfileAdminVerification::new(self.0)
     }
 }

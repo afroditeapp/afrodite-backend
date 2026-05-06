@@ -68,6 +68,8 @@ pub struct ProfileStateCached {
     pub search_age_range_min: ProfileAge,
     pub search_age_range_max: ProfileAge,
     pub search_group_flags: SearchGroupFlags,
+    pub profile_age_range_verified: Option<bool>,
+    pub profile_age_range_verified_manual: Option<bool>,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
     pub unlimited_likes_filter: Option<bool>,
     pub profile_created_time_filter: Option<ProfileCreatedTimeFilter>,
@@ -79,6 +81,13 @@ pub struct ProfileStateCached {
     pub max_distance_km_filter: Option<MaxDistanceKm>,
     pub random_profile_order: bool,
     pub profile_edited_time: ProfileEditedTime,
+}
+
+impl ProfileStateCached {
+    pub fn effective_profile_age_range_verified(&self) -> Option<bool> {
+        self.profile_age_range_verified_manual
+            .or(self.profile_age_range_verified)
+    }
 }
 
 #[derive(Clone, Copy)]

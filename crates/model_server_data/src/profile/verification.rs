@@ -13,6 +13,8 @@ use utoipa::ToSchema;
 ///   this bit must be unset.
 /// - SECURITY_CONTENT_VERIFIED = 0x4. Current security content has effective
 ///   security verified value true.
+/// - PROFILE_AGE_RANGE_VERIFIED = 0x8. Profile age range has effective
+///   verification value true.
 #[derive(
     Debug,
     Clone,

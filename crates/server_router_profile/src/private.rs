@@ -33,6 +33,9 @@ impl PrivateRoutes {
             .merge(api::profile_admin::router_admin_profile_data(
                 self.state.clone(),
             ))
+            .merge(api::profile_admin::router_admin_verification(
+                self.state.clone(),
+            ))
             .merge(api::profile_admin::router_admin_moderation(
                 self.state.clone(),
             ))

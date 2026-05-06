@@ -11,8 +11,9 @@ use common::CacheCommon;
 use error_stack::Result;
 use media::CacheMedia;
 use model::{
-    AccessToken, AccessTokenType, AccountId, AccountIdInternal, AccountState, LastSeenUnixTime,
-    LoginSession, Permissions, PushNotificationFlags,
+    AccessToken, AccessTokenType, AccountId, AccountIdInternal, AccountState,
+    AllVerificationStatusFlags, LastSeenUnixTime, LoginSession, Permissions,
+    ProfileVerificationStatusFlags, PushNotificationFlags,
 };
 use model_server_data::{AuthPair, LocationIndexProfileData};
 use profile::CacheProfile;
@@ -638,7 +639,12 @@ impl CacheEntry {
                 .initial_setup_completed_unix_time,
             self.media.profile_content_edited_time,
             profile.profile_text_character_count(),
-            self.media.media_verification_status_flags,
+            AllVerificationStatusFlags::new(
+                ProfileVerificationStatusFlags::from_profile_age_range_verified(
+                    profile.state.effective_profile_age_range_verified(),
+                ),
+                self.media.media_verification_status_flags,
+            ),
         )
     }
 

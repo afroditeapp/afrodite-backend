@@ -9,7 +9,8 @@ use model_profile::{
     AccountIdInternal, AttributeId, GetMyProfileResult, GetProfileFilters, InitialProfileAge,
     LastSeenUnixTime, Location, Profile, ProfileAge, ProfileAttributeFilterValue,
     ProfileAttributeValue, ProfileInternal, ProfileNameModerationState, ProfileStateInternal,
-    ProfileStringModerationContentType, ProfileTextModerationState, UnixTime,
+    ProfileStringModerationContentType, ProfileTextModerationState, ProfileVerificationStatusFlags,
+    UnixTime,
 };
 
 use crate::current::read::GetDbReadCommandsProfile;
@@ -32,6 +33,7 @@ impl CurrentReadProfileData<'_> {
 
     pub fn profile(&mut self, id: AccountIdInternal) -> Result<Profile, DieselDatabaseError> {
         let profile = self.profile_internal(id)?;
+        let profile_state = self.profile_state(id)?;
         let attributes = self.profile_attribute_values(id)?;
         let other_shared_state = self.read().common().state().other_shared_state(id)?;
         let profile_name_moderation_state = self
@@ -44,12 +46,17 @@ impl CurrentReadProfileData<'_> {
             .profile()
             .moderation()
             .profile_text_moderation_state(id)?;
+        let verification_status = ProfileVerificationStatusFlags::from_profile_age_range_verified(
+            profile_state.effective_profile_age_range_verified(),
+        )
+        .into();
         Ok(Profile::new(
             profile,
             profile_name_moderation_state,
             profile_text_moderation_state,
             attributes,
             other_shared_state.unlimited_likes,
+            verification_status,
         ))
     }
 
@@ -82,11 +89,17 @@ impl CurrentReadProfileData<'_> {
                 .map(|v| ProfileTextModerationState(v.state)),
             attributes,
             other_shared_state.unlimited_likes,
+            ProfileVerificationStatusFlags::from_profile_age_range_verified(
+                profile_state.effective_profile_age_range_verified(),
+            )
+            .into(),
         );
         let r = GetMyProfileResult {
             profile: p,
             profile_version,
             profile_sync_version: profile_state.profile_sync_version,
+            profile_age_range_verified: profile_state.profile_age_range_verified,
+            profile_age_range_verified_manual: profile_state.profile_age_range_verified_manual,
             name_moderation_info: profile_name_moderation_state,
             text_moderation_info: profile_text_moderation_state,
         };

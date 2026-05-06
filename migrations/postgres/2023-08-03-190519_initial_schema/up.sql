@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS account_permissions(
     admin_edit_media_content_face_detected_value BOOLEAN NOT NULL DEFAULT FALSE,
     admin_edit_media_content_face_verified_value BOOLEAN NOT NULL DEFAULT FALSE,
     admin_edit_security_content_verified_value   BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_edit_profile_age_range_verified_value  BOOLEAN NOT NULL DEFAULT FALSE,
     admin_verify_account                         BOOLEAN NOT NULL DEFAULT FALSE,
     admin_export_data                            BOOLEAN NOT NULL DEFAULT FALSE,
     admin_moderate_media_content                 BOOLEAN NOT NULL DEFAULT FALSE,
@@ -604,6 +605,10 @@ CREATE TABLE IF NOT EXISTS profile_state(
     -- Profile age when initial setup is completed
     initial_profile_age               SMALLINT,
     initial_profile_age_set_unix_time BIGINT,
+    -- Profile age range verification value set by bot/admin automation.
+    profile_age_range_verified BOOLEAN,
+    -- Manual profile age range verification value set by human admin.
+    profile_age_range_verified_manual BOOLEAN,
     -- Edit time for public profile changes. This updates from both
     -- user and admin made changes.
     profile_edited_unix_time          BIGINT        NOT NULL    DEFAULT 0,
