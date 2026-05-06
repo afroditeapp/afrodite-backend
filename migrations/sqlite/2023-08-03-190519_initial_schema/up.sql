@@ -597,8 +597,8 @@ CREATE TABLE IF NOT EXISTS profile_state(
     profile_verification_status_filter SMALLINT,
     -- Profile iterator setting for random profile order.
     random_profile_order       BOOLEAN              NOT NULL    DEFAULT FALSE,
-    latitude                   DOUBLE PRECISION               NOT NULL    DEFAULT 0.0,
-    longitude                  DOUBLE PRECISION               NOT NULL    DEFAULT 0.0,
+    latitude                   REAL                 NOT NULL    DEFAULT 0.0,
+    longitude                  REAL                 NOT NULL    DEFAULT 0.0,
     -- Sync version for profile data for this account.
     profile_sync_version              SMALLINT      NOT NULL    DEFAULT 0,
     -- Profile age when initial setup is completed

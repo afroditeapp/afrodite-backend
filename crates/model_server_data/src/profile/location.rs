@@ -3,16 +3,16 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Default)]
-#[serde(try_from = "f64")]
-#[serde(into = "f64")]
-pub struct FiniteDouble {
-    value: f64,
+#[serde(try_from = "f32")]
+#[serde(into = "f32")]
+pub struct FiniteFloat {
+    value: f32,
 }
 
-impl TryFrom<f64> for FiniteDouble {
+impl TryFrom<f32> for FiniteFloat {
     type Error = String;
 
-    fn try_from(value: f64) -> Result<Self, Self::Error> {
+    fn try_from(value: f32) -> Result<Self, Self::Error> {
         if value.is_finite() {
             Ok(Self { value })
         } else {
@@ -21,8 +21,8 @@ impl TryFrom<f64> for FiniteDouble {
     }
 }
 
-impl From<FiniteDouble> for f64 {
-    fn from(value: FiniteDouble) -> Self {
+impl From<FiniteFloat> for f32 {
+    fn from(value: FiniteFloat) -> Self {
         value.value
     }
 }
@@ -45,20 +45,20 @@ impl From<FiniteDouble> for f64 {
 #[diesel(table_name = crate::schema::profile_state)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct Location {
-    #[schema(value_type = f64)]
-    #[diesel(deserialize_as = f64, serialize_as = f64)]
-    latitude: FiniteDouble,
-    #[schema(value_type = f64)]
-    #[diesel(deserialize_as = f64, serialize_as = f64)]
-    longitude: FiniteDouble,
+    #[schema(value_type = f32)]
+    #[diesel(deserialize_as = f32, serialize_as = f32)]
+    latitude: FiniteFloat,
+    #[schema(value_type = f32)]
+    #[diesel(deserialize_as = f32, serialize_as = f32)]
+    longitude: FiniteFloat,
 }
 
 impl Location {
-    pub fn latitude(&self) -> f64 {
+    pub fn latitude(&self) -> f32 {
         self.latitude.into()
     }
 
-    pub fn longitude(&self) -> f64 {
+    pub fn longitude(&self) -> f32 {
         self.longitude.into()
     }
 }
@@ -97,8 +97,8 @@ impl LocationInternal {
 impl From<Location> for LocationInternal {
     fn from(value: Location) -> Self {
         Self {
-            latitude: value.latitude(),
-            longitude: value.longitude(),
+            latitude: value.latitude().into(),
+            longitude: value.longitude().into(),
         }
     }
 }
