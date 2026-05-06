@@ -102,15 +102,6 @@ pub enum GetProfileContentInfoBinaryError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`get_security_content_verification_queue_status`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum GetSecurityContentVerificationQueueStatusError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
 /// struct for typed errors of method [`post_media_app_notification_settings`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -124,16 +115,6 @@ pub enum PostMediaAppNotificationSettingsError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PostProfileContentReportError {
-    Status401(),
-    Status429(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
-/// struct for typed errors of method [`post_security_content_verification_queue_item`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum PostSecurityContentVerificationQueueItemError {
     Status401(),
     Status429(),
     Status500(),
@@ -505,43 +486,6 @@ pub async fn get_profile_content_info_binary(configuration: &configuration::Conf
     }
 }
 
-pub async fn get_security_content_verification_queue_status(configuration: &configuration::Configuration, ) -> Result<models::SecurityContentVerificationQueueStatus, Error<GetSecurityContentVerificationQueueStatusError>> {
-
-    let uri_str = format!("{}/media_api/security_content_verification_queue", configuration.base_path);
-    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
-
-    if let Some(ref user_agent) = configuration.user_agent {
-        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
-    }
-    if let Some(ref token) = configuration.bearer_access_token {
-        req_builder = req_builder.bearer_auth(token.to_owned());
-    };
-
-    let req = req_builder.build()?;
-    let resp = configuration.client.execute(req).await?;
-
-    let status = resp.status();
-    let content_type = resp
-        .headers()
-        .get("content-type")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("application/octet-stream");
-    let content_type = super::ContentType::from(content_type);
-
-    if !status.is_client_error() && !status.is_server_error() {
-        let content = resp.text().await?;
-        match content_type {
-            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::SecurityContentVerificationQueueStatus`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::SecurityContentVerificationQueueStatus`")))),
-        }
-    } else {
-        let content = resp.text().await?;
-        let entity: Option<GetSecurityContentVerificationQueueStatusError> = serde_json::from_str(&content).ok();
-        Err(Error::ResponseError(ResponseContent { status, content, entity }))
-    }
-}
-
 pub async fn post_media_app_notification_settings(configuration: &configuration::Configuration, media_app_notification_settings: models::MediaAppNotificationSettings) -> Result<(), Error<PostMediaAppNotificationSettingsError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_media_app_notification_settings = media_app_notification_settings;
@@ -608,47 +552,6 @@ pub async fn post_profile_content_report(configuration: &configuration::Configur
     } else {
         let content = resp.text().await?;
         let entity: Option<PostProfileContentReportError> = serde_json::from_str(&content).ok();
-        Err(Error::ResponseError(ResponseContent { status, content, entity }))
-    }
-}
-
-/// Queue rules: - One account can have only one pending item in queue. - Queue maximum length is configured with media limits. - Provided security content must match current security content.
-pub async fn post_security_content_verification_queue_item(configuration: &configuration::Configuration, post_security_content_verification_queue_item: models::PostSecurityContentVerificationQueueItem) -> Result<models::PostSecurityContentVerificationQueueItemResult, Error<PostSecurityContentVerificationQueueItemError>> {
-    // add a prefix to parameters to efficiently prevent name collisions
-    let p_body_post_security_content_verification_queue_item = post_security_content_verification_queue_item;
-
-    let uri_str = format!("{}/media_api/security_content_verification_queue", configuration.base_path);
-    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
-
-    if let Some(ref user_agent) = configuration.user_agent {
-        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
-    }
-    if let Some(ref token) = configuration.bearer_access_token {
-        req_builder = req_builder.bearer_auth(token.to_owned());
-    };
-    req_builder = req_builder.json(&p_body_post_security_content_verification_queue_item);
-
-    let req = req_builder.build()?;
-    let resp = configuration.client.execute(req).await?;
-
-    let status = resp.status();
-    let content_type = resp
-        .headers()
-        .get("content-type")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("application/octet-stream");
-    let content_type = super::ContentType::from(content_type);
-
-    if !status.is_client_error() && !status.is_server_error() {
-        let content = resp.text().await?;
-        match content_type {
-            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::PostSecurityContentVerificationQueueItemResult`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::PostSecurityContentVerificationQueueItemResult`")))),
-        }
-    } else {
-        let content = resp.text().await?;
-        let entity: Option<PostSecurityContentVerificationQueueItemError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

@@ -13,6 +13,10 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct BotConfigWarnings {
+    #[serde(rename = "account_verification_file_config_missing", skip_serializing_if = "Option::is_none")]
+    pub account_verification_file_config_missing: Option<bool>,
+    #[serde(rename = "account_verification_security_content_file_config_missing", skip_serializing_if = "Option::is_none")]
+    pub account_verification_security_content_file_config_missing: Option<bool>,
     #[serde(rename = "content_moderation_file_config_missing", skip_serializing_if = "Option::is_none")]
     pub content_moderation_file_config_missing: Option<bool>,
     #[serde(rename = "error", skip_serializing_if = "Option::is_none")]
@@ -26,20 +30,19 @@ pub struct BotConfigWarnings {
     pub profile_name_moderation_file_config_missing: Option<bool>,
     #[serde(rename = "profile_text_moderation_file_config_missing", skip_serializing_if = "Option::is_none")]
     pub profile_text_moderation_file_config_missing: Option<bool>,
-    #[serde(rename = "security_content_verification_file_config_missing", skip_serializing_if = "Option::is_none")]
-    pub security_content_verification_file_config_missing: Option<bool>,
 }
 
 impl BotConfigWarnings {
     pub fn new() -> BotConfigWarnings {
         BotConfigWarnings {
+            account_verification_file_config_missing: None,
+            account_verification_security_content_file_config_missing: None,
             content_moderation_file_config_missing: None,
             error: None,
             error_admin_bot_offline: None,
             face_verification_file_config_missing: None,
             profile_name_moderation_file_config_missing: None,
             profile_text_moderation_file_config_missing: None,
-            security_content_verification_file_config_missing: None,
         }
     }
 }

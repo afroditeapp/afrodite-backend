@@ -13,6 +13,10 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AdminBotConfig {
+    #[serde(rename = "account_verification")]
+    pub account_verification: Box<models::AdminAccountVerificationConfig>,
+    #[serde(rename = "account_verification_enabled", skip_serializing_if = "Option::is_none")]
+    pub account_verification_enabled: Option<bool>,
     #[serde(rename = "content_moderation")]
     pub content_moderation: Box<models::AdminContentModerationConfig>,
     #[serde(rename = "content_moderation_enabled", skip_serializing_if = "Option::is_none")]
@@ -29,15 +33,13 @@ pub struct AdminBotConfig {
     pub profile_text_moderation: Box<models::AdminProfileStringModerationConfig>,
     #[serde(rename = "profile_text_moderation_enabled", skip_serializing_if = "Option::is_none")]
     pub profile_text_moderation_enabled: Option<bool>,
-    #[serde(rename = "security_content_verification")]
-    pub security_content_verification: Box<models::AdminSecurityContentVerificationConfig>,
-    #[serde(rename = "security_content_verification_enabled", skip_serializing_if = "Option::is_none")]
-    pub security_content_verification_enabled: Option<bool>,
 }
 
 impl AdminBotConfig {
-    pub fn new(content_moderation: models::AdminContentModerationConfig, face_verification: models::AdminFaceVerificationConfig, profile_name_moderation: models::AdminProfileStringModerationConfig, profile_text_moderation: models::AdminProfileStringModerationConfig, security_content_verification: models::AdminSecurityContentVerificationConfig) -> AdminBotConfig {
+    pub fn new(account_verification: models::AdminAccountVerificationConfig, content_moderation: models::AdminContentModerationConfig, face_verification: models::AdminFaceVerificationConfig, profile_name_moderation: models::AdminProfileStringModerationConfig, profile_text_moderation: models::AdminProfileStringModerationConfig) -> AdminBotConfig {
         AdminBotConfig {
+            account_verification: Box::new(account_verification),
+            account_verification_enabled: None,
             content_moderation: Box::new(content_moderation),
             content_moderation_enabled: None,
             face_verification: Box::new(face_verification),
@@ -46,8 +48,6 @@ impl AdminBotConfig {
             profile_name_moderation_enabled: None,
             profile_text_moderation: Box::new(profile_text_moderation),
             profile_text_moderation_enabled: None,
-            security_content_verification: Box::new(security_content_verification),
-            security_content_verification_enabled: None,
         }
     }
 }

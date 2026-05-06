@@ -31,6 +31,7 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**get_account_deletion_request_state**](docs/AccountApi.md#get_account_deletion_request_state) | **GET** /account_api/get_account_deletion_request_state/{aid} | Get account deletion request state
 *AccountApi* | [**get_account_setup**](docs/AccountApi.md#get_account_setup) | **GET** /account_api/account_setup | Get non-changeable user information to account.
 *AccountApi* | [**get_account_state**](docs/AccountApi.md#get_account_state) | **GET** /account_api/state | Get current account state.
+*AccountApi* | [**get_account_verification_queue_status**](docs/AccountApi.md#get_account_verification_queue_status) | **GET** /account_api/account_verification_queue | Get account verification queue status for current account.
 *AccountApi* | [**get_email_address_state**](docs/AccountApi.md#get_email_address_state) | **GET** /account_api/email_address_state | 
 *AccountApi* | [**get_latest_birthdate**](docs/AccountApi.md#get_latest_birthdate) | **GET** /account_api/latest_birthdate | 
 *AccountApi* | [**get_news_item**](docs/AccountApi.md#get_news_item) | **GET** /account_api/news_item/{nid} | Get news item content using specific locale and fallback to locale \"en\" if news translation is not found.
@@ -38,6 +39,7 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**get_verify_new_email**](docs/AccountApi.md#get_verify_new_email) | **GET** /account_api/verify_new_email/{token} | Verify new email address using the token sent via email. This endpoint is meant to be accessed via a link in the verification email. To workaround email security scanning related link accessing, the link can be opened multiple times.
 *AccountApi* | [**post_account_app_notification_settings**](docs/AccountApi.md#post_account_app_notification_settings) | **POST** /account_api/post_account_app_notification_settings | 
 *AccountApi* | [**post_account_setup**](docs/AccountApi.md#post_account_setup) | **POST** /account_api/account_setup | Setup non-changeable user information during `initial setup` state.
+*AccountApi* | [**post_account_verification_queue_item**](docs/AccountApi.md#post_account_verification_queue_item) | **POST** /account_api/account_verification_queue | Add account verification request to queue for current account.
 *AccountApi* | [**post_cancel_email_change**](docs/AccountApi.md#post_cancel_email_change) | **POST** /account_api/cancel_email_change | Cancel email changing process
 *AccountApi* | [**post_complete_setup**](docs/AccountApi.md#post_complete_setup) | **POST** /account_api/complete_setup | Complete initial setup.
 *AccountApi* | [**post_custom_report_empty**](docs/AccountApi.md#post_custom_report_empty) | **POST** /account_api/custom_report_empty | Send custom report without any content
@@ -68,9 +70,11 @@ Class | Method | HTTP request | Description
 *AccountAdminApi* | [**get_account_id_from_email**](docs/AccountAdminApi.md#get_account_id_from_email) | **GET** /account_api/get_account_id_from_email/{email} | Get account ID from email
 *AccountAdminApi* | [**get_account_locked_state**](docs/AccountAdminApi.md#get_account_locked_state) | **GET** /account_api/get_account_locked_state/{aid} | Get account locked state
 *AccountAdminApi* | [**get_account_state_admin**](docs/AccountAdminApi.md#get_account_state_admin) | **GET** /account_api/get_account_state_admin/{aid} | Get [model::Account] for specific account.
+*AccountAdminApi* | [**get_account_verification_queue_next_item**](docs/AccountAdminApi.md#get_account_verification_queue_next_item) | **GET** /account_api/account_verification_queue_next_item | Get next item in account verification queue.
 *AccountAdminApi* | [**get_all_admins**](docs/AccountAdminApi.md#get_all_admins) | **GET** /account_api/get_all_admins | Get all admins
 *AccountAdminApi* | [**get_email_address_state_admin**](docs/AccountAdminApi.md#get_email_address_state_admin) | **GET** /account_api/email_address_state_admin/{aid} | Get email address state for admin.
 *AccountAdminApi* | [**get_permissions**](docs/AccountAdminApi.md#get_permissions) | **GET** /account_api/get_permissions/{aid} | Get [model::Permissions] for specific account.
+*AccountAdminApi* | [**post_account_verification_queue_remove_next_item**](docs/AccountAdminApi.md#post_account_verification_queue_remove_next_item) | **POST** /account_api/account_verification_queue_remove_next_item | Remove next item from account verification queue if possible.
 *AccountAdminApi* | [**post_admin_cancel_email_change**](docs/AccountAdminApi.md#post_admin_cancel_email_change) | **POST** /account_api/admin_cancel_email_change/{aid} | Cancel email changing process for any account.
 *AccountAdminApi* | [**post_admin_init_email_change**](docs/AccountAdminApi.md#post_admin_init_email_change) | **POST** /account_api/admin_init_email_change | Initiate email change process for any account by providing a new email address.
 *AccountAdminApi* | [**post_admin_logout**](docs/AccountAdminApi.md#post_admin_logout) | **POST** /account_api/admin_logout/{aid} | Logout any account
@@ -187,10 +191,8 @@ Class | Method | HTTP request | Description
 *MediaApi* | [**get_media_content_info**](docs/MediaApi.md#get_media_content_info) | **GET** /media_api/media_content_info | Get my profile and security content
 *MediaApi* | [**get_profile_content_info**](docs/MediaApi.md#get_profile_content_info) | **GET** /media_api/profile_content_info/{aid} | Get current profile content for selected profile.
 *MediaApi* | [**get_profile_content_info_binary**](docs/MediaApi.md#get_profile_content_info_binary) | **GET** /media_api/profile_content_info_binary/{aid} | Get current profile content for selected profile as compact binary payload.
-*MediaApi* | [**get_security_content_verification_queue_status**](docs/MediaApi.md#get_security_content_verification_queue_status) | **GET** /media_api/security_content_verification_queue | Get security content verification queue status for current account.
 *MediaApi* | [**post_media_app_notification_settings**](docs/MediaApi.md#post_media_app_notification_settings) | **POST** /media_api/post_media_app_notification_settings | 
 *MediaApi* | [**post_profile_content_report**](docs/MediaApi.md#post_profile_content_report) | **POST** /media_api/profile_content_report | Report profile content.
-*MediaApi* | [**post_security_content_verification_queue_item**](docs/MediaApi.md#post_security_content_verification_queue_item) | **POST** /media_api/security_content_verification_queue | Add security content verification request to queue for current account.
 *MediaApi* | [**put_content_to_content_slot**](docs/MediaApi.md#put_content_to_content_slot) | **PUT** /media_api/content_slot/{slot_id} | Upload content to server. The content is saved to content processing slot when account state is [model::AccountState::InitialSetup]. In other states the slot number is ignored and content goes directly to moderation.
 *MediaApi* | [**put_profile_content**](docs/MediaApi.md#put_profile_content) | **PUT** /media_api/profile_content | Set new profile content for current account.
 *MediaApi* | [**put_security_content_info**](docs/MediaApi.md#put_security_content_info) | **PUT** /media_api/security_content_info | Set current security content for current account.
@@ -199,12 +201,10 @@ Class | Method | HTTP request | Description
 *MediaAdminApi* | [**get_media_content_face_verified_null_list**](docs/MediaAdminApi.md#get_media_content_face_verified_null_list) | **GET** /media_api/media_content_face_verified_null_list | Get first page of accounts with security selfie and content where `face_verified` is NULL and `face_detected` is true or `face_detected_manual` is true. Oldest security content set time is first and count 25.
 *MediaAdminApi* | [**get_media_content_pending_moderation_list**](docs/MediaAdminApi.md#get_media_content_pending_moderation_list) | **GET** /media_api/media_content_pending_moderation | Get first page of pending media content moderations. Oldest item is first and count 25.
 *MediaAdminApi* | [**get_security_content_admin_info**](docs/MediaAdminApi.md#get_security_content_admin_info) | **GET** /media_api/security_content_admin_info/{aid} | Get current security content for selected profile.
-*MediaAdminApi* | [**get_security_content_verification_queue_next_item**](docs/MediaAdminApi.md#get_security_content_verification_queue_next_item) | **GET** /media_api/security_content_verification_queue_admin_next | Get next item in security content verification queue.
 *MediaAdminApi* | [**post_image_processing_config**](docs/MediaAdminApi.md#post_image_processing_config) | **POST** /media_api/image_processing_config | Update image processing configuration
 *MediaAdminApi* | [**post_media_content_face_detected_value**](docs/MediaAdminApi.md#post_media_content_face_detected_value) | **POST** /media_api/media_content_face_detected_value | Change media content face detected value
 *MediaAdminApi* | [**post_media_content_face_verified_value**](docs/MediaAdminApi.md#post_media_content_face_verified_value) | **POST** /media_api/media_content_face_verified_value | Change media content face verified value
 *MediaAdminApi* | [**post_moderate_media_content**](docs/MediaAdminApi.md#post_moderate_media_content) | **POST** /media_api/moderate_media_content | Rejected category and details can be set only when the content is rejected.
-*MediaAdminApi* | [**post_security_content_verification_queue_remove_next_item**](docs/MediaAdminApi.md#post_security_content_verification_queue_remove_next_item) | **POST** /media_api/security_content_verification_queue_admin_next_remove | Remove next item from security content verification queue if possible.
 *MediaAdminApi* | [**post_security_content_verified_value**](docs/MediaAdminApi.md#post_security_content_verified_value) | **POST** /media_api/security_content_verified_value | Change security content verified value
 *ProfileApi* | [**delete_favorite_profile**](docs/ProfileApi.md#delete_favorite_profile) | **DELETE** /profile_api/favorite_profile | Delete favorite profile
 *ProfileApi* | [**get_automatic_profile_search_settings**](docs/ProfileApi.md#get_automatic_profile_search_settings) | **GET** /profile_api/automatic_profile_search_settings | 
@@ -262,8 +262,12 @@ Class | Method | HTTP request | Description
  - [AccountSetup](docs/AccountSetup.md)
  - [AccountStateContainer](docs/AccountStateContainer.md)
  - [AccountSyncVersion](docs/AccountSyncVersion.md)
+ - [AccountVerificationMethodsConfig](docs/AccountVerificationMethodsConfig.md)
+ - [AccountVerificationQueueAdminItem](docs/AccountVerificationQueueAdminItem.md)
+ - [AccountVerificationQueueStatus](docs/AccountVerificationQueueStatus.md)
  - [AddFavoriteProfileResult](docs/AddFavoriteProfileResult.md)
  - [AddPublicKeyResult](docs/AddPublicKeyResult.md)
+ - [AdminAccountVerificationConfig](docs/AdminAccountVerificationConfig.md)
  - [AdminBotConfig](docs/AdminBotConfig.md)
  - [AdminContentModerationConfig](docs/AdminContentModerationConfig.md)
  - [AdminFaceVerificationConfig](docs/AdminFaceVerificationConfig.md)
@@ -357,6 +361,7 @@ Class | Method | HTTP request | Description
  - [GetAccountBanTimeResult](docs/GetAccountBanTimeResult.md)
  - [GetAccountDeletionRequestResult](docs/GetAccountDeletionRequestResult.md)
  - [GetAccountIdFromEmailResult](docs/GetAccountIdFromEmailResult.md)
+ - [GetAccountVerificationQueueNextItemResult](docs/GetAccountVerificationQueueNextItemResult.md)
  - [GetAllAdminsResult](docs/GetAllAdminsResult.md)
  - [GetApiUsageStatisticsResult](docs/GetApiUsageStatisticsResult.md)
  - [GetApiUsageStatisticsSettings](docs/GetApiUsageStatisticsSettings.md)
@@ -391,7 +396,6 @@ Class | Method | HTTP request | Description
  - [GetProfileStringState](docs/GetProfileStringState.md)
  - [GetPushNotificationInfo](docs/GetPushNotificationInfo.md)
  - [GetReportList](docs/GetReportList.md)
- - [GetSecurityContentVerificationQueueNextItemResult](docs/GetSecurityContentVerificationQueueNextItemResult.md)
  - [GetSentMessage](docs/GetSentMessage.md)
  - [ImageProcessingDynamicConfig](docs/ImageProcessingDynamicConfig.md)
  - [ImageProcessingWarnings](docs/ImageProcessingWarnings.md)
@@ -476,14 +480,14 @@ Class | Method | HTTP request | Description
  - [PerfMetricValueArea](docs/PerfMetricValueArea.md)
  - [PerfMetricValues](docs/PerfMetricValues.md)
  - [Permissions](docs/Permissions.md)
+ - [PostAccountVerificationQueueItem](docs/PostAccountVerificationQueueItem.md)
+ - [PostAccountVerificationQueueItemResult](docs/PostAccountVerificationQueueItemResult.md)
+ - [PostAccountVerificationQueueRemoveNextItem](docs/PostAccountVerificationQueueRemoveNextItem.md)
  - [PostMediaContentFaceDetectedValue](docs/PostMediaContentFaceDetectedValue.md)
  - [PostMediaContentFaceVerifiedValue](docs/PostMediaContentFaceVerifiedValue.md)
  - [PostMediaContentFaceVerifiedValueItem](docs/PostMediaContentFaceVerifiedValueItem.md)
  - [PostModerateMediaContent](docs/PostModerateMediaContent.md)
  - [PostModerateProfileString](docs/PostModerateProfileString.md)
- - [PostSecurityContentVerificationQueueItem](docs/PostSecurityContentVerificationQueueItem.md)
- - [PostSecurityContentVerificationQueueItemResult](docs/PostSecurityContentVerificationQueueItemResult.md)
- - [PostSecurityContentVerificationQueueRemoveNextItem](docs/PostSecurityContentVerificationQueueRemoveNextItem.md)
  - [PostSecurityContentVerifiedValue](docs/PostSecurityContentVerifiedValue.md)
  - [PostStartDataExport](docs/PostStartDataExport.md)
  - [PostVideoCallUrlResult](docs/PostVideoCallUrlResult.md)
@@ -563,8 +567,6 @@ Class | Method | HTTP request | Description
  - [SearchAgeRange](docs/SearchAgeRange.md)
  - [SearchGroups](docs/SearchGroups.md)
  - [SecurityContentAdminInfo](docs/SecurityContentAdminInfo.md)
- - [SecurityContentVerificationQueueAdminItem](docs/SecurityContentVerificationQueueAdminItem.md)
- - [SecurityContentVerificationQueueStatus](docs/SecurityContentVerificationQueueStatus.md)
  - [SeenMessage](docs/SeenMessage.md)
  - [SendLike](docs/SendLike.md)
  - [SendLikeResult](docs/SendLikeResult.md)
@@ -611,6 +613,7 @@ Class | Method | HTTP request | Description
  - [VapidPublicKey](docs/VapidPublicKey.md)
  - [VerificationAction](docs/VerificationAction.md)
  - [VerificationConfig](docs/VerificationConfig.md)
+ - [VerificationMethodsConfig](docs/VerificationMethodsConfig.md)
 
 
 To get access to the crate's generated documentation, use:

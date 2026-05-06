@@ -27,6 +27,8 @@ pub struct ClientFeaturesConfig {
     pub news: Option<Option<Box<models::NewsConfig>>>,
     #[serde(rename = "profile", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub profile: Option<Option<Box<models::ProfileConfig>>>,
+    #[serde(rename = "verification_methods", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub verification_methods: Option<Option<Box<models::VerificationMethodsConfig>>>,
 }
 
 impl ClientFeaturesConfig {
@@ -39,6 +41,7 @@ impl ClientFeaturesConfig {
             map: None,
             news: None,
             profile: None,
+            verification_methods: None,
         }
     }
 }

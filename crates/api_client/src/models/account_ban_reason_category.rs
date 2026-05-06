@@ -11,6 +11,7 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
+/// AccountBanReasonCategory : Numeric category for account ban reason.  Known values: - `0` = profile name - `1` = profile text - `2` = media content - `3` = chat message - `4` = report spam
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AccountBanReasonCategory {
     #[serde(rename = "value")]
@@ -18,6 +19,7 @@ pub struct AccountBanReasonCategory {
 }
 
 impl AccountBanReasonCategory {
+    /// Numeric category for account ban reason.  Known values: - `0` = profile name - `1` = profile text - `2` = media content - `3` = chat message - `4` = report spam
     pub fn new(value: i32) -> AccountBanReasonCategory {
         AccountBanReasonCategory {
             value,

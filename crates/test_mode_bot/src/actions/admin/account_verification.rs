@@ -1,10 +1,10 @@
 use std::{fmt::Debug, sync::Arc};
 
 use api_client::{
-    apis::{media_admin_api, media_api},
+    apis::{account_admin_api, media_admin_api, media_api},
     models::{
-        AccountId, ContentId, PostSecurityContentVerificationQueueRemoveNextItem,
-        PostSecurityContentVerifiedValue, SecurityContentVerificationQueueAdminItem,
+        AccountId, AccountVerificationQueueAdminItem, ContentId,
+        PostAccountVerificationQueueRemoveNextItem, PostSecurityContentVerifiedValue,
     },
 };
 use async_openai::{
@@ -78,6 +78,16 @@ impl AdminBotAccountVerificationLogic {
             None => return Ok(Some(EmptyPage)),
         };
 
+        let security_content =
+            media_admin_api::get_security_content_admin_info(&api.api(), &item.account_id.aid)
+                .await
+                .change_context(TestError::ApiRequest)?;
+
+        let Some(security_content) = security_content.content.flatten().map(|v| v.cid) else {
+            Self::remove_next_queue_item(api, *item.account_id).await?;
+            return Ok(None);
+        };
+
         let value = match Self::parse_verification_method_action(
             config,
             &item.verification_method,
@@ -92,7 +102,7 @@ impl AdminBotAccountVerificationLogic {
                         config,
                         state,
                         &item.account_id,
-                        &item.security_content,
+                        &security_content,
                         verification_image,
                     )
                     .await?
@@ -103,13 +113,12 @@ impl AdminBotAccountVerificationLogic {
         };
 
         let account_id = (*item.account_id).clone();
-        let security_content = (*item.security_content).clone();
 
         media_admin_api::post_security_content_verified_value(
             &api.api(),
             PostSecurityContentVerifiedValue {
                 account_id: Box::new(account_id.clone()),
-                security_content: Box::new(security_content),
+                security_content,
                 value: Some(value),
             },
         )
@@ -309,14 +318,13 @@ impl AdminBotAccountVerificationLogic {
 
     async fn get_next_queue_item(
         api: &ApiClient,
-    ) -> Result<Option<SecurityContentVerificationQueueAdminItem>, TestError> {
-        let response =
-            media_admin_api::get_security_content_verification_queue_next_item(&api.api())
-                .await
-                .change_context(TestError::ApiRequest)?
-                .item
-                .flatten()
-                .map(|item| *item);
+    ) -> Result<Option<AccountVerificationQueueAdminItem>, TestError> {
+        let response = account_admin_api::get_account_verification_queue_next_item(&api.api())
+            .await
+            .change_context(TestError::ApiRequest)?
+            .item
+            .flatten()
+            .map(|item| *item);
 
         Ok(response)
     }
@@ -325,9 +333,9 @@ impl AdminBotAccountVerificationLogic {
         api: &ApiClient,
         account_id: api_client::models::AccountId,
     ) -> Result<(), TestError> {
-        media_admin_api::post_security_content_verification_queue_remove_next_item(
+        account_admin_api::post_account_verification_queue_remove_next_item(
             &api.api(),
-            PostSecurityContentVerificationQueueRemoveNextItem {
+            PostAccountVerificationQueueRemoveNextItem {
                 account_id: Box::new(account_id),
             },
         )

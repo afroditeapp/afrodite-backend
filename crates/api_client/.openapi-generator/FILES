@@ -31,8 +31,12 @@ src/models/account_registration_platforms.rs
 src/models/account_setup.rs
 src/models/account_state_container.rs
 src/models/account_sync_version.rs
+src/models/account_verification_methods_config.rs
+src/models/account_verification_queue_admin_item.rs
+src/models/account_verification_queue_status.rs
 src/models/add_favorite_profile_result.rs
 src/models/add_public_key_result.rs
+src/models/admin_account_verification_config.rs
 src/models/admin_bot_config.rs
 src/models/admin_content_moderation_config.rs
 src/models/admin_face_verification_config.rs
@@ -126,6 +130,7 @@ src/models/first_image_config.rs
 src/models/get_account_ban_time_result.rs
 src/models/get_account_deletion_request_result.rs
 src/models/get_account_id_from_email_result.rs
+src/models/get_account_verification_queue_next_item_result.rs
 src/models/get_all_admins_result.rs
 src/models/get_api_usage_statistics_result.rs
 src/models/get_api_usage_statistics_settings.rs
@@ -160,7 +165,6 @@ src/models/get_profile_string_pending_moderation_list.rs
 src/models/get_profile_string_state.rs
 src/models/get_push_notification_info.rs
 src/models/get_report_list.rs
-src/models/get_security_content_verification_queue_next_item_result.rs
 src/models/get_sent_message.rs
 src/models/image_processing_dynamic_config.rs
 src/models/image_processing_warnings.rs
@@ -246,14 +250,14 @@ src/models/perf_metric_query_result.rs
 src/models/perf_metric_value_area.rs
 src/models/perf_metric_values.rs
 src/models/permissions.rs
+src/models/post_account_verification_queue_item.rs
+src/models/post_account_verification_queue_item_result.rs
+src/models/post_account_verification_queue_remove_next_item.rs
 src/models/post_media_content_face_detected_value.rs
 src/models/post_media_content_face_verified_value.rs
 src/models/post_media_content_face_verified_value_item.rs
 src/models/post_moderate_media_content.rs
 src/models/post_moderate_profile_string.rs
-src/models/post_security_content_verification_queue_item.rs
-src/models/post_security_content_verification_queue_item_result.rs
-src/models/post_security_content_verification_queue_remove_next_item.rs
 src/models/post_security_content_verified_value.rs
 src/models/post_start_data_export.rs
 src/models/post_video_call_url_result.rs
@@ -333,8 +337,6 @@ src/models/scheduled_task_type_value.rs
 src/models/search_age_range.rs
 src/models/search_groups.rs
 src/models/security_content_admin_info.rs
-src/models/security_content_verification_queue_admin_item.rs
-src/models/security_content_verification_queue_status.rs
 src/models/seen_message.rs
 src/models/send_like.rs
 src/models/send_like_result.rs
@@ -381,3 +383,4 @@ src/models/update_report_result.rs
 src/models/vapid_public_key.rs
 src/models/verification_action.rs
 src/models/verification_config.rs
+src/models/verification_methods_config.rs

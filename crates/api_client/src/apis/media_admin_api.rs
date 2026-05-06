@@ -60,15 +60,6 @@ pub enum GetSecurityContentAdminInfoError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`get_security_content_verification_queue_next_item`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum GetSecurityContentVerificationQueueNextItemError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
 /// struct for typed errors of method [`post_image_processing_config`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -100,15 +91,6 @@ pub enum PostMediaContentFaceVerifiedValueError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PostModerateMediaContentError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
-/// struct for typed errors of method [`post_security_content_verification_queue_remove_next_item`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum PostSecurityContentVerificationQueueRemoveNextItemError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -281,7 +263,7 @@ pub async fn get_media_content_pending_moderation_list(configuration: &configura
     }
 }
 
-/// # Access  - Permission [model::Permissions::admin_moderate_media_content] - Permission [model::Permissions::admin_edit_media_content_face_verified_value] - Permission [model::Permissions::admin_edit_security_content_verified_value]
+/// # Access  - Permission [model::Permissions::admin_moderate_media_content] - Permission [model::Permissions::admin_edit_media_content_face_verified_value] - Permission [model::Permissions::admin_edit_security_content_verified_value] - Permission [model::Permissions::admin_verify_account]
 pub async fn get_security_content_admin_info(configuration: &configuration::Configuration, aid: &str) -> Result<models::SecurityContentAdminInfo, Error<GetSecurityContentAdminInfoError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_aid = aid;
@@ -317,44 +299,6 @@ pub async fn get_security_content_admin_info(configuration: &configuration::Conf
     } else {
         let content = resp.text().await?;
         let entity: Option<GetSecurityContentAdminInfoError> = serde_json::from_str(&content).ok();
-        Err(Error::ResponseError(ResponseContent { status, content, entity }))
-    }
-}
-
-/// # Access * Permission [model::Permissions::admin_edit_security_content_verified_value]
-pub async fn get_security_content_verification_queue_next_item(configuration: &configuration::Configuration, ) -> Result<models::GetSecurityContentVerificationQueueNextItemResult, Error<GetSecurityContentVerificationQueueNextItemError>> {
-
-    let uri_str = format!("{}/media_api/security_content_verification_queue_admin_next", configuration.base_path);
-    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
-
-    if let Some(ref user_agent) = configuration.user_agent {
-        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
-    }
-    if let Some(ref token) = configuration.bearer_access_token {
-        req_builder = req_builder.bearer_auth(token.to_owned());
-    };
-
-    let req = req_builder.build()?;
-    let resp = configuration.client.execute(req).await?;
-
-    let status = resp.status();
-    let content_type = resp
-        .headers()
-        .get("content-type")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("application/octet-stream");
-    let content_type = super::ContentType::from(content_type);
-
-    if !status.is_client_error() && !status.is_server_error() {
-        let content = resp.text().await?;
-        match content_type {
-            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::GetSecurityContentVerificationQueueNextItemResult`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::GetSecurityContentVerificationQueueNextItemResult`")))),
-        }
-    } else {
-        let content = resp.text().await?;
-        let entity: Option<GetSecurityContentVerificationQueueNextItemError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -475,36 +419,6 @@ pub async fn post_moderate_media_content(configuration: &configuration::Configur
     } else {
         let content = resp.text().await?;
         let entity: Option<PostModerateMediaContentError> = serde_json::from_str(&content).ok();
-        Err(Error::ResponseError(ResponseContent { status, content, entity }))
-    }
-}
-
-/// Removal succeeds only when the provided account id matches queue head item owner. No error is returned is there is a mismatch.  # Access * Permission [model::Permissions::admin_edit_security_content_verified_value]
-pub async fn post_security_content_verification_queue_remove_next_item(configuration: &configuration::Configuration, post_security_content_verification_queue_remove_next_item: models::PostSecurityContentVerificationQueueRemoveNextItem) -> Result<(), Error<PostSecurityContentVerificationQueueRemoveNextItemError>> {
-    // add a prefix to parameters to efficiently prevent name collisions
-    let p_body_post_security_content_verification_queue_remove_next_item = post_security_content_verification_queue_remove_next_item;
-
-    let uri_str = format!("{}/media_api/security_content_verification_queue_admin_next_remove", configuration.base_path);
-    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
-
-    if let Some(ref user_agent) = configuration.user_agent {
-        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
-    }
-    if let Some(ref token) = configuration.bearer_access_token {
-        req_builder = req_builder.bearer_auth(token.to_owned());
-    };
-    req_builder = req_builder.json(&p_body_post_security_content_verification_queue_remove_next_item);
-
-    let req = req_builder.build()?;
-    let resp = configuration.client.execute(req).await?;
-
-    let status = resp.status();
-
-    if !status.is_client_error() && !status.is_server_error() {
-        Ok(())
-    } else {
-        let content = resp.text().await?;
-        let entity: Option<PostSecurityContentVerificationQueueRemoveNextItemError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

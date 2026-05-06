@@ -93,6 +93,8 @@ pub struct Permissions {
     pub admin_server_view_server_config: Option<bool>,
     #[serde(rename = "admin_subscribe_admin_notifications", skip_serializing_if = "Option::is_none")]
     pub admin_subscribe_admin_notifications: Option<bool>,
+    #[serde(rename = "admin_verify_account", skip_serializing_if = "Option::is_none")]
+    pub admin_verify_account: Option<bool>,
     #[serde(rename = "admin_view_account_api_usage", skip_serializing_if = "Option::is_none")]
     pub admin_view_account_api_usage: Option<bool>,
     #[serde(rename = "admin_view_account_ip_address_usage", skip_serializing_if = "Option::is_none")]
@@ -152,6 +154,7 @@ impl Permissions {
             admin_server_view_info: None,
             admin_server_view_server_config: None,
             admin_subscribe_admin_notifications: None,
+            admin_verify_account: None,
             admin_view_account_api_usage: None,
             admin_view_account_ip_address_usage: None,
             admin_view_account_state: None,
