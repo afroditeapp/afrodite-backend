@@ -4,7 +4,7 @@ use axum::{
 };
 use manager_api::RequestSenderCmds;
 use manager_model::{
-    ManagerInstanceNameList, ManagerInstanceNameValue, ManualTaskType, NotifyBackend,
+    ManagerInstanceNameList, ManagerInstanceNameValue, ManualTaskType, NotifyServer,
     ScheduledTaskStatus, ScheduledTaskType, ScheduledTaskTypeValue, SoftwareInfo,
     SoftwareUpdateStatus, SoftwareUpdateTaskType, SystemInfo,
 };
@@ -266,7 +266,7 @@ pub async fn post_trigger_server_data_reset(
     state
         .manager_request_to(manager)
         .await?
-        .trigger_manual_task(ManualTaskType::BackendDataReset)
+        .trigger_manual_task(ManualTaskType::ServerDataReset.into())
         .await?;
     Ok(())
 }
@@ -299,7 +299,7 @@ pub async fn post_trigger_server_restart(
         state
             .manager_request_to(manager)
             .await?
-            .trigger_manual_task(ManualTaskType::BackendRestart)
+            .trigger_manual_task(ManualTaskType::ServerRestart.into())
             .await?;
         Ok(())
     } else {
@@ -335,7 +335,7 @@ pub async fn post_trigger_system_reboot(
         state
             .manager_request_to(manager)
             .await?
-            .trigger_manual_task(ManualTaskType::SystemReboot)
+            .trigger_manual_task(ManualTaskType::SystemReboot.into())
             .await?;
         Ok(())
     } else {
@@ -371,7 +371,7 @@ pub async fn post_trigger_system_shutdown(
         state
             .manager_request_to(manager)
             .await?
-            .trigger_manual_task(ManualTaskType::SystemShutdown)
+            .trigger_manual_task(ManualTaskType::SystemShutdown.into())
             .await?;
         Ok(())
     } else {
@@ -412,7 +412,7 @@ pub async fn get_scheduled_tasks_status(
             .await?
             .get_scheduled_tasks_status()
             .await?;
-        Ok(info.into())
+        Ok(ScheduledTaskStatus::from(info).into())
     } else {
         Err(StatusCode::UNAUTHORIZED)
     }
@@ -428,7 +428,7 @@ const PATH_POST_SCHEDULE_TASK: &str = "/common_api/schedule_task";
 #[utoipa::path(
     post,
     path = PATH_POST_SCHEDULE_TASK,
-    params(ManagerInstanceNameValue, ScheduledTaskTypeValue, NotifyBackend),
+    params(ManagerInstanceNameValue, ScheduledTaskTypeValue, NotifyServer),
     responses(
         (status = 200, description = "Successful."),
         (status = 401, description = "Unauthorized."),
@@ -441,12 +441,12 @@ pub async fn post_schedule_task(
     Extension(api_caller_permissions): Extension<Permissions>,
     Query(manager): Query<ManagerInstanceNameValue>,
     Query(task): Query<ScheduledTaskTypeValue>,
-    Query(notify_backend): Query<NotifyBackend>,
+    Query(notify_server): Query<NotifyServer>,
 ) -> Result<(), StatusCode> {
     COMMON_ADMIN.post_schedule_task.incr();
 
     let authorized = match task.scheduled_task_type {
-        ScheduledTaskType::BackendRestart => api_caller_permissions.admin_server_scheduled_restart,
+        ScheduledTaskType::ServerRestart => api_caller_permissions.admin_server_scheduled_restart,
         ScheduledTaskType::SystemReboot => api_caller_permissions.admin_server_scheduled_reboot,
     };
 
@@ -454,7 +454,7 @@ pub async fn post_schedule_task(
         state
             .manager_request_to(manager)
             .await?
-            .schedule_task(task.scheduled_task_type, notify_backend)
+            .schedule_task(task.scheduled_task_type.into(), notify_server.into())
             .await?;
         Ok(())
     } else {
@@ -489,7 +489,7 @@ pub async fn post_unschedule_task(
     COMMON_ADMIN.post_unschedule_task.incr();
 
     let authorized = match task.scheduled_task_type {
-        ScheduledTaskType::BackendRestart => api_caller_permissions.admin_server_scheduled_restart,
+        ScheduledTaskType::ServerRestart => api_caller_permissions.admin_server_scheduled_restart,
         ScheduledTaskType::SystemReboot => api_caller_permissions.admin_server_scheduled_reboot,
     };
 
@@ -497,7 +497,7 @@ pub async fn post_unschedule_task(
         state
             .manager_request_to(manager)
             .await?
-            .unschedule_task(task.scheduled_task_type)
+            .unschedule_task(task.scheduled_task_type.into())
             .await?;
         Ok(())
     } else {

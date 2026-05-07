@@ -3,8 +3,9 @@ use simple_backend_model::UnixTime;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    ManualTaskType, NotifyBackend, ScheduledTaskStatus, ScheduledTaskType,
-    SecureStorageEncryptionKey, SoftwareUpdateStatus, SoftwareUpdateTaskType, SystemInfo,
+    ManagerApiManualTaskType, ManagerApiNotifyBackend, ManagerApiScheduledTaskStatus,
+    ManagerApiScheduledTaskType, SecureStorageEncryptionKey, SoftwareUpdateStatus,
+    SoftwareUpdateTaskType, SystemInfo,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, num_enum::TryFromPrimitive)]
@@ -49,13 +50,13 @@ pub enum JsonRpcRequestType {
     /// Response [JsonRpcResponseType::Successful]
     TriggerSoftwareUpdateTask(SoftwareUpdateTaskType),
     /// Response [JsonRpcResponseType::Successful]
-    TriggerManualTask(ManualTaskType),
+    TriggerManualTask(ManagerApiManualTaskType),
     /// Response [JsonRpcResponseType::ScheduledTasksStatus]
     GetScheduledTasksStatus,
     /// Response [JsonRpcResponseType::Successful]
-    ScheduleTask(ScheduledTaskType, NotifyBackend),
+    ScheduleTask(ManagerApiScheduledTaskType, ManagerApiNotifyBackend),
     /// Response [JsonRpcResponseType::Successful]
-    UnscheduleTask(ScheduledTaskType),
+    UnscheduleTask(ManagerApiScheduledTaskType),
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
@@ -100,7 +101,7 @@ impl JsonRpcResponse {
         }
     }
 
-    pub fn scheduled_tasks_status(status: ScheduledTaskStatus) -> Self {
+    pub fn scheduled_tasks_status(status: ManagerApiScheduledTaskStatus) -> Self {
         Self {
             response: JsonRpcResponseType::ScheduledTasksStatus(status),
         }
@@ -128,7 +129,7 @@ pub enum JsonRpcResponseType {
     SecureStorageEncryptionKey(SecureStorageEncryptionKey),
     SystemInfo(SystemInfo),
     SoftwareUpdateStatus(SoftwareUpdateStatus),
-    ScheduledTasksStatus(ScheduledTaskStatus),
+    ScheduledTasksStatus(ManagerApiScheduledTaskStatus),
     Successful,
     RequestRecipientNotFound,
 }

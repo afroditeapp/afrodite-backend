@@ -6,7 +6,8 @@ use error_stack::{Result, ResultExt};
 use futures::lock::Mutex;
 use manager_config::file::ScheduledTasksConfig;
 use manager_model::{
-    MaintenanceTask, MaintenanceTime, ManualTaskType, ScheduledTaskStatus, ScheduledTaskType,
+    MaintenanceTime, ManagerApiMaintenanceTask, ManagerApiManualTaskType,
+    ManagerApiScheduledTaskStatus, ManagerApiScheduledTaskType,
 };
 use simple_backend_model::UnixTime;
 use simple_backend_utils::time::{
@@ -66,18 +67,18 @@ impl ScheduledTaskManagerQuitHandle {
 #[derive(Debug, Clone, Copy)]
 pub enum ScheduledTaskManagerMessage {
     Schedule {
-        task: ScheduledTaskType,
+        task: ManagerApiScheduledTaskType,
         notify_backend: bool,
     },
     Unschedule {
-        task: ScheduledTaskType,
+        task: ManagerApiScheduledTaskType,
     },
 }
 
 #[derive(Debug, Clone)]
 pub struct ScheduledTaskManagerHandle {
     sender: mpsc::Sender<ScheduledTaskManagerMessage>,
-    state: Arc<Mutex<ScheduledTaskStatus>>,
+    state: Arc<Mutex<ManagerApiScheduledTaskStatus>>,
 }
 
 impl ScheduledTaskManagerHandle {
@@ -92,7 +93,7 @@ impl ScheduledTaskManagerHandle {
         Ok(())
     }
 
-    pub async fn status(&self) -> ScheduledTaskStatus {
+    pub async fn status(&self) -> ManagerApiScheduledTaskStatus {
         self.state.lock().await.clone()
     }
 
@@ -117,12 +118,12 @@ impl ScheduledTaskManagerHandle {
 pub struct ScheduledTaskManagerInternalState {
     sender: mpsc::Sender<ScheduledTaskManagerMessage>,
     receiver: mpsc::Receiver<ScheduledTaskManagerMessage>,
-    state: Arc<Mutex<ScheduledTaskStatus>>,
+    state: Arc<Mutex<ManagerApiScheduledTaskStatus>>,
 }
 
 pub struct ScheduledTaskManager {
     receiver: mpsc::Receiver<ScheduledTaskManagerMessage>,
-    internal_state: Arc<Mutex<ScheduledTaskStatus>>,
+    internal_state: Arc<Mutex<ManagerApiScheduledTaskStatus>>,
     state: S,
 }
 
@@ -132,7 +133,7 @@ impl ScheduledTaskManager {
         ScheduledTaskManagerInternalState,
     ) {
         let (sender, receiver) = mpsc::channel(1);
-        let state = Arc::new(Mutex::new(ScheduledTaskStatus::default()));
+        let state = Arc::new(Mutex::new(ManagerApiScheduledTaskStatus::default()));
         let handle = ScheduledTaskManagerHandle {
             sender: sender.clone(),
             state: state.clone(),
@@ -251,7 +252,7 @@ impl ScheduledTaskManager {
 }
 
 struct ScheduledTaksManagerInternal {
-    internal_state: Arc<Mutex<ScheduledTaskStatus>>,
+    internal_state: Arc<Mutex<ManagerApiScheduledTaskStatus>>,
     state: S,
     config: ScheduledTasksConfig,
 }
@@ -262,12 +263,12 @@ impl ScheduledTaksManagerInternal {
         let result = if state.system_reboot.is_some() {
             self.state
                 .task_manager()
-                .send_message(ManualTaskType::SystemReboot)
+                .send_message(ManagerApiManualTaskType::SystemReboot)
                 .await
         } else if state.backend_restart.is_some() {
             self.state
                 .task_manager()
-                .send_message(ManualTaskType::BackendRestart)
+                .send_message(ManagerApiManualTaskType::BackendRestart)
                 .await
         } else {
             return;
@@ -290,16 +291,18 @@ impl ScheduledTaksManagerInternal {
                 task,
                 notify_backend,
             } => match task {
-                ScheduledTaskType::BackendRestart => {
+                ManagerApiScheduledTaskType::BackendRestart => {
                     self.schedule_backend_restart(notify_backend).await
                 }
-                ScheduledTaskType::SystemReboot => {
+                ManagerApiScheduledTaskType::SystemReboot => {
                     self.schedule_system_reboot(notify_backend).await
                 }
             },
             ScheduledTaskManagerMessage::Unschedule { task } => match task {
-                ScheduledTaskType::BackendRestart => self.unschedule_backend_restart().await,
-                ScheduledTaskType::SystemReboot => self.unschedule_system_reboot().await,
+                ManagerApiScheduledTaskType::BackendRestart => {
+                    self.unschedule_backend_restart().await
+                }
+                ManagerApiScheduledTaskType::SystemReboot => self.unschedule_system_reboot().await,
             },
         };
 
@@ -351,8 +354,8 @@ impl ScheduledTaksManagerInternal {
     fn new_maintenance_task(
         &self,
         notify_backend: bool,
-    ) -> Result<MaintenanceTask, ScheduledTaskError> {
-        Ok(MaintenanceTask {
+    ) -> Result<ManagerApiMaintenanceTask, ScheduledTaskError> {
+        Ok(ManagerApiMaintenanceTask {
             time: self.task_start_time()?,
             notify_backend,
         })

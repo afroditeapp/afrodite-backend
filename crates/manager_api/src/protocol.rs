@@ -2,8 +2,9 @@ use error_stack::{Result, ResultExt, report};
 use manager_model::{
     BackupMessage, BackupMessageHeader, BackupMessageType, JsonRpcLinkHeader, JsonRpcLinkMessage,
     JsonRpcLinkMessageType, JsonRpcRequest, JsonRpcRequestType, JsonRpcResponse,
-    JsonRpcResponseType, ManagerInstanceName, ManagerInstanceNameList, ManagerProtocolMode,
-    ManagerProtocolVersion, ManualTaskType, NotifyBackend, ScheduledTaskStatus, ScheduledTaskType,
+    JsonRpcResponseType, ManagerApiManualTaskType, ManagerApiNotifyBackend,
+    ManagerApiScheduledTaskStatus, ManagerApiScheduledTaskType, ManagerInstanceName,
+    ManagerInstanceNameList, ManagerProtocolMode, ManagerProtocolVersion,
     SecureStorageEncryptionKey, ServerEvent, SoftwareUpdateStatus, SoftwareUpdateTaskType,
     SystemInfo,
 };
@@ -339,7 +340,7 @@ pub trait RequestSenderCmds: Sized {
         self.send_request(request).await?.require_successful()
     }
 
-    async fn trigger_manual_task(self, task: ManualTaskType) -> Result<(), ClientError> {
+    async fn trigger_manual_task(self, task: ManagerApiManualTaskType) -> Result<(), ClientError> {
         let request = JsonRpcRequest::new(
             self.request_recipient_name(),
             JsonRpcRequestType::TriggerManualTask(task),
@@ -347,7 +348,9 @@ pub trait RequestSenderCmds: Sized {
         self.send_request(request).await?.require_successful()
     }
 
-    async fn get_scheduled_tasks_status(self) -> Result<ScheduledTaskStatus, ClientError> {
+    async fn get_scheduled_tasks_status(
+        self,
+    ) -> Result<ManagerApiScheduledTaskStatus, ClientError> {
         let request = JsonRpcRequest::new(
             self.request_recipient_name(),
             JsonRpcRequestType::GetScheduledTasksStatus,
@@ -362,17 +365,17 @@ pub trait RequestSenderCmds: Sized {
 
     async fn schedule_task(
         self,
-        task: ScheduledTaskType,
-        notify_backend: NotifyBackend,
+        task: ManagerApiScheduledTaskType,
+        notify_server: ManagerApiNotifyBackend,
     ) -> Result<(), ClientError> {
         let request = JsonRpcRequest::new(
             self.request_recipient_name(),
-            JsonRpcRequestType::ScheduleTask(task, notify_backend),
+            JsonRpcRequestType::ScheduleTask(task, notify_server),
         );
         self.send_request(request).await?.require_successful()
     }
 
-    async fn unschedule_task(self, task: ScheduledTaskType) -> Result<(), ClientError> {
+    async fn unschedule_task(self, task: ManagerApiScheduledTaskType) -> Result<(), ClientError> {
         let request = JsonRpcRequest::new(
             self.request_recipient_name(),
             JsonRpcRequestType::UnscheduleTask(task),

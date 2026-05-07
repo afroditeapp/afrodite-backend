@@ -1,5 +1,5 @@
 use error_stack::{Result, ResultExt};
-use manager_model::{JsonRpcResponse, ManualTaskType};
+use manager_model::{JsonRpcResponse, ManagerApiManualTaskType};
 use tracing::warn;
 
 use super::JsonRpcError;
@@ -8,10 +8,10 @@ use crate::api::{GetConfig, GetTaskManager};
 pub trait RpcTask: GetConfig + GetTaskManager {
     async fn rpc_trigger_manual_task(
         &self,
-        task: ManualTaskType,
+        task: ManagerApiManualTaskType,
     ) -> Result<JsonRpcResponse, JsonRpcError> {
         match task {
-            ManualTaskType::BackendDataReset => {
+            ManagerApiManualTaskType::BackendDataReset => {
                 if self
                     .config()
                     .manual_tasks_config()
@@ -24,7 +24,7 @@ pub trait RpcTask: GetConfig + GetTaskManager {
                     return Ok(JsonRpcResponse::successful());
                 }
             }
-            ManualTaskType::BackendRestart => {
+            ManagerApiManualTaskType::BackendRestart => {
                 if !self.config().manual_tasks_config().allow_backend_restart {
                     warn!(
                         "Skipping backend restart request because it is disabled from config file"
@@ -32,13 +32,13 @@ pub trait RpcTask: GetConfig + GetTaskManager {
                     return Ok(JsonRpcResponse::successful());
                 }
             }
-            ManualTaskType::SystemReboot => {
+            ManagerApiManualTaskType::SystemReboot => {
                 if !self.config().manual_tasks_config().allow_system_reboot {
                     warn!("Skipping system reboot request because it is disabled from config file");
                     return Ok(JsonRpcResponse::successful());
                 }
             }
-            ManualTaskType::SystemShutdown => {
+            ManagerApiManualTaskType::SystemShutdown => {
                 if !self.config().manual_tasks_config().allow_system_shutdown {
                     warn!(
                         "Skipping system shutdown request because it is disabled from config file"

@@ -3,7 +3,7 @@
 use std::{process::ExitStatus, sync::Arc};
 
 use error_stack::{Result, ResultExt};
-use manager_model::ManualTaskType;
+use manager_model::ManagerApiManualTaskType;
 use tokio::{process::Command, sync::mpsc, task::JoinHandle};
 use tracing::{info, warn};
 
@@ -56,7 +56,7 @@ pub enum TaskError {
 pub struct TaskManagerQuitHandle {
     task: JoinHandle<()>,
     // Make sure Receiver works until the manager quits.
-    _sender: mpsc::Sender<ManualTaskType>,
+    _sender: mpsc::Sender<ManagerApiManualTaskType>,
 }
 
 impl TaskManagerQuitHandle {
@@ -72,11 +72,11 @@ impl TaskManagerQuitHandle {
 
 #[derive(Debug, Clone)]
 pub struct TaskManagerHandle {
-    sender: mpsc::Sender<ManualTaskType>,
+    sender: mpsc::Sender<ManagerApiManualTaskType>,
 }
 
 impl TaskManagerHandle {
-    pub async fn send_message(&self, message: ManualTaskType) -> Result<(), TaskError> {
+    pub async fn send_message(&self, message: ManagerApiManualTaskType) -> Result<(), TaskError> {
         self.sender
             .send(message)
             .await
@@ -87,12 +87,12 @@ impl TaskManagerHandle {
 }
 
 pub struct TaskManagerInternalState {
-    sender: mpsc::Sender<ManualTaskType>,
-    receiver: mpsc::Receiver<ManualTaskType>,
+    sender: mpsc::Sender<ManagerApiManualTaskType>,
+    receiver: mpsc::Receiver<ManagerApiManualTaskType>,
 }
 
 pub struct TaskManager {
-    receiver: mpsc::Receiver<ManualTaskType>,
+    receiver: mpsc::Receiver<ManagerApiManualTaskType>,
     state: S,
     mount_state: Arc<MountStateStorage>,
 }
@@ -149,14 +149,14 @@ impl TaskManager {
         }
     }
 
-    pub async fn handle_message(&self, message: ManualTaskType) {
+    pub async fn handle_message(&self, message: ManagerApiManualTaskType) {
         let result = match message {
-            ManualTaskType::SystemReboot => self.run_reboot().await,
-            ManualTaskType::SystemShutdown => self.run_shutdown().await,
-            ManualTaskType::BackendRestart => {
+            ManagerApiManualTaskType::SystemReboot => self.run_reboot().await,
+            ManagerApiManualTaskType::SystemShutdown => self.run_shutdown().await,
+            ManagerApiManualTaskType::BackendRestart => {
                 self.backend_restart_and_optional_data_reset(false).await
             }
-            ManualTaskType::BackendDataReset => {
+            ManagerApiManualTaskType::BackendDataReset => {
                 self.backend_restart_and_optional_data_reset(true).await
             }
         };

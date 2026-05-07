@@ -45,6 +45,7 @@ pub mod app {
         model::common_admin::ReportIteratorMode,
         // Manager
         manager_model::ScheduledTaskTypeValue,
+        manager_model::ScheduledTaskType,
     )),
     modifiers(&SecurityApiAccessTokenDefault),
 )]

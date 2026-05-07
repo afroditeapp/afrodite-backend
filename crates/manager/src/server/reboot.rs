@@ -4,7 +4,7 @@ use std::{path::Path, time::Duration};
 
 use error_stack::{Result, ResultExt};
 use manager_config::Config;
-use manager_model::ScheduledTaskType;
+use manager_model::ManagerApiScheduledTaskType;
 use simple_backend_utils::time::sleep_until_current_time_is_at;
 use tokio::{task::JoinHandle, time::sleep};
 use tracing::{error, info, warn};
@@ -103,7 +103,7 @@ impl RebootManager {
                 .state
                 .scheduled_task_manager()
                 .send_message(ScheduledTaskManagerMessage::Schedule {
-                    task: ScheduledTaskType::SystemReboot,
+                    task: ManagerApiScheduledTaskType::SystemReboot,
                     notify_backend,
                 })
                 .await

@@ -1,5 +1,5 @@
 use error_stack::{Result, ResultExt};
-use manager_model::{JsonRpcResponse, ScheduledTaskType};
+use manager_model::{JsonRpcResponse, ManagerApiScheduledTaskType};
 
 use super::JsonRpcError;
 use crate::{
@@ -10,7 +10,7 @@ use crate::{
 pub trait RpcScheduledTask: GetConfig + GetScheduledTaskManager {
     async fn rpc_schedule_task(
         &self,
-        task: ScheduledTaskType,
+        task: ManagerApiScheduledTaskType,
         notify_backend: bool,
     ) -> Result<JsonRpcResponse, JsonRpcError> {
         self.scheduled_task_manager()
@@ -25,7 +25,7 @@ pub trait RpcScheduledTask: GetConfig + GetScheduledTaskManager {
 
     async fn rpc_unschedule_task(
         &self,
-        task: ScheduledTaskType,
+        task: ManagerApiScheduledTaskType,
     ) -> Result<JsonRpcResponse, JsonRpcError> {
         self.scheduled_task_manager()
             .send_message(ScheduledTaskManagerMessage::Unschedule { task })
