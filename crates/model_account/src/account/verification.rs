@@ -1,11 +1,6 @@
+pub use model::AccountVerificationQueueItem as PostAccountVerificationQueueItem;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
-
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct PostAccountVerificationQueueItem {
-    pub verification_method: String,
-    pub verification_data: String,
-}
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, ToSchema)]
 pub struct PostAccountVerificationQueueItemResult {

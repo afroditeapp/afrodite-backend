@@ -1,3 +1,4 @@
+use model::AccountVerificationScope;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -8,6 +9,7 @@ pub struct AccountVerificationQueueAdminItem {
     pub account_id: AccountId,
     pub verification_method: String,
     pub verification_data: String,
+    pub verification_scope: AccountVerificationScope,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, ToSchema)]

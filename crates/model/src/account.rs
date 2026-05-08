@@ -17,6 +17,9 @@ pub use custom_reports::*;
 mod client_features;
 pub use client_features::*;
 
+mod verification;
+pub use verification::*;
+
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct Account {
     state: AccountStateContainer,

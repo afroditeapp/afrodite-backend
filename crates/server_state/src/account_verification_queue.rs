@@ -1,6 +1,6 @@
 use std::collections::{HashMap, VecDeque};
 
-use model::{AccountId, AccountIdInternal};
+use model::{AccountId, AccountIdInternal, AccountVerificationQueueItem};
 use server_data::event::EventManagerWithCacheReference;
 use tokio::sync::RwLock;
 use tracing::warn;
@@ -9,12 +9,6 @@ use tracing::warn;
 pub enum AccountVerificationQueueAddError {
     AlreadyQueued,
     QueueFull,
-}
-
-#[derive(Debug, Clone)]
-pub struct AccountVerificationQueueItem {
-    pub verification_method: String,
-    pub verification_data: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -42,8 +36,7 @@ impl AccountVerificationQueueData {
     pub async fn add(
         &self,
         account_id: AccountIdInternal,
-        verification_method: String,
-        verification_data: String,
+        item: AccountVerificationQueueItem,
         max_queue_length: u16,
     ) -> Result<(), AccountVerificationQueueAddError> {
         let mut write = self.data.write().await;
@@ -56,11 +49,6 @@ impl AccountVerificationQueueData {
         if write.queue.len() >= usize::from(max_queue_length) {
             return Err(AccountVerificationQueueAddError::QueueFull);
         }
-
-        let item = AccountVerificationQueueItem {
-            verification_method,
-            verification_data,
-        };
 
         write.queue.push_back(account_id);
         write.items.insert(account_id, item);

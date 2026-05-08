@@ -26,8 +26,11 @@ pub use report::*;
 mod client_features;
 pub use client_features::*;
 
-mod verification;
-pub use verification::*;
+pub mod verification;
+pub use verification::{
+    AccountVerificationQueueStatus, PostAccountVerificationQueueItem,
+    PostAccountVerificationQueueItemResult,
+};
 
 #[derive(Debug, Default, Deserialize, Serialize, ToSchema, Clone, PartialEq)]
 pub struct LoginResult {

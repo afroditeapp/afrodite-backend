@@ -70,11 +70,6 @@ pub async fn post_account_verification_queue_item(
         .post_account_verification_queue_item()
         .await?;
 
-    let PostAccountVerificationQueueItem {
-        verification_method,
-        verification_data,
-    } = data;
-
     let max_queue_length = state
         .config()
         .limits_account()
@@ -82,12 +77,7 @@ pub async fn post_account_verification_queue_item(
 
     let add_result = state
         .account_verification_queue()
-        .add(
-            api_caller_account_id,
-            verification_method,
-            verification_data,
-            max_queue_length,
-        )
+        .add(api_caller_account_id, data, max_queue_length)
         .await;
 
     let result = match add_result {

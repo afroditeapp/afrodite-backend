@@ -53,6 +53,7 @@ pub async fn get_account_verification_queue_next_item(
             account_id,
             verification_method: value.verification_method,
             verification_data: value.verification_data,
+            verification_scope: value.verification_scope,
         });
 
     Ok(GetAccountVerificationQueueNextItemResult { item }.into())
