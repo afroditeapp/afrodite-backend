@@ -52,8 +52,10 @@ const PATH_GET_CONTENT: &str = "/media_api/content/{aid}/{cid}";
 /// Only accepted content can be accessed.
 ///
 /// ## Admin access
-/// [Permissions::admin_view_all_profiles] and
-/// [Permissions::admin_moderate_media_content] allows access to all content.
+/// - [Permissions::admin_view_all_profiles]
+/// - [Permissions::admin_moderate_media_content]
+/// - [Permissions::admin_edit_media_content_face_verified_value]
+/// - [Permissions::admin_edit_security_content_verified_value]
 ///
 #[utoipa::path(
     get,
@@ -150,6 +152,8 @@ pub async fn get_content(
     if (visibility && requested_content_is_profile_content && content_accepted)
         || permissions.admin_view_all_profiles
         || permissions.admin_moderate_media_content
+        || permissions.admin_edit_media_content_face_verified_value
+        || permissions.admin_edit_security_content_verified_value
         || (params.is_match
             && requested_content_is_profile_content
             && content_accepted
