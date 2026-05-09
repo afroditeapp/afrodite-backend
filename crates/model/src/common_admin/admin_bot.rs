@@ -77,6 +77,9 @@ impl Default for LlmFaceVerificationConfig {
 pub struct AdminAccountVerificationConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
+    pub profile_age_range_enabled: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
     pub security_content_enabled: bool,
     pub security_content: AdminSecurityContentVerificationConfig,
 }

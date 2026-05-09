@@ -1,19 +1,51 @@
+use std::sync::Arc;
+
 use api_client::{
-    apis::{account_admin_api, media_admin_api},
-    models::{
-        AccountVerificationQueueAdminItem, PostAccountVerificationQueueRemoveNextItem,
-        PostSecurityContentVerifiedValue,
-    },
+    apis::{account_admin_api, profile_admin_api},
+    models::{AccountVerificationQueueAdminItem, PostAccountVerificationQueueRemoveNextItem},
 };
-use config::bot_config_file::internal::AccountVerificationConfig;
+use async_openai::{Client, config::OpenAIConfig};
+use config::bot_config_file::internal::{
+    AccountVerificationConfig, LlmSecurityContentVerificationConfig,
+};
 use error_stack::{Result, ResultExt};
 use test_mode_utils::client::{ApiClient, TestError};
 
 use super::EmptyPage;
 
+mod profile_age_range;
 mod security_content;
 
-pub use security_content::AccountVerificationState;
+#[derive(Debug, Default)]
+pub struct AccountVerificationState {
+    llm: Option<LlmConfigAndClient>,
+}
+
+impl AccountVerificationState {
+    pub fn new(config: &AccountVerificationConfig, reqwest_client: reqwest::Client) -> Self {
+        let llm = config
+            .security_content
+            .as_ref()
+            .and_then(|v| v.llm.clone())
+            .map(|config| LlmConfigAndClient {
+                client: Client::with_config(
+                    OpenAIConfig::new()
+                        .with_api_base(config.openai_api_url.to_string())
+                        .with_api_key(""),
+                )
+                .with_http_client(reqwest_client.clone()),
+                config: config.into(),
+            });
+
+        Self { llm }
+    }
+}
+
+#[derive(Debug, Clone)]
+struct LlmConfigAndClient {
+    config: Arc<LlmSecurityContentVerificationConfig>,
+    client: Client<OpenAIConfig>,
+}
 
 #[derive(Debug)]
 pub struct AdminBotAccountVerificationLogic;
@@ -21,66 +53,50 @@ pub struct AdminBotAccountVerificationLogic;
 enum VerificationMethodAction {
     Accept,
     Reject,
-    _CheckImage(Vec<u8>),
+    _PersonIdentificationData { jpeg_image: Vec<u8>, age: u8 },
 }
 
 impl AdminBotAccountVerificationLogic {
     async fn verify_one_page(
         api: &ApiClient,
         config: &AccountVerificationConfig,
-        state: &mut AccountVerificationState,
+        state: &AccountVerificationState,
     ) -> Result<Option<EmptyPage>, TestError> {
         let item = match Self::get_next_queue_item(api).await? {
             Some(item) => item,
             None => return Ok(Some(EmptyPage)),
         };
 
-        let security_content =
-            media_admin_api::get_security_content_admin_info(&api.api(), &item.account_id.aid)
-                .await
-                .change_context(TestError::ApiRequest)?;
-
-        let Some(security_content) = security_content.content.flatten().map(|v| v.cid) else {
-            Self::remove_next_queue_item(api, *item.account_id).await?;
-            return Ok(None);
-        };
-
-        let value = match Self::parse_verification_method_action(
+        let account_id = (*item.account_id).clone();
+        let method_action = Self::parse_verification_method_action(
             config,
             &item.verification_method,
             &item.verification_data,
-        )? {
-            VerificationMethodAction::Accept => Some(true),
-            VerificationMethodAction::Reject => Some(false),
-            VerificationMethodAction::_CheckImage(verification_image) => {
-                if let Some(config) = &config.security_content {
-                    security_content::handle_check_image_method(
-                        api,
-                        config,
-                        state,
-                        &item.account_id,
-                        &security_content,
-                        verification_image,
-                    )
-                    .await?
-                } else {
-                    None
-                }
-            }
-        };
+        );
 
-        let account_id = (*item.account_id).clone();
+        let age_and_name = profile_admin_api::get_profile_age_and_name(&api.api(), &account_id.aid)
+            .await
+            .change_context(TestError::ApiRequest)?;
 
-        media_admin_api::post_security_content_verified_value(
-            &api.api(),
-            PostSecurityContentVerifiedValue {
-                account_id: Box::new(account_id.clone()),
-                security_content,
-                value: Some(value),
-            },
+        profile_age_range::handle_profile_age_range_verification(
+            api,
+            config,
+            &account_id,
+            &item.verification_scope,
+            &method_action,
+            age_and_name.age,
         )
-        .await
-        .change_context(TestError::ApiRequest)?;
+        .await?;
+
+        security_content::handle_security_content_verification(
+            api,
+            config,
+            state,
+            &account_id,
+            &item.verification_scope,
+            method_action,
+        )
+        .await?;
 
         Self::remove_next_queue_item(api, account_id).await?;
 
@@ -91,18 +107,21 @@ impl AdminBotAccountVerificationLogic {
         config: &AccountVerificationConfig,
         verification_method: &str,
         _verification_data: &str,
-    ) -> Result<VerificationMethodAction, TestError> {
+    ) -> VerificationMethodAction {
         match verification_method.trim().to_lowercase().as_str() {
-            "debug_accept" if config.allowed_methods.debug_accept => {
-                Ok(VerificationMethodAction::Accept)
+            "debug_accept" => {
+                if config.allowed_methods.debug_accept {
+                    VerificationMethodAction::Accept
+                } else {
+                    VerificationMethodAction::Reject
+                }
             }
-            "debug_reject" if config.allowed_methods.debug_reject => {
-                Ok(VerificationMethodAction::Reject)
+            "debug_reject" => VerificationMethodAction::Reject,
+            "eudi" => {
+                // TODO: Implement eudi verification method
+                VerificationMethodAction::Reject
             }
-            // TODO: eudi
-            _ => Err(TestError::AdminBotInternalError).attach_printable(
-                "Unsupported or disabled account verification method".to_string(),
-            ),
+            _ => VerificationMethodAction::Reject,
         }
     }
 
@@ -138,7 +157,7 @@ impl AdminBotAccountVerificationLogic {
     pub async fn run_account_verification(
         api: &ApiClient,
         config: &AccountVerificationConfig,
-        state: &mut AccountVerificationState,
+        state: &AccountVerificationState,
     ) -> Result<(), TestError> {
         loop {
             if Self::verify_one_page(api, config, state).await?.is_some() {
