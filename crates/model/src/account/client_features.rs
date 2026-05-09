@@ -323,6 +323,10 @@ pub struct VerificationConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub security_content: bool,
+    /// Show profile age range verification status and filters.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub profile_age_range: bool,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
