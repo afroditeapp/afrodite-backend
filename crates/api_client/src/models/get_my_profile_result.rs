@@ -17,6 +17,10 @@ pub struct GetMyProfileResult {
     pub name_moderation_info: Option<Option<Box<models::ProfileStringModerationInfo>>>,
     #[serde(rename = "profile")]
     pub profile: Box<models::Profile>,
+    #[serde(rename = "profile_age_range_verified", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub profile_age_range_verified: Option<Option<bool>>,
+    #[serde(rename = "profile_age_range_verified_manual", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub profile_age_range_verified_manual: Option<Option<bool>>,
     #[serde(rename = "profile_sync_version")]
     pub profile_sync_version: Box<models::ProfileSyncVersion>,
     #[serde(rename = "profile_version")]
@@ -30,6 +34,8 @@ impl GetMyProfileResult {
         GetMyProfileResult {
             name_moderation_info: None,
             profile: Box::new(profile),
+            profile_age_range_verified: None,
+            profile_age_range_verified_manual: None,
             profile_sync_version: Box::new(profile_sync_version),
             profile_version: Box::new(profile_version),
             text_moderation_info: None,

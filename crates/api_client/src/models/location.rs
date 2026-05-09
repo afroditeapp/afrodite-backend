@@ -15,14 +15,14 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Location {
     #[serde(rename = "latitude")]
-    pub latitude: f64,
+    pub latitude: f32,
     #[serde(rename = "longitude")]
-    pub longitude: f64,
+    pub longitude: f32,
 }
 
 impl Location {
     /// Location in latitude and longitude. The values are not NaN, infinity or negative infinity.
-    pub fn new(latitude: f64, longitude: f64) -> Location {
+    pub fn new(latitude: f32, longitude: f32) -> Location {
         Location {
             latitude,
             longitude,

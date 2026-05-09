@@ -1240,18 +1240,18 @@ pub async fn post_process_report(configuration: &configuration::Configuration, p
 }
 
 /// # Access * Permission [model::Permissions::admin_server_scheduled_restart] * Permission [model::Permissions::admin_server_scheduled_reboot]
-pub async fn post_schedule_task(configuration: &configuration::Configuration, manager_name: &str, scheduled_task_type: models::ScheduledTaskType, notify_backend: bool) -> Result<(), Error<PostScheduleTaskError>> {
+pub async fn post_schedule_task(configuration: &configuration::Configuration, manager_name: &str, scheduled_task_type: models::ScheduledTaskType, notify_server: bool) -> Result<(), Error<PostScheduleTaskError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_query_manager_name = manager_name;
     let p_query_scheduled_task_type = scheduled_task_type;
-    let p_query_notify_backend = notify_backend;
+    let p_query_notify_server = notify_server;
 
     let uri_str = format!("{}/common_api/schedule_task", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
 
     req_builder = req_builder.query(&[("manager_name", &p_query_manager_name.to_string())]);
     req_builder = req_builder.query(&[("scheduled_task_type", &p_query_scheduled_task_type.to_string())]);
-    req_builder = req_builder.query(&[("notify_backend", &p_query_notify_backend.to_string())]);
+    req_builder = req_builder.query(&[("notify_server", &p_query_notify_server.to_string())]);
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }

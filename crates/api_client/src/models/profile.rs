@@ -32,11 +32,13 @@ pub struct Profile {
     pub ptext_accepted: Option<bool>,
     #[serde(rename = "unlimited_likes", skip_serializing_if = "Option::is_none")]
     pub unlimited_likes: Option<bool>,
+    #[serde(rename = "verification_status")]
+    pub verification_status: Box<models::ProfileVerificationStatus>,
 }
 
 impl Profile {
     /// Public profile info
-    pub fn new(age: i64) -> Profile {
+    pub fn new(age: i64, verification_status: models::ProfileVerificationStatus) -> Profile {
         Profile {
             age,
             attributes: None,
@@ -45,6 +47,7 @@ impl Profile {
             ptext: None,
             ptext_accepted: None,
             unlimited_likes: None,
+            verification_status: Box::new(verification_status),
         }
     }
 }

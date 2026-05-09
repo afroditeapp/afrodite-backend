@@ -13,8 +13,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ScheduledTaskStatus {
-    #[serde(rename = "backend_restart", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub backend_restart: Option<Option<Box<models::MaintenanceTask>>>,
+    #[serde(rename = "server_restart", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub server_restart: Option<Option<Box<models::MaintenanceTask>>>,
     #[serde(rename = "system_reboot", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub system_reboot: Option<Option<Box<models::MaintenanceTask>>>,
 }
@@ -22,7 +22,7 @@ pub struct ScheduledTaskStatus {
 impl ScheduledTaskStatus {
     pub fn new() -> ScheduledTaskStatus {
         ScheduledTaskStatus {
-            backend_restart: None,
+            server_restart: None,
             system_reboot: None,
         }
     }

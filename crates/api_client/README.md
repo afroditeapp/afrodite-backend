@@ -236,11 +236,13 @@ Class | Method | HTTP request | Description
 *ProfileAdminApi* | [**get_admin_profile_iterator_page**](docs/ProfileAdminApi.md#get_admin_profile_iterator_page) | **GET** /profile_api/get_admin_profile_iterator_page | Get admin profile iterator page
 *ProfileAdminApi* | [**get_latest_created_account_id_db**](docs/ProfileAdminApi.md#get_latest_created_account_id_db) | **GET** /profile_api/get_latest_created_account_id_db | Get latest created account ID DB
 *ProfileAdminApi* | [**get_profile_age_and_name**](docs/ProfileAdminApi.md#get_profile_age_and_name) | **GET** /profile_api/get_profile_age_and_name/{aid} | Get profile age and name
+*ProfileAdminApi* | [**get_profile_age_range_verification_admin_info**](docs/ProfileAdminApi.md#get_profile_age_range_verification_admin_info) | **GET** /profile_api/profile_age_range_verification_admin_info/{aid} | Get profile age range verification values.
 *ProfileAdminApi* | [**get_profile_attributes_schema**](docs/ProfileAdminApi.md#get_profile_attributes_schema) | **GET** /profile_api/profile_attributes_schema | Get profile attributes schema from DB.
 *ProfileAdminApi* | [**get_profile_statistics_history**](docs/ProfileAdminApi.md#get_profile_statistics_history) | **GET** /profile_api/profile_statistics_history | 
 *ProfileAdminApi* | [**get_profile_string_pending_moderation_list**](docs/ProfileAdminApi.md#get_profile_string_pending_moderation_list) | **GET** /profile_api/profile_string_pending_moderation | Get first page of pending profile string moderations. Oldest item is first and count 25.
 *ProfileAdminApi* | [**get_profile_string_state**](docs/ProfileAdminApi.md#get_profile_string_state) | **GET** /profile_api/get_profile_string_state/{aid} | Get profile string state
 *ProfileAdminApi* | [**post_moderate_profile_string**](docs/ProfileAdminApi.md#post_moderate_profile_string) | **POST** /profile_api/moderate_profile_string | Rejected category and details can be set only when [PostModerateProfileString::value] is rejected.
+*ProfileAdminApi* | [**post_profile_age_range_verified_value**](docs/ProfileAdminApi.md#post_profile_age_range_verified_value) | **POST** /profile_api/profile_age_range_verified_value | Change profile age range verified value.
 *ProfileAdminApi* | [**post_set_profile_name**](docs/ProfileAdminApi.md#post_set_profile_name) | **POST** /profile_api/set_profile_name | Set profile name
 *ProfileAdminApi* | [**put_profile_attributes_schema**](docs/ProfileAdminApi.md#put_profile_attributes_schema) | **PUT** /profile_api/profile_attributes_schema | Add or edit profile attributes to profile attributes schema in DB.
 
@@ -264,7 +266,9 @@ Class | Method | HTTP request | Description
  - [AccountSyncVersion](docs/AccountSyncVersion.md)
  - [AccountVerificationMethodsConfig](docs/AccountVerificationMethodsConfig.md)
  - [AccountVerificationQueueAdminItem](docs/AccountVerificationQueueAdminItem.md)
+ - [AccountVerificationQueueItem](docs/AccountVerificationQueueItem.md)
  - [AccountVerificationQueueStatus](docs/AccountVerificationQueueStatus.md)
+ - [AccountVerificationScope](docs/AccountVerificationScope.md)
  - [AddFavoriteProfileResult](docs/AddFavoriteProfileResult.md)
  - [AddPublicKeyResult](docs/AddPublicKeyResult.md)
  - [AdminAccountVerificationConfig](docs/AdminAccountVerificationConfig.md)
@@ -480,7 +484,6 @@ Class | Method | HTTP request | Description
  - [PerfMetricValueArea](docs/PerfMetricValueArea.md)
  - [PerfMetricValues](docs/PerfMetricValues.md)
  - [Permissions](docs/Permissions.md)
- - [PostAccountVerificationQueueItem](docs/PostAccountVerificationQueueItem.md)
  - [PostAccountVerificationQueueItemResult](docs/PostAccountVerificationQueueItemResult.md)
  - [PostAccountVerificationQueueRemoveNextItem](docs/PostAccountVerificationQueueRemoveNextItem.md)
  - [PostMediaContentFaceDetectedValue](docs/PostMediaContentFaceDetectedValue.md)
@@ -488,6 +491,7 @@ Class | Method | HTTP request | Description
  - [PostMediaContentFaceVerifiedValueItem](docs/PostMediaContentFaceVerifiedValueItem.md)
  - [PostModerateMediaContent](docs/PostModerateMediaContent.md)
  - [PostModerateProfileString](docs/PostModerateProfileString.md)
+ - [PostProfileAgeRangeVerifiedValue](docs/PostProfileAgeRangeVerifiedValue.md)
  - [PostSecurityContentVerifiedValue](docs/PostSecurityContentVerifiedValue.md)
  - [PostStartDataExport](docs/PostStartDataExport.md)
  - [PostVideoCallUrlResult](docs/PostVideoCallUrlResult.md)
@@ -495,6 +499,7 @@ Class | Method | HTTP request | Description
  - [ProcessReport](docs/ProcessReport.md)
  - [Profile](docs/Profile.md)
  - [ProfileAgeCounts](docs/ProfileAgeCounts.md)
+ - [ProfileAgeRangeVerificationAdminInfo](docs/ProfileAgeRangeVerificationAdminInfo.md)
  - [ProfileAppNotificationSettings](docs/ProfileAppNotificationSettings.md)
  - [ProfileAttributeFilterValue](docs/ProfileAttributeFilterValue.md)
  - [ProfileAttributeFilterValueUpdate](docs/ProfileAttributeFilterValueUpdate.md)
@@ -529,6 +534,7 @@ Class | Method | HTTP request | Description
  - [ProfileTextMaxCharactersFilter](docs/ProfileTextMaxCharactersFilter.md)
  - [ProfileTextMinCharactersFilter](docs/ProfileTextMinCharactersFilter.md)
  - [ProfileUpdate](docs/ProfileUpdate.md)
+ - [ProfileVerificationStatus](docs/ProfileVerificationStatus.md)
  - [ProfileVerificationStatusFilter](docs/ProfileVerificationStatusFilter.md)
  - [ProfileVersion](docs/ProfileVersion.md)
  - [ProfileVisibility](docs/ProfileVisibility.md)

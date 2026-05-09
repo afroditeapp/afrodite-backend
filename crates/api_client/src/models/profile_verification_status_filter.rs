@@ -11,7 +11,7 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// ProfileVerificationStatusFilter : Filter value for profile verification status flags.  - PROFILE_CONTENT_FACE_VERIFIED_ANY = 0x1. At least one current profile   picture has effective face verified value true. - PROFILE_CONTENT_FACE_VERIFIED_ALL = 0x2. All current profile pictures   have effective face verified value true. For empty profile picture list   this bit must be unset. - SECURITY_CONTENT_VERIFIED = 0x4. Current security content has effective   security verified value true.
+/// ProfileVerificationStatusFilter : Filter value for profile verification status flags.  - PROFILE_CONTENT_FACE_VERIFIED_ANY = 0x1. At least one current profile   picture has effective face verified value true. - PROFILE_CONTENT_FACE_VERIFIED_ALL = 0x2. All current profile pictures   have effective face verified value true. For empty profile picture list   this bit must be unset. - SECURITY_CONTENT_VERIFIED = 0x4. Current security content has effective   security verified value true. - PROFILE_AGE_RANGE_VERIFIED = 0x8. Profile age range has effective   verification value true.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ProfileVerificationStatusFilter {
     #[serde(rename = "value")]
@@ -19,7 +19,7 @@ pub struct ProfileVerificationStatusFilter {
 }
 
 impl ProfileVerificationStatusFilter {
-    /// Filter value for profile verification status flags.  - PROFILE_CONTENT_FACE_VERIFIED_ANY = 0x1. At least one current profile   picture has effective face verified value true. - PROFILE_CONTENT_FACE_VERIFIED_ALL = 0x2. All current profile pictures   have effective face verified value true. For empty profile picture list   this bit must be unset. - SECURITY_CONTENT_VERIFIED = 0x4. Current security content has effective   security verified value true.
+    /// Filter value for profile verification status flags.  - PROFILE_CONTENT_FACE_VERIFIED_ANY = 0x1. At least one current profile   picture has effective face verified value true. - PROFILE_CONTENT_FACE_VERIFIED_ALL = 0x2. All current profile pictures   have effective face verified value true. For empty profile picture list   this bit must be unset. - SECURITY_CONTENT_VERIFIED = 0x4. Current security content has effective   security verified value true. - PROFILE_AGE_RANGE_VERIFIED = 0x8. Profile age range has effective   verification value true.
     pub fn new(value: i32) -> ProfileVerificationStatusFilter {
         ProfileVerificationStatusFilter {
             value,

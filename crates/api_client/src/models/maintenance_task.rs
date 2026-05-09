@@ -13,16 +13,16 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct MaintenanceTask {
-    #[serde(rename = "notify_backend")]
-    pub notify_backend: bool,
+    #[serde(rename = "notify_server")]
+    pub notify_server: bool,
     #[serde(rename = "time")]
     pub time: Box<models::UnixTime>,
 }
 
 impl MaintenanceTask {
-    pub fn new(notify_backend: bool, time: models::UnixTime) -> MaintenanceTask {
+    pub fn new(notify_server: bool, time: models::UnixTime) -> MaintenanceTask {
         MaintenanceTask {
-            notify_backend,
+            notify_server,
             time: Box::new(time),
         }
     }

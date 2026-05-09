@@ -287,9 +287,9 @@ pub struct BaseBotConfig {
     pub grid_crop_x: Option<f32>,
     pub grid_crop_y: Option<f32>,
     /// Latitude
-    pub lat: Option<f64>,
+    pub lat: Option<f32>,
     /// Longitude
-    pub lon: Option<f64>,
+    pub lon: Option<f32>,
     /// All bots will try to send like to this account ID
     pub send_like_to_account_id: Option<simple_backend_utils::UuidBase64UrlToml>,
     change_visibility: Option<bool>,

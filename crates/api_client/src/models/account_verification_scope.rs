@@ -12,22 +12,16 @@ use crate::models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct VerificationConfig {
-    /// Show face verification status and filters.
-    #[serde(rename = "face", skip_serializing_if = "Option::is_none")]
-    pub face: Option<bool>,
-    /// Show profile age range verification status and filters.
+pub struct AccountVerificationScope {
     #[serde(rename = "profile_age_range", skip_serializing_if = "Option::is_none")]
     pub profile_age_range: Option<bool>,
-    /// Show security content verification status and filters.
     #[serde(rename = "security_content", skip_serializing_if = "Option::is_none")]
     pub security_content: Option<bool>,
 }
 
-impl VerificationConfig {
-    pub fn new() -> VerificationConfig {
-        VerificationConfig {
-            face: None,
+impl AccountVerificationScope {
+    pub fn new() -> AccountVerificationScope {
+        AccountVerificationScope {
             profile_age_range: None,
             security_content: None,
         }

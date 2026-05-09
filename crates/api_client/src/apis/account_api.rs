@@ -821,9 +821,9 @@ pub async fn post_account_setup(configuration: &configuration::Configuration, se
     }
 }
 
-pub async fn post_account_verification_queue_item(configuration: &configuration::Configuration, post_account_verification_queue_item: models::PostAccountVerificationQueueItem) -> Result<models::PostAccountVerificationQueueItemResult, Error<PostAccountVerificationQueueItemError>> {
+pub async fn post_account_verification_queue_item(configuration: &configuration::Configuration, account_verification_queue_item: models::AccountVerificationQueueItem) -> Result<models::PostAccountVerificationQueueItemResult, Error<PostAccountVerificationQueueItemError>> {
     // add a prefix to parameters to efficiently prevent name collisions
-    let p_body_post_account_verification_queue_item = post_account_verification_queue_item;
+    let p_body_account_verification_queue_item = account_verification_queue_item;
 
     let uri_str = format!("{}/account_api/account_verification_queue", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
@@ -834,7 +834,7 @@ pub async fn post_account_verification_queue_item(configuration: &configuration:
     if let Some(ref token) = configuration.bearer_access_token {
         req_builder = req_builder.bearer_auth(token.to_owned());
     };
-    req_builder = req_builder.json(&p_body_post_account_verification_queue_item);
+    req_builder = req_builder.json(&p_body_account_verification_queue_item);
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;

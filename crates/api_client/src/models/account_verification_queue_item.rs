@@ -12,9 +12,7 @@ use crate::models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct AccountVerificationQueueAdminItem {
-    #[serde(rename = "account_id")]
-    pub account_id: Box<models::AccountId>,
+pub struct AccountVerificationQueueItem {
     #[serde(rename = "verification_data")]
     pub verification_data: String,
     #[serde(rename = "verification_method")]
@@ -23,10 +21,9 @@ pub struct AccountVerificationQueueAdminItem {
     pub verification_scope: Box<models::AccountVerificationScope>,
 }
 
-impl AccountVerificationQueueAdminItem {
-    pub fn new(account_id: models::AccountId, verification_data: String, verification_method: String, verification_scope: models::AccountVerificationScope) -> AccountVerificationQueueAdminItem {
-        AccountVerificationQueueAdminItem {
-            account_id: Box::new(account_id),
+impl AccountVerificationQueueItem {
+    pub fn new(verification_data: String, verification_method: String, verification_scope: models::AccountVerificationScope) -> AccountVerificationQueueItem {
+        AccountVerificationQueueItem {
             verification_data,
             verification_method,
             verification_scope: Box::new(verification_scope),
