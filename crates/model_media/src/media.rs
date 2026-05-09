@@ -750,8 +750,6 @@ pub struct GetMediaContentResult {
     pub profile_content_version: ProfileContentVersion,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub security_content: Option<MyContentInfo>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub security_content_verified: Option<bool>,
     pub sync_version: MediaContentSyncVersion,
 }
 
