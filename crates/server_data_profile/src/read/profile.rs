@@ -48,8 +48,9 @@ impl ReadCommandsProfile<'_> {
     ) -> Result<ProfileAndProfileVersion, DataError> {
         self.read_cache_profile_and_common(id, move |data, c| {
             let verification_status =
-                ProfileVerificationStatusFlags::from_profile_age_range_verified(
+                ProfileVerificationStatusFlags::from_profile_verification_values(
                     data.state.effective_profile_age_range_verified(),
+                    data.state.effective_profile_name_verified(),
                 )
                 .into();
             Ok(ProfileAndProfileVersion {

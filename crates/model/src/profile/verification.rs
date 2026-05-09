@@ -5,6 +5,7 @@ impl InternalVerificationStatusFlags {
     const PROFILE_CONTENT_FACE_VERIFIED_ALL: i16 = 0x2;
     const SECURITY_CONTENT_VERIFIED: i16 = 0x4;
     const PROFILE_AGE_RANGE_VERIFIED: i16 = 0x8;
+    const PROFILE_NAME_VERIFIED: i16 = 0x10;
 }
 
 bitflags::bitflags! {
@@ -27,14 +28,22 @@ bitflags::bitflags! {
     pub struct ProfileVerificationStatusFlags: i16 {
         /// Profile age range is verified.
         const PROFILE_AGE_RANGE_VERIFIED = InternalVerificationStatusFlags::PROFILE_AGE_RANGE_VERIFIED;
+        /// Profile name is verified.
+        const PROFILE_NAME_VERIFIED = InternalVerificationStatusFlags::PROFILE_NAME_VERIFIED;
     }
 }
 
 impl ProfileVerificationStatusFlags {
-    pub fn from_profile_age_range_verified(profile_age_range_verified: Option<bool>) -> Self {
+    pub fn from_profile_verification_values(
+        profile_age_range_verified: Option<bool>,
+        profile_name_verified: Option<bool>,
+    ) -> Self {
         let mut bits = 0;
         if profile_age_range_verified == Some(true) {
             bits |= Self::PROFILE_AGE_RANGE_VERIFIED.bits();
+        }
+        if profile_name_verified == Some(true) {
+            bits |= Self::PROFILE_NAME_VERIFIED.bits();
         }
 
         Self::from_bits_retain(bits)
@@ -74,6 +83,8 @@ bitflags::bitflags! {
         const SECURITY_CONTENT_VERIFIED = InternalVerificationStatusFlags::SECURITY_CONTENT_VERIFIED;
         /// Profile age range is verified.
         const PROFILE_AGE_RANGE_VERIFIED = InternalVerificationStatusFlags::PROFILE_AGE_RANGE_VERIFIED;
+        /// Profile name is verified.
+        const PROFILE_NAME_VERIFIED = InternalVerificationStatusFlags::PROFILE_NAME_VERIFIED;
     }
 }
 

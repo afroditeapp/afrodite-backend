@@ -117,6 +117,7 @@ diesel::table! {
         admin_edit_media_content_face_verified_value -> Bool,
         admin_edit_security_content_verified_value -> Bool,
         admin_edit_profile_age_range_verified_value -> Bool,
+        admin_edit_profile_name_verified_value -> Bool,
         admin_verify_account -> Bool,
         admin_export_data -> Bool,
         admin_moderate_media_content -> Bool,
@@ -859,6 +860,8 @@ diesel::table! {
         initial_profile_age_set_unix_time -> Nullable<Int8>,
         profile_age_range_verified -> Nullable<Bool>,
         profile_age_range_verified_manual -> Nullable<Bool>,
+        profile_name_verified -> Nullable<Bool>,
+        profile_name_verified_manual -> Nullable<Bool>,
         profile_edited_unix_time -> Int8,
     }
 }

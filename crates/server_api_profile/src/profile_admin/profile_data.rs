@@ -31,6 +31,7 @@ const PATH_GET_PROFILE_AGE_AND_NAME: &str = "/profile_api/get_profile_age_and_na
 /// - Permission [model::Permissions::admin_moderate_profile_names]
 /// - Permission [model::Permissions::admin_moderate_profile_texts]
 /// - Permission [model::Permissions::admin_edit_profile_age_range_verified_value]
+/// - Permission [model::Permissions::admin_edit_profile_name_verified_value]
 #[utoipa::path(
     get,
     path = PATH_GET_PROFILE_AGE_AND_NAME,
@@ -58,7 +59,8 @@ pub async fn get_profile_age_and_name(
         || permissions.admin_moderate_media_content
         || permissions.admin_moderate_profile_names
         || permissions.admin_moderate_profile_texts
-        || permissions.admin_edit_profile_age_range_verified_value;
+        || permissions.admin_edit_profile_age_range_verified_value
+        || permissions.admin_edit_profile_name_verified_value;
 
     if !access_allowed {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);

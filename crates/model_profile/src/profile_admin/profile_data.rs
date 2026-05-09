@@ -34,3 +34,20 @@ pub struct PostProfileAgeRangeVerifiedValue {
     /// Set to None to clear the currently applicable value.
     pub value: Option<bool>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct ProfileNameVerificationAdminInfo {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub profile_name_verified: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub profile_name_verified_manual: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct PostProfileNameVerifiedValue {
+    pub account_id: AccountId,
+    /// Bot sets automatic profile name verification value.
+    /// Human admin sets manual override value.
+    /// Set to None to clear the currently applicable value.
+    pub value: Option<bool>,
+}

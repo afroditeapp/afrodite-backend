@@ -70,6 +70,8 @@ pub struct ProfileStateCached {
     pub search_group_flags: SearchGroupFlags,
     pub profile_age_range_verified: Option<bool>,
     pub profile_age_range_verified_manual: Option<bool>,
+    pub profile_name_verified: Option<bool>,
+    pub profile_name_verified_manual: Option<bool>,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
     pub unlimited_likes_filter: Option<bool>,
     pub profile_created_time_filter: Option<ProfileCreatedTimeFilter>,
@@ -87,6 +89,11 @@ impl ProfileStateCached {
     pub fn effective_profile_age_range_verified(&self) -> Option<bool> {
         self.profile_age_range_verified_manual
             .or(self.profile_age_range_verified)
+    }
+
+    pub fn effective_profile_name_verified(&self) -> Option<bool> {
+        self.profile_name_verified_manual
+            .or(self.profile_name_verified)
     }
 }
 

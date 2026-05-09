@@ -46,8 +46,9 @@ impl CurrentReadProfileData<'_> {
             .profile()
             .moderation()
             .profile_text_moderation_state(id)?;
-        let verification_status = ProfileVerificationStatusFlags::from_profile_age_range_verified(
+        let verification_status = ProfileVerificationStatusFlags::from_profile_verification_values(
             profile_state.effective_profile_age_range_verified(),
+            profile_state.effective_profile_name_verified(),
         )
         .into();
         Ok(Profile::new(
@@ -89,8 +90,9 @@ impl CurrentReadProfileData<'_> {
                 .map(|v| ProfileTextModerationState(v.state)),
             attributes,
             other_shared_state.unlimited_likes,
-            ProfileVerificationStatusFlags::from_profile_age_range_verified(
+            ProfileVerificationStatusFlags::from_profile_verification_values(
                 profile_state.effective_profile_age_range_verified(),
+                profile_state.effective_profile_name_verified(),
             )
             .into(),
         );
@@ -100,6 +102,8 @@ impl CurrentReadProfileData<'_> {
             profile_sync_version: profile_state.profile_sync_version,
             profile_age_range_verified: profile_state.profile_age_range_verified,
             profile_age_range_verified_manual: profile_state.profile_age_range_verified_manual,
+            profile_name_verified: profile_state.profile_name_verified,
+            profile_name_verified_manual: profile_state.profile_name_verified_manual,
             name_moderation_info: profile_name_moderation_state,
             text_moderation_info: profile_text_moderation_state,
         };

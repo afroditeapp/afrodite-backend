@@ -122,6 +122,8 @@ pub struct ProfileStateInternal {
     pub search_group_flags: SearchGroupFlags,
     pub profile_age_range_verified: Option<bool>,
     pub profile_age_range_verified_manual: Option<bool>,
+    pub profile_name_verified: Option<bool>,
+    pub profile_name_verified_manual: Option<bool>,
     pub last_seen_time_filter: Option<LastSeenTimeFilter>,
     pub unlimited_likes_filter: Option<bool>,
     pub min_distance_km_filter: Option<MinDistanceKm>,
@@ -144,6 +146,8 @@ impl From<ProfileStateInternal> for ProfileStateCached {
             search_group_flags: value.search_group_flags,
             profile_age_range_verified: value.profile_age_range_verified,
             profile_age_range_verified_manual: value.profile_age_range_verified_manual,
+            profile_name_verified: value.profile_name_verified,
+            profile_name_verified_manual: value.profile_name_verified_manual,
             last_seen_time_filter: value.last_seen_time_filter,
             unlimited_likes_filter: value.unlimited_likes_filter,
             min_distance_km_filter: value.min_distance_km_filter,
@@ -164,11 +168,18 @@ impl ProfileStateInternal {
         self.profile_age_range_verified_manual
             .or(self.profile_age_range_verified)
     }
+
+    pub fn effective_profile_name_verified(&self) -> Option<bool> {
+        self.profile_name_verified_manual
+            .or(self.profile_name_verified)
+    }
 }
 
 /// Value for profile verification status flags.
 ///
 /// - PROFILE_AGE_RANGE_VERIFIED = 0x8. Profile age range has effective
+///   verification value true.
+/// - PROFILE_NAME_VERIFIED = 0x10. Profile name has effective
 ///   verification value true.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, ToSchema)]
 pub struct ProfileVerificationStatus {
@@ -453,6 +464,10 @@ pub struct GetMyProfileResult {
     pub profile_age_range_verified: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub profile_age_range_verified_manual: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub profile_name_verified: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub profile_name_verified_manual: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name_moderation_info: Option<ProfileStringModerationInfo>,
     #[serde(skip_serializing_if = "Option::is_none")]

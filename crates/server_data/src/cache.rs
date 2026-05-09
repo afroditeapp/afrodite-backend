@@ -640,8 +640,9 @@ impl CacheEntry {
             self.media.profile_content_edited_time,
             profile.profile_text_character_count(),
             AllVerificationStatusFlags::new(
-                ProfileVerificationStatusFlags::from_profile_age_range_verified(
+                ProfileVerificationStatusFlags::from_profile_verification_values(
                     profile.state.effective_profile_age_range_verified(),
+                    profile.state.effective_profile_name_verified(),
                 ),
                 self.media.media_verification_status_flags,
             ),

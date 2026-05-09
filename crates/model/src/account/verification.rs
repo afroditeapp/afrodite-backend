@@ -16,4 +16,7 @@ pub struct AccountVerificationScope {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub profile_age_range: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub profile_name: bool,
 }
