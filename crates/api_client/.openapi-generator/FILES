@@ -260,6 +260,7 @@ src/models/post_media_content_face_verified_value_item.rs
 src/models/post_moderate_media_content.rs
 src/models/post_moderate_profile_string.rs
 src/models/post_profile_age_range_verified_value.rs
+src/models/post_profile_name_verified_value.rs
 src/models/post_security_content_verified_value.rs
 src/models/post_start_data_export.rs
 src/models/post_video_call_url_result.rs
@@ -288,6 +289,7 @@ src/models/profile_iterator_page.rs
 src/models/profile_iterator_page_value.rs
 src/models/profile_iterator_session_id.rs
 src/models/profile_link.rs
+src/models/profile_name_verification_admin_info.rs
 src/models/profile_page.rs
 src/models/profile_privacy_settings.rs
 src/models/profile_statistics_history_value.rs

@@ -15,6 +15,8 @@ use serde::{Deserialize, Serialize};
 pub struct AccountVerificationScope {
     #[serde(rename = "profile_age_range", skip_serializing_if = "Option::is_none")]
     pub profile_age_range: Option<bool>,
+    #[serde(rename = "profile_name", skip_serializing_if = "Option::is_none")]
+    pub profile_name: Option<bool>,
     #[serde(rename = "security_content", skip_serializing_if = "Option::is_none")]
     pub security_content: Option<bool>,
 }
@@ -23,6 +25,7 @@ impl AccountVerificationScope {
     pub fn new() -> AccountVerificationScope {
         AccountVerificationScope {
             profile_age_range: None,
+            profile_name: None,
             security_content: None,
         }
     }

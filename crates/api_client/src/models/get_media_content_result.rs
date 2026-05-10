@@ -19,8 +19,6 @@ pub struct GetMediaContentResult {
     pub profile_content_version: Box<models::ProfileContentVersion>,
     #[serde(rename = "security_content", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub security_content: Option<Option<Box<models::MyContentInfo>>>,
-    #[serde(rename = "security_content_verified", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub security_content_verified: Option<Option<bool>>,
     #[serde(rename = "sync_version")]
     pub sync_version: Box<models::MediaContentSyncVersion>,
 }
@@ -31,7 +29,6 @@ impl GetMediaContentResult {
             profile_content: Box::new(profile_content),
             profile_content_version: Box::new(profile_content_version),
             security_content: None,
-            security_content_verified: None,
             sync_version: Box::new(sync_version),
         }
     }

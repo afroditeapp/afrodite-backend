@@ -38,6 +38,8 @@ pub struct Permissions {
     pub admin_edit_profile_attributes_schema_visible_content: Option<bool>,
     #[serde(rename = "admin_edit_profile_name", skip_serializing_if = "Option::is_none")]
     pub admin_edit_profile_name: Option<bool>,
+    #[serde(rename = "admin_edit_profile_name_verified_value", skip_serializing_if = "Option::is_none")]
+    pub admin_edit_profile_name_verified_value: Option<bool>,
     #[serde(rename = "admin_edit_security_content_verified_value", skip_serializing_if = "Option::is_none")]
     pub admin_edit_security_content_verified_value: Option<bool>,
     #[serde(rename = "admin_export_data", skip_serializing_if = "Option::is_none")]
@@ -129,6 +131,7 @@ impl Permissions {
             admin_edit_profile_attributes_schema: None,
             admin_edit_profile_attributes_schema_visible_content: None,
             admin_edit_profile_name: None,
+            admin_edit_profile_name_verified_value: None,
             admin_edit_security_content_verified_value: None,
             admin_export_data: None,
             admin_find_account_by_email_address: None,
