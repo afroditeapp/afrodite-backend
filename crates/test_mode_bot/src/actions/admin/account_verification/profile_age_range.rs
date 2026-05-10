@@ -20,8 +20,9 @@ pub async fn handle_profile_age_range_verification(
         if config.profile_age_range && verification_scope.profile_age_range.unwrap_or_default() {
             let accept = match method_action {
                 VerificationMethodAction::Accept => true,
-                VerificationMethodAction::Reject => false,
-                VerificationMethodAction::_PersonIdentificationData { age, .. } => {
+                VerificationMethodAction::Reject
+                | VerificationMethodAction::_PersonIdentificationData { age: None, .. } => false,
+                VerificationMethodAction::_PersonIdentificationData { age: Some(age), .. } => {
                     current_age == Into::<i64>::into(*age)
                 }
             };

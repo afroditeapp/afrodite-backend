@@ -41,8 +41,14 @@ pub async fn handle_security_content_verification(
     {
         let accepted = match method_action {
             VerificationMethodAction::Accept => true,
-            VerificationMethodAction::Reject => false,
-            VerificationMethodAction::_PersonIdentificationData { jpeg_image, .. } => {
+            VerificationMethodAction::Reject
+            | VerificationMethodAction::_PersonIdentificationData {
+                jpeg_image: None, ..
+            } => false,
+            VerificationMethodAction::_PersonIdentificationData {
+                jpeg_image: Some(jpeg_image),
+                ..
+            } => {
                 handle_check_image_method(
                     api,
                     config,

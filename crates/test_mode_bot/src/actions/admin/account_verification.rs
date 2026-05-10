@@ -14,6 +14,7 @@ use test_mode_utils::client::{ApiClient, TestError};
 use super::EmptyPage;
 
 mod profile_age_range;
+mod profile_name;
 mod security_content;
 
 #[derive(Debug, Default)]
@@ -53,7 +54,11 @@ pub struct AdminBotAccountVerificationLogic;
 enum VerificationMethodAction {
     Accept,
     Reject,
-    _PersonIdentificationData { jpeg_image: Vec<u8>, age: u8 },
+    _PersonIdentificationData {
+        jpeg_image: Option<Vec<u8>>,
+        age: Option<u8>,
+        names: Vec<String>,
+    },
 }
 
 impl AdminBotAccountVerificationLogic {
@@ -85,6 +90,16 @@ impl AdminBotAccountVerificationLogic {
             &item.verification_scope,
             &method_action,
             age_and_name.age,
+        )
+        .await?;
+
+        profile_name::handle_profile_name_verification(
+            api,
+            config,
+            &account_id,
+            &item.verification_scope,
+            &method_action,
+            age_and_name.name.unwrap_or_default(),
         )
         .await?;
 
