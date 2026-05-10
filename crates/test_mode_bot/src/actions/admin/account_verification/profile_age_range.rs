@@ -6,7 +6,7 @@ use config::bot_config_file::internal::AccountVerificationConfig;
 use error_stack::{Result, ResultExt};
 use test_mode_utils::client::{ApiClient, TestError};
 
-use super::VerificationMethodAction;
+use super::{LazyProfileAgeAndName, VerificationMethodAction};
 
 pub async fn handle_profile_age_range_verification(
     api: &ApiClient,
@@ -14,7 +14,7 @@ pub async fn handle_profile_age_range_verification(
     account_id: &AccountId,
     verification_scope: &AccountVerificationScope,
     method_action: &VerificationMethodAction,
-    current_age: i64,
+    age_and_name: &mut LazyProfileAgeAndName<'_>,
 ) -> Result<(), TestError> {
     let value =
         if config.profile_age_range && verification_scope.profile_age_range.unwrap_or_default() {
@@ -23,7 +23,7 @@ pub async fn handle_profile_age_range_verification(
                 VerificationMethodAction::Reject
                 | VerificationMethodAction::_PersonIdentificationData { age: None, .. } => false,
                 VerificationMethodAction::_PersonIdentificationData { age: Some(age), .. } => {
-                    current_age == Into::<i64>::into(*age)
+                    age_and_name.age().await? == Into::<i64>::into(*age)
                 }
             };
             Some(Some(accept))

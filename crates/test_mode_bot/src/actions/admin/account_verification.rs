@@ -51,6 +51,41 @@ struct LlmConfigAndClient {
 #[derive(Debug)]
 pub struct AdminBotAccountVerificationLogic;
 
+struct LazyProfileAgeAndName<'a> {
+    api: &'a ApiClient,
+    aid: &'a str,
+    value: Option<api_client::models::GetProfileAgeAndName>,
+}
+
+impl<'a> LazyProfileAgeAndName<'a> {
+    fn new(api: &'a ApiClient, aid: &'a str) -> Self {
+        Self {
+            api,
+            aid,
+            value: None,
+        }
+    }
+
+    async fn get(&mut self) -> Result<&api_client::models::GetProfileAgeAndName, TestError> {
+        if let Some(value) = self.value.take() {
+            Ok(self.value.insert(value))
+        } else {
+            let value = profile_admin_api::get_profile_age_and_name(&self.api.api(), self.aid)
+                .await
+                .change_context(TestError::ApiRequest)?;
+            Ok(self.value.insert(value))
+        }
+    }
+
+    async fn age(&mut self) -> Result<i64, TestError> {
+        Ok(self.get().await?.age)
+    }
+
+    async fn name(&mut self) -> Result<Option<&str>, TestError> {
+        Ok(self.get().await?.name.as_deref())
+    }
+}
+
 enum VerificationMethodAction {
     Accept,
     Reject,
@@ -79,9 +114,7 @@ impl AdminBotAccountVerificationLogic {
             &item.verification_data,
         );
 
-        let age_and_name = profile_admin_api::get_profile_age_and_name(&api.api(), &account_id.aid)
-            .await
-            .change_context(TestError::ApiRequest)?;
+        let mut age_and_name = LazyProfileAgeAndName::new(api, &account_id.aid);
 
         profile_age_range::handle_profile_age_range_verification(
             api,
@@ -89,7 +122,7 @@ impl AdminBotAccountVerificationLogic {
             &account_id,
             &item.verification_scope,
             &method_action,
-            age_and_name.age,
+            &mut age_and_name,
         )
         .await?;
 
@@ -99,7 +132,7 @@ impl AdminBotAccountVerificationLogic {
             &account_id,
             &item.verification_scope,
             &method_action,
-            age_and_name.name.unwrap_or_default(),
+            &mut age_and_name,
         )
         .await?;
 
