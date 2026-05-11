@@ -15,6 +15,8 @@ use serde::{Deserialize, Serialize};
 pub struct AdminAccountVerificationConfig {
     #[serde(rename = "profile_age_range_enabled", skip_serializing_if = "Option::is_none")]
     pub profile_age_range_enabled: Option<bool>,
+    #[serde(rename = "profile_name_enabled", skip_serializing_if = "Option::is_none")]
+    pub profile_name_enabled: Option<bool>,
     #[serde(rename = "security_content")]
     pub security_content: Box<models::AdminSecurityContentVerificationConfig>,
     #[serde(rename = "security_content_enabled", skip_serializing_if = "Option::is_none")]
@@ -25,6 +27,7 @@ impl AdminAccountVerificationConfig {
     pub fn new(security_content: models::AdminSecurityContentVerificationConfig) -> AdminAccountVerificationConfig {
         AdminAccountVerificationConfig {
             profile_age_range_enabled: None,
+            profile_name_enabled: None,
             security_content: Box::new(security_content),
             security_content_enabled: None,
         }
