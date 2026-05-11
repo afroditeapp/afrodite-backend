@@ -16,7 +16,7 @@ use super::super::FileError;
 pub const TMP_DIR_NAME: &str = "tmp";
 pub const CONTENT_DIR_NAME: &str = "content";
 
-const MAX_TMP_FILE_SIZE: usize = 1024 * 1024 * 1024 * 10; // 10 MiB
+const MAX_TMP_FILE_SIZE: usize = 1024 * 1024 * 10; // 10 MiB
 
 /// Path to directory which contains all account data directories.
 #[derive(Debug, Clone)]
