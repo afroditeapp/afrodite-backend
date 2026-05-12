@@ -264,3 +264,52 @@ impl From<ByteCount> for String {
         value.bytes.to_string()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::ByteCount;
+    use crate::consts::{GIB_IN_BYTES, KIB_IN_BYTES, MIB_IN_BYTES};
+
+    #[test]
+    fn byte_count_parses_bytes_without_unit() {
+        let parsed = ByteCount::try_from("123".to_string()).unwrap();
+        assert_eq!(parsed.bytes(), 123);
+    }
+
+    #[test]
+    fn byte_count_parses_kibibytes() {
+        let parsed_upper = ByteCount::try_from("2K".to_string()).unwrap();
+        assert_eq!(parsed_upper.bytes(), 2 * KIB_IN_BYTES as i64);
+
+        let parsed_lower = ByteCount::try_from("2k".to_string()).unwrap();
+        assert_eq!(parsed_lower.bytes(), 2 * KIB_IN_BYTES as i64);
+    }
+
+    #[test]
+    fn byte_count_parses_mebibytes() {
+        let parsed_upper = ByteCount::try_from("3M".to_string()).unwrap();
+        assert_eq!(parsed_upper.bytes(), 3 * MIB_IN_BYTES as i64);
+
+        let parsed_lower = ByteCount::try_from("3m".to_string()).unwrap();
+        assert_eq!(parsed_lower.bytes(), 3 * MIB_IN_BYTES as i64);
+    }
+
+    #[test]
+    fn byte_count_parses_gibibytes() {
+        let parsed_upper = ByteCount::try_from("4G".to_string()).unwrap();
+        assert_eq!(parsed_upper.bytes(), 4 * GIB_IN_BYTES as i64);
+
+        let parsed_lower = ByteCount::try_from("4g".to_string()).unwrap();
+        assert_eq!(parsed_lower.bytes(), 4 * GIB_IN_BYTES as i64);
+    }
+
+    #[test]
+    fn byte_count_rejects_negative_without_unit() {
+        assert!(ByteCount::try_from("-1".to_string()).is_err());
+    }
+
+    #[test]
+    fn byte_count_rejects_negative_with_unit() {
+        assert!(ByteCount::try_from("-1M".to_string()).is_err());
+    }
+}
