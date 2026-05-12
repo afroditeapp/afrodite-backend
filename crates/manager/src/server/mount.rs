@@ -173,7 +173,7 @@ impl MountManager {
             .arg(
                 storage_config
                     .extend_size_to
-                    .map(|v| v.bytes)
+                    .map(|v| v.bytes())
                     .unwrap_or_default()
                     .to_string(),
             )

@@ -8,8 +8,7 @@ use manager_model::{ManagerInstanceName, SecureStorageEncryptionKey};
 use serde::{Deserialize, Serialize};
 use simple_backend_utils::{
     ContextExt,
-    file::FileSizeValue,
-    time::{DurationValue, UtcTimeValue},
+    time::{ByteCount, DurationValue, UtcTimeValue},
 };
 use url::Url;
 
@@ -267,7 +266,7 @@ pub struct SecureStorageConfig {
     /// Optional. Configure timeout for downloading the encryption key.
     pub key_download_timeout_seconds: Option<u32>,
     /// Optional. Extend secure storage size.
-    pub extend_size_to: Option<FileSizeValue>,
+    pub extend_size_to: Option<ByteCount>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

@@ -204,6 +204,7 @@ impl From<DurationValue> for String {
 #[serde(try_from = "String")]
 #[serde(into = "String")]
 pub struct ByteCount {
+    /// Keep this as i64 because Bash doesn't support u64
     bytes: i64,
 }
 
