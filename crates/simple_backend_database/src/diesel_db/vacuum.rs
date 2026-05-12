@@ -4,7 +4,7 @@ use diesel::RunQueryDsl;
 use error_stack::{Result, ResultExt};
 use nix::sys::statvfs::statvfs;
 use simple_backend_config::file::SqliteVacuumConfig;
-use simple_backend_utils::db::DieselDatabaseError;
+use simple_backend_utils::{consts::MIB_IN_BYTES, db::DieselDatabaseError};
 use tracing::{error, info};
 
 use super::MyDbConnection;
@@ -76,8 +76,8 @@ fn is_disk_space_available(
         error!(
             "Insufficient disk space to run VACUUM for '{}' DB: available={}MB, required={}MB",
             db_name,
-            available_space / 1024 / 1024,
-            required_space / 1024 / 1024
+            available_space / MIB_IN_BYTES as u64,
+            required_space / MIB_IN_BYTES as i64
         );
         Ok(false)
     }
@@ -107,8 +107,8 @@ pub fn run_sqlite_vacuum_if_needed(
                 "VACUUM conditions met for '{}' DB: age={}d, free_space={}MB, total_size={}MB",
                 db_name,
                 db_info.age_seconds / (60 * 60 * 24),
-                free_space_bytes / 1024 / 1024,
-                db_info.size_bytes / 1024 / 1024
+                free_space_bytes / MIB_IN_BYTES as i64,
+                db_info.size_bytes / MIB_IN_BYTES as i64
             );
             diesel::sql_query("VACUUM;")
                 .execute(sqlite_conn)

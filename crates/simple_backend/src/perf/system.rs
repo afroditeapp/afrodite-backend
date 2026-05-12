@@ -1,3 +1,4 @@
+use simple_backend_utils::consts::MIB_IN_BYTES;
 use sysinfo::MemoryRefreshKind;
 
 pub struct SystemInfo {
@@ -13,7 +14,7 @@ impl SystemInfo {
         system.refresh_memory_specifics(MemoryRefreshKind::nothing().with_ram());
         SystemInfo {
             cpu_usage: system.global_cpu_usage() as u32,
-            ram_usage_mib: (system.used_memory() / 1024 / 1024) as u32,
+            ram_usage_mib: (system.used_memory() / MIB_IN_BYTES as u64) as u32,
         }
     }
 

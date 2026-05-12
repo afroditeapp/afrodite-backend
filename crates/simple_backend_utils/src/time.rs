@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 use tokio::time::sleep;
 use utoipa::ToSchema;
 
+use crate::consts::{GIB_IN_BYTES, KIB_IN_BYTES, MIB_IN_BYTES};
+
 #[derive(thiserror::Error, Debug)]
 pub enum SleepUntilClockIsAtError {
     #[error("Target time value is invalid")]
@@ -212,7 +214,7 @@ impl ByteCount {
 
     pub fn from_megabytes(mb: u32) -> Self {
         Self {
-            bytes: Into::<i64>::into(mb) * 1024 * 1024,
+            bytes: Into::<i64>::into(mb) * MIB_IN_BYTES as i64,
         }
     }
 }
@@ -246,9 +248,9 @@ impl TryFrom<String> for ByteCount {
 
         let bytes = match unit {
             "B" => number,
-            "K" => number * 1024,
-            "M" => number * 1024 * 1024,
-            "G" => number * 1024 * 1024 * 1024,
+            "K" => number * KIB_IN_BYTES as i64,
+            "M" => number * MIB_IN_BYTES as i64,
+            "G" => number * GIB_IN_BYTES as i64,
             _ => unreachable!(),
         };
 

@@ -2,6 +2,7 @@ use std::num::{NonZeroU8, NonZeroU16};
 
 use config::file::LocationConfig;
 use model_server_data::CellData;
+use simple_backend_utils::consts::KIB_IN_BYTES;
 
 use super::coordinates::{CoordinateManager, ZOOM_LEVEL_AND_TILE_LENGTH};
 
@@ -70,9 +71,10 @@ impl LocationIndexInfoCreator {
 
 fn format_size_in_bytes(size: usize) -> String {
     let mut size = size as f64;
+    let kib_in_bytes = KIB_IN_BYTES as f64;
     let mut unit = 0;
-    while size > 1024.0 && unit < 3 {
-        size /= 1024.0;
+    while size > kib_in_bytes && unit < 3 {
+        size /= kib_in_bytes;
         unit += 1;
     }
     let unit = match unit {

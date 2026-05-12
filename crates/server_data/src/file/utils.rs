@@ -6,7 +6,9 @@ use error_stack::{Result, ResultExt};
 use model::{AccountId, ContentId, ContentProcessingId};
 use server_common::data::DataError;
 use simple_backend_database::data::create_dirs_and_get_files_dir_path;
-use simple_backend_utils::{ContextExt, file::overwrite_and_remove_if_exists};
+use simple_backend_utils::{
+    ContextExt, consts::MIB_IN_BYTES, file::overwrite_and_remove_if_exists,
+};
 use tokio::io::AsyncWriteExt;
 use tokio_stream::{StreamExt, wrappers::ReadDirStream};
 use tokio_util::io::ReaderStream;
@@ -16,7 +18,7 @@ use super::super::FileError;
 pub const TMP_DIR_NAME: &str = "tmp";
 pub const CONTENT_DIR_NAME: &str = "content";
 
-const MAX_TMP_FILE_SIZE: usize = 1024 * 1024 * 10; // 10 MiB
+const MAX_TMP_FILE_SIZE: usize = MIB_IN_BYTES * 10; // 10 MiB
 
 /// Path to directory which contains all account data directories.
 #[derive(Debug, Clone)]

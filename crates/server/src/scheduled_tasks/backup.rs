@@ -18,7 +18,7 @@ use server_state::S;
 use sha2::{Digest, Sha256};
 use simple_backend::{ServerQuitWatcher, app::GetManagerApi};
 use simple_backend_config::Database;
-use simple_backend_utils::file::overwrite_and_remove_if_exists;
+use simple_backend_utils::{consts::MIB_IN_BYTES, file::overwrite_and_remove_if_exists};
 use tokio::{io::AsyncReadExt, sync::broadcast::error::TryRecvError};
 
 use super::ScheduledTaskError;
@@ -202,7 +202,7 @@ async fn send_backup_db(
         .await
         .change_context(ScheduledTaskError::Backup)?;
 
-    let buffer_size: usize = 1024 * 1024;
+    let buffer_size: usize = MIB_IN_BYTES;
     let mut read_buffer: Vec<u8> = vec![0; buffer_size];
     let mut next_packet_number: Wrapping<u32> = Wrapping(0);
 
@@ -238,7 +238,7 @@ async fn calculate_hash(tmp_db_path: &str) -> Result<Sha256Bytes, ScheduledTaskE
         .await
         .change_context(ScheduledTaskError::Backup)?;
 
-    let buffer_size: usize = 1024 * 1024;
+    let buffer_size: usize = MIB_IN_BYTES;
     let mut read_buffer: Vec<u8> = vec![0; buffer_size];
 
     loop {

@@ -5076,6 +5076,7 @@ dependencies = [
  "server_data_chat",
  "sha2",
  "simple_backend",
+ "simple_backend_utils",
  "tokio",
  "tracing",
  "utils",

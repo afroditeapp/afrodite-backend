@@ -6,7 +6,7 @@ use model::{
     AccountIdInternal, ClientType, PushNotificationSendingInfo, PushNotificationsToMarkAsSent,
 };
 use simple_backend::ServerQuitWatcher;
-use simple_backend_utils::ContextExt;
+use simple_backend_utils::{ContextExt, consts::MIB_IN_BYTES};
 use tokio::{
     sync::mpsc::{Receiver, Sender, error::TrySendError},
     task::JoinHandle,
@@ -24,8 +24,8 @@ mod apns;
 mod fcm;
 mod web;
 
-const PRIMARY_BUFFER_SIZE: usize = 1024 * 1024;
-const SECONDARY_BUFFER_SIZE: usize = 1024 * 512;
+const PRIMARY_BUFFER_SIZE: usize = MIB_IN_BYTES;
+const SECONDARY_BUFFER_SIZE: usize = MIB_IN_BYTES / 2;
 
 #[derive(thiserror::Error, Debug)]
 pub enum PushNotificationError {

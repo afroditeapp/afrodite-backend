@@ -38,3 +38,4 @@ database_chat = { path = "../database_chat" }
 
 utils = { path = "../utils" }
 simple_backend = { path = "../simple_backend" }
+simple_backend_utils = { path = "../simple_backend_utils" }

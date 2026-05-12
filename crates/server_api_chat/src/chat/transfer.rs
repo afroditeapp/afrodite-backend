@@ -16,6 +16,7 @@ use model_chat::{BackupTransferClientRole, BackupTransferInitialMessage};
 use server_api::{S, app::GetAccessTokens};
 use sha2::{Digest, Sha256};
 use simple_backend::create_counters;
+use simple_backend_utils::consts::KIB_IN_BYTES;
 
 use super::super::utils::StatusCode;
 
@@ -28,7 +29,7 @@ use target::handle_target_client;
 pub const PATH_BACKUP_TRANSFER: &str = "/chat_api/backup_transfer";
 
 /// 64 KiB
-pub const MAX_BINARY_MESSAGE_SIZE: usize = 1024 * 64;
+pub const MAX_BINARY_MESSAGE_SIZE: usize = KIB_IN_BYTES * 64;
 
 type Sha256Bytes = [u8; 32];
 

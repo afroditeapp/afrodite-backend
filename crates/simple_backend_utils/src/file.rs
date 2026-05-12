@@ -4,6 +4,8 @@ use error_stack::{Result, ResultExt};
 use serde::{Deserialize, Serialize};
 use tokio::io::AsyncWriteExt;
 
+use crate::consts::{KIB_IN_BYTES, MIB_IN_BYTES};
+
 #[derive(thiserror::Error, Debug)]
 pub enum OverwriteFileError {
     // File IO errors
@@ -120,8 +122,12 @@ impl TryFrom<String> for FileSizeValue {
             };
             match unit {
                 "K" => number,
-                "M" => number.checked_mul(1024).ok_or_else(overflow_error)?,
-                "G" => number.checked_mul(1024 * 1024).ok_or_else(overflow_error)?,
+                "M" => number
+                    .checked_mul(KIB_IN_BYTES as i64)
+                    .ok_or_else(overflow_error)?,
+                "G" => number
+                    .checked_mul(MIB_IN_BYTES as i64)
+                    .ok_or_else(overflow_error)?,
                 unit => {
                     return Err(format!(
                         "Unknown size unit: {unit}, supported units: K, M, G",

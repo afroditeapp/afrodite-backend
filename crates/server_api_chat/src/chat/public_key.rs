@@ -17,6 +17,7 @@ use server_api::{
 };
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use simple_backend::create_counters;
+use simple_backend_utils::consts::KIB_IN_BYTES;
 
 use super::super::utils::{Json, StatusCode};
 use crate::app::ReadData;
@@ -126,7 +127,7 @@ async fn post_add_public_key(
 ) -> Result<Json<AddPublicKeyResult>, StatusCode> {
     CHAT.post_add_public_key.incr();
 
-    let key_data = to_bytes(key_data, 1024 * 8)
+    let key_data = to_bytes(key_data, KIB_IN_BYTES * 8)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
         .to_vec();

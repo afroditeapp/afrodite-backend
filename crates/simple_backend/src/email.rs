@@ -9,7 +9,7 @@ use lettre::{
 };
 use simple_backend_config::{SimpleBackendConfig, file::EmailSendingConfig};
 use simple_backend_model::UnixTime;
-use simple_backend_utils::ContextExt;
+use simple_backend_utils::{ContextExt, consts::MIB_IN_BYTES};
 use tokio::{
     sync::{
         mpsc::{Receiver, Sender, error::TrySendError},
@@ -23,8 +23,8 @@ use crate::{ServerQuitWatcher, email::data::Counter};
 
 mod data;
 
-const EMAIL_SENDING_CHANNEL_BUFFER_SIZE: usize = 1024 * 1024;
-const EMAIL_SENDING_HIGH_PRIORITY_CHANNEL_BUFFER_SIZE: usize = 1024 * 1024;
+const EMAIL_SENDING_CHANNEL_BUFFER_SIZE: usize = MIB_IN_BYTES;
+const EMAIL_SENDING_HIGH_PRIORITY_CHANNEL_BUFFER_SIZE: usize = MIB_IN_BYTES;
 
 #[derive(thiserror::Error, Debug)]
 pub enum EmailError {
