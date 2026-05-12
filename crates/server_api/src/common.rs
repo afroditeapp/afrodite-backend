@@ -1,7 +1,7 @@
 //! Common routes
 //!
 
-use std::net::SocketAddr;
+use std::{net::SocketAddr, time::Duration};
 
 use axum::{
     body::Bytes,
@@ -14,8 +14,8 @@ use axum::{
 use http::HeaderMap;
 use model::{
     AccessToken, AccessTokenType, AccountIdInternal, ClientVersion, EventToClientInternal,
-    ManualServerMaintenanceInfoForAnotherServer, NotificationEvent, RefreshToken,
-    WebSocketClientInfo, WebSocketClientTypeNumber,
+    ManualServerMaintenanceInfoForAnotherServer, NotificationEvent, PushNotificationFlags,
+    RefreshToken, WebSocketClientInfo, WebSocketClientTypeNumber,
 };
 use model_server_data::AuthPair;
 use server_common::websocket::WebSocketError;
@@ -545,6 +545,11 @@ async fn handle_socket_result(
 
     let mut timeout_timer = ConnectionPingTracker::new();
 
+    const CHAT_NOTIFICATION_HANDLED_TIMEOUT: Duration = Duration::from_secs(20);
+    let chat_notification_handled_timer = tokio::time::sleep(CHAT_NOTIFICATION_HANDLED_TIMEOUT);
+    tokio::pin!(chat_notification_handled_timer);
+    let mut chat_notification_handled_timer_active = false;
+
     loop {
         tokio::select! {
             result = socket.recv() => {
@@ -616,7 +621,20 @@ async fn handle_socket_result(
                             }
                         };
 
+                        let chat_notifications_changed =
+                            matches!(event, EventToClientInternal::PendingChatNotificationsChanged);
+
                         send_event(&mut socket, event).await?;
+
+                        if chat_notifications_changed {
+                            // Detect broken connection faster when chat
+                            // notification is pending.
+                            chat_notification_handled_timer_active = true;
+                            chat_notification_handled_timer
+                                .as_mut()
+                                .reset(tokio::time::Instant::now() + CHAT_NOTIFICATION_HANDLED_TIMEOUT);
+                        }
+
                         // If event is pending push notification related, the cached
                         // pending push notification flags are removed in the related
                         // HTTP route handlers using event manager assuming
@@ -637,6 +655,40 @@ async fn handle_socket_result(
                     info!("Connection timeout for '{}', address: {}", id.id.as_ref(), address);
                 }
                 break;
+            }
+            _ = &mut chat_notification_handled_timer, if chat_notification_handled_timer_active => {
+                chat_notification_handled_timer_active = false;
+
+                let pending_flags = state
+                    .read()
+                    .common()
+                    .push_notification()
+                    .cached_pending_push_notification_flags(id)
+                    .await;
+
+                match pending_flags {
+                    Ok(flags) => {
+                        if flags.contains(PushNotificationFlags::PENDING_CHAT_NOTIFICATION) {
+                            if state.config().general().debug_websocket_logging {
+                                info!(
+                                    "Pending chat notification flag still set after timeout for '{}', address: {}. Closing websocket.",
+                                    id.id.as_ref(),
+                                    address
+                                );
+                            }
+                            break;
+                        }
+                    }
+                    Err(e) => {
+                        if state.config().general().debug_websocket_logging {
+                            error!(
+                                "Failed to check pending push notification flags for '{}', address: {}, error: {e:?}",
+                                id.id.as_ref(),
+                                address,
+                            );
+                        }
+                    }
+                }
             }
         }
     }
