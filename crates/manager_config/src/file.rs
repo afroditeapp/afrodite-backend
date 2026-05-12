@@ -8,7 +8,8 @@ use manager_model::{ManagerInstanceName, SecureStorageEncryptionKey};
 use serde::{Deserialize, Serialize};
 use simple_backend_utils::{
     ContextExt,
-    time::{ByteCount, DurationValue, UtcTimeValue},
+    byte::ByteCount,
+    time::{DurationValue, UtcTimeValue},
 };
 use url::Url;
 

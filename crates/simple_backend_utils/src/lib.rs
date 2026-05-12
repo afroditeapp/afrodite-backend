@@ -7,6 +7,7 @@ use std::fmt::Display;
 
 use error_stack::{Context, Report, Result, ResultExt};
 
+pub mod byte;
 pub mod consts;
 pub mod db;
 pub mod dir;

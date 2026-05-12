@@ -11,7 +11,10 @@ use model_server_state::DemoAccountId;
 use serde::{Deserialize, Serialize};
 use simple_backend_config::file::IpAddressAccessConfig;
 use simple_backend_model::VersionNumber;
-use simple_backend_utils::time::{ByteCount, DurationValue, TimeValue, UtcTimeValue};
+use simple_backend_utils::{
+    byte::ByteCount,
+    time::{DurationValue, TimeValue, UtcTimeValue},
+};
 
 // Kilpisjärvi ja Nuorgam
 // latitude_top_left = 70.1
