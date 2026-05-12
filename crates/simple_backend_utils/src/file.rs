@@ -4,7 +4,7 @@ use error_stack::{Result, ResultExt};
 use serde::{Deserialize, Serialize};
 use tokio::io::AsyncWriteExt;
 
-use crate::consts::{KIB_IN_BYTES, MIB_IN_BYTES};
+use crate::consts::{GIB_IN_BYTES, KIB_IN_BYTES, MIB_IN_BYTES};
 
 #[derive(thiserror::Error, Debug)]
 pub enum OverwriteFileError {
@@ -121,12 +121,14 @@ impl TryFrom<String> for FileSizeValue {
                 format!("File size too large, current value: {input}, max value: i64::MAX bytes")
             };
             match unit {
-                "K" => number,
-                "M" => number
+                "K" => number
                     .checked_mul(KIB_IN_BYTES as i64)
                     .ok_or_else(overflow_error)?,
-                "G" => number
+                "M" => number
                     .checked_mul(MIB_IN_BYTES as i64)
+                    .ok_or_else(overflow_error)?,
+                "G" => number
+                    .checked_mul(GIB_IN_BYTES as i64)
                     .ok_or_else(overflow_error)?,
                 unit => {
                     return Err(format!(
