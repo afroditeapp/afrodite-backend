@@ -31,6 +31,9 @@ pub use parser::parse_server_binary_message;
 ///   - request id byte (u8)
 /// - `WebSocketConnectionAttemptsRemaining` (7): payload format:
 ///   - remaining daily websocket connection attempts as u8
+/// - `AppUpdateAvailable` (8): payload is currently empty.
+///   - Client must accept both empty and non-empty payload to support
+///     forward-compatible protocol changes.
 /// - `AccountStateChanged` (30): payload is empty.
 /// - `AccountVerificationQueuePositionChanged` (31): payload format:
 ///   - optional queue position as 1 byte (empty payload means `None`)
@@ -125,6 +128,7 @@ pub enum ServerMessageType {
     PushNotificationInfoChanged = 5,
     RequestAdminBotConfigWarnings = 6,
     WebSocketConnectionAttemptsRemaining = 7,
+    AppUpdateAvailable = 8,
     // - account: 30..=59
     /// Account state, profile visibility or permissions changed
     AccountStateChanged = 30,
@@ -194,6 +198,7 @@ pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
         EventToClientInternal::WebSocketConnectionAttemptsRemaining { .. } => {
             ServerMessageType::WebSocketConnectionAttemptsRemaining
         }
+        EventToClientInternal::AppUpdateAvailable => ServerMessageType::AppUpdateAvailable,
         EventToClientInternal::PushNotificationInfoChanged => {
             ServerMessageType::PushNotificationInfoChanged
         }
@@ -279,6 +284,7 @@ pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
         | EventToClientInternal::NewMessageReceived
         | EventToClientInternal::PendingChatNotificationsChanged
         | EventToClientInternal::PendingAppNotificationsChanged
+        | EventToClientInternal::AppUpdateAvailable
         | EventToClientInternal::ReceivedLikesChanged
         | EventToClientInternal::ClientConfigChanged
         | EventToClientInternal::ProfileChanged

@@ -170,6 +170,7 @@ fn convert_server_event_to_client_for_test_mode(
         | EventToClientInternal::PendingChatNotificationsChanged
         | EventToClientInternal::PendingAppNotificationsChanged
         | EventToClientInternal::WebSocketConnectionAttemptsRemaining { .. }
+        | EventToClientInternal::AppUpdateAvailable
         | EventToClientInternal::ReceivedLikesChanged
         | EventToClientInternal::ClientConfigChanged
         | EventToClientInternal::ProfileChanged

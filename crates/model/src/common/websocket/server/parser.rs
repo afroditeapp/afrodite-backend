@@ -45,6 +45,7 @@ pub fn parse_server_binary_message(message: &[u8]) -> Result<EventToClientIntern
                 next_payload_byte(&mut message_iter, "websocket connection attempts remaining")?;
             EventToClientInternal::WebSocketConnectionAttemptsRemaining { remaining }
         }
+        ServerMessageType::AppUpdateAvailable => EventToClientInternal::AppUpdateAvailable,
         ServerMessageType::PushNotificationInfoChanged => {
             EventToClientInternal::PushNotificationInfoChanged
         }
@@ -129,6 +130,12 @@ fn ensure_payload_fully_consumed(
     payload_iter: &mut impl Iterator<Item = u8>,
     message_type: ServerMessageType,
 ) -> Result<(), String> {
+    if matches!(message_type, ServerMessageType::AppUpdateAvailable) {
+        // Forward compatibility: currently this event has no payload, but clients
+        // should accept optional payload bytes added in future protocol versions.
+        return Ok(());
+    }
+
     if payload_iter.next().is_some() {
         return Err(format!("unexpected trailing payload for {message_type:?}"));
     }
@@ -477,6 +484,26 @@ mod tests {
             _ => panic!("unexpected event parsed"),
         }
     }
+
+    assert_roundtrip_without_payload!(
+        roundtrip_app_update_available_message,
+        EventToClientInternal::AppUpdateAvailable,
+        EventToClientInternal::AppUpdateAvailable
+    );
+
+    #[test]
+    fn parse_app_update_available_with_future_payload() {
+        let parsed = parse_server_binary_message(&[
+            crate::ServerMessageType::AppUpdateAvailable as u8,
+            1,
+            2,
+            3,
+        ])
+        .expect("app update available with payload should parse");
+
+        assert!(matches!(parsed, EventToClientInternal::AppUpdateAvailable));
+    }
+
     assert_roundtrip_without_payload!(
         roundtrip_account_state_changed_message,
         EventToClientInternal::AccountStateChanged,

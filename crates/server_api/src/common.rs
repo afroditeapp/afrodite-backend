@@ -305,7 +305,7 @@ async fn handle_socket_basic_errors(
             }
         };
         if is_supported_client {
-            handle_socket(socket, address, id, state, ws_manager).await
+            handle_socket(socket, address, id, state, ws_manager, info).await
         } else {
             let _ = socket.send(Message::Binary(Bytes::from_static(&[2]))).await;
         }
@@ -320,6 +320,7 @@ async fn handle_socket(
     id: AccountIdInternal,
     state: S,
     mut ws_manager: WebSocketManager,
+    info: WebSocketClientInfo,
 ) {
     if state.config().general().debug_websocket_logging {
         info!(
@@ -351,7 +352,7 @@ async fn handle_socket(
                 error!("delete_connection failed, {e:?}");
             }
         },
-        r = handle_socket_result(socket, address, id, &state) => {
+        r = handle_socket_result(socket, address, id, &state, info) => {
             match r {
                 Ok(()) => {
                     let result = state
@@ -405,6 +406,7 @@ async fn handle_socket_result(
     address: SocketAddr,
     id: AccountIdInternal,
     state: &S,
+    info: WebSocketClientInfo,
 ) -> crate::result::Result<(), WebSocketError> {
     let websocket_connection_attempts_remaining_message = match state
         .api_limits(id)
@@ -538,6 +540,12 @@ async fn handle_socket_result(
             EventToClientInternal::WebSocketConnectionAttemptsRemaining { remaining },
         )
         .await?;
+    }
+
+    if let Some(app_update_config) = state.config().app_update_available()
+        && app_update_config.should_send_event(info)
+    {
+        send_event(&mut socket, EventToClientInternal::AppUpdateAvailable).await?;
     }
 
     COMMON.websocket_connected.incr();

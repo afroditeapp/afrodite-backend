@@ -25,9 +25,9 @@ use bot_config_file::BotConfigFile;
 use csv::profile_name_allowlist::{ProfileNameAllowlistBuilder, ProfileNameAllowlistData};
 use error_stack::{Result, ResultExt};
 use file::{
-    AccountLimitsConfig, AutomaticProfileSearchConfig, ChatLimitsConfig, CommonLimitsConfig,
-    DemoAccountConfig, GrantAdminAccessConfig, MediaLimitsConfig, RemoteBotLoginConfig,
-    ScheduledTasksConfig,
+    AccountLimitsConfig, AppUpdateAvailableConfig, AutomaticProfileSearchConfig, ChatLimitsConfig,
+    CommonLimitsConfig, DemoAccountConfig, GrantAdminAccessConfig, MediaLimitsConfig,
+    RemoteBotLoginConfig, ScheduledTasksConfig,
 };
 use file_email_content::EmailContentFile;
 use file_web_content::WebContentFile;
@@ -249,6 +249,10 @@ impl Config {
 
     pub fn client_version_tracking(&self) -> Option<&ClientVersionTrackingConfig> {
         self.file.api.client_version_tracking.as_ref()
+    }
+
+    pub fn app_update_available(&self) -> Option<&AppUpdateAvailableConfig> {
+        self.file.api.app_update_available.as_ref()
     }
 
     pub fn remote_bot_login(&self) -> &RemoteBotLoginConfig {

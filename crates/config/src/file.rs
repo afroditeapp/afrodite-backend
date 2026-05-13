@@ -4,7 +4,9 @@ use std::{
 };
 
 use error_stack::{Result, ResultExt};
-use model::{ClientVersion, StringResourceInternal};
+use model::{
+    ClientVersion, StringResourceInternal, WebSocketClientInfo, WebSocketClientTypeNumber,
+};
 // Re-export for test-mode crate
 pub use model_server_data::EmailAddress;
 use model_server_state::DemoAccountId;
@@ -109,6 +111,13 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # minor_max = 100
 # patch_min = 0
 # patch_max = 1000
+#
+# [api.app_update_available]
+# version = "1.0.0"
+# [api.app_update_available.platforms]
+# android = true
+# ios = true
+# web = true
 
 "#;
 
@@ -213,6 +222,38 @@ pub struct ApiConfig {
     pub obfuscation_salt: Option<String>,
     pub min_client_version: Option<MinClientVersion>,
     pub client_version_tracking: Option<ClientVersionTrackingConfig>,
+    pub app_update_available: Option<AppUpdateAvailableConfig>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct AppUpdateAvailableConfig {
+    pub version: VersionNumber,
+    pub platforms: AppUpdatePlatforms,
+}
+
+impl AppUpdateAvailableConfig {
+    pub fn should_send_event(&self, client_info: WebSocketClientInfo) -> bool {
+        self.platforms.includes(client_info.client_type)
+            && Into::<VersionNumber>::into(client_info.client_version) < self.version
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct AppUpdatePlatforms {
+    pub android: bool,
+    pub ios: bool,
+    pub web: bool,
+}
+
+impl AppUpdatePlatforms {
+    pub fn includes(&self, client_type: WebSocketClientTypeNumber) -> bool {
+        match client_type {
+            WebSocketClientTypeNumber::Android => self.android,
+            WebSocketClientTypeNumber::Ios => self.ios,
+            WebSocketClientTypeNumber::Web => self.web,
+            WebSocketClientTypeNumber::Bot => false,
+        }
+    }
 }
 
 /// Client version tracking is disabled when these values are not

@@ -100,6 +100,7 @@ pub enum EventToClientInternal {
     WebSocketConnectionAttemptsRemaining {
         remaining: u8,
     },
+    AppUpdateAvailable,
     ReceivedLikesChanged,
     ClientConfigChanged,
     ProfileChanged,
