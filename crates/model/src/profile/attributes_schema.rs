@@ -132,6 +132,10 @@ impl AttributeId {
         self.0
     }
 
+    pub fn to_u16(&self) -> u16 {
+        self.0 as u16
+    }
+
     pub fn to_usize(&self) -> usize {
         self.0 as usize
     }

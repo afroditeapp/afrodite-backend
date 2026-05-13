@@ -7,6 +7,7 @@
 pub use model::*;
 pub use model_server_data::*;
 
+pub mod binary;
 pub mod profile;
 pub mod profile_admin;
 

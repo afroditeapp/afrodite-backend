@@ -99,8 +99,21 @@ impl Profile {
         self.name_accepted
     }
 
+    pub fn attributes_count_u16(&self) -> u16 {
+        // AttributeId is i16 value so this is safe
+        self.attributes.len() as u16
+    }
+
     pub fn unlimited_likes(&self) -> bool {
         self.unlimited_likes
+    }
+
+    pub fn ptext_accepted(&self) -> bool {
+        self.ptext_accepted
+    }
+
+    pub fn verification_status(&self) -> ProfileVerificationStatus {
+        self.verification_status
     }
 }
 
@@ -451,6 +464,30 @@ impl GetProfileResult {
             profile: None,
             profile_version: None,
             last_seen_time: None,
+        }
+    }
+}
+
+pub enum GetProfileResultInternal {
+    Empty,
+    VersionOnly {
+        version: ProfileVersion,
+        last_seen_time: Option<LastSeenTime>,
+    },
+    ProfileWithVersion(ProfileAndProfileVersion),
+}
+
+impl From<GetProfileResultInternal> for GetProfileResult {
+    fn from(value: GetProfileResultInternal) -> Self {
+        match value {
+            GetProfileResultInternal::Empty => Self::empty(),
+            GetProfileResultInternal::VersionOnly {
+                version,
+                last_seen_time,
+            } => Self::current_version_latest_response(version, last_seen_time),
+            GetProfileResultInternal::ProfileWithVersion(info) => {
+                Self::profile_with_version_response(info)
+            }
         }
     }
 }

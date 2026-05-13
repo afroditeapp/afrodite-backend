@@ -2,11 +2,14 @@ use axum::{
     Extension,
     extract::{Path, Query, State},
 };
+use axum_extra::TypedHeader;
+use headers::ContentType;
 use model::AdminNotificationTypes;
 use model_profile::{
     AccountId, AccountIdInternal, AccountState, GetInitialProfileAgeResult, GetMyProfileResult,
-    GetProfileQueryParam, GetProfileResult, Permissions, ProfileUpdate, ProfileUpdateInternal,
-    SearchAgeRange, SearchAgeRangeValidated, SearchGroups, ValidatedSearchGroups,
+    GetProfileQueryParam, GetProfileResult, GetProfileResultInternal, Permissions, ProfileUpdate,
+    ProfileUpdateInternal, SearchAgeRange, SearchAgeRangeValidated, SearchGroups,
+    ValidatedSearchGroups,
 };
 use server_api::{
     S,
@@ -21,9 +24,64 @@ use simple_backend_utils::IntoReportFromString;
 
 use crate::{
     DataError,
-    app::{GetAccounts, ReadData, WriteData},
+    app::{GetAccounts, GetProfileAttributes, ReadData, WriteData},
     utils::{Json, StatusCode},
 };
+
+async fn read_profile_result(
+    state: &S,
+    account_id: AccountIdInternal,
+    account_state: AccountState,
+    permissions: Permissions,
+    requested_profile: AccountIdInternal,
+    params: GetProfileQueryParam,
+) -> Result<GetProfileResultInternal, StatusCode> {
+    if account_id.as_id() == requested_profile.as_id() {
+        return read_profile_result_for_account(state, requested_profile, params).await;
+    }
+
+    if account_state != AccountState::Normal {
+        return Ok(GetProfileResultInternal::Empty);
+    }
+
+    let visibility = state
+        .read()
+        .common()
+        .account(requested_profile)
+        .await?
+        .profile_visibility()
+        .is_currently_public();
+
+    if visibility
+        || permissions.admin_view_all_profiles
+        || (params.allow_get_profile_if_match()
+            && state
+                .data_all_access()
+                .is_match(account_id, requested_profile)
+                .await?)
+    {
+        read_profile_result_for_account(state, requested_profile, params).await
+    } else {
+        Ok(GetProfileResultInternal::Empty)
+    }
+}
+
+async fn read_profile_result_for_account(
+    state: &S,
+    requested_profile: AccountIdInternal,
+    params: GetProfileQueryParam,
+) -> Result<GetProfileResultInternal, StatusCode> {
+    let profile_info = state.read().profile().profile(requested_profile).await?;
+    Ok(match params.profile_version() {
+        Some(param_version) if param_version == profile_info.version => {
+            GetProfileResultInternal::VersionOnly {
+                version: profile_info.version,
+                last_seen_time: profile_info.last_seen_time,
+            }
+        }
+        _ => GetProfileResultInternal::ProfileWithVersion(profile_info),
+    })
+}
 
 const PATH_GET_PROFILE: &str = "/profile_api/profile/{aid}";
 
@@ -78,48 +136,111 @@ pub async fn get_profile(
 
     let requested_profile = state.get_internal_id(requested_profile).await?;
 
-    let read_profile_action = || async {
-        let profile_info = state.read().profile().profile(requested_profile).await?;
-        match params.profile_version() {
-            Some(param_version) if param_version == profile_info.version => {
-                Ok(GetProfileResult::current_version_latest_response(
-                    profile_info.version,
-                    profile_info.last_seen_time,
-                )
-                .into())
-            }
-            _ => Ok(GetProfileResult::profile_with_version_response(profile_info).into()),
-        }
-    };
+    let result = read_profile_result(
+        &state,
+        account_id,
+        account_state,
+        permissions,
+        requested_profile,
+        params,
+    )
+    .await?;
 
-    if account_id.as_id() == requested_profile.as_id() {
-        return read_profile_action().await;
-    }
+    Ok(GetProfileResult::from(result).into())
+}
 
-    if account_state != AccountState::Normal {
-        return Ok(GetProfileResult::empty().into());
-    }
+const PATH_GET_PROFILE_BINARY: &str = "/profile_api/profile_binary/{aid}";
 
-    let visibility = state
-        .read()
-        .common()
-        .account(requested_profile)
-        .await?
-        .profile_visibility()
-        .is_currently_public();
+/// Get account's current profile as compact binary payload.
+///
+/// The first byte is result variant:
+/// - 0 = Empty
+/// - 1 = VersionOnly
+/// - 2 = ProfileWithVersion
+///
+/// Variant payloads:
+/// - Empty: no payload
+/// - VersionOnly:
+///   - 16-byte profile version UUID
+///   - null last seen time (0 byte) or last seen time as minimal i64
+/// - ProfileWithVersion:
+///   - 16-byte profile version UUID
+///   - null last seen time (0 byte) or last seen time as minimal i64
+///   - profile payload:
+///     - optional name string:
+///       - 1-byte u8 byte count (0 means null)
+///       - string UTF-8 bytes when count > 0
+///     - optional profile text string:
+///       - 2-byte little-endian u16 byte count (0 means null)
+///       - string UTF-8 bytes when count > 0
+///     - 1-byte age
+///     - attributes list:
+///       - 2-byte little-endian u16 attribute count
+///       - repeated entries:
+///         - 2-byte little-endian u16 attribute id with value width flag in most significant bit:
+///           - bits 0..14: attribute ID
+///           - bit 15: value width flag (0 = u16 values, 1 = u32 values)
+///         - 1-byte u8 value count
+///         - repeated values:
+///           - value width flag 0: 2-byte little-endian u16 values
+///           - value width flag 1: 4-byte little-endian u32 values
+///     - 1-byte profile flags:
+///       - bit 0: unlimited_likes
+///       - bit 1: name_accepted
+///       - bit 2: ptext_accepted
+///       - bits 3..7: reserved (0)
+///     - 2-byte verification status i16 (little-endian)
+///
+/// Minimal i64 format:
+/// - i64 byte count (u8, values: 1, 2, 4, 8)
+/// - i64 bytes (little-endian)
+#[utoipa::path(
+    get,
+    path = PATH_GET_PROFILE_BINARY,
+    params(AccountId, GetProfileQueryParam),
+    responses(
+        (status = 200, description = "Get current profile as binary.", body = inline(model::BinaryData), content_type = "application/octet-stream"),
+        (status = 401, description = "Unauthorized"),
+        (status = 429, description = "Too many requests."),
+        (
+            status = 500,
+            description = "Internal server error",
+        ),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_profile_binary(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+    Extension(account_state): Extension<AccountState>,
+    Extension(permissions): Extension<Permissions>,
+    Path(requested_profile): Path<AccountId>,
+    Query(params): Query<GetProfileQueryParam>,
+) -> Result<(TypedHeader<ContentType>, Vec<u8>), StatusCode> {
+    PROFILE.get_profile_binary.incr();
+    state
+        .api_usage_tracker()
+        .incr(account_id, |u| &u.get_profile)
+        .await;
+    state.api_limits(account_id).profile().get_profile().await?;
 
-    if visibility
-        || permissions.admin_view_all_profiles
-        || (params.allow_get_profile_if_match()
-            && state
-                .data_all_access()
-                .is_match(account_id, requested_profile)
-                .await?)
-    {
-        read_profile_action().await
-    } else {
-        Ok(GetProfileResult::empty().into())
-    }
+    let requested_profile = state.get_internal_id(requested_profile).await?;
+    let result = read_profile_result(
+        &state,
+        account_id,
+        account_state,
+        permissions,
+        requested_profile,
+        params,
+    )
+    .await?;
+
+    let profile_attributes = state.profile_attributes_manager().read().await;
+
+    Ok((
+        TypedHeader(ContentType::octet_stream()),
+        result.to_binary_with_schema(&profile_attributes),
+    ))
 }
 
 const PATH_POST_PROFILE: &str = "/profile_api/profile";
@@ -134,11 +255,13 @@ const PATH_POST_PROFILE: &str = "/profile_api/profile";
 /// # Requirements
 /// - Profile attributes must be valid.
 /// - Profile text must be 2000 bytes or less.
+///   If limit is increased in the future the max limit is u16.
 /// - Profile text must be trimmed.
 /// - Profile name changes are only possible when initial setup is ongoing
 ///   or current profile name is not accepted.
 /// - Profile name must be trimmed and not empty.
 /// - Profile name must be 100 bytes or less.
+///   If limit is increased in the future the max limit is u8.
 /// - Profile name must start with uppercase letter.
 /// - Profile name must match with profile name regex if it is enabled and
 ///   related account is not a bot account.
@@ -396,15 +519,16 @@ pub async fn get_initial_profile_age(
 }
 
 create_open_api_router!(
-        fn router_profile_data,
-        get_profile,
-        get_search_groups,
-        get_search_age_range,
-        post_profile,
-        post_search_groups,
-        post_search_age_range,
-        get_my_profile,
-        get_initial_profile_age,
+    fn router_profile_data,
+    get_profile,
+    get_profile_binary,
+    get_search_groups,
+    get_search_age_range,
+    post_profile,
+    post_search_groups,
+    post_search_age_range,
+    get_my_profile,
+    get_initial_profile_age,
 );
 
 create_counters!(
@@ -412,6 +536,7 @@ create_counters!(
     PROFILE,
     PROFILE_DATA_COUNTERS_LIST,
     get_profile,
+    get_profile_binary,
     get_search_groups,
     get_search_age_range,
     post_profile,

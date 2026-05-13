@@ -7,6 +7,8 @@ edition = "2024"
 
 [dependencies]
 axum = { workspace = true }
+axum-extra = { workspace = true }
+headers = { workspace = true }
 
 utoipa = { workspace = true }
 utoipa-axum = { workspace = true }

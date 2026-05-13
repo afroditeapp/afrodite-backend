@@ -14,6 +14,7 @@ regex = { workspace = true }
 
 model = { path = "../model" }
 model_server_data = { path = "../model_server_data" }
+utils = { path = "../utils" }
 
 simple_backend_model = { path = "../simple_backend_model"}
 simple_backend_utils = { path = "../simple_backend_utils"}

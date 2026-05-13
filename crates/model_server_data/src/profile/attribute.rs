@@ -62,6 +62,11 @@ impl ProfileAttributeValue {
     pub fn raw_values(&self) -> &[u32] {
         &self.v
     }
+
+    pub fn raw_values_count_u8(&self) -> u8 {
+        // Max selected attribute values count is NonZeroU8 value so this is safe
+        self.v.len() as u8
+    }
 }
 
 impl From<ProfileAttributeValue> for ProfileAttributeValueUpdate {
