@@ -41,7 +41,7 @@ const PATH_GET_PENDING_MESSAGES: &str = "/chat_api/pending_messages";
 /// - Binary data
 ///
 /// Minimal i64 has this format:
-/// - i64 byte count (u8, values: 1, 2, 4, 8)
+/// - i64 byte count (u8, values: 1, 2, 3, 4, 5, 6, 7, 8)
 /// - i64 bytes (little-endian)
 ///
 /// Binary data is binary PGP message which contains backend signed

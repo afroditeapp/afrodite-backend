@@ -112,7 +112,7 @@ pub use parser::parse_server_binary_message;
 ///
 /// Data types used in payload definitions:
 /// - minimal i64:
-///   - i64 byte count (u8, values: 1, 2, 4, 8)
+///   - i64 byte count (u8, values: 1, 2, 3, 4, 5, 6, 7, 8)
 ///   - i64 bytes (little-endian byte order)
 /// - optional values in payloads are omitted when they are not present
 #[derive(Debug, Clone, Copy, PartialEq, Eq, TryFromPrimitive, ToSchema)]

@@ -192,7 +192,7 @@ const PATH_GET_PROFILE_BINARY: &str = "/profile_api/profile_binary/{aid}";
 ///     - 2-byte verification status i16 (little-endian)
 ///
 /// Minimal i64 format:
-/// - i64 byte count (u8, values: 1, 2, 4, 8)
+/// - i64 byte count (u8, values: 1, 2, 3, 4, 5, 6, 7, 8)
 /// - i64 bytes (little-endian)
 #[utoipa::path(
     get,

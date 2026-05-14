@@ -1,17 +1,20 @@
 pub fn add_minimal_i64(buffer: &mut Vec<u8>, value: i64) {
-    if let Ok(value) = TryInto::<i8>::try_into(value) {
-        buffer.push(1);
-        buffer.extend_from_slice(&value.to_le_bytes());
-    } else if let Ok(value) = TryInto::<i16>::try_into(value) {
-        buffer.push(2);
-        buffer.extend_from_slice(&value.to_le_bytes());
-    } else if let Ok(value) = TryInto::<i32>::try_into(value) {
-        buffer.push(4);
-        buffer.extend_from_slice(&value.to_le_bytes());
-    } else {
-        buffer.push(8);
-        buffer.extend_from_slice(&value.to_le_bytes());
+    let bytes = value.to_le_bytes();
+
+    let mut marker = 8_usize;
+    while marker > 1 {
+        let next_msb = bytes[marker - 2];
+        let sign_extension = if next_msb & 0x80 == 0 { 0x00 } else { 0xFF };
+
+        if bytes[marker - 1] == sign_extension {
+            marker -= 1;
+        } else {
+            break;
+        }
     }
+
+    buffer.push(marker as u8);
+    buffer.extend_from_slice(&bytes[..marker]);
 }
 
 pub fn parse_minimal_i64_from_iter(iter: &mut impl Iterator<Item = u8>) -> Option<i64> {
@@ -23,22 +26,20 @@ fn parse_minimal_i64_from_iter_with_marker(
     marker: u8,
     iter: &mut impl Iterator<Item = u8>,
 ) -> Option<i64> {
-    let value = match marker {
-        1 => i8::from_le_bytes([iter.next()?]).into(),
-        2 => i16::from_le_bytes([iter.next()?, iter.next()?]).into(),
-        4 => i32::from_le_bytes([iter.next()?, iter.next()?, iter.next()?, iter.next()?]).into(),
-        8 => i64::from_le_bytes([
-            iter.next()?,
-            iter.next()?,
-            iter.next()?,
-            iter.next()?,
-            iter.next()?,
-            iter.next()?,
-            iter.next()?,
-            iter.next()?,
-        ]),
-        _ => return None,
-    };
+    if !(1..=8).contains(&marker) {
+        return None;
+    }
+
+    let mut bytes = [0_u8; 8];
+    for b in bytes.iter_mut().take(marker as usize) {
+        *b = iter.next()?;
+    }
+
+    if bytes[marker as usize - 1] & 0x80 != 0 {
+        bytes[marker as usize..].fill(0xFF);
+    }
+
+    let value = i64::from_le_bytes(bytes);
 
     Some(value)
 }
@@ -55,7 +56,14 @@ mod tests {
             -1,
             i8::MAX as i64,
             i8::MIN as i64,
+            8_388_607,
+            -8_388_608,
             i32::MAX as i64,
+            -2_147_483_648,
+            549_755_813_887,
+            -549_755_813_888,
+            140_737_488_355_327,
+            -140_737_488_355_328,
             i64::MIN,
         ];
 
@@ -69,6 +77,26 @@ mod tests {
             assert_eq!(parse_minimal_i64_from_iter(&mut iter), Some(expected));
         }
         assert_eq!(parse_minimal_i64_from_iter(&mut iter), None);
+    }
+
+    #[test]
+    fn minimal_i64_uses_all_supported_lengths() {
+        let values_and_markers = [
+            (0_i64, 1_u8),
+            (128_i64, 2_u8),
+            (8_388_607_i64, 3_u8),
+            (2_147_483_647_i64, 4_u8),
+            (549_755_813_887_i64, 5_u8),
+            (140_737_488_355_327_i64, 6_u8),
+            (36_028_797_018_963_967_i64, 7_u8),
+            (i64::MAX, 8_u8),
+        ];
+
+        for (value, expected_marker) in values_and_markers {
+            let mut bytes = Vec::new();
+            add_minimal_i64(&mut bytes, value);
+            assert_eq!(bytes.first().copied(), Some(expected_marker));
+        }
     }
 
     #[test]
