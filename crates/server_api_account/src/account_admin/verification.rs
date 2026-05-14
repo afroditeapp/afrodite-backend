@@ -6,9 +6,10 @@ use model_account::{
 };
 use server_api::{
     S,
-    app::{AccountVerificationQueueProvider, EventManagerProvider, GetAccounts},
-    create_open_api_router,
+    app::{AccountVerificationQueueProvider, EventManagerProvider, GetAccounts, WriteData},
+    create_open_api_router, db_write,
 };
+use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
 
 use crate::utils::{Json, StatusCode};
@@ -96,12 +97,32 @@ pub async fn post_account_verification_queue_remove_next_item(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let expected_account_id = state.get_internal_id(data.account_id).await?;
+    let PostAccountVerificationQueueRemoveNextItem {
+        account_id,
+        verification_method,
+        verification_unix_time,
+        verification_error_flags,
+    } = data;
 
-    let _ = state
+    let expected_account_id = state.get_internal_id(account_id).await?;
+
+    let removed_item = state
         .account_verification_queue()
         .remove_next_item(expected_account_id, &state.event_manager())
         .await;
+
+    if removed_item.is_ok() {
+        db_write!(state, move |cmds| {
+            cmds.account()
+                .set_account_verification_data(
+                    expected_account_id,
+                    verification_method,
+                    verification_unix_time,
+                    verification_error_flags,
+                )
+                .await
+        })?;
+    }
 
     Ok(())
 }

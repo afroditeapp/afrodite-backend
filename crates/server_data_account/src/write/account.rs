@@ -2,8 +2,11 @@ use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommands
 use database_account::current::write::GetDbWriteCommandsAccount;
 use delete::WriteCommandsAccountDelete;
 use email::WriteCommandsAccountEmail;
-use model::AccountStateContainer;
-use model_account::{Account, AccountIdInternal, Permissions, ProfileVisibility, SetAccountSetup};
+use model::{AccountStateContainer, UnixTime};
+use model_account::{
+    Account, AccountIdInternal, AccountVerificationErrorFlagsValue, Permissions, ProfileVisibility,
+    SetAccountSetup, VerificationMethod,
+};
 use model_server_state::DemoAccountId;
 use news::WriteCommandsAccountNews;
 use server_data::{
@@ -136,6 +139,23 @@ impl WriteCommandsAccount<'_> {
     pub async fn get_next_unique_account_id(&self) -> Result<AccountIdInternal, DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.account().data().new_unique_account_id()
+        })
+    }
+
+    pub async fn set_account_verification_data(
+        &self,
+        id: AccountIdInternal,
+        method: VerificationMethod,
+        time: UnixTime,
+        error_flags: Option<AccountVerificationErrorFlagsValue>,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.account().verification().set_account_verification_data(
+                id,
+                method,
+                time,
+                error_flags,
+            )
         })
     }
 }

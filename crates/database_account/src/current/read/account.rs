@@ -12,6 +12,7 @@ mod news;
 mod notification;
 mod report;
 mod sign_in_with;
+mod verification;
 
 impl<'a> CurrentReadAccount<'a> {
     pub fn ban(self) -> ban::CurrentReadAccountBan<'a> {
@@ -52,5 +53,9 @@ impl<'a> CurrentReadAccount<'a> {
 
     pub fn notification(self) -> notification::CurrentReadAccountNotification<'a> {
         notification::CurrentReadAccountNotification::new(self.cmds)
+    }
+
+    pub fn verification(self) -> verification::CurrentReadAccountVerification<'a> {
+        verification::CurrentReadAccountVerification::new(self.cmds)
     }
 }

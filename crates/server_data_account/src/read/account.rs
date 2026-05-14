@@ -2,9 +2,9 @@ use database::current::read::GetDbReadCommandsCommon;
 use database_account::current::read::GetDbReadCommandsAccount;
 use model::UnixTime;
 use model_account::{
-    AccountGlobalState, AccountId, AccountIdInternal, AccountSetup, AppleAccountId, BotAccount,
-    EmailAddressState, EmailAddressStateInternal, EmailLoginTokens, GetBotsResult, GoogleAccountId,
-    SignInWithInfo,
+    AccountGlobalState, AccountId, AccountIdInternal, AccountSetup,
+    AccountVerificationDataInternal, AppleAccountId, BotAccount, EmailAddressState,
+    EmailAddressStateInternal, EmailLoginTokens, GetBotsResult, GoogleAccountId, SignInWithInfo,
 };
 use model_server_state::DemoAccountId;
 use server_data::{
@@ -153,6 +153,15 @@ impl ReadCommandsAccount<'_> {
 
     pub async fn global_state(&self) -> Result<AccountGlobalState, DataError> {
         self.db_read(move |mut cmds| cmds.account().data().global_state())
+            .await
+            .into_error()
+    }
+
+    pub async fn account_verification_data(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<AccountVerificationDataInternal, DataError> {
+        self.db_read(move |mut cmds| cmds.account().verification().account_verification_data(id))
             .await
             .into_error()
     }

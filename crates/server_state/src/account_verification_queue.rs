@@ -15,6 +15,7 @@ pub enum AccountVerificationQueueAddError {
 pub enum AccountVerificationQueueRemoveNextError {
     QueueEmpty,
     AccountIdMismatch,
+    QueueItemMissing,
 }
 
 #[derive(Default)]
@@ -82,7 +83,7 @@ impl AccountVerificationQueueData {
         &self,
         expected_account_id: AccountIdInternal,
         event_manager: &EventManagerWithCacheReference<'_>,
-    ) -> Result<(), AccountVerificationQueueRemoveNextError> {
+    ) -> Result<AccountVerificationQueueItem, AccountVerificationQueueRemoveNextError> {
         let mut write = self.data.write().await;
         let expected_account_id = expected_account_id.as_id();
 
@@ -95,7 +96,10 @@ impl AccountVerificationQueueData {
         }
 
         write.queue.pop_front();
-        write.items.remove(&next_account_id);
+        let removed_item = write
+            .items
+            .remove(&next_account_id)
+            .ok_or(AccountVerificationQueueRemoveNextError::QueueItemMissing)?;
 
         let queue_position_change_for_expected_account = [(next_account_id, Option::<u8>::None)];
         let queue_position_changes_for_other_accounts = write
@@ -129,6 +133,6 @@ impl AccountVerificationQueueData {
         // Make sure that update events are sequential
         drop(write);
 
-        Ok(())
+        Ok(removed_item)
     }
 }

@@ -9,6 +9,7 @@ mod news;
 mod notification;
 mod report;
 mod sign_in_with;
+mod verification;
 
 define_current_write_commands!(CurrentWriteAccount);
 
@@ -47,5 +48,9 @@ impl<'a> CurrentWriteAccount<'a> {
 
     pub fn notification(self) -> notification::CurrentWriteAccountNotification<'a> {
         notification::CurrentWriteAccountNotification::new(self.cmds)
+    }
+
+    pub fn verification(self) -> verification::CurrentWriteAccountVerification<'a> {
+        verification::CurrentWriteAccountVerification::new(self.cmds)
     }
 }

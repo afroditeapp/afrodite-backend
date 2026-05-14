@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use utils::time::age_in_years_from_birthdate;
 use utoipa::{IntoParams, ToSchema};
 
-use crate::{AccountId, AccountIdDb};
+use crate::{AccountId, AccountIdDb, AccountVerificationErrorFlagsValue, VerificationMethod};
 
 mod email;
 pub use email::*;
@@ -28,8 +28,8 @@ pub use client_features::*;
 
 pub mod verification;
 pub use verification::{
-    AccountVerificationQueueStatus, PostAccountVerificationQueueItem,
-    PostAccountVerificationQueueItemResult,
+    AccountVerificationDataInternal, AccountVerificationQueueStatus,
+    PostAccountVerificationQueueItem, PostAccountVerificationQueueItemResult,
 };
 
 #[derive(Debug, Default, Deserialize, Serialize, ToSchema, Clone, PartialEq)]
@@ -365,6 +365,9 @@ pub struct AccountStateTableRaw {
     unread_news_count: i64,
     account_created_unix_time: UnixTime,
     account_locked: bool,
+    account_verification_method: Option<VerificationMethod>,
+    account_verification_unix_time: Option<UnixTime>,
+    account_verification_error_flags: Option<AccountVerificationErrorFlagsValue>,
 }
 
 /// Global state for account component

@@ -8,9 +8,11 @@ use server_api::{
     AccountVerificationQueueAddError, S,
     app::{
         AccountVerificationQueueProvider, AdminNotificationProvider, ApiLimitsProvider, GetConfig,
+        ReadData,
     },
     create_open_api_router,
 };
+use server_data_account::read::GetReadCommandsAccount;
 use simple_backend::create_counters;
 
 use crate::utils::{Json, StatusCode};
@@ -39,7 +41,19 @@ pub async fn get_account_verification_queue_status(
         .queue_position(api_caller_account_id)
         .await;
 
-    Ok(AccountVerificationQueueStatus { queue_position }.into())
+    let verification_data = state
+        .read()
+        .account()
+        .account_verification_data(api_caller_account_id)
+        .await?;
+
+    Ok(AccountVerificationQueueStatus {
+        queue_position,
+        verification_method: verification_data.verification_method,
+        verification_unix_time: verification_data.verification_unix_time,
+        verification_error_flags: verification_data.verification_error_flags,
+    }
+    .into())
 }
 
 const PATH_POST_ACCOUNT_VERIFICATION_QUEUE_ITEM: &str = "/account_api/account_verification_queue";

@@ -1,6 +1,15 @@
+use diesel::Queryable;
 pub use model::AccountVerificationQueueItem as PostAccountVerificationQueueItem;
+use model::{AccountVerificationErrorFlagsValue, UnixTime, VerificationMethod};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
+
+#[derive(Debug, Clone, Copy, Queryable)]
+pub struct AccountVerificationDataInternal {
+    pub verification_method: Option<VerificationMethod>,
+    pub verification_unix_time: Option<UnixTime>,
+    pub verification_error_flags: Option<AccountVerificationErrorFlagsValue>,
+}
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, ToSchema)]
 pub struct PostAccountVerificationQueueItemResult {
@@ -42,4 +51,11 @@ pub struct AccountVerificationQueueStatus {
     /// The first queue position is 1
     #[serde(skip_serializing_if = "Option::is_none")]
     pub queue_position: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub verification_method: Option<VerificationMethod>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub verification_unix_time: Option<UnixTime>,
+    /// Null means there are no known verification errors.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub verification_error_flags: Option<AccountVerificationErrorFlagsValue>,
 }
