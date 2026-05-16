@@ -120,6 +120,10 @@ fn value_is_true(v: &bool) -> bool {
 }
 
 impl AccountStateContainer {
+    pub fn initial_setup_completed(&self) -> bool {
+        self.initial_setup_completed
+    }
+
     pub fn account_state(&self) -> AccountState {
         if self.pending_deletion {
             AccountState::PendingDeletion

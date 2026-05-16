@@ -12,6 +12,7 @@ use server_api::{
     },
     create_open_api_router,
 };
+use server_data::read::GetReadCommandsCommon;
 use server_data_account::read::GetReadCommandsAccount;
 use simple_backend::create_counters;
 
@@ -59,6 +60,8 @@ pub async fn get_account_verification_queue_status(
 const PATH_POST_ACCOUNT_VERIFICATION_QUEUE_ITEM: &str = "/account_api/account_verification_queue";
 
 /// Add account verification request to queue for current account.
+///
+/// Adding new request requires initial setup to be completed.
 #[utoipa::path(
     post,
     path = PATH_POST_ACCOUNT_VERIFICATION_QUEUE_ITEM,
@@ -83,6 +86,13 @@ pub async fn post_account_verification_queue_item(
         .account()
         .post_account_verification_queue_item()
         .await?;
+
+    let account = state.read().common().account(api_caller_account_id).await?;
+    if !account.state_container().initial_setup_completed() {
+        return Ok(
+            PostAccountVerificationQueueItemResult::error_initial_setup_not_completed().into(),
+        );
+    }
 
     let max_queue_length = state
         .config()

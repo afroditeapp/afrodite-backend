@@ -22,6 +22,9 @@ pub struct PostAccountVerificationQueueItemResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     error_queue_full: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_initial_setup_not_completed: bool,
 }
 
 impl PostAccountVerificationQueueItemResult {
@@ -41,6 +44,14 @@ impl PostAccountVerificationQueueItemResult {
         Self {
             error: true,
             error_queue_full: true,
+            ..Default::default()
+        }
+    }
+
+    pub fn error_initial_setup_not_completed() -> Self {
+        Self {
+            error: true,
+            error_initial_setup_not_completed: true,
             ..Default::default()
         }
     }
