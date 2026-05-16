@@ -184,6 +184,8 @@ impl DataAllUtils for DataAllUtilsImpl {
         async move {
             write_command_runner
                 .write(move |cmds| async move {
+                    // TODO(quality): Single DB transaction for all value updates
+
                     let mut merged_flags: AccountVerificationErrorFlags =
                         verification_error_flags.into();
 
