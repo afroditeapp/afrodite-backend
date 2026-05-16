@@ -29,6 +29,8 @@ pub struct ProfileAgeRangeVerificationAdminInfo {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct PostProfileAgeRangeVerifiedValue {
     pub account_id: AccountId,
+    #[schema(value_type = i64)]
+    pub current_profile_age: ProfileAge,
     /// Bot sets automatic profile age range verification value.
     /// Human admin sets manual override value.
     /// Set to None to clear the currently applicable value.
@@ -46,6 +48,8 @@ pub struct ProfileNameVerificationAdminInfo {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct PostProfileNameVerifiedValue {
     pub account_id: AccountId,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub current_profile_name: Option<NonEmptyString>,
     /// Bot sets automatic profile name verification value.
     /// Human admin sets manual override value.
     /// Set to None to clear the currently applicable value.

@@ -1,9 +1,9 @@
 use diesel::{AsExpression, FromSqlRow, sql_types::SmallInt};
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{SimpleDieselEnum, diesel_i16_wrapper};
+use simple_backend_model::{NonEmptyString, SimpleDieselEnum, diesel_i16_wrapper};
 use utoipa::ToSchema;
 
-use crate::{AccountIdInternal, ContentId};
+use crate::{AccountIdInternal, ContentId, ProfileAge};
 
 #[derive(
     Debug,
@@ -134,12 +134,15 @@ pub struct EditVerificationSecurityContent {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EditVerificationProfileAgeRange {
+    pub current_profile_age: ProfileAge,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub verified_value: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EditVerificationProfileName {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub current_profile_name: Option<NonEmptyString>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub verified_value: Option<bool>,
 }

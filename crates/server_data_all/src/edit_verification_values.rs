@@ -1,7 +1,7 @@
 use model::{AccountIdInternal, EditVerificationValues};
 use server_data::{DataError, result::WrappedContextExt, write_commands::WriteCommandRunnerHandle};
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
-use server_data_profile::write::GetWriteCommandsProfile;
+use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
 
 pub async fn edit_verification_values(
     write_command_runner: &WriteCommandRunnerHandle,
@@ -20,6 +20,18 @@ pub async fn edit_verification_values(
             let mut send_profile_changed_event = false;
 
             if let Some(profile_age_range) = profile_age_range {
+                let current_profile_age_in_db = cmds
+                    .read()
+                    .profile()
+                    .profile(profile_owner_id)
+                    .await?
+                    .profile
+                    .age;
+
+                if profile_age_range.current_profile_age != current_profile_age_in_db {
+                    return Err(DataError::NotAllowed.report());
+                }
+
                 let changed = cmds
                     .profile_admin()
                     .verification()
@@ -33,6 +45,18 @@ pub async fn edit_verification_values(
             }
 
             if let Some(profile_name) = profile_name {
+                let current_profile_name_in_db = cmds
+                    .read()
+                    .profile()
+                    .profile(profile_owner_id)
+                    .await?
+                    .profile
+                    .name;
+
+                if profile_name.current_profile_name != current_profile_name_in_db {
+                    return Err(DataError::NotAllowed.report());
+                }
+
                 let changed = cmds
                     .profile_admin()
                     .verification()

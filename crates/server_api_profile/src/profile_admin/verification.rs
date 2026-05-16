@@ -100,6 +100,7 @@ pub async fn post_profile_age_range_verified_value(
                 profile_owner_id,
                 security_content: None,
                 profile_age_range: Some(EditVerificationProfileAgeRange {
+                    current_profile_age: data.current_profile_age,
                     verified_value: data.value,
                 }),
                 profile_name: None,
@@ -192,6 +193,7 @@ pub async fn post_profile_name_verified_value(
                 security_content: None,
                 profile_age_range: None,
                 profile_name: Some(EditVerificationProfileName {
+                    current_profile_name: data.current_profile_name,
                     verified_value: data.value,
                 }),
             },
