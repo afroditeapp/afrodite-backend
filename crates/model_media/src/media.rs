@@ -434,24 +434,15 @@ impl CurrentAccountMediaInternal {
     }
 
     pub fn media_verification_status_flags(&self) -> MediaVerificationStatusFlags {
-        let mut profile_content_exists = false;
-        let mut any_face_verified = false;
-        let mut all_face_verified = true;
+        let mut flags = MediaVerificationStatusFlags::empty();
 
         for content in self.iter_current_profile_content() {
-            profile_content_exists = true;
-            let verified = content.effective_face_verified() == Some(true);
-            any_face_verified |= verified;
-            all_face_verified &= verified;
+            if content.effective_face_verified() == Some(true) {
+                flags |= MediaVerificationStatusFlags::PROFILE_CONTENT_FACE_VERIFIED;
+                break;
+            }
         }
 
-        let mut flags = MediaVerificationStatusFlags::empty();
-        if any_face_verified {
-            flags |= MediaVerificationStatusFlags::PROFILE_CONTENT_FACE_VERIFIED_ANY;
-        }
-        if profile_content_exists && all_face_verified {
-            flags |= MediaVerificationStatusFlags::PROFILE_CONTENT_FACE_VERIFIED_ALL;
-        }
         if self.security_content_id.is_some()
             && self.effective_security_content_verified() == Some(true)
         {
@@ -521,12 +512,9 @@ impl UpdateProfileContentResult {
 
 /// Value for profile verification status flags.
 ///
-/// - PROFILE_CONTENT_FACE_VERIFIED_ANY = 0x1. At least one current profile
+/// - PROFILE_CONTENT_FACE_VERIFIED = 0x1. At least one current profile
 ///   picture has effective face verified value true.
-/// - PROFILE_CONTENT_FACE_VERIFIED_ALL = 0x2. All current profile pictures
-///   have effective face verified value true. For empty profile picture list
-///   this bit must be unset.
-/// - SECURITY_CONTENT_VERIFIED = 0x4. Current security content has effective
+/// - SECURITY_CONTENT_VERIFIED = 0x2. Current security content has effective
 ///   security verified value true.
 #[derive(Debug, PartialEq, Serialize, ToSchema)]
 pub struct MediaVerificationStatus {
