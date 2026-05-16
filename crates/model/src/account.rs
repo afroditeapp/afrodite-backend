@@ -17,6 +17,9 @@ pub use custom_reports::*;
 mod client_features;
 pub use client_features::*;
 
+mod account_admin;
+pub use account_admin::*;
+
 mod verification;
 pub use verification::*;
 

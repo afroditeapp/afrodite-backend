@@ -12,7 +12,10 @@ use client_version::ClientVersionTracker;
 use config::Config;
 use data_signer::DataSigner;
 use ip_address::IpAddressUsageTracker;
-use model::{Account, AccountIdInternal, ClientMessageForDataAllCrate, EditVerificationValues};
+use model::{
+    Account, AccountIdInternal, AccountVerificationErrorFlagsValue, ClientMessageForDataAllCrate,
+    EditVerificationValues, UnixTime, VerificationMethod,
+};
 use model_chat::SignInWithInfo;
 use model_server_data::EmailAddress;
 use server_common::{push_notifications::PushNotificationSender, websocket::WebSocketError};
@@ -237,11 +240,38 @@ impl DataAllAccess<'_> {
     pub async fn edit_verification_values(
         &self,
         moderator_id: AccountIdInternal,
+        profile_owner_id: AccountIdInternal,
         values: EditVerificationValues,
+    ) -> server_common::result::Result<(), DataError> {
+        let cmd = self.utils().edit_verification_values(
+            self.write(),
+            moderator_id,
+            profile_owner_id,
+            values,
+        );
+        cmd.await
+    }
+
+    pub async fn process_removed_account_verification_queue_item(
+        &self,
+        moderator_id: AccountIdInternal,
+        profile_owner_id: AccountIdInternal,
+        verification_method: VerificationMethod,
+        verification_unix_time: UnixTime,
+        verification_error_flags: Option<AccountVerificationErrorFlagsValue>,
+        edit: Option<EditVerificationValues>,
     ) -> server_common::result::Result<(), DataError> {
         let cmd = self
             .utils()
-            .edit_verification_values(self.write(), moderator_id, values);
+            .process_removed_account_verification_queue_item(
+                self.write(),
+                moderator_id,
+                profile_owner_id,
+                verification_method,
+                verification_unix_time,
+                verification_error_flags,
+                edit,
+            );
         cmd.await
     }
 }

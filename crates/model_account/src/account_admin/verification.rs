@@ -1,5 +1,6 @@
 use model::{
-    AccountVerificationErrorFlagsValue, AccountVerificationScope, UnixTime, VerificationMethod,
+    AccountVerificationErrorFlagsValue, AccountVerificationScope, EditVerificationValues, UnixTime,
+    VerificationMethod,
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -27,4 +28,6 @@ pub struct PostAccountVerificationQueueRemoveNextItem {
     pub verification_unix_time: UnixTime,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub verification_error_flags: Option<AccountVerificationErrorFlagsValue>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub edit: Option<EditVerificationValues>,
 }

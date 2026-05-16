@@ -4,7 +4,8 @@ use axum::extract::ws::WebSocket;
 use config::{Config, file::EmailAddress};
 use futures::future::BoxFuture;
 use model::{
-    Account, AccountId, AccountIdInternal, ClientMessageForDataAllCrate, EditVerificationValues,
+    Account, AccountId, AccountIdInternal, AccountVerificationErrorFlagsValue,
+    ClientMessageForDataAllCrate, EditVerificationValues, UnixTime, VerificationMethod,
 };
 use model_server_data::SignInWithInfo;
 pub use server_common::app::*;
@@ -178,7 +179,20 @@ pub trait DataAllUtils: Send + Sync + 'static {
         &self,
         write_command_runner: &'a WriteCommandRunnerHandle,
         moderator_id: AccountIdInternal,
+        profile_owner_id: AccountIdInternal,
         values: EditVerificationValues,
+    ) -> BoxFuture<'a, server_common::result::Result<(), DataError>>;
+
+    #[allow(clippy::too_many_arguments)]
+    fn process_removed_account_verification_queue_item<'a>(
+        &self,
+        write_command_runner: &'a WriteCommandRunnerHandle,
+        moderator_id: AccountIdInternal,
+        profile_owner_id: AccountIdInternal,
+        verification_method: VerificationMethod,
+        verification_unix_time: UnixTime,
+        verification_error_flags: Option<AccountVerificationErrorFlagsValue>,
+        edit: Option<EditVerificationValues>,
     ) -> BoxFuture<'a, server_common::result::Result<(), DataError>>;
 }
 

@@ -96,8 +96,8 @@ pub async fn post_profile_age_range_verified_value(
         .data_all_access()
         .edit_verification_values(
             moderator_id,
+            profile_owner_id,
             EditVerificationValues {
-                profile_owner_id,
                 security_content: None,
                 profile_age_range: Some(EditVerificationProfileAgeRange {
                     current_profile_age: data.current_profile_age,
@@ -188,8 +188,8 @@ pub async fn post_profile_name_verified_value(
         .data_all_access()
         .edit_verification_values(
             moderator_id,
+            profile_owner_id,
             EditVerificationValues {
-                profile_owner_id,
                 security_content: None,
                 profile_age_range: None,
                 profile_name: Some(EditVerificationProfileName {

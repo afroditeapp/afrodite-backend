@@ -107,8 +107,8 @@ pub async fn post_security_content_verified_value(
         .data_all_access()
         .edit_verification_values(
             moderator_id,
+            profile_owner_id,
             EditVerificationValues {
-                profile_owner_id,
                 security_content: Some(EditVerificationSecurityContent {
                     security_content: data.security_content,
                     verified_value: data.value,

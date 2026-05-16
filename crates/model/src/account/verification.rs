@@ -1,9 +1,7 @@
 use diesel::{AsExpression, FromSqlRow, sql_types::SmallInt};
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{NonEmptyString, SimpleDieselEnum, diesel_i16_wrapper};
+use simple_backend_model::{SimpleDieselEnum, diesel_i16_wrapper};
 use utoipa::ToSchema;
-
-use crate::{AccountIdInternal, ContentId, ProfileAge};
 
 #[derive(
     Debug,
@@ -34,11 +32,14 @@ bitflags::bitflags! {
         const VERIFICATION_DATA_PARSING_FAILED = 0x1;
         const VERIFICATION_DATA_VERIFICATION_FAILED = 0x2;
         const PROFILE_AGE_RANGE_VERIFICATION_FAILED = 0x4;
-        const PROFILE_AGE_RANGE_MISMATCH = 0x8;
-        const PROFILE_NAME_VERIFICATION_FAILED = 0x10;
-        const PROFILE_NAME_MISMATCH = 0x20;
-        const SECURITY_CONTENT_VERIFICATION_FAILED = 0x40;
-        const SECURITY_CONTENT_MISMATCH = 0x80;
+        const PROFILE_AGE_RANGE_VERIFICATION_MISMATCH = 0x8;
+        const PROFILE_AGE_RANGE_MISMATCH = 0x10;
+        const PROFILE_NAME_VERIFICATION_FAILED = 0x20;
+        const PROFILE_NAME_VERIFICATION_MISMATCH = 0x40;
+        const PROFILE_NAME_MISMATCH = 0x80;
+        const SECURITY_CONTENT_VERIFICATION_FAILED = 0x100;
+        const SECURITY_CONTENT_VERIFICATION_MISMATCH = 0x200;
+        const SECURITY_CONTENT_MISMATCH = 0x400;
     }
 }
 
@@ -51,6 +52,23 @@ impl TryFrom<i16> for AccountVerificationErrorFlags {
 }
 
 /// Value for account verification error flags.
+///
+/// - VERIFICATION_DATA_PARSING_FAILED = 0x1. Verification data parsing failed.
+/// - VERIFICATION_DATA_VERIFICATION_FAILED = 0x2. Verification data verification failed.
+/// - PROFILE_AGE_RANGE_VERIFICATION_FAILED = 0x4. Profile age range verification failed.
+/// - PROFILE_AGE_RANGE_VERIFICATION_MISMATCH = 0x8. Value in verification data does not match
+///   user set profile age range value.
+/// - PROFILE_AGE_RANGE_MISMATCH = 0x10. User changed profile age range during verification
+///   process.
+/// - PROFILE_NAME_VERIFICATION_FAILED = 0x20. Profile name verification failed.
+/// - PROFILE_NAME_VERIFICATION_MISMATCH = 0x40. Value in verification data does not match
+///   user set profile name value.
+/// - PROFILE_NAME_MISMATCH = 0x80. User changed profile name during verification process.
+/// - SECURITY_CONTENT_VERIFICATION_FAILED = 0x100. Security content verification failed.
+/// - SECURITY_CONTENT_VERIFICATION_MISMATCH = 0x200. Value in verification data does not match
+///   user set security content value.
+/// - SECURITY_CONTENT_MISMATCH = 0x400. User changed security content during verification
+///   process.
 #[derive(
     Debug,
     Clone,
@@ -123,37 +141,4 @@ pub struct AccountVerificationScope {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub profile_name: bool,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct EditVerificationSecurityContent {
-    pub security_content: ContentId,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub verified_value: Option<bool>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct EditVerificationProfileAgeRange {
-    pub current_profile_age: ProfileAge,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub verified_value: Option<bool>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct EditVerificationProfileName {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub current_profile_name: Option<NonEmptyString>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub verified_value: Option<bool>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct EditVerificationValues {
-    pub profile_owner_id: AccountIdInternal,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub security_content: Option<EditVerificationSecurityContent>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub profile_age_range: Option<EditVerificationProfileAgeRange>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub profile_name: Option<EditVerificationProfileName>,
 }

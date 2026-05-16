@@ -1,15 +1,14 @@
 use axum::{Extension, extract::State};
-use model::Permissions;
+use model::{AccountIdInternal, Permissions};
 use model_account::{
     AccountVerificationQueueAdminItem, GetAccountVerificationQueueNextItemResult,
     PostAccountVerificationQueueRemoveNextItem,
 };
 use server_api::{
     S,
-    app::{AccountVerificationQueueProvider, EventManagerProvider, GetAccounts, WriteData},
-    create_open_api_router, db_write,
+    app::{AccountVerificationQueueProvider, EventManagerProvider, GetAccounts},
+    create_open_api_router,
 };
-use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
 
 use crate::utils::{Json, StatusCode};
@@ -87,6 +86,7 @@ const PATH_POST_ACCOUNT_VERIFICATION_QUEUE_REMOVE_NEXT_ITEM: &str =
 pub async fn post_account_verification_queue_remove_next_item(
     State(state): State<S>,
     Extension(permissions): Extension<Permissions>,
+    Extension(moderator_id): Extension<AccountIdInternal>,
     Json(data): Json<PostAccountVerificationQueueRemoveNextItem>,
 ) -> Result<(), StatusCode> {
     ACCOUNT_ADMIN
@@ -102,6 +102,7 @@ pub async fn post_account_verification_queue_remove_next_item(
         verification_method,
         verification_unix_time,
         verification_error_flags,
+        edit,
     } = data;
 
     let expected_account_id = state.get_internal_id(account_id).await?;
@@ -112,16 +113,17 @@ pub async fn post_account_verification_queue_remove_next_item(
         .await;
 
     if removed_item.is_ok() {
-        db_write!(state, move |cmds| {
-            cmds.account()
-                .set_account_verification_data(
-                    expected_account_id,
-                    verification_method,
-                    verification_unix_time,
-                    verification_error_flags,
-                )
-                .await
-        })?;
+        state
+            .data_all_access()
+            .process_removed_account_verification_queue_item(
+                moderator_id,
+                expected_account_id,
+                verification_method,
+                verification_unix_time,
+                verification_error_flags,
+                edit,
+            )
+            .await?;
     }
 
     Ok(())

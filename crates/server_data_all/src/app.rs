@@ -2,7 +2,9 @@ use axum::extract::ws::WebSocket;
 use config::Config;
 use futures::{FutureExt, future::BoxFuture};
 use model::{
-    Account, AccountIdInternal, ClientMessageForDataAllCrate, EditVerificationValues, EmailMessages,
+    Account, AccountIdInternal, AccountVerificationErrorFlags, AccountVerificationErrorFlagsValue,
+    ClientMessageForDataAllCrate, EditVerificationValues, EmailMessages, UnixTime,
+    VerificationMethod,
 };
 use model_account::{EmailAddress, SignInWithInfo};
 use server_common::websocket::WebSocketError;
@@ -157,13 +159,63 @@ impl DataAllUtils for DataAllUtilsImpl {
         &self,
         write_command_runner: &'a WriteCommandRunnerHandle,
         moderator_id: AccountIdInternal,
+        profile_owner_id: AccountIdInternal,
         values: EditVerificationValues,
     ) -> BoxFuture<'a, server_common::result::Result<(), DataError>> {
         crate::edit_verification_values::edit_verification_values(
             write_command_runner,
             moderator_id,
+            profile_owner_id,
             values,
         )
+        .boxed()
+    }
+
+    fn process_removed_account_verification_queue_item<'a>(
+        &self,
+        write_command_runner: &'a WriteCommandRunnerHandle,
+        moderator_id: AccountIdInternal,
+        profile_owner_id: AccountIdInternal,
+        verification_method: VerificationMethod,
+        verification_unix_time: UnixTime,
+        verification_error_flags: Option<AccountVerificationErrorFlagsValue>,
+        edit: Option<EditVerificationValues>,
+    ) -> BoxFuture<'a, server_common::result::Result<(), DataError>> {
+        async move {
+            write_command_runner
+                .write(move |cmds| async move {
+                    let mut merged_flags = verification_error_flags
+                        .map(|v| AccountVerificationErrorFlags::from_bits_retain(v.v))
+                        .unwrap_or(AccountVerificationErrorFlags::empty());
+
+                    if let Some(edit_values) = edit {
+                        merged_flags |=
+                            crate::edit_verification_values::edit_verification_values_in_write_call(
+                                &cmds,
+                                moderator_id,
+                                profile_owner_id,
+                                edit_values,
+                            )
+                            .await?;
+                    }
+
+                    cmds.account()
+                        .set_account_verification_data(
+                            profile_owner_id,
+                            verification_method,
+                            verification_unix_time,
+                            if merged_flags.is_empty() {
+                                None
+                            } else {
+                                Some(merged_flags.into())
+                            },
+                        )
+                        .await?;
+
+                    Ok(())
+                })
+                .await
+        }
         .boxed()
     }
 }
