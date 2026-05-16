@@ -11,8 +11,14 @@ pub async fn edit_verification_values(
 ) -> server_common::result::Result<(), DataError> {
     let flags = write_command_runner
         .write(move |cmds| async move {
-            edit_verification_values_in_write_call(&cmds, moderator_id, profile_owner_id, values)
-                .await
+            edit_verification_values_in_write_call(
+                &cmds,
+                moderator_id,
+                profile_owner_id,
+                values,
+                false,
+            )
+            .await
         })
         .await?;
 
@@ -28,6 +34,7 @@ pub async fn edit_verification_values_in_write_call(
     moderator_id: AccountIdInternal,
     profile_owner_id: AccountIdInternal,
     values: EditVerificationValues,
+    reset_missing_values_to_null: bool,
 ) -> server_common::result::Result<AccountVerificationErrorFlags, DataError> {
     let EditVerificationValues {
         security_content,
@@ -61,6 +68,13 @@ pub async fn edit_verification_values_in_write_call(
                 .await?;
             send_profile_changed_event |= changed;
         }
+    } else if reset_missing_values_to_null {
+        let changed = cmds
+            .profile_admin()
+            .verification()
+            .change_profile_age_range_verified_value(moderator_id, profile_owner_id, None)
+            .await?;
+        send_profile_changed_event |= changed;
     }
 
     if let Some(profile_name) = profile_name {
@@ -86,6 +100,13 @@ pub async fn edit_verification_values_in_write_call(
                 .await?;
             send_profile_changed_event |= changed;
         }
+    } else if reset_missing_values_to_null {
+        let changed = cmds
+            .profile_admin()
+            .verification()
+            .change_profile_name_verified_value(moderator_id, profile_owner_id, None)
+            .await?;
+        send_profile_changed_event |= changed;
     }
 
     if send_profile_changed_event {
@@ -118,6 +139,11 @@ pub async fn edit_verification_values_in_write_call(
                 )
                 .await?;
         }
+    } else if reset_missing_values_to_null {
+        cmds.media_admin()
+            .content()
+            .change_security_content_verified_value(moderator_id, profile_owner_id, None)
+            .await?;
     }
 
     Ok(flags)

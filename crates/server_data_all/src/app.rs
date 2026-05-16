@@ -189,16 +189,20 @@ impl DataAllUtils for DataAllUtilsImpl {
                     let mut merged_flags: AccountVerificationErrorFlags =
                         verification_error_flags.into();
 
-                    if let Some(edit_values) = edit {
-                        merged_flags |=
-                            crate::edit_verification_values::edit_verification_values_in_write_call(
-                                &cmds,
-                                moderator_id,
-                                profile_owner_id,
-                                edit_values,
-                            )
-                            .await?;
-                    }
+                    let edit_values = edit.unwrap_or(EditVerificationValues {
+                        security_content: None,
+                        profile_age_range: None,
+                        profile_name: None,
+                    });
+                    merged_flags |=
+                        crate::edit_verification_values::edit_verification_values_in_write_call(
+                            &cmds,
+                            moderator_id,
+                            profile_owner_id,
+                            edit_values,
+                            true,
+                        )
+                        .await?;
 
                     cmds.account()
                         .set_account_verification_data(
