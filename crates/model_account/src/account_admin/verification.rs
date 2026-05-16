@@ -26,8 +26,7 @@ pub struct PostAccountVerificationQueueRemoveNextItem {
     pub account_id: AccountId,
     pub verification_method: VerificationMethod,
     pub verification_unix_time: UnixTime,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub verification_error_flags: Option<AccountVerificationErrorFlagsValue>,
+    pub verification_error_flags: AccountVerificationErrorFlagsValue,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub edit: Option<EditVerificationValues>,
 }

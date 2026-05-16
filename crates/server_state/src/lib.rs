@@ -258,7 +258,7 @@ impl DataAllAccess<'_> {
         profile_owner_id: AccountIdInternal,
         verification_method: VerificationMethod,
         verification_unix_time: UnixTime,
-        verification_error_flags: Option<AccountVerificationErrorFlagsValue>,
+        verification_error_flags: AccountVerificationErrorFlagsValue,
         edit: Option<EditVerificationValues>,
     ) -> server_common::result::Result<(), DataError> {
         let cmd = self

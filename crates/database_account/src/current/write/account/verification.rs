@@ -14,7 +14,7 @@ impl CurrentWriteAccountVerification<'_> {
         id: AccountIdInternal,
         method: VerificationMethod,
         time: UnixTime,
-        error_flags: Option<AccountVerificationErrorFlagsValue>,
+        error_flags: AccountVerificationErrorFlagsValue,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::account_state::dsl::*;
 

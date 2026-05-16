@@ -185,7 +185,7 @@ diesel::table! {
         account_locked -> Bool,
         account_verification_method -> Nullable<Int2>,
         account_verification_unix_time -> Nullable<Int8>,
-        account_verification_error_flags -> Nullable<Int2>,
+        account_verification_error_flags -> Int2,
     }
 }
 

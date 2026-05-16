@@ -475,7 +475,7 @@ CREATE TABLE IF NOT EXISTS account_state(
     account_locked                     BOOLEAN             NOT NULL DEFAULT FALSE,
     account_verification_method        SMALLINT,
     account_verification_unix_time     BIGINT,
-    account_verification_error_flags   SMALLINT,
+    account_verification_error_flags   SMALLINT            NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

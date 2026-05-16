@@ -178,15 +178,14 @@ impl DataAllUtils for DataAllUtilsImpl {
         profile_owner_id: AccountIdInternal,
         verification_method: VerificationMethod,
         verification_unix_time: UnixTime,
-        verification_error_flags: Option<AccountVerificationErrorFlagsValue>,
+        verification_error_flags: AccountVerificationErrorFlagsValue,
         edit: Option<EditVerificationValues>,
     ) -> BoxFuture<'a, server_common::result::Result<(), DataError>> {
         async move {
             write_command_runner
                 .write(move |cmds| async move {
-                    let mut merged_flags = verification_error_flags
-                        .map(|v| AccountVerificationErrorFlags::from_bits_retain(v.v))
-                        .unwrap_or(AccountVerificationErrorFlags::empty());
+                    let mut merged_flags: AccountVerificationErrorFlags =
+                        verification_error_flags.into();
 
                     if let Some(edit_values) = edit {
                         merged_flags |=
@@ -204,11 +203,7 @@ impl DataAllUtils for DataAllUtilsImpl {
                             profile_owner_id,
                             verification_method,
                             verification_unix_time,
-                            if merged_flags.is_empty() {
-                                None
-                            } else {
-                                Some(merged_flags.into())
-                            },
+                            merged_flags.into(),
                         )
                         .await?;
 

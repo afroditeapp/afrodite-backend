@@ -367,7 +367,7 @@ pub struct AccountStateTableRaw {
     account_locked: bool,
     account_verification_method: Option<VerificationMethod>,
     account_verification_unix_time: Option<UnixTime>,
-    account_verification_error_flags: Option<AccountVerificationErrorFlagsValue>,
+    account_verification_error_flags: AccountVerificationErrorFlagsValue,
 }
 
 /// Global state for account component

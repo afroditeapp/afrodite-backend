@@ -8,7 +8,7 @@ use utoipa::ToSchema;
 pub struct AccountVerificationDataInternal {
     pub verification_method: Option<VerificationMethod>,
     pub verification_unix_time: Option<UnixTime>,
-    pub verification_error_flags: Option<AccountVerificationErrorFlagsValue>,
+    pub verification_error_flags: AccountVerificationErrorFlagsValue,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, ToSchema)]
@@ -66,7 +66,6 @@ pub struct AccountVerificationQueueStatus {
     pub verification_method: Option<VerificationMethod>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub verification_unix_time: Option<UnixTime>,
-    /// Null means there are no known verification errors.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub verification_error_flags: Option<AccountVerificationErrorFlagsValue>,
+    /// Empty flags value means there are no known verification errors.
+    pub verification_error_flags: AccountVerificationErrorFlagsValue,
 }

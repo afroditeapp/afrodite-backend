@@ -121,6 +121,12 @@ impl From<AccountVerificationErrorFlags> for AccountVerificationErrorFlagsValue 
     }
 }
 
+impl From<AccountVerificationErrorFlagsValue> for AccountVerificationErrorFlags {
+    fn from(value: AccountVerificationErrorFlagsValue) -> Self {
+        Self::from_bits_retain(value.v)
+    }
+}
+
 diesel_i16_wrapper!(AccountVerificationErrorFlagsValue);
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

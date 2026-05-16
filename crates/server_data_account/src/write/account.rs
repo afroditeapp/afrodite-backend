@@ -147,7 +147,7 @@ impl WriteCommandsAccount<'_> {
         id: AccountIdInternal,
         method: VerificationMethod,
         time: UnixTime,
-        error_flags: Option<AccountVerificationErrorFlagsValue>,
+        error_flags: AccountVerificationErrorFlagsValue,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.account().verification().set_account_verification_data(
