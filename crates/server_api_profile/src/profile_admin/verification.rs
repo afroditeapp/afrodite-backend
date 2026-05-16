@@ -2,17 +2,19 @@ use axum::{
     Extension,
     extract::{Path, State},
 };
-use model::AccountId;
+use model::{
+    AccountId, EditVerificationProfileAgeRange, EditVerificationProfileName, EditVerificationValues,
+};
 use model_profile::{
     Permissions, PostProfileAgeRangeVerifiedValue, PostProfileNameVerifiedValue,
     ProfileAgeRangeVerificationAdminInfo, ProfileNameVerificationAdminInfo,
 };
-use server_api::{S, app::GetAccounts, create_open_api_router, db_write};
-use server_data_profile::{read::GetReadProfileCommands, write::GetWriteCommandsProfile};
+use server_api::{S, app::GetAccounts, create_open_api_router};
+use server_data_profile::read::GetReadProfileCommands;
 use simple_backend::create_counters;
 
 use crate::{
-    app::{ReadData, WriteData},
+    app::ReadData,
     utils::{Json, StatusCode},
 };
 
@@ -90,13 +92,20 @@ pub async fn post_profile_age_range_verified_value(
 
     let profile_owner_id = state.get_internal_id(data.account_id).await?;
 
-    db_write!(state, move |cmds| {
-        cmds.profile_admin()
-            .verification()
-            .change_profile_age_range_verified_value(moderator_id, profile_owner_id, data.value)
-            .await?;
-        Ok(())
-    })?;
+    state
+        .data_all_access()
+        .edit_verification_values(
+            moderator_id,
+            EditVerificationValues {
+                profile_owner_id,
+                security_content: None,
+                profile_age_range: Some(EditVerificationProfileAgeRange {
+                    verified_value: data.value,
+                }),
+                profile_name: None,
+            },
+        )
+        .await?;
 
     Ok(())
 }
@@ -174,13 +183,20 @@ pub async fn post_profile_name_verified_value(
 
     let profile_owner_id = state.get_internal_id(data.account_id).await?;
 
-    db_write!(state, move |cmds| {
-        cmds.profile_admin()
-            .verification()
-            .change_profile_name_verified_value(moderator_id, profile_owner_id, data.value)
-            .await?;
-        Ok(())
-    })?;
+    state
+        .data_all_access()
+        .edit_verification_values(
+            moderator_id,
+            EditVerificationValues {
+                profile_owner_id,
+                security_content: None,
+                profile_age_range: None,
+                profile_name: Some(EditVerificationProfileName {
+                    verified_value: data.value,
+                }),
+            },
+        )
+        .await?;
 
     Ok(())
 }

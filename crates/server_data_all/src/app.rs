@@ -1,7 +1,9 @@
 use axum::extract::ws::WebSocket;
 use config::Config;
 use futures::{FutureExt, future::BoxFuture};
-use model::{Account, AccountIdInternal, ClientMessageForDataAllCrate, EmailMessages};
+use model::{
+    Account, AccountIdInternal, ClientMessageForDataAllCrate, EditVerificationValues, EmailMessages,
+};
 use model_account::{EmailAddress, SignInWithInfo};
 use server_common::websocket::WebSocketError;
 use server_data::{
@@ -148,6 +150,20 @@ impl DataAllUtils for DataAllUtilsImpl {
             crate::data_export::data_export(write_command_runner, zip_main_directory_name, cmd)
                 .await
         }
+        .boxed()
+    }
+
+    fn edit_verification_values<'a>(
+        &self,
+        write_command_runner: &'a WriteCommandRunnerHandle,
+        moderator_id: AccountIdInternal,
+        values: EditVerificationValues,
+    ) -> BoxFuture<'a, server_common::result::Result<(), DataError>> {
+        crate::edit_verification_values::edit_verification_values(
+            write_command_runner,
+            moderator_id,
+            values,
+        )
         .boxed()
     }
 }

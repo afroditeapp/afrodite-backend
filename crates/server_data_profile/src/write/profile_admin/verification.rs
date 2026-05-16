@@ -16,7 +16,7 @@ impl WriteCommandsProfileAdminVerification<'_> {
         moderator_id: AccountIdInternal,
         account: AccountIdInternal,
         value: Option<bool>,
-    ) -> Result<(), DataError> {
+    ) -> Result<bool, DataError> {
         let (profile_state, moderator_is_bot) = self
             .db_read(move |mut cmds| {
                 let profile_state = cmds.profile().data().profile_state(account)?;
@@ -36,7 +36,7 @@ impl WriteCommandsProfileAdminVerification<'_> {
         };
 
         if value_already_set {
-            return Ok(());
+            return Ok(false);
         }
 
         let modification = ProfileModificationMetadata::generate();
@@ -72,11 +72,7 @@ impl WriteCommandsProfileAdminVerification<'_> {
 
         self.update_location_cache_profile(account).await?;
 
-        self.event_manager()
-            .send_connected_event(account, EventToClientInternal::ProfileChanged)
-            .await?;
-
-        Ok(())
+        Ok(true)
     }
 
     pub async fn change_profile_name_verified_value(
@@ -84,7 +80,7 @@ impl WriteCommandsProfileAdminVerification<'_> {
         moderator_id: AccountIdInternal,
         account: AccountIdInternal,
         value: Option<bool>,
-    ) -> Result<(), DataError> {
+    ) -> Result<bool, DataError> {
         let (profile_state, moderator_is_bot) = self
             .db_read(move |mut cmds| {
                 let profile_state = cmds.profile().data().profile_state(account)?;
@@ -104,7 +100,7 @@ impl WriteCommandsProfileAdminVerification<'_> {
         };
 
         if value_already_set {
-            return Ok(());
+            return Ok(false);
         }
 
         let modification = ProfileModificationMetadata::generate();
@@ -140,6 +136,13 @@ impl WriteCommandsProfileAdminVerification<'_> {
 
         self.update_location_cache_profile(account).await?;
 
+        Ok(true)
+    }
+
+    pub async fn send_profile_changed_event(
+        &self,
+        account: AccountIdInternal,
+    ) -> Result<(), DataError> {
         self.event_manager()
             .send_connected_event(account, EventToClientInternal::ProfileChanged)
             .await?;

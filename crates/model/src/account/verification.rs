@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 use simple_backend_model::{SimpleDieselEnum, diesel_i16_wrapper};
 use utoipa::ToSchema;
 
+use crate::{AccountIdInternal, ContentId};
+
 #[derive(
     Debug,
     Clone,
@@ -121,4 +123,34 @@ pub struct AccountVerificationScope {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub profile_name: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EditVerificationSecurityContent {
+    pub security_content: ContentId,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub verified_value: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EditVerificationProfileAgeRange {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub verified_value: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EditVerificationProfileName {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub verified_value: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EditVerificationValues {
+    pub profile_owner_id: AccountIdInternal,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub security_content: Option<EditVerificationSecurityContent>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub profile_age_range: Option<EditVerificationProfileAgeRange>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub profile_name: Option<EditVerificationProfileName>,
 }

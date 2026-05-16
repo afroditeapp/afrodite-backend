@@ -3,7 +3,9 @@ use std::{future::Future, sync::Arc};
 use axum::extract::ws::WebSocket;
 use config::{Config, file::EmailAddress};
 use futures::future::BoxFuture;
-use model::{Account, AccountId, AccountIdInternal, ClientMessageForDataAllCrate};
+use model::{
+    Account, AccountId, AccountIdInternal, ClientMessageForDataAllCrate, EditVerificationValues,
+};
 use model_server_data::SignInWithInfo;
 pub use server_common::app::*;
 use server_common::websocket::WebSocketError;
@@ -170,6 +172,13 @@ pub trait DataAllUtils: Send + Sync + 'static {
         write_handle: &'a WriteCommandRunnerHandle,
         zip_main_directory_name: String,
         cmd: DataExportCmd,
+    ) -> BoxFuture<'a, server_common::result::Result<(), DataError>>;
+
+    fn edit_verification_values<'a>(
+        &self,
+        write_command_runner: &'a WriteCommandRunnerHandle,
+        moderator_id: AccountIdInternal,
+        values: EditVerificationValues,
     ) -> BoxFuture<'a, server_common::result::Result<(), DataError>>;
 }
 

@@ -5,6 +5,7 @@
 
 pub mod app;
 pub mod data_export;
+pub mod edit_verification_values;
 pub mod initial_setup;
 pub mod load;
 pub mod register;

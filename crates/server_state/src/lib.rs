@@ -12,7 +12,7 @@ use client_version::ClientVersionTracker;
 use config::Config;
 use data_signer::DataSigner;
 use ip_address::IpAddressUsageTracker;
-use model::{Account, AccountIdInternal, ClientMessageForDataAllCrate};
+use model::{Account, AccountIdInternal, ClientMessageForDataAllCrate, EditVerificationValues};
 use model_chat::SignInWithInfo;
 use model_server_data::EmailAddress;
 use server_common::{push_notifications::PushNotificationSender, websocket::WebSocketError};
@@ -231,6 +231,17 @@ impl DataAllAccess<'_> {
         let cmd = self
             .utils()
             .data_export(self.write(), zip_main_directory_name, cmd);
+        cmd.await
+    }
+
+    pub async fn edit_verification_values(
+        &self,
+        moderator_id: AccountIdInternal,
+        values: EditVerificationValues,
+    ) -> server_common::result::Result<(), DataError> {
+        let cmd = self
+            .utils()
+            .edit_verification_values(self.write(), moderator_id, values);
         cmd.await
     }
 }

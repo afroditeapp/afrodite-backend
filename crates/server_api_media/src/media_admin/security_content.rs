@@ -2,24 +2,20 @@ use axum::{
     Extension,
     extract::{Path, State},
 };
+use model::{EditVerificationSecurityContent, EditVerificationValues};
 use model_media::{
     AccountId, AccountIdInternal, Permissions, PostSecurityContentVerifiedValue,
     SecurityContentAdminInfo,
 };
 use server_api::{
-    DataError, S,
+    S,
     app::{GetAccounts, ReadData},
     create_open_api_router,
-    result::WrappedContextExt,
 };
-use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
+use server_data_media::read::GetReadMediaCommands;
 use simple_backend::create_counters;
 
-use crate::{
-    app::WriteData,
-    db_write,
-    utils::{Json, StatusCode},
-};
+use crate::utils::{Json, StatusCode};
 
 const PATH_GET_SECURITY_CONTENT_ADMIN_INFO: &str = "/media_api/security_content_admin_info/{aid}";
 
@@ -105,28 +101,23 @@ pub async fn post_security_content_verified_value(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let content_owner = state.get_internal_id(data.account_id).await?;
+    let profile_owner_id = state.get_internal_id(data.account_id).await?;
 
-    db_write!(state, move |cmds| {
-        let current_security_content = cmds
-            .read()
-            .media()
-            .current_account_media(content_owner)
-            .await?
-            .security_content_id
-            .map(|v| v.content_id());
-
-        if current_security_content != Some(data.security_content) {
-            return Err(DataError::NotAllowed.report());
-        }
-
-        cmds.media_admin()
-            .content()
-            .change_security_content_verified_value(moderator_id, content_owner, data.value)
-            .await?;
-
-        Ok(())
-    })?;
+    state
+        .data_all_access()
+        .edit_verification_values(
+            moderator_id,
+            EditVerificationValues {
+                profile_owner_id,
+                security_content: Some(EditVerificationSecurityContent {
+                    security_content: data.security_content,
+                    verified_value: data.value,
+                }),
+                profile_age_range: None,
+                profile_name: None,
+            },
+        )
+        .await?;
 
     Ok(())
 }
