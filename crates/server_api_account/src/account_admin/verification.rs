@@ -1,5 +1,5 @@
 use axum::{Extension, extract::State};
-use model::{AccountIdInternal, Permissions};
+use model::{AccountIdInternal, Permissions, UnixTime};
 use model_account::{
     AccountVerificationQueueAdminItem, GetAccountVerificationQueueNextItemResult,
     PostAccountVerificationQueueRemoveNextItem,
@@ -99,8 +99,6 @@ pub async fn post_account_verification_queue_remove_next_item(
 
     let PostAccountVerificationQueueRemoveNextItem {
         account_id,
-        verification_method,
-        verification_unix_time,
         verification_error_flags,
         edit,
     } = data;
@@ -112,14 +110,14 @@ pub async fn post_account_verification_queue_remove_next_item(
         .remove_next_item(expected_account_id, &state.event_manager())
         .await;
 
-    if removed_item.is_ok() {
+    if let Ok(removed_item) = removed_item {
         state
             .data_all_access()
             .process_removed_account_verification_queue_item(
                 moderator_id,
                 expected_account_id,
-                verification_method,
-                verification_unix_time,
+                removed_item.verification_method,
+                UnixTime::current_time(),
                 verification_error_flags,
                 edit,
             )

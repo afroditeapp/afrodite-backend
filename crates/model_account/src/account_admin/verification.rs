@@ -1,5 +1,5 @@
 use model::{
-    AccountVerificationErrorFlagsValue, AccountVerificationScope, EditVerificationValues, UnixTime,
+    AccountVerificationErrorFlagsValue, AccountVerificationScope, EditVerificationValues,
     VerificationMethod,
 };
 use serde::{Deserialize, Serialize};
@@ -24,8 +24,6 @@ pub struct GetAccountVerificationQueueNextItemResult {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct PostAccountVerificationQueueRemoveNextItem {
     pub account_id: AccountId,
-    pub verification_method: VerificationMethod,
-    pub verification_unix_time: UnixTime,
     pub verification_error_flags: AccountVerificationErrorFlagsValue,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub edit: Option<EditVerificationValues>,
