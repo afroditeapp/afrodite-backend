@@ -8,3 +8,5 @@ Don't modify `api_client` crate or code which depends on it unless explicitly
 requested.
 
 Format code with `make fmt` command.
+
+Use built-in workspace tools if possible.
