@@ -45,6 +45,10 @@ impl MediaContentUploadType {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct NewContentParams {
+    /// Content slot index. Slots from 0 to 6 are available.
+    pub slot_id: u8,
+    /// ID which is added to processing state events
+    pub processing_id_from_client: u8,
     /// Client captured this content.
     pub secure_capture: bool,
     pub content_type: MediaContentUploadType,

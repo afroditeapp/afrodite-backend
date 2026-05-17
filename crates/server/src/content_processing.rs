@@ -1,6 +1,7 @@
 use config::Config;
 use model::{
-    AdminBotNotificationTypes, AdminNotificationTypes, ContentId, ContentProcessingStateInternal,
+    AdminBotNotificationTypes, AdminNotificationTypes, ContentId, ContentProcessingStateChanged,
+    ContentProcessingStateInternal,
 };
 use model_media::MediaContentUploadType;
 use server_api::{
@@ -65,25 +66,35 @@ impl ContentProcessingManager {
         ContentProcessingManagerQuitHandle { task }
     }
 
-    pub async fn run(
+    async fn run(
         self,
-        mut receiver: ContentProcessingReceiver,
+        receiver: ContentProcessingReceiver,
         mut quit_notification: ServerQuitWatcher,
     ) {
         loop {
             tokio::select! {
-                item = receiver.0.recv() => {
-                    match item {
-                        Some(item) => {
-                            let new_content = self.state.content_processing().pop_from_queue(self.state.event_manager(), item).await;
-                            if let Some(content) = new_content {
-                                self.handle_content(content).await;
-                            }
+                _ = receiver.0.notified() => {
+                    while let Some(content) = self
+                        .state
+                        .content_processing()
+                        .pop_from_queue(self.state.event_manager())
+                        .await
+                    {
+                        let content_owner = content.content_owner;
+                        let new_state = self.handle_content(content).await;
+                        self.state
+                            .content_processing()
+                            .set_processing_phase_idle(content_owner)
+                            .await;
+                        if let Some(new_state) = new_state {
+                            self.state
+                                .event_manager()
+                                .send_content_processing_state_changed_to_client(
+                                    content_owner,
+                                    new_state,
+                                )
+                                .await;
                         }
-                        None => {
-                            error!("Content processing event channel is broken");
-                            return;
-                        },
                     }
                 }
                 _ = quit_notification.recv() => {
@@ -93,7 +104,10 @@ impl ContentProcessingManager {
         }
     }
 
-    pub async fn handle_content(&self, content: ProcessingState) {
+    async fn handle_content(
+        &self,
+        content: ProcessingState,
+    ) -> Option<ContentProcessingStateChanged> {
         let result = match content.new_content_params.content_type {
             MediaContentUploadType::Image => {
                 let state = self.state.clone();
@@ -119,7 +133,9 @@ impl ContentProcessingManager {
         };
 
         let mut write = self.state.content_processing().data().write().await;
-        if let Some(state) = write.processing_states_mut().get_mut(&content.to_key()) {
+        let new_state = if let Some(state) =
+            write.processing_states_mut().get_mut(&content.to_key())
+        {
             let result = self
                 .if_successful_and_no_nsfw_then_save_to_database(self.state.config(), result, state)
                 .await;
@@ -142,23 +158,23 @@ impl ContentProcessingManager {
                 }
             }
 
-            self.state
-                .event_manager()
-                .send_content_processing_state_change_to_client(state)
-                .await;
+            Some(state.to_content_processing_state_changed())
         } else {
             warn!("Content processing state not found");
             match result {
-                Ok(_) => (),
+                Ok(_) => None,
                 Err(e) => {
                     error!("Content processing error: {:?}", e);
+                    None
                 }
             }
-        }
+        };
 
         if let Err(e) = content.tmp_raw_img.overwrite_and_remove_if_exists().await {
             warn!("content.tmp_raw_img removing failed {:?}", e)
         }
+
+        new_state
     }
 
     async fn if_successful_and_no_nsfw_then_save_to_database(

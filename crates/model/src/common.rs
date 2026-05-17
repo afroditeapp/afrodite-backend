@@ -61,8 +61,7 @@ pub struct ManualServerMaintenanceInfoForAnotherServer {
 
 #[derive(Debug, Clone)]
 pub struct ContentProcessingStateChanged {
-    /// Server process specific unique ID.
-    pub id: i64,
+    pub processing_id_from_client: u8,
     pub new_state: ContentProcessingStateInternal,
 }
 

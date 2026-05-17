@@ -488,6 +488,30 @@ impl SetProfileContent {
     }
 }
 
+#[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]
+pub struct PutContentToContentSlotResult {
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub error: bool,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub error_content_processing_ongoing: bool,
+}
+
+impl PutContentToContentSlotResult {
+    pub fn ok() -> Self {
+        Self::default()
+    }
+
+    pub fn error_content_processing_ongoing() -> Self {
+        Self {
+            error: true,
+            error_content_processing_ongoing: true,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct UpdateProfileContentResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]

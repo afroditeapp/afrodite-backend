@@ -81,14 +81,13 @@ pub use parser::parse_server_binary_message;
 ///       - profile content version as 16-byte big-endian UUID
 ///       - null last seen time (0 byte) or last seen time as minimal i64
 /// - `ContentProcessingStateChanged` (90): payload format:
-///   - content processing server process ID as minimal i64
+///   - client-provided processing id byte (u8)
 ///   - content processing state byte:
-///     - 0: Empty
-///     - 1: InQueue
-///     - 2: Processing
-///     - 3: Completed
-///     - 4: Failed
-///     - 5: NsfwDetected
+///     - 0: InQueue
+///     - 1: Processing
+///     - 2: Completed
+///     - 3: Failed
+///     - 4: NsfwDetected
 ///   - state specific data:
 ///     - InQueue: queue number as minimal i64
 ///     - Completed:
@@ -369,7 +368,7 @@ fn append_content_processing_state_changed_payload(
     buffer: &mut Vec<u8>,
     value: &ContentProcessingStateChanged,
 ) {
-    minimal_i64::add_minimal_i64(buffer, value.id);
+    buffer.push(value.processing_id_from_client);
     let state_type = value.new_state.state_type();
     buffer.push(state_type as u8);
 
@@ -386,8 +385,7 @@ fn append_content_processing_state_changed_payload(
             buffer.extend_from_slice(content_id.cid.as_bytes());
             buffer.push(u8::from(face_detected));
         }
-        ContentProcessingStateInternal::Empty
-        | ContentProcessingStateInternal::Processing
+        ContentProcessingStateInternal::Processing
         | ContentProcessingStateInternal::Failed
         | ContentProcessingStateInternal::NsfwDetected => (),
     }

@@ -7,9 +7,9 @@ use axum_extra::TypedHeader;
 use headers::{CacheControl, ContentLength, ContentType, ETag, IfNoneMatch};
 use model::{EventToClientInternal, NotificationEvent, PendingAppNotificationInternal};
 use model_media::{
-    AccountContent, AccountId, AccountIdInternal, AccountState, ContentId, ContentProcessingId,
-    ContentProcessingState, ContentSlot, GetContentQueryParams, NewContentParams, Permissions,
-    SlotId,
+    AccountContent, AccountId, AccountIdInternal, AccountState, ContentId, ContentProcessingState,
+    ContentSlot, GetContentQueryParams, NewContentParams, Permissions,
+    PutContentToContentSlotResult,
 };
 use server_api::{
     S,
@@ -20,6 +20,7 @@ use server_api::{
 };
 use server_data::{
     DataError,
+    content_processing::ContentProcessingOngoing,
     read::GetReadCommandsCommon,
     write::GetWriteCommandsCommon,
     write_concurrent::{ConcurrentWriteAction, ConcurrentWriteContentHandle},
@@ -230,52 +231,47 @@ pub async fn get_all_account_media_content(
     .into())
 }
 
-const PATH_PUT_CONTENT_TO_CONTENT_SLOT: &str = "/media_api/content_slot/{slot_id}";
+const PATH_PUT_UPLOAD_CONTENT: &str = "/media_api/upload_content";
 
-/// Upload content to server. The content is saved to content processing
+/// Upload content to server for processing.
+///
+/// The processed content is saved to content processing
 /// slot when account state is [model::AccountState::InitialSetup].
 /// In other states the slot number is ignored and content goes
-/// directly to moderation.
+/// directly to moderation. Slots from 0 to 6 are available.
 ///
-/// Processing ID will be returned and processing of the content
+/// When no errors are returned, processing of the content
 /// will begin. Events about the content processing will be sent
 /// to the client.
 ///
-/// The state of the processing can be also queired. The querying is
-/// required to receive the content ID.
-///
-/// Slots from 0 to 6 are available.
-///
-/// One account can only have one content in upload or processing state.
-/// New upload might potentially delete the previous if processing of it is
-/// not complete.
+/// One account can only have one content in upload or processing ongoing.
+/// Ongoing upload can be cancelled by starting another upload. When processing
+/// is ongoing, uploading can't be done.
 ///
 /// Content processing will fail if image content resolution width or height
 /// value is less than 512.
-///
 #[utoipa::path(
     put,
-    path = PATH_PUT_CONTENT_TO_CONTENT_SLOT,
-    params(SlotId, NewContentParams),
+    path = PATH_PUT_UPLOAD_CONTENT,
+    params(NewContentParams),
     request_body(content = inline(model::BinaryData), content_type = "application/octet-stream"),
     responses(
-        (status = 200, description = "Image upload was successful.", body = ContentProcessingId),
+        (status = 200, description = "Image upload result.", body = PutContentToContentSlotResult),
         (status = 401, description = "Unauthorized."),
         (status = 406, description = "Unknown slot ID."),
         (status = 500, description = "Internal server error."),
     ),
     security(("access_token" = [])),
 )]
-pub async fn put_content_to_content_slot(
+pub async fn put_upload_content(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
-    Path(slot_number): Path<SlotId>,
     Query(new_content_params): Query<NewContentParams>,
     content_data: Body,
-) -> Result<Json<ContentProcessingId>, StatusCode> {
-    MEDIA.put_content_to_content_slot.incr();
+) -> Result<Json<PutContentToContentSlotResult>, StatusCode> {
+    MEDIA.put_upload_content.incr();
 
-    let slot = TryInto::<ContentSlot>::try_into(slot_number.slot_id as i16)
+    let slot = TryInto::<ContentSlot>::try_into(new_content_params.slot_id as i16)
         .map_err(|_| StatusCode::NOT_ACCEPTABLE)?;
 
     let count = state
@@ -287,13 +283,22 @@ pub async fn put_content_to_content_slot(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
+    let upload_permit = match state.content_processing().begin_upload(account_id).await {
+        Ok(v) => v,
+        Err(ContentProcessingOngoing) => {
+            return Ok(PutContentToContentSlotResult::error_content_processing_ongoing().into());
+        }
+    };
+
     let stream = content_data.into_data_stream();
 
     let content_info = state
         .write_concurrent(account_id.as_id(), move |cmds| async move {
             let out: ConcurrentWriteAction<crate::result::Result<_, DataError>> = cmds
                 .accquire_image(move |cmds: ConcurrentWriteContentHandle| {
-                    Box::new(async move { cmds.save_to_tmp(account_id, slot, stream).await })
+                    Box::new(
+                        async move { cmds.save_to_tmp(account_id, stream, upload_permit).await },
+                    )
                 })
                 .await;
             out
@@ -302,41 +307,36 @@ pub async fn put_content_to_content_slot(
 
     state
         .content_processing()
-        .queue_new_content(account_id, slot, content_info.clone(), new_content_params)
-        .await?;
+        .queue_new_content(account_id, slot, content_info, new_content_params)
+        .await;
 
-    Ok(content_info.processing_id.into())
+    Ok(PutContentToContentSlotResult::ok().into())
 }
 
-const PATH_GET_CONTENT_SLOT_STATE: &str = "/media_api/content_slot/{slot_id}";
+const PATH_GET_CONTENT_PROCESSING_STATE: &str = "/media_api/content_processing_state";
 
-/// Get state of content slot.
-///
-/// Slots from 0 to 6 are available.
-///
+/// Get current content processing state for account.
 #[utoipa::path(
     get,
-    path = PATH_GET_CONTENT_SLOT_STATE,
-    params(SlotId),
+    path = PATH_GET_CONTENT_PROCESSING_STATE,
     responses(
         (status = 200, description = "Successful.", body = ContentProcessingState),
         (status = 401, description = "Unauthorized."),
-        (status = 406, description = "Unknown slot ID."),
         (status = 500, description = "Internal server error."),
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_content_slot_state(
+pub async fn get_content_processing_state(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
-    Path(slot_number): Path<SlotId>,
 ) -> Result<Json<ContentProcessingState>, StatusCode> {
-    MEDIA.get_content_slot_state.incr();
+    MEDIA.get_content_processing_state.incr();
 
-    let slot = TryInto::<ContentSlot>::try_into(slot_number.slot_id as i16)
-        .map_err(|_| StatusCode::NOT_ACCEPTABLE)?;
-
-    if let Some(state) = state.content_processing().get_state(account_id, slot).await {
+    if let Some(state) = state
+        .content_processing()
+        .get_current_state(account_id)
+        .await
+    {
         Ok(state.into())
     } else {
         Ok(ContentProcessingState::default().into())
@@ -450,12 +450,12 @@ pub async fn delete_content(
 }
 
 create_open_api_router!(
-        fn router_content,
-        get_content,
-        get_all_account_media_content,
-        put_content_to_content_slot,
-        get_content_slot_state,
-        delete_content,
+    fn router_content,
+    get_content,
+    get_all_account_media_content,
+    put_upload_content,
+    get_content_processing_state,
+    delete_content,
 );
 
 create_counters!(
@@ -464,8 +464,8 @@ create_counters!(
     MEDIA_CONTENT_COUNTERS_LIST,
     get_content,
     get_all_account_media_content,
-    get_content_slot_state,
-    put_content_to_content_slot,
+    get_content_processing_state,
+    put_upload_content,
     delete_content,
     delete_content_for_content_owner,
     delete_content_for_admin,

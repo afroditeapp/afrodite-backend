@@ -3,13 +3,13 @@ use std::path::{Path, PathBuf};
 use axum::body::BodyDataStream;
 use config::Config;
 use error_stack::{Result, ResultExt};
-use model::{AccountId, ContentId, ContentProcessingId};
+use model::{AccountId, ContentId};
 use server_common::data::DataError;
 use simple_backend_database::data::create_dirs_and_get_files_dir_path;
 use simple_backend_utils::{
     ContextExt, consts::MIB_IN_BYTES, file::overwrite_and_remove_if_exists,
 };
-use tokio::io::AsyncWriteExt;
+use tokio::{io::AsyncWriteExt, sync::oneshot};
 use tokio_stream::{StreamExt, wrappers::ReadDirStream};
 use tokio_util::io::ReaderStream;
 
@@ -19,6 +19,8 @@ pub const TMP_DIR_NAME: &str = "tmp";
 pub const CONTENT_DIR_NAME: &str = "content";
 
 const MAX_TMP_FILE_SIZE: usize = MIB_IN_BYTES * 10; // 10 MiB
+const TMP_RAW_UPLOAD_FILE_NAME: &str = "content.raw";
+const TMP_PROCESSED_UPLOAD_FILE_NAME: &str = "content.processed";
 
 /// Path to directory which contains all account data directories.
 #[derive(Debug, Clone)]
@@ -35,24 +37,12 @@ impl FileDir {
     }
 
     /// Unprocessed content upload.
-    pub fn raw_content_upload(
-        &self,
-        id: AccountId,
-        content_id: ContentProcessingId,
-    ) -> TmpContentFile {
-        self.account_dir(id)
-            .tmp_dir()
-            .raw_content_upload(content_id)
+    pub fn raw_content_upload(&self, id: AccountId) -> TmpContentFile {
+        self.account_dir(id).tmp_dir().raw_content_upload()
     }
 
-    pub fn processed_content_upload(
-        &self,
-        id: AccountId,
-        content_id: ContentProcessingId,
-    ) -> TmpContentFile {
-        self.account_dir(id)
-            .tmp_dir()
-            .processed_content_upload(content_id)
+    pub fn processed_content_upload(&self, id: AccountId) -> TmpContentFile {
+        self.account_dir(id).tmp_dir().processed_content_upload()
     }
 
     pub fn media_content(&self, id: AccountId, content_id: ContentId) -> ContentFile {
@@ -141,15 +131,15 @@ impl TmpDir {
         }
     }
 
-    pub fn raw_content_upload(mut self, id: ContentProcessingId) -> TmpContentFile {
-        self.dir.push(id.raw_content_file_name());
+    pub fn raw_content_upload(mut self) -> TmpContentFile {
+        self.dir.push(TMP_RAW_UPLOAD_FILE_NAME);
         TmpContentFile {
             path: PathToFile { path: self.dir },
         }
     }
 
-    pub fn processed_content_upload(mut self, id: ContentProcessingId) -> TmpContentFile {
-        self.dir.push(id.content_file_name());
+    pub fn processed_content_upload(mut self) -> TmpContentFile {
+        self.dir.push(TMP_PROCESSED_UPLOAD_FILE_NAME);
         TmpContentFile {
             path: PathToFile { path: self.dir },
         }
@@ -216,8 +206,12 @@ pub struct TmpContentFile {
 }
 
 impl TmpContentFile {
-    pub async fn save_stream(&self, stream: BodyDataStream) -> Result<(), FileError> {
-        self.path.save_stream(stream).await
+    pub async fn save_stream_with_cancel(
+        &self,
+        stream: BodyDataStream,
+        cancel: &mut oneshot::Receiver<()>,
+    ) -> Result<(), FileError> {
+        self.path.save_stream_with_cancel(stream, cancel).await
     }
 
     pub async fn move_to(self, new_location: &ContentFile) -> Result<(), FileError> {
@@ -228,7 +222,7 @@ impl TmpContentFile {
         self.path.move_to_blocking(&new_location.path)
     }
 
-    pub async fn overwrite_and_remove_if_exists(self) -> Result<(), FileError> {
+    pub async fn overwrite_and_remove_if_exists(&self) -> Result<(), FileError> {
         self.path.overwrite_and_remove_if_exists().await
     }
 
@@ -298,7 +292,11 @@ impl PathToFile {
         }
     }
 
-    pub async fn save_stream(&self, mut stream: BodyDataStream) -> Result<(), FileError> {
+    pub async fn save_stream_with_cancel(
+        &self,
+        mut stream: BodyDataStream,
+        cancel: &mut oneshot::Receiver<()>,
+    ) -> Result<(), FileError> {
         self.create_parent_dirs().await?;
 
         let mut file = tokio::fs::File::create(&self.path)
@@ -307,16 +305,29 @@ impl PathToFile {
 
         let mut file_size = 0;
 
-        while let Some(result) = stream.next().await {
-            let mut data = result.change_context(FileError::StreamReadFailed)?;
-            file_size += data.len();
-            if file_size > MAX_TMP_FILE_SIZE {
-                return Err(FileError::FileUploadMaxFileSizeReached.report());
+        loop {
+            tokio::select! {
+                _ = &mut *cancel => {
+                    return Err(FileError::FileUploadCancelled.report());
+                }
+                result = stream.next() => {
+                    match result {
+                        Some(result) => {
+                            let mut data = result.change_context(FileError::StreamReadFailed)?;
+                            file_size += data.len();
+                            if file_size > MAX_TMP_FILE_SIZE {
+                                return Err(FileError::FileUploadMaxFileSizeReached.report());
+                            }
+                            file.write_all_buf(&mut data)
+                                .await
+                                .change_context(FileError::IoFileWrite)?;
+                        }
+                        None => break,
+                    }
+                }
             }
-            file.write_all_buf(&mut data)
-                .await
-                .change_context(FileError::IoFileWrite)?;
         }
+
         file.flush().await.change_context(FileError::IoFileFlush)?;
         file.sync_all()
             .await
@@ -361,7 +372,7 @@ impl PathToFile {
         std::fs::rename(self.path, new_location.as_path()).change_context(FileError::IoFileRename)
     }
 
-    pub async fn overwrite_and_remove_if_exists(self) -> Result<(), FileError> {
+    pub async fn overwrite_and_remove_if_exists(&self) -> Result<(), FileError> {
         overwrite_and_remove_if_exists(&self.path)
             .await
             .change_context(FileError::FileOverwritingAndRemovingFailed)

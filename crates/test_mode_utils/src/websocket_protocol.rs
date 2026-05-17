@@ -52,13 +52,16 @@ pub struct AdminBotNotificationTypes {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ContentProcessingStateChanged {
-    pub id: i64,
+    pub processing_id_from_client: u8,
     pub new_state: ContentProcessingState,
 }
 
 impl ContentProcessingStateChanged {
-    pub fn new(id: i64, new_state: ContentProcessingState) -> Self {
-        Self { id, new_state }
+    pub fn new(processing_id_from_client: u8, new_state: ContentProcessingState) -> Self {
+        Self {
+            processing_id_from_client,
+            new_state,
+        }
     }
 }
 
@@ -124,7 +127,7 @@ fn convert_server_event_to_client_for_test_mode(
         EventToClientInternal::ContentProcessingStateChanged(state_changed) => {
             let mut event = EventToClient::new(EventType::ContentProcessingStateChanged);
             let value = ContentProcessingStateChanged::new(
-                state_changed.id,
+                state_changed.processing_id_from_client,
                 convert_content_processing_state(state_changed.new_state),
             );
             event.content_processing_state_changed = Some(value);
@@ -209,8 +212,7 @@ fn convert_content_processing_state(
             converted.cid = Some(Some(Box::new(ContentId::new(content_id.cid.to_string()))));
             converted.face_detected = Some(Some(face_detected));
         }
-        ContentProcessingStateInternal::Empty
-        | ContentProcessingStateInternal::Processing
+        ContentProcessingStateInternal::Processing
         | ContentProcessingStateInternal::Failed
         | ContentProcessingStateInternal::NsfwDetected => (),
     }
@@ -222,7 +224,6 @@ fn convert_content_processing_state_type(
     state_type: InternalContentProcessingStateType,
 ) -> ContentProcessingStateType {
     match state_type {
-        InternalContentProcessingStateType::Empty => ContentProcessingStateType::Empty,
         InternalContentProcessingStateType::InQueue => ContentProcessingStateType::InQueue,
         InternalContentProcessingStateType::Processing => ContentProcessingStateType::Processing,
         InternalContentProcessingStateType::Completed => ContentProcessingStateType::Completed,

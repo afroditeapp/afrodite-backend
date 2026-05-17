@@ -348,7 +348,8 @@ fn parse_optional_last_seen_time_payload(
 fn parse_content_processing_state_changed_payload(
     payload_iter: &mut impl Iterator<Item = u8>,
 ) -> Result<ContentProcessingStateChanged, String> {
-    let id = parse_minimal_i64_value(payload_iter)?;
+    let processing_id_from_client =
+        next_payload_byte(payload_iter, "content processing id from client")?;
     let state_raw = next_payload_byte(payload_iter, "content processing state")?;
     let state = ContentProcessingStateType::try_from(state_raw)
         .map_err(|_| format!("unsupported content processing state value {state_raw}"))?;
@@ -365,13 +366,15 @@ fn parse_content_processing_state_changed_payload(
                 face_detected: face_detected_byte != 0,
             }
         }
-        ContentProcessingStateType::Empty => ContentProcessingStateInternal::Empty,
         ContentProcessingStateType::Processing => ContentProcessingStateInternal::Processing,
         ContentProcessingStateType::Failed => ContentProcessingStateInternal::Failed,
         ContentProcessingStateType::NsfwDetected => ContentProcessingStateInternal::NsfwDetected,
     };
 
-    Ok(ContentProcessingStateChanged { id, new_state })
+    Ok(ContentProcessingStateChanged {
+        processing_id_from_client,
+        new_state,
+    })
 }
 
 fn parse_content_id_payload(
@@ -808,7 +811,7 @@ mod tests {
     #[test]
     fn roundtrip_content_processing_state_changed_message() {
         let expected = ContentProcessingStateChanged {
-            id: 42,
+            processing_id_from_client: 42,
             new_state: ContentProcessingStateInternal::Completed {
                 content_id: crate::ContentId { cid: test_uuid(9) },
                 face_detected: true,
@@ -823,7 +826,10 @@ mod tests {
 
         match parsed {
             EventToClientInternal::ContentProcessingStateChanged(parsed_value) => {
-                assert_eq!(parsed_value.id, expected.id);
+                assert_eq!(
+                    parsed_value.processing_id_from_client,
+                    expected.processing_id_from_client
+                );
                 assert_eq!(parsed_value.new_state, expected.new_state);
             }
             _ => panic!("unexpected event parsed"),

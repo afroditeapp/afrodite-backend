@@ -11,7 +11,6 @@ use tracing::{error, warn};
 use crate::{
     DataError,
     cache::DatabaseCache,
-    content_processing::ProcessingState,
     result::{Result, WrappedResultExt},
 };
 
@@ -270,15 +269,14 @@ impl<'a> EventManagerWithCacheReference<'a> {
         }
     }
 
-    pub async fn send_content_processing_state_change_to_client(&self, state: &ProcessingState) {
-        let state_change = ContentProcessingStateChanged {
-            id: state.processing_id.server_process_id(),
-            new_state: state.processing_state,
-        };
-
+    pub async fn send_content_processing_state_changed_to_client(
+        &self,
+        account: impl Into<AccountId>,
+        state_change: ContentProcessingStateChanged,
+    ) {
         if let Err(e) = self
             .send_connected_event(
-                state.content_owner,
+                account,
                 model::EventToClientInternal::ContentProcessingStateChanged(state_change),
             )
             .await

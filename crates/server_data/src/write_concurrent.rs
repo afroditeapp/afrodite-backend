@@ -4,20 +4,18 @@
 use std::{
     collections::HashMap,
     fmt::{self, Debug},
-    sync::{
-        Arc,
-        atomic::{AtomicI64, Ordering},
-    },
+    sync::Arc,
 };
 
 use axum::body::BodyDataStream;
 use futures::Future;
-use model::{AccountId, AccountIdInternal, ContentProcessingId, ContentSlot, ProfileLink};
+use model::{AccountId, AccountIdInternal, ProfileLink};
 use model_server_data::{
     AutomaticProfileSearchIteratorSessionId, AutomaticProfileSearchIteratorSessionIdInternal,
     ProfileIteratorSessionId, ProfileIteratorSessionIdInternal,
 };
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock};
+use tracing::warn;
 
 use super::{
     IntoDataError,
@@ -25,13 +23,14 @@ use super::{
     file::utils::FileDir,
 };
 use crate::{
-    DataError, content_processing::NewContentInfo, db_manager::RouterDatabaseWriteHandle,
-    index::LocationIndexIteratorHandle, result::Result,
+    DataError,
+    content_processing::{UploadInfo, UploadPermit},
+    db_manager::RouterDatabaseWriteHandle,
+    index::LocationIndexIteratorHandle,
+    result::Result,
 };
 
 const PROFILE_ITERATOR_PAGE_SIZE: usize = 25;
-
-static NEXT_CONTENT_PROCESSING_ID: AtomicI64 = AtomicI64::new(0);
 
 pub type OutputFuture<R> = Box<dyn Future<Output = R> + Send + 'static>;
 
@@ -167,12 +166,12 @@ impl ConcurrentWriteContentHandle {
     pub async fn save_to_tmp(
         &self,
         id: AccountIdInternal,
-        slot: ContentSlot,
         stream: BodyDataStream,
-    ) -> Result<NewContentInfo, DataError> {
+        upload_permit: UploadPermit,
+    ) -> Result<UploadInfo, DataError> {
         self.write
             .user_write_commands_account()
-            .save_to_tmp(id, slot, stream)
+            .save_to_tmp(id, stream, upload_permit)
             .await
     }
 }
@@ -263,29 +262,29 @@ impl<'a> WriteCommandsConcurrent<'a> {
     pub async fn save_to_tmp(
         &self,
         id: AccountIdInternal,
-        slot: ContentSlot,
         stream: BodyDataStream,
-    ) -> Result<NewContentInfo, DataError> {
-        let processing_id_i64 = NEXT_CONTENT_PROCESSING_ID.fetch_add(1, Ordering::Relaxed);
-        let processing_id = ContentProcessingId::new(id.as_id(), slot, processing_id_i64);
+        mut upload_permit: UploadPermit,
+    ) -> Result<UploadInfo, DataError> {
+        let tmp_raw_img = self.file_dir.raw_content_upload(id.as_id());
 
-        // There might be some content in the tmp dir which does not have
-        // content ID in the database if previous content writing failed.
-        // Because tmp dir is also used for data export saving it is not
-        // possible to clear tmp dir completely at this point.
-        // The dir is cleared completely when server starts.
+        if let Err(e) = tmp_raw_img.overwrite_and_remove_if_exists().await {
+            warn!("tmp_raw_img removing failed {:?}", e)
+        }
 
-        let tmp_raw_img = self.file_dir.raw_content_upload(id.as_id(), processing_id);
-        tmp_raw_img.save_stream(stream).await?;
+        tmp_raw_img
+            .save_stream_with_cancel(stream, upload_permit.cancel_receiver_mut())
+            .await?;
 
-        let tmp_img = self
-            .file_dir
-            .processed_content_upload(id.as_id(), processing_id);
+        let tmp_img = self.file_dir.processed_content_upload(id.as_id());
 
-        Ok(NewContentInfo {
-            processing_id,
+        if let Err(e) = tmp_img.overwrite_and_remove_if_exists().await {
+            warn!("tmp_img removing failed {:?}", e)
+        }
+
+        Ok(UploadInfo {
             tmp_raw_img,
             tmp_img,
+            upload_permit,
         })
     }
 

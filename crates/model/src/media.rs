@@ -149,65 +149,25 @@ pub enum ContentSlot {
     Content6 = 6,
 }
 
-/// Content ID which is queued to be processed
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema)]
-pub struct ContentProcessingId {
-    aid: AccountId,
-    slot: ContentSlot,
-    /// Server process specific unique ID
-    id: i64,
-}
-
-impl ContentProcessingId {
-    pub fn new(aid: AccountId, slot: ContentSlot, id: i64) -> Self {
-        Self { aid, slot, id }
-    }
-
-    pub fn server_process_id(&self) -> i64 {
-        self.id
-    }
-
-    /// File name for unprocessed user uploaded content.
-    pub fn raw_content_file_name(&self) -> String {
-        format!("{}_{}.raw", self.id, self.slot as i64)
-    }
-
-    pub fn content_file_name(&self) -> String {
-        format!("{}_{}", self.id, self.slot as i64)
-    }
-}
-
 #[derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    Default,
-    Deserialize,
-    Serialize,
-    ToSchema,
-    num_enum::TryFromPrimitive,
+    Debug, Clone, Copy, PartialEq, Deserialize, Serialize, ToSchema, num_enum::TryFromPrimitive,
 )]
 #[repr(u8)]
 pub enum ContentProcessingStateType {
-    /// This content slot is empty.
-    #[default]
-    Empty = 0,
     /// Content is waiting in processing queue.
-    InQueue = 1,
+    InQueue = 0,
     /// Content processing is ongoing.
-    Processing = 2,
-    /// Content is processed and content ID is now available.
-    Completed = 3,
+    Processing = 1,
+    /// Content is processed and [ContentId] is now available.
+    Completed = 2,
     /// Content processing failed.
-    Failed = 4,
+    Failed = 3,
     /// NSFW detected.
-    NsfwDetected = 5,
+    NsfwDetected = 4,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ContentProcessingStateInternal {
-    Empty,
     InQueue {
         wait_queue_position: i64,
     },
@@ -223,7 +183,6 @@ pub enum ContentProcessingStateInternal {
 impl ContentProcessingStateInternal {
     pub fn state_type(&self) -> ContentProcessingStateType {
         match self {
-            Self::Empty => ContentProcessingStateType::Empty,
             Self::InQueue { .. } => ContentProcessingStateType::InQueue,
             Self::Processing => ContentProcessingStateType::Processing,
             Self::Completed { .. } => ContentProcessingStateType::Completed,
@@ -232,24 +191,20 @@ impl ContentProcessingStateInternal {
         }
     }
 
-    pub fn to_external(&self) -> ContentProcessingState {
+    pub fn to_external(&self, processing_id_from_client: u8) -> ContentProcessingState {
         match self {
-            Self::Empty => ContentProcessingState {
-                state: ContentProcessingStateType::Empty,
-                wait_queue_position: None,
-                cid: None,
-                face_detected: None,
-            },
             Self::InQueue {
                 wait_queue_position,
             } => ContentProcessingState {
-                state: ContentProcessingStateType::InQueue,
+                state: ContentProcessingStateType::InQueue.into(),
+                processing_id_from_client: processing_id_from_client.into(),
                 wait_queue_position: Some(*wait_queue_position),
                 cid: None,
                 face_detected: None,
             },
             Self::Processing => ContentProcessingState {
-                state: ContentProcessingStateType::Processing,
+                state: ContentProcessingStateType::Processing.into(),
+                processing_id_from_client: processing_id_from_client.into(),
                 wait_queue_position: None,
                 cid: None,
                 face_detected: None,
@@ -258,19 +213,22 @@ impl ContentProcessingStateInternal {
                 content_id,
                 face_detected,
             } => ContentProcessingState {
-                state: ContentProcessingStateType::Completed,
+                state: ContentProcessingStateType::Completed.into(),
+                processing_id_from_client: processing_id_from_client.into(),
                 wait_queue_position: None,
                 cid: Some(*content_id),
                 face_detected: Some(*face_detected),
             },
             Self::Failed => ContentProcessingState {
-                state: ContentProcessingStateType::Failed,
+                state: ContentProcessingStateType::Failed.into(),
+                processing_id_from_client: processing_id_from_client.into(),
                 wait_queue_position: None,
                 cid: None,
                 face_detected: None,
             },
             Self::NsfwDetected => ContentProcessingState {
-                state: ContentProcessingStateType::NsfwDetected,
+                state: ContentProcessingStateType::NsfwDetected.into(),
+                processing_id_from_client: processing_id_from_client.into(),
                 wait_queue_position: None,
                 cid: None,
                 face_detected: None,
@@ -281,13 +239,15 @@ impl ContentProcessingStateInternal {
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
 pub struct ContentProcessingState {
-    pub state: ContentProcessingStateType,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub state: Option<ContentProcessingStateType>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub processing_id_from_client: Option<u8>,
     /// Current position in processing queue.
     ///
-    /// If ProcessingContentId is added to empty queue, then
-    /// this will be 1.
+    /// First value is 1.
     ///
-    /// Use i64 as Dart has only signed integers.
+    /// i64 is used as Dart has only signed integers.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub wait_queue_position: Option<i64>,
     /// Content ID of the processed content.
