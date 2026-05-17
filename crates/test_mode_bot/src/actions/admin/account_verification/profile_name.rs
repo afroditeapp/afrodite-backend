@@ -48,6 +48,7 @@ pub async fn handle_profile_name_verification(
 
     let request = PostProfileNameVerifiedValue {
         account_id: Box::new(account_id.clone()),
+        current_profile_name: age_and_name.name().await?.map(str::to_owned),
         value,
     };
 

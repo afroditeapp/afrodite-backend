@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Profile {
     #[serde(rename = "age")]
-    pub age: i64,
+    pub age: i32,
     #[serde(rename = "attributes", skip_serializing_if = "Option::is_none")]
     pub attributes: Option<Vec<models::ProfileAttributeValue>>,
     /// A string wrapper that ensures the string is not empty. This type is used for TEXT columns that should not allow empty strings. In the database, these columns are NULL when there is no value, and this type represents non-NULL values that must be non-empty.
@@ -38,7 +38,7 @@ pub struct Profile {
 
 impl Profile {
     /// Public profile info
-    pub fn new(age: i64, verification_status: models::ProfileVerificationStatus) -> Profile {
+    pub fn new(age: i32, verification_status: models::ProfileVerificationStatus) -> Profile {
         Profile {
             age,
             attributes: None,

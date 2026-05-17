@@ -17,6 +17,8 @@ pub struct PostAccountVerificationQueueItemResult {
     pub error: Option<bool>,
     #[serde(rename = "error_already_in_queue", skip_serializing_if = "Option::is_none")]
     pub error_already_in_queue: Option<bool>,
+    #[serde(rename = "error_initial_setup_not_completed", skip_serializing_if = "Option::is_none")]
+    pub error_initial_setup_not_completed: Option<bool>,
     #[serde(rename = "error_queue_full", skip_serializing_if = "Option::is_none")]
     pub error_queue_full: Option<bool>,
 }
@@ -26,6 +28,7 @@ impl PostAccountVerificationQueueItemResult {
         PostAccountVerificationQueueItemResult {
             error: None,
             error_already_in_queue: None,
+            error_initial_setup_not_completed: None,
             error_queue_full: None,
         }
     }

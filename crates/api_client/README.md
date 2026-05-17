@@ -214,6 +214,7 @@ Class | Method | HTTP request | Description
 *ProfileApi* | [**get_my_profile**](docs/ProfileApi.md#get_my_profile) | **GET** /profile_api/my_profile | Get my profile
 *ProfileApi* | [**get_profile**](docs/ProfileApi.md#get_profile) | **GET** /profile_api/profile/{aid} | Get account's current profile.
 *ProfileApi* | [**get_profile_app_notification_settings**](docs/ProfileApi.md#get_profile_app_notification_settings) | **GET** /profile_api/get_profile_app_notification_settings | 
+*ProfileApi* | [**get_profile_binary**](docs/ProfileApi.md#get_profile_binary) | **GET** /profile_api/profile_binary/{aid} | Get account's current profile as compact binary payload.
 *ProfileApi* | [**get_profile_filters**](docs/ProfileApi.md#get_profile_filters) | **GET** /profile_api/profile_filters | Get current profile filters.
 *ProfileApi* | [**get_profile_from_database_debug_mode_benchmark**](docs/ProfileApi.md#get_profile_from_database_debug_mode_benchmark) | **GET** /profile_api/benchmark/profile/{aid} | Get account's current profile from database. Debug mode must be enabled that route can be used.
 *ProfileApi* | [**get_profile_privacy_settings**](docs/ProfileApi.md#get_profile_privacy_settings) | **GET** /profile_api/get_profile_privacy_settings | 
@@ -266,6 +267,7 @@ Class | Method | HTTP request | Description
  - [AccountSetup](docs/AccountSetup.md)
  - [AccountStateContainer](docs/AccountStateContainer.md)
  - [AccountSyncVersion](docs/AccountSyncVersion.md)
+ - [AccountVerificationErrorFlagsValue](docs/AccountVerificationErrorFlagsValue.md)
  - [AccountVerificationMethodsConfig](docs/AccountVerificationMethodsConfig.md)
  - [AccountVerificationQueueAdminItem](docs/AccountVerificationQueueAdminItem.md)
  - [AccountVerificationQueueItem](docs/AccountVerificationQueueItem.md)
@@ -357,6 +359,10 @@ Class | Method | HTTP request | Description
  - [DynamicClientFeaturesConfig](docs/DynamicClientFeaturesConfig.md)
  - [DynamicClientFeaturesConfigHash](docs/DynamicClientFeaturesConfigHash.md)
  - [DynamicServerConfig](docs/DynamicServerConfig.md)
+ - [EditVerificationProfileAgeRange](docs/EditVerificationProfileAgeRange.md)
+ - [EditVerificationProfileName](docs/EditVerificationProfileName.md)
+ - [EditVerificationSecurityContent](docs/EditVerificationSecurityContent.md)
+ - [EditVerificationValues](docs/EditVerificationValues.md)
  - [EmailAddressState](docs/EmailAddressState.md)
  - [EmailAddressStateAdmin](docs/EmailAddressStateAdmin.md)
  - [EmailLogin](docs/EmailLogin.md)
@@ -623,6 +629,7 @@ Class | Method | HTTP request | Description
  - [VapidPublicKey](docs/VapidPublicKey.md)
  - [VerificationAction](docs/VerificationAction.md)
  - [VerificationConfig](docs/VerificationConfig.md)
+ - [VerificationMethod](docs/VerificationMethod.md)
  - [VerificationMethodsConfig](docs/VerificationMethodsConfig.md)
 
 

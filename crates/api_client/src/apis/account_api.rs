@@ -821,6 +821,7 @@ pub async fn post_account_setup(configuration: &configuration::Configuration, se
     }
 }
 
+/// Adding new request requires initial setup to be completed.
 pub async fn post_account_verification_queue_item(configuration: &configuration::Configuration, account_verification_queue_item: models::AccountVerificationQueueItem) -> Result<models::PostAccountVerificationQueueItemResult, Error<PostAccountVerificationQueueItemError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_account_verification_queue_item = account_verification_queue_item;

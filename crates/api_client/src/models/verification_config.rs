@@ -19,6 +19,9 @@ pub struct VerificationConfig {
     /// Show profile age range verification status and filters.
     #[serde(rename = "profile_age_range", skip_serializing_if = "Option::is_none")]
     pub profile_age_range: Option<bool>,
+    /// Show profile name verification status and filters.
+    #[serde(rename = "profile_name", skip_serializing_if = "Option::is_none")]
+    pub profile_name: Option<bool>,
     /// Show security content verification status and filters.
     #[serde(rename = "security_content", skip_serializing_if = "Option::is_none")]
     pub security_content: Option<bool>,
@@ -29,6 +32,7 @@ impl VerificationConfig {
         VerificationConfig {
             face: None,
             profile_age_range: None,
+            profile_name: None,
             security_content: None,
         }
     }

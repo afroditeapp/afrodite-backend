@@ -12,23 +12,19 @@ use crate::models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct PostProfileNameVerifiedValue {
-    #[serde(rename = "account_id")]
-    pub account_id: Box<models::AccountId>,
+pub struct EditVerificationProfileName {
     /// A string wrapper that ensures the string is not empty. This type is used for TEXT columns that should not allow empty strings. In the database, these columns are NULL when there is no value, and this type represents non-NULL values that must be non-empty.
     #[serde(rename = "current_profile_name", skip_serializing_if = "Option::is_none")]
     pub current_profile_name: Option<String>,
-    /// Bot sets automatic profile name verification value. Human admin sets manual override value. Set to None to clear the currently applicable value.
-    #[serde(rename = "value", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub value: Option<Option<bool>>,
+    #[serde(rename = "verified_value", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub verified_value: Option<Option<bool>>,
 }
 
-impl PostProfileNameVerifiedValue {
-    pub fn new(account_id: models::AccountId) -> PostProfileNameVerifiedValue {
-        PostProfileNameVerifiedValue {
-            account_id: Box::new(account_id),
+impl EditVerificationProfileName {
+    pub fn new() -> EditVerificationProfileName {
+        EditVerificationProfileName {
             current_profile_name: None,
-            value: None,
+            verified_value: None,
         }
     }
 }

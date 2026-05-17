@@ -2,7 +2,10 @@ use std::sync::Arc;
 
 use api_client::{
     apis::{account_admin_api, profile_admin_api},
-    models::{AccountVerificationQueueAdminItem, PostAccountVerificationQueueRemoveNextItem},
+    models::{
+        AccountVerificationErrorFlagsValue, AccountVerificationQueueAdminItem,
+        PostAccountVerificationQueueRemoveNextItem, VerificationMethod,
+    },
 };
 use async_openai::{Client, config::OpenAIConfig};
 use config::bot_config_file::internal::{
@@ -77,7 +80,7 @@ impl<'a> LazyProfileAgeAndName<'a> {
         }
     }
 
-    async fn age(&mut self) -> Result<i64, TestError> {
+    async fn age(&mut self) -> Result<i32, TestError> {
         Ok(self.get().await?.age)
     }
 
@@ -153,23 +156,22 @@ impl AdminBotAccountVerificationLogic {
 
     fn parse_verification_method_action(
         config: &AccountVerificationConfig,
-        verification_method: &str,
+        verification_method: &VerificationMethod,
         _verification_data: &str,
     ) -> VerificationMethodAction {
-        match verification_method.trim().to_lowercase().as_str() {
-            "debug_accept" => {
+        match verification_method {
+            VerificationMethod::DebugAccept => {
                 if config.allowed_methods.debug_accept {
                     VerificationMethodAction::Accept
                 } else {
                     VerificationMethodAction::Reject
                 }
             }
-            "debug_reject" => VerificationMethodAction::Reject,
-            "eudi" => {
+            VerificationMethod::DebugReject => VerificationMethodAction::Reject,
+            VerificationMethod::Eudi => {
                 // TODO: Implement eudi verification method
                 VerificationMethodAction::Reject
             }
-            _ => VerificationMethodAction::Reject,
         }
     }
 
@@ -194,6 +196,8 @@ impl AdminBotAccountVerificationLogic {
             &api.api(),
             PostAccountVerificationQueueRemoveNextItem {
                 account_id: Box::new(account_id),
+                edit: None,
+                verification_error_flags: Box::new(AccountVerificationErrorFlagsValue { v: 0 }),
             },
         )
         .await

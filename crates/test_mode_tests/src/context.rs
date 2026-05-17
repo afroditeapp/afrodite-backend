@@ -78,7 +78,7 @@ impl TestContext {
         self.new_account_internal(30, "Test").await
     }
 
-    async fn new_account_internal(&mut self, age: i64, name: &str) -> Result<Account, TestError> {
+    async fn new_account_internal(&mut self, age: i32, name: &str) -> Result<Account, TestError> {
         let mut account = Account::register_and_login(self, false).await?;
         account
             .run_actions(action_array![
@@ -110,7 +110,7 @@ impl TestContext {
 
     pub async fn new_account_with_settings(
         &mut self,
-        age: i64,
+        age: i32,
         name: &str,
         min_age: i32,
         max_age: i32,

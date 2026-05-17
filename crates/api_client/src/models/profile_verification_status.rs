@@ -11,7 +11,7 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// ProfileVerificationStatus : Value for profile verification status flags.  - PROFILE_AGE_RANGE_VERIFIED = 0x8. Profile age range has effective   verification value true. - PROFILE_NAME_VERIFIED = 0x10. Profile name has effective   verification value true.
+/// ProfileVerificationStatus : Value for profile verification status flags.  - PROFILE_AGE_RANGE_VERIFIED = 0x4. Profile age range has effective   verification value true. - PROFILE_NAME_VERIFIED = 0x8. Profile name has effective   verification value true.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ProfileVerificationStatus {
     #[serde(rename = "v")]
@@ -19,7 +19,7 @@ pub struct ProfileVerificationStatus {
 }
 
 impl ProfileVerificationStatus {
-    /// Value for profile verification status flags.  - PROFILE_AGE_RANGE_VERIFIED = 0x8. Profile age range has effective   verification value true. - PROFILE_NAME_VERIFIED = 0x10. Profile name has effective   verification value true.
+    /// Value for profile verification status flags.  - PROFILE_AGE_RANGE_VERIFIED = 0x4. Profile age range has effective   verification value true. - PROFILE_NAME_VERIFIED = 0x8. Profile name has effective   verification value true.
     pub fn new(v: i32) -> ProfileVerificationStatus {
         ProfileVerificationStatus {
             v,

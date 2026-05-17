@@ -23,7 +23,7 @@ pub async fn handle_profile_age_range_verification(
                 VerificationMethodAction::Reject
                 | VerificationMethodAction::_PersonIdentificationData { age: None, .. } => false,
                 VerificationMethodAction::_PersonIdentificationData { age: Some(age), .. } => {
-                    age_and_name.age().await? == Into::<i64>::into(*age)
+                    age_and_name.age().await? == Into::<i32>::into(*age)
                 }
             };
             Some(Some(accept))
@@ -33,6 +33,7 @@ pub async fn handle_profile_age_range_verification(
 
     let request = PostProfileAgeRangeVerifiedValue {
         account_id: Box::new(account_id.clone()),
+        current_profile_age: age_and_name.age().await?,
         value,
     };
 

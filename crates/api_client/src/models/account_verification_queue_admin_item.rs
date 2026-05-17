@@ -18,13 +18,13 @@ pub struct AccountVerificationQueueAdminItem {
     #[serde(rename = "verification_data")]
     pub verification_data: String,
     #[serde(rename = "verification_method")]
-    pub verification_method: String,
+    pub verification_method: models::VerificationMethod,
     #[serde(rename = "verification_scope")]
     pub verification_scope: Box<models::AccountVerificationScope>,
 }
 
 impl AccountVerificationQueueAdminItem {
-    pub fn new(account_id: models::AccountId, verification_data: String, verification_method: String, verification_scope: models::AccountVerificationScope) -> AccountVerificationQueueAdminItem {
+    pub fn new(account_id: models::AccountId, verification_data: String, verification_method: models::VerificationMethod, verification_scope: models::AccountVerificationScope) -> AccountVerificationQueueAdminItem {
         AccountVerificationQueueAdminItem {
             account_id: Box::new(account_id),
             verification_data,

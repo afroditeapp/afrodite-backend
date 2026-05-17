@@ -88,6 +88,16 @@ pub enum GetProfileAppNotificationSettingsError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`get_profile_binary`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetProfileBinaryError {
+    Status401(),
+    Status429(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_profile_filters`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -562,6 +572,43 @@ pub async fn get_profile_app_notification_settings(configuration: &configuration
     }
 }
 
+/// The first byte is result variant: - 0 = Empty - 1 = VersionOnly - 2 = ProfileWithVersion  Variant payloads: - Empty: no payload - VersionOnly:   - 16-byte profile version UUID   - null last seen time (0 byte) or last seen time as minimal i64 - ProfileWithVersion:   - 16-byte profile version UUID   - null last seen time (0 byte) or last seen time as minimal i64   - profile payload:     - optional name string:       - 1-byte u8 byte count (0 means null)       - string UTF-8 bytes when count > 0     - optional profile text string:       - 2-byte little-endian u16 byte count (0 means null)       - string UTF-8 bytes when count > 0     - 1-byte age     - attributes list:       - 2-byte little-endian u16 attribute count       - repeated entries:         - 2-byte little-endian u16 attribute id with value width flag in most significant bit:           - bits 0..14: attribute ID           - bit 15: value width flag (0 = u16 values, 1 = u32 values)         - 1-byte u8 value count         - repeated values:           - value width flag 0: 2-byte little-endian u16 values           - value width flag 1: 4-byte little-endian u32 values     - 1-byte profile flags:       - bit 0: unlimited_likes       - bit 1: name_accepted       - bit 2: ptext_accepted       - bits 3..7: reserved (0)     - 2-byte verification status i16 (little-endian)  Minimal i64 format: - i64 byte count (u8, values: 1, 2, 3, 4, 5, 6, 7, 8) - i64 bytes (little-endian)
+pub async fn get_profile_binary(configuration: &configuration::Configuration, aid: &str, v: Option<&str>, is_match: Option<bool>) -> Result<reqwest::Response, Error<GetProfileBinaryError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_aid = aid;
+    let p_query_v = v;
+    let p_query_is_match = is_match;
+
+    let uri_str = format!("{}/profile_api/profile_binary/{aid}", configuration.base_path, aid=crate::apis::urlencode(p_path_aid));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref param_value) = p_query_v {
+        req_builder = req_builder.query(&[("v", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_is_match {
+        req_builder = req_builder.query(&[("is_match", &param_value.to_string())]);
+    }
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(resp)
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetProfileBinaryError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 pub async fn get_profile_filters(configuration: &configuration::Configuration, ) -> Result<models::GetProfileFilters, Error<GetProfileFiltersError>> {
 
     let uri_str = format!("{}/profile_api/profile_filters", configuration.base_path);
@@ -905,7 +952,7 @@ pub async fn post_get_query_profile_attributes_config(configuration: &configurat
     }
 }
 
-/// Writes the profile to the database only if it is changed.  WebSocket event about profile change will not be emitted. The event is emitted only from server side profile updates.  # Requirements - Profile attributes must be valid. - Profile text must be 2000 bytes or less. - Profile text must be trimmed. - Profile name changes are only possible when initial setup is ongoing   or current profile name is not accepted. - Profile name must be trimmed and not empty. - Profile name must be 100 bytes or less. - Profile name must start with uppercase letter. - Profile name must match with profile name regex if it is enabled and   related account is not a bot account. - Profile age must match with currently valid age range. The first min   value for the age range is the age at the initial setup. The second min   and max value is calculated using the following algorithm:  - The initial age (initialAge) is paired with the year of initial    setup completed (initialSetupYear).    - Year difference (yearDifference = currentYear - initialSetupYear) is      used for changing the range min and max.      - Min value: initialAge + yearDifference - 1.      - Max value: initialAge + yearDifference + 1.  
+/// Writes the profile to the database only if it is changed.  WebSocket event about profile change will not be emitted. The event is emitted only from server side profile updates.  # Requirements - Profile attributes must be valid. - Profile text must be 2000 bytes or less.   If limit is increased in the future the max limit is u16. - Profile text must be trimmed. - Profile name changes are only possible when initial setup is ongoing   or current profile name is not accepted. - Profile name must be trimmed and not empty. - Profile name must be 100 bytes or less.   If limit is increased in the future the max limit is u8. - Profile name must start with uppercase letter. - Profile name must match with profile name regex if it is enabled and   related account is not a bot account. - Profile age must match with currently valid age range. The first min   value for the age range is the age at the initial setup. The second min   and max value is calculated using the following algorithm:  - The initial age (initialAge) is paired with the year of initial    setup completed (initialSetupYear).    - Year difference (yearDifference = currentYear - initialSetupYear) is      used for changing the range min and max.      - Min value: initialAge + yearDifference - 1.      - Max value: initialAge + yearDifference + 1.  
 pub async fn post_profile(configuration: &configuration::Configuration, profile_update: models::ProfileUpdate) -> Result<(), Error<PostProfileError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_profile_update = profile_update;

@@ -15,15 +15,18 @@ use serde::{Deserialize, Serialize};
 pub struct PostProfileAgeRangeVerifiedValue {
     #[serde(rename = "account_id")]
     pub account_id: Box<models::AccountId>,
+    #[serde(rename = "current_profile_age")]
+    pub current_profile_age: i32,
     /// Bot sets automatic profile age range verification value. Human admin sets manual override value. Set to None to clear the currently applicable value.
     #[serde(rename = "value", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub value: Option<Option<bool>>,
 }
 
 impl PostProfileAgeRangeVerifiedValue {
-    pub fn new(account_id: models::AccountId) -> PostProfileAgeRangeVerifiedValue {
+    pub fn new(account_id: models::AccountId, current_profile_age: i32) -> PostProfileAgeRangeVerifiedValue {
         PostProfileAgeRangeVerifiedValue {
             account_id: Box::new(account_id),
+            current_profile_age,
             value: None,
         }
     }
