@@ -4,7 +4,7 @@ use api_client::{
     apis::{account_admin_api, profile_admin_api},
     models::{
         AccountVerificationErrorFlagsValue, AccountVerificationQueueAdminItem,
-        PostAccountVerificationQueueRemoveNextItem, VerificationMethod,
+        EditVerificationValues, PostAccountVerificationQueueRemoveNextItem, VerificationMethod,
     },
 };
 use async_openai::{Client, config::OpenAIConfig};
@@ -12,7 +12,10 @@ use config::bot_config_file::internal::{
     AccountVerificationConfig, LlmSecurityContentVerificationConfig,
 };
 use error_stack::{Result, ResultExt};
-use test_mode_utils::client::{ApiClient, TestError};
+use test_mode_utils::{
+    AccountVerificationErrorFlags,
+    client::{ApiClient, TestError},
+};
 
 use super::EmptyPage;
 
@@ -84,8 +87,8 @@ impl<'a> LazyProfileAgeAndName<'a> {
         Ok(self.get().await?.age)
     }
 
-    async fn name(&mut self) -> Result<Option<&str>, TestError> {
-        Ok(self.get().await?.name.as_deref())
+    async fn name(&mut self) -> Result<Option<String>, TestError> {
+        Ok(self.get().await?.name.clone())
     }
 }
 
@@ -119,37 +122,58 @@ impl AdminBotAccountVerificationLogic {
 
         let mut age_and_name = LazyProfileAgeAndName::new(api, &account_id.aid);
 
-        profile_age_range::handle_profile_age_range_verification(
+        let (profile_age_range, profile_age_range_flags) = if item
+            .verification_scope
+            .profile_age_range
+            .unwrap_or_default()
+        {
+            profile_age_range::handle_profile_age_range_verification(
+                config,
+                &method_action,
+                &mut age_and_name,
+            )
+            .await?
+        } else {
+            (None, AccountVerificationErrorFlags::empty())
+        };
+
+        let (profile_name, profile_name_flags) =
+            if item.verification_scope.profile_name.unwrap_or_default() {
+                profile_name::handle_profile_name_verification(
+                    config,
+                    &method_action,
+                    &mut age_and_name,
+                )
+                .await?
+            } else {
+                (None, AccountVerificationErrorFlags::empty())
+            };
+
+        let (security_content, security_content_flags) =
+            if item.verification_scope.security_content.unwrap_or_default() {
+                security_content::handle_security_content_verification(
+                    api,
+                    config,
+                    state,
+                    &account_id,
+                    &method_action,
+                )
+                .await?
+            } else {
+                (None, AccountVerificationErrorFlags::empty())
+            };
+
+        Self::remove_next_queue_item(
             api,
-            config,
-            &account_id,
-            &item.verification_scope,
-            &method_action,
-            &mut age_and_name,
+            account_id,
+            EditVerificationValues {
+                profile_age_range: Some(profile_age_range.map(Box::new)),
+                profile_name: Some(profile_name.map(Box::new)),
+                security_content: Some(security_content.map(Box::new)),
+            },
+            profile_age_range_flags | profile_name_flags | security_content_flags,
         )
         .await?;
-
-        profile_name::handle_profile_name_verification(
-            api,
-            config,
-            &account_id,
-            &item.verification_scope,
-            &method_action,
-            &mut age_and_name,
-        )
-        .await?;
-
-        security_content::handle_security_content_verification(
-            api,
-            config,
-            state,
-            &account_id,
-            &item.verification_scope,
-            method_action,
-        )
-        .await?;
-
-        Self::remove_next_queue_item(api, account_id).await?;
 
         Ok(None)
     }
@@ -191,13 +215,17 @@ impl AdminBotAccountVerificationLogic {
     async fn remove_next_queue_item(
         api: &ApiClient,
         account_id: api_client::models::AccountId,
+        edit: EditVerificationValues,
+        verification_error_flags: AccountVerificationErrorFlags,
     ) -> Result<(), TestError> {
         account_admin_api::post_account_verification_queue_remove_next_item(
             &api.api(),
             PostAccountVerificationQueueRemoveNextItem {
                 account_id: Box::new(account_id),
-                edit: None,
-                verification_error_flags: Box::new(AccountVerificationErrorFlagsValue { v: 0 }),
+                edit: Some(Some(Box::new(edit))),
+                verification_error_flags: Box::new(AccountVerificationErrorFlagsValue {
+                    v: verification_error_flags.bits().into(),
+                }),
             },
         )
         .await

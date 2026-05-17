@@ -1,6 +1,6 @@
 use api_client::{
     apis::{media_admin_api, media_api},
-    models::{AccountId, AccountVerificationScope, ContentId, PostSecurityContentVerifiedValue},
+    models::{AccountId, ContentId, EditVerificationSecurityContent},
 };
 use async_openai::types::{
     ChatCompletionRequestMessage, ChatCompletionRequestMessageContentPartImage,
@@ -12,7 +12,10 @@ use config::bot_config_file::internal::{
     AccountVerificationConfig, SecurityContentVerificationConfig, VerificationAction,
 };
 use error_stack::{Result, ResultExt};
-use test_mode_utils::client::{ApiClient, TestError};
+use test_mode_utils::{
+    AccountVerificationErrorFlags,
+    client::{ApiClient, TestError},
+};
 use tracing::info;
 
 use super::{super::ModerationResult, VerificationMethodAction};
@@ -23,9 +26,21 @@ pub async fn handle_security_content_verification(
     config: &AccountVerificationConfig,
     state: &AccountVerificationState,
     account_id: &AccountId,
-    verification_scope: &AccountVerificationScope,
-    method_action: VerificationMethodAction,
-) -> Result<(), TestError> {
+    method_action: &VerificationMethodAction,
+) -> Result<
+    (
+        Option<EditVerificationSecurityContent>,
+        AccountVerificationErrorFlags,
+    ),
+    TestError,
+> {
+    let Some(config) = &config.security_content else {
+        return Ok((
+            None,
+            AccountVerificationErrorFlags::SECURITY_CONTENT_VERIFICATION_FAILED,
+        ));
+    };
+
     let Some(security_content) =
         media_admin_api::get_security_content_admin_info(&api.api(), &account_id.aid)
             .await
@@ -33,47 +48,49 @@ pub async fn handle_security_content_verification(
             .content
             .flatten()
     else {
-        return Ok(());
+        return Ok((
+            None,
+            AccountVerificationErrorFlags::SECURITY_CONTENT_VERIFICATION_FAILED,
+        ));
     };
 
-    let value = if let Some(config) = &config.security_content
-        && verification_scope.security_content.unwrap_or_default()
-    {
-        let accepted = match method_action {
-            VerificationMethodAction::Accept => true,
-            VerificationMethodAction::Reject
-            | VerificationMethodAction::_PersonIdentificationData {
-                jpeg_image: None, ..
-            } => false,
-            VerificationMethodAction::_PersonIdentificationData {
-                jpeg_image: Some(jpeg_image),
-                ..
-            } => {
-                handle_check_image_method(
-                    api,
-                    config,
-                    state,
-                    account_id,
-                    &security_content.cid,
-                    jpeg_image,
+    let (accepted, flags) = match method_action {
+        VerificationMethodAction::Accept => (true, AccountVerificationErrorFlags::empty()),
+        VerificationMethodAction::Reject
+        | VerificationMethodAction::_PersonIdentificationData {
+            jpeg_image: None, ..
+        } => (false, AccountVerificationErrorFlags::empty()),
+        VerificationMethodAction::_PersonIdentificationData {
+            jpeg_image: Some(jpeg_image),
+            ..
+        } => {
+            let accepted = handle_check_image_method(
+                api,
+                config,
+                state,
+                account_id,
+                &security_content.cid,
+                jpeg_image,
+            )
+            .await?;
+            if accepted {
+                (true, AccountVerificationErrorFlags::empty())
+            } else {
+                (
+                    false,
+                    AccountVerificationErrorFlags::SECURITY_CONTENT_VERIFICATION_MISMATCH,
                 )
-                .await?
             }
-        };
-        Some(Some(accepted))
-    } else {
-        None
+        }
     };
 
-    let request = PostSecurityContentVerifiedValue {
-        account_id: Box::new(account_id.clone()),
-        security_content: security_content.cid,
-        value,
-    };
-
-    media_admin_api::post_security_content_verified_value(&api.api(), request)
-        .await
-        .change_context(TestError::ApiRequest)
+    Ok((
+        Some(EditVerificationSecurityContent {
+            security_content: security_content.cid,
+            verified_value: Some(Some(accepted)),
+        }),
+        flags,
+    ))
 }
 
 async fn handle_check_image_method(
@@ -82,7 +99,7 @@ async fn handle_check_image_method(
     state: &AccountVerificationState,
     aid: &AccountId,
     cid: &ContentId,
-    verification_image: Vec<u8>,
+    verification_image: &[u8],
 ) -> Result<bool, TestError> {
     let security_content = media_api::get_content(&api.api(), &aid.aid, &cid.cid, Some(false))
         .await
@@ -93,7 +110,7 @@ async fn handle_check_image_method(
         .to_vec();
 
     let result = if let Some(llm) = state.llm.clone() {
-        llm_security_content_verification_and_retry(&security_content, &verification_image, llm)
+        llm_security_content_verification_and_retry(&security_content, verification_image, llm)
             .await?
     } else {
         None

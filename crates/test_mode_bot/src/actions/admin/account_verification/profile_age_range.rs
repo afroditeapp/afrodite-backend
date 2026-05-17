@@ -1,43 +1,53 @@
-use api_client::{
-    apis::profile_admin_api,
-    models::{AccountId, AccountVerificationScope, PostProfileAgeRangeVerifiedValue},
-};
+use api_client::models::EditVerificationProfileAgeRange;
 use config::bot_config_file::internal::AccountVerificationConfig;
-use error_stack::{Result, ResultExt};
-use test_mode_utils::client::{ApiClient, TestError};
+use error_stack::Result;
+use test_mode_utils::{AccountVerificationErrorFlags, client::TestError};
 
 use super::{LazyProfileAgeAndName, VerificationMethodAction};
 
 pub async fn handle_profile_age_range_verification(
-    api: &ApiClient,
     config: &AccountVerificationConfig,
-    account_id: &AccountId,
-    verification_scope: &AccountVerificationScope,
     method_action: &VerificationMethodAction,
     age_and_name: &mut LazyProfileAgeAndName<'_>,
-) -> Result<(), TestError> {
-    let value =
-        if config.profile_age_range && verification_scope.profile_age_range.unwrap_or_default() {
-            let accept = match method_action {
-                VerificationMethodAction::Accept => true,
-                VerificationMethodAction::Reject
-                | VerificationMethodAction::_PersonIdentificationData { age: None, .. } => false,
-                VerificationMethodAction::_PersonIdentificationData { age: Some(age), .. } => {
-                    age_and_name.age().await? == Into::<i32>::into(*age)
-                }
-            };
-            Some(Some(accept))
-        } else {
-            None
-        };
+) -> Result<
+    (
+        Option<EditVerificationProfileAgeRange>,
+        AccountVerificationErrorFlags,
+    ),
+    TestError,
+> {
+    if !config.profile_age_range {
+        return Ok((
+            None,
+            AccountVerificationErrorFlags::PROFILE_AGE_RANGE_VERIFICATION_FAILED,
+        ));
+    }
 
-    let request = PostProfileAgeRangeVerifiedValue {
-        account_id: Box::new(account_id.clone()),
-        current_profile_age: age_and_name.age().await?,
-        value,
+    let current_profile_age = age_and_name.age().await?;
+    let (accepted, flags) = match method_action {
+        VerificationMethodAction::Accept => (true, AccountVerificationErrorFlags::empty()),
+        VerificationMethodAction::Reject => (false, AccountVerificationErrorFlags::empty()),
+        VerificationMethodAction::_PersonIdentificationData { age: None, .. } => (
+            false,
+            AccountVerificationErrorFlags::PROFILE_AGE_RANGE_VERIFICATION_FAILED,
+        ),
+        VerificationMethodAction::_PersonIdentificationData { age: Some(age), .. } => {
+            if current_profile_age == Into::<i32>::into(*age) {
+                (true, AccountVerificationErrorFlags::empty())
+            } else {
+                (
+                    false,
+                    AccountVerificationErrorFlags::PROFILE_AGE_RANGE_VERIFICATION_MISMATCH,
+                )
+            }
+        }
     };
 
-    profile_admin_api::post_profile_age_range_verified_value(&api.api(), request)
-        .await
-        .change_context(TestError::ApiRequest)
+    Ok((
+        Some(EditVerificationProfileAgeRange {
+            current_profile_age,
+            verified_value: Some(Some(accepted)),
+        }),
+        flags,
+    ))
 }

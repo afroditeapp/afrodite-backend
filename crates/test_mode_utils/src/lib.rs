@@ -3,6 +3,8 @@
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
 
+pub use model::AccountVerificationErrorFlags;
+
 use crate::client::TestError;
 
 pub mod client;
