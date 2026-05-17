@@ -13,6 +13,7 @@ pub struct EditVerificationSecurityContent {
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct EditVerificationProfileAgeRange {
+    #[schema(value_type = i16)]
     pub current_profile_age: ProfileAge,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub verified_value: Option<bool>,

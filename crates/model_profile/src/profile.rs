@@ -47,7 +47,7 @@ pub struct Profile {
     pub name: Option<NonEmptyString>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ptext: Option<NonEmptyString>,
-    #[schema(value_type = i64)]
+    #[schema(value_type = i16)]
     pub age: ProfileAge,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     #[schema(default = json!([]))]
@@ -212,7 +212,7 @@ pub struct ProfileUpdate {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ptext: Option<NonEmptyString>,
     pub name: NonEmptyString,
-    #[schema(value_type = i64)]
+    #[schema(value_type = i16)]
     pub age: ProfileAge,
     pub attributes: Vec<ProfileAttributeValueUpdate>,
 }
@@ -513,7 +513,7 @@ pub struct GetMyProfileResult {
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct InitialProfileAge {
-    #[schema(value_type = i64)]
+    #[schema(value_type = i16)]
     pub initial_profile_age: ProfileAge,
     pub initial_profile_age_set_unix_time: UnixTime,
 }

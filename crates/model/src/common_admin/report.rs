@@ -40,7 +40,7 @@ pub struct ReportDetailedInfo {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ReportAccountInfo {
-    #[schema(value_type = i64)]
+    #[schema(value_type = i16)]
     pub age: ProfileAge,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<NonEmptyString>,

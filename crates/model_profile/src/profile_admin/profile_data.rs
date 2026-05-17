@@ -5,7 +5,7 @@ use utoipa::ToSchema;
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct GetProfileAgeAndName {
-    #[schema(value_type = i64)]
+    #[schema(value_type = i16)]
     pub age: ProfileAge,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<NonEmptyString>,
@@ -29,7 +29,7 @@ pub struct ProfileAgeRangeVerificationAdminInfo {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct PostProfileAgeRangeVerifiedValue {
     pub account_id: AccountId,
-    #[schema(value_type = i64)]
+    #[schema(value_type = i16)]
     pub current_profile_age: ProfileAge,
     /// Bot sets automatic profile age range verification value.
     /// Human admin sets manual override value.
