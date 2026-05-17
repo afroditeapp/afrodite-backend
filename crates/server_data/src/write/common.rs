@@ -90,9 +90,6 @@ impl WriteCommandsCommon<'_> {
             permissions.admin_moderate_media_content = true;
             permissions.admin_moderate_profile_names = true;
             permissions.admin_moderate_profile_texts = true;
-            permissions.admin_edit_media_content_face_verified_value = true;
-            permissions.admin_edit_profile_age_range_verified_value = true;
-            permissions.admin_edit_profile_name_verified_value = true;
             permissions.admin_verify_account = true;
         };
 
