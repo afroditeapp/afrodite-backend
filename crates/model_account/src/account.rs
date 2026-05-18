@@ -29,7 +29,8 @@ pub use client_features::*;
 pub mod verification;
 pub use verification::{
     AccountVerificationDataInternal, AccountVerificationQueueStatus,
-    PostAccountVerificationQueueItem, PostAccountVerificationQueueItemResult,
+    PostAccountVerificationQueueItem, PostAccountVerificationQueueItemResult, PostAgeVerification,
+    PostAgeVerificationResult,
 };
 
 #[derive(Debug, Default, Deserialize, Serialize, ToSchema, Clone, PartialEq)]

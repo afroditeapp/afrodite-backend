@@ -1,19 +1,21 @@
 use axum::{Extension, extract::State};
-use model::{AccountIdInternal, AdminBotNotificationTypes};
+use model::{
+    AccountIdInternal, AdminBotNotificationTypes, AgeVerificationMethod, EventToClientInternal,
+};
 use model_account::{
     AccountVerificationQueueStatus, PostAccountVerificationQueueItem,
-    PostAccountVerificationQueueItemResult,
+    PostAccountVerificationQueueItemResult, PostAgeVerification, PostAgeVerificationResult,
 };
 use server_api::{
     AccountVerificationQueueAddError, S,
     app::{
         AccountVerificationQueueProvider, AdminNotificationProvider, ApiLimitsProvider, GetConfig,
-        ReadData,
+        ReadData, WriteData,
     },
-    create_open_api_router,
+    create_open_api_router, db_write,
 };
 use server_data::read::GetReadCommandsCommon;
-use server_data_account::read::GetReadCommandsAccount;
+use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
 
 use crate::utils::{Json, StatusCode};
@@ -124,10 +126,85 @@ pub async fn post_account_verification_queue_item(
     Ok(result.into())
 }
 
+const PATH_POST_AGE_VERIFICATION: &str = "/account_api/age_verification";
+
+/// Verify user's age once for current account.
+#[utoipa::path(
+    post,
+    path = PATH_POST_AGE_VERIFICATION,
+    request_body = PostAgeVerification,
+    responses(
+        (status = 200, description = "Successful.", body = PostAgeVerificationResult),
+        (status = 401, description = "Unauthorized."),
+        (status = 500),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_age_verification(
+    State(state): State<S>,
+    Extension(api_caller_account_id): Extension<AccountIdInternal>,
+    Json(data): Json<PostAgeVerification>,
+) -> Result<Json<PostAgeVerificationResult>, StatusCode> {
+    ACCOUNT.post_age_verification.incr();
+
+    let account = state.read().common().account(api_caller_account_id).await?;
+    if account.age_verified() {
+        return Ok(PostAgeVerificationResult::error_age_already_verified().into());
+    }
+
+    let methods = state
+        .config()
+        .client_features_internal()
+        .age_verification
+        .methods
+        .clone()
+        .unwrap_or_default();
+    let age_18_or_older = match data.verification_method {
+        AgeVerificationMethod::Debug => {
+            if !methods.debug {
+                return Err(StatusCode::INTERNAL_SERVER_ERROR);
+            }
+            true
+        }
+        AgeVerificationMethod::Eudi => {
+            if !methods.eudi {
+                return Err(StatusCode::INTERNAL_SERVER_ERROR);
+            }
+            // TODO: Implement
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    };
+
+    if !age_18_or_older {
+        return Ok(PostAgeVerificationResult::error_age_under_18().into());
+    }
+
+    let result = db_write!(state, move |cmds| {
+        let account = cmds.read().common().account(api_caller_account_id).await?;
+        if account.age_verified() {
+            return Ok(PostAgeVerificationResult::error_age_already_verified());
+        } else {
+            cmds.account()
+                .set_age_verified(api_caller_account_id)
+                .await?;
+            cmds.events()
+                .send_connected_event(
+                    api_caller_account_id.uuid,
+                    EventToClientInternal::AccountStateChanged,
+                )
+                .await?;
+            Ok(PostAgeVerificationResult::success())
+        }
+    })?;
+
+    Ok(result.into())
+}
+
 create_open_api_router!(
     fn router_verification,
     get_account_verification_queue_status,
     post_account_verification_queue_item,
+    post_age_verification,
 );
 
 create_counters!(
@@ -136,4 +213,5 @@ create_counters!(
     ACCOUNT_VERIFICATION_COUNTERS_LIST,
     get_account_verification_queue_status,
     post_account_verification_queue_item,
+    post_age_verification,
 );

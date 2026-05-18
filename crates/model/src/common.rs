@@ -601,6 +601,7 @@ pub struct AccountStateRelatedSharedState {
     pub account_state_pending_deletion: bool,
     pub sync_version: AccountSyncVersion,
     pub email_verified: bool,
+    pub age_verified: bool,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default, PartialEq, Eq)]
@@ -665,6 +666,7 @@ impl From<Account> for AccountStateRelatedSharedState {
             account_state_pending_deletion: account.state_container().pending_deletion,
             sync_version: account.sync_version(),
             email_verified: account.email_verified(),
+            age_verified: account.age_verified(),
         }
     }
 }

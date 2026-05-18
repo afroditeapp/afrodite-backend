@@ -138,15 +138,45 @@ impl CurrentWriteCommonState<'_> {
         + Send
         + 'static,
     ) -> Result<Account, DieselDatabaseError> {
+        self.update_syncable_account_data_with_age_verified(
+            id,
+            account,
+            move |state, permissions, visibility, email_verified, _age_verified| {
+                modify_action(state, permissions, visibility, email_verified)
+            },
+        )
+    }
+
+    /// The only method which can modify AccountStateContainer, Permissions,
+    /// ProfileVisibility, email verification status and age verification status.
+    /// Updates automatically the AccountSyncVersion number.
+    ///
+    /// Returns the modified Account.
+    pub fn update_syncable_account_data_with_age_verified(
+        &mut self,
+        id: AccountIdInternal,
+        account: Account,
+        modify_action: impl FnOnce(
+            &mut AccountStateContainer,
+            &mut Permissions,
+            &mut ProfileVisibility,
+            &mut bool, // Email verified
+            &mut bool, // Age verified
+        ) -> error_stack::Result<(), DieselDatabaseError>
+        + Send
+        + 'static,
+    ) -> Result<Account, DieselDatabaseError> {
         let mut state = account.state_container();
         let mut permissions = account.permissions();
         let mut profile_visibility = account.profile_visibility();
         let mut email_verified = account.email_verified();
+        let mut age_verified = account.age_verified();
         modify_action(
             &mut state,
             &mut permissions,
             &mut profile_visibility,
             &mut email_verified,
+            &mut age_verified,
         )
         .map_err(|_| DieselDatabaseError::NotAllowed.report())?;
         let new_version = account.sync_version().increment_if_not_max_value();
@@ -155,6 +185,7 @@ impl CurrentWriteCommonState<'_> {
             state,
             profile_visibility,
             email_verified,
+            age_verified,
             new_version,
         );
 

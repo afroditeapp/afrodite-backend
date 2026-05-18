@@ -31,6 +31,9 @@ pub struct Account {
     #[serde(default, skip_serializing_if = "value_is_true")]
     #[schema(default = true)]
     email_verified: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    age_verified: bool,
     sync_version: AccountSyncVersion,
 }
 
@@ -52,6 +55,7 @@ impl Account {
             permissions,
             visibility: shared_state.profile_visibility(),
             email_verified: shared_state.email_verified,
+            age_verified: shared_state.age_verified,
             sync_version: shared_state.sync_version,
         }
     }
@@ -61,6 +65,7 @@ impl Account {
         state: AccountStateContainer,
         visibility: ProfileVisibility,
         email_verified: bool,
+        age_verified: bool,
         sync_version: AccountSyncVersion,
     ) -> Self {
         Self {
@@ -68,6 +73,7 @@ impl Account {
             state,
             visibility,
             email_verified,
+            age_verified,
             sync_version,
         }
     }
@@ -94,6 +100,10 @@ impl Account {
 
     pub fn email_verified(&self) -> bool {
         self.email_verified
+    }
+
+    pub fn age_verified(&self) -> bool {
+        self.age_verified
     }
 }
 

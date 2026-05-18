@@ -146,6 +146,7 @@ CREATE TABLE IF NOT EXISTS shared_state(
     -- 1 = user bot
     bot_account_type_number   SMALLINT,
     email_verified            BOOLEAN              NOT NULL DEFAULT FALSE,
+    age_verified              BOOLEAN              NOT NULL DEFAULT FALSE,
     -- Profile component uses this info for profile filtering.
     initial_setup_completed_unix_time BIGINT       NOT NULL DEFAULT 0,
     FOREIGN KEY (account_id)

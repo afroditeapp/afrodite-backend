@@ -901,6 +901,7 @@ diesel::table! {
         birthdate -> Nullable<Date>,
         bot_account_type_number -> Nullable<Int2>,
         email_verified -> Bool,
+        age_verified -> Bool,
         initial_setup_completed_unix_time -> Int8,
     }
 }

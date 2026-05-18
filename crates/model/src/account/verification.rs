@@ -26,6 +26,28 @@ pub enum VerificationMethod {
     Eudi = 2,
 }
 
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Deserialize,
+    Serialize,
+    ToSchema,
+    PartialEq,
+    Eq,
+    Hash,
+    SimpleDieselEnum,
+    diesel::FromSqlRow,
+    diesel::AsExpression,
+    num_enum::TryFromPrimitive,
+)]
+#[diesel(sql_type = SmallInt)]
+#[repr(i16)]
+pub enum AgeVerificationMethod {
+    Debug = 0,
+    Eudi = 1,
+}
+
 bitflags::bitflags! {
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     pub struct AccountVerificationErrorFlags: i16 {

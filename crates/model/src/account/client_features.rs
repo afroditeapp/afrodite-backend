@@ -151,6 +151,8 @@ pub struct ClientFeaturesConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     chat: Option<ChatConfig>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    age_verification: Option<AgeVerificationConfig>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     verification_methods: Option<VerificationMethodsConfig>,
 }
 
@@ -331,6 +333,28 @@ pub struct VerificationConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub profile_name: bool,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
+pub struct AgeVerificationConfig {
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    verify_during_initial_setup: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    require: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub methods: Option<AgeVerificationMethodsConfig>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
+pub struct AgeVerificationMethodsConfig {
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub debug: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub eudi: bool,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]

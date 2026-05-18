@@ -73,15 +73,39 @@ impl WriteCommandsAccount<'_> {
         + Send
         + 'static,
     ) -> Result<Account, DataError> {
+        self.update_syncable_account_data_internal(
+            id,
+            increment_admin_access_granted,
+            move |state, permissions, visibility, email_verified, _age_verified| {
+                modify_action(state, permissions, visibility, email_verified)
+            },
+        )
+        .await
+    }
+
+    async fn update_syncable_account_data_internal(
+        &self,
+        id: AccountIdInternal,
+        increment_admin_access_granted: Option<IncrementAdminAccessGrantedCount>,
+        modify_action: impl FnOnce(
+            &mut AccountStateContainer,
+            &mut Permissions,
+            &mut ProfileVisibility,
+            &mut bool, // Email verified
+            &mut bool, // Age verified
+        ) -> error_stack::Result<(), DieselDatabaseError>
+        + Send
+        + 'static,
+    ) -> Result<Account, DataError> {
         let current_account = self
             .db_read(move |mut cmds| cmds.common().account(id))
             .await?;
         let a = current_account.clone();
         let new_account = db_transaction!(self, move |mut cmds| {
-            let account =
-                cmds.common()
-                    .state()
-                    .update_syncable_account_data(id, a, modify_action)?;
+            let account = cmds
+                .common()
+                .state()
+                .update_syncable_account_data_with_age_verified(id, a, modify_action)?;
 
             if increment_admin_access_granted.is_some() {
                 cmds.account()
@@ -157,5 +181,15 @@ impl WriteCommandsAccount<'_> {
                 error_flags,
             )
         })
+    }
+
+    pub async fn set_age_verified(&self, id: AccountIdInternal) -> Result<(), DataError> {
+        self.update_syncable_account_data_internal(id, None, |_, _, _, _, age_verified| {
+            *age_verified = true;
+            Ok(())
+        })
+        .await?;
+
+        Ok(())
     }
 }
