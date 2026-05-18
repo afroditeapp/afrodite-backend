@@ -1,3 +1,5 @@
+use std::sync::OnceLock;
+
 use axum::{Extension, extract::State};
 use model::{AccountIdInternal, Permissions, UnixTime};
 use model_account::{
@@ -62,6 +64,14 @@ pub async fn get_account_verification_queue_next_item(
 const PATH_POST_ACCOUNT_VERIFICATION_QUEUE_REMOVE_NEXT_ITEM: &str =
     "/account_api/account_verification_queue_remove_next_item";
 
+static POST_ACCOUNT_VERIFICATION_QUEUE_REMOVE_NEXT_ITEM_MUTEX: OnceLock<tokio::sync::Mutex<()>> =
+    OnceLock::new();
+
+fn post_account_verification_queue_remove_next_item_mutex() -> &'static tokio::sync::Mutex<()> {
+    POST_ACCOUNT_VERIFICATION_QUEUE_REMOVE_NEXT_ITEM_MUTEX
+        .get_or_init(|| tokio::sync::Mutex::new(()))
+}
+
 /// Remove next item from account verification queue if possible.
 ///
 /// Removal succeeds only when the provided account id matches queue head item owner.
@@ -97,32 +107,46 @@ pub async fn post_account_verification_queue_remove_next_item(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
+    let route_mutex_guard = post_account_verification_queue_remove_next_item_mutex()
+        .lock()
+        .await;
+
     let PostAccountVerificationQueueRemoveNextItem {
         account_id,
         verification_error_flags,
         edit,
     } = data;
 
-    let expected_account_id = state.get_internal_id(account_id).await?;
+    let Some((account_id_in_queue, expected_item)) =
+        state.account_verification_queue().next_item().await
+    else {
+        return Ok(());
+    };
 
-    let removed_item = state
+    if account_id_in_queue != account_id {
+        return Ok(());
+    }
+
+    let account_id = state.get_internal_id(account_id).await?;
+
+    state
+        .data_all_access()
+        .process_account_verification_queue_item(
+            moderator_id,
+            account_id,
+            expected_item.verification_method,
+            UnixTime::current_time(),
+            verification_error_flags,
+            edit,
+        )
+        .await?;
+
+    let _removed_item = state
         .account_verification_queue()
-        .remove_next_item(expected_account_id, &state.event_manager())
+        .remove_next_item(account_id, &state.event_manager())
         .await;
 
-    if let Ok(removed_item) = removed_item {
-        state
-            .data_all_access()
-            .process_removed_account_verification_queue_item(
-                moderator_id,
-                expected_account_id,
-                removed_item.verification_method,
-                UnixTime::current_time(),
-                verification_error_flags,
-                edit,
-            )
-            .await?;
-    }
+    drop(route_mutex_guard);
 
     Ok(())
 }

@@ -252,7 +252,7 @@ impl DataAllAccess<'_> {
         cmd.await
     }
 
-    pub async fn process_removed_account_verification_queue_item(
+    pub async fn process_account_verification_queue_item(
         &self,
         moderator_id: AccountIdInternal,
         profile_owner_id: AccountIdInternal,
@@ -261,17 +261,15 @@ impl DataAllAccess<'_> {
         verification_error_flags: AccountVerificationErrorFlagsValue,
         edit: Option<EditVerificationValues>,
     ) -> server_common::result::Result<(), DataError> {
-        let cmd = self
-            .utils()
-            .process_removed_account_verification_queue_item(
-                self.write(),
-                moderator_id,
-                profile_owner_id,
-                verification_method,
-                verification_unix_time,
-                verification_error_flags,
-                edit,
-            );
+        let cmd = self.utils().process_account_verification_queue_item(
+            self.write(),
+            moderator_id,
+            profile_owner_id,
+            verification_method,
+            verification_unix_time,
+            verification_error_flags,
+            edit,
+        );
         cmd.await
     }
 }

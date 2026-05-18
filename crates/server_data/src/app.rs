@@ -184,7 +184,7 @@ pub trait DataAllUtils: Send + Sync + 'static {
     ) -> BoxFuture<'a, server_common::result::Result<(), DataError>>;
 
     #[allow(clippy::too_many_arguments)]
-    fn process_removed_account_verification_queue_item<'a>(
+    fn process_account_verification_queue_item<'a>(
         &self,
         write_command_runner: &'a WriteCommandRunnerHandle,
         moderator_id: AccountIdInternal,
