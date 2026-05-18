@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use api_client::{
     apis::{account_admin_api, profile_admin_api},
@@ -118,7 +118,9 @@ impl AdminBotAccountVerificationLogic {
             config,
             &item.verification_method,
             &item.verification_data,
-        ) {
+        )
+        .await
+        {
             Ok(method_action) => method_action,
             Err(verification_error_flags) => {
                 Self::remove_next_queue_item(
@@ -190,7 +192,7 @@ impl AdminBotAccountVerificationLogic {
         Ok(None)
     }
 
-    fn parse_verification_method_action(
+    async fn parse_verification_method_action(
         config: &AccountVerificationConfig,
         verification_method: &VerificationMethod,
         _verification_data: &str,
@@ -198,6 +200,7 @@ impl AdminBotAccountVerificationLogic {
         match verification_method {
             VerificationMethod::DebugAccept => {
                 if config.allowed_methods.debug_accept {
+                    tokio::time::sleep(Duration::from_secs(2)).await;
                     Ok(VerificationMethodAction::Accept)
                 } else {
                     Err(AccountVerificationErrorFlags::VERIFICATION_METHOD_DISABLED)
@@ -205,6 +208,7 @@ impl AdminBotAccountVerificationLogic {
             }
             VerificationMethod::DebugReject => {
                 if config.allowed_methods.debug_reject {
+                    tokio::time::sleep(Duration::from_secs(2)).await;
                     Ok(VerificationMethodAction::Reject)
                 } else {
                     Err(AccountVerificationErrorFlags::VERIFICATION_METHOD_DISABLED)
