@@ -114,11 +114,23 @@ impl AdminBotAccountVerificationLogic {
         };
 
         let account_id = (*item.account_id).clone();
-        let method_action = Self::parse_verification_method_action(
+        let method_action = match Self::parse_verification_method_action(
             config,
             &item.verification_method,
             &item.verification_data,
-        );
+        ) {
+            Ok(method_action) => method_action,
+            Err(verification_error_flags) => {
+                Self::remove_next_queue_item(
+                    api,
+                    account_id.clone(),
+                    EditVerificationValues::default(),
+                    verification_error_flags,
+                )
+                .await?;
+                return Ok(None);
+            }
+        };
 
         let mut age_and_name = LazyProfileAgeAndName::new(api, &account_id.aid);
 
@@ -182,19 +194,29 @@ impl AdminBotAccountVerificationLogic {
         config: &AccountVerificationConfig,
         verification_method: &VerificationMethod,
         _verification_data: &str,
-    ) -> VerificationMethodAction {
+    ) -> std::result::Result<VerificationMethodAction, AccountVerificationErrorFlags> {
         match verification_method {
             VerificationMethod::DebugAccept => {
                 if config.allowed_methods.debug_accept {
-                    VerificationMethodAction::Accept
+                    Ok(VerificationMethodAction::Accept)
                 } else {
-                    VerificationMethodAction::Reject
+                    Err(AccountVerificationErrorFlags::VERIFICATION_METHOD_DISABLED)
                 }
             }
-            VerificationMethod::DebugReject => VerificationMethodAction::Reject,
+            VerificationMethod::DebugReject => {
+                if config.allowed_methods.debug_reject {
+                    Ok(VerificationMethodAction::Reject)
+                } else {
+                    Err(AccountVerificationErrorFlags::VERIFICATION_METHOD_DISABLED)
+                }
+            }
             VerificationMethod::Eudi => {
-                // TODO: Implement eudi verification method
-                VerificationMethodAction::Reject
+                if config.allowed_methods.eudi {
+                    // TODO: Implement eudi verification method
+                    Ok(VerificationMethodAction::Reject)
+                } else {
+                    Err(AccountVerificationErrorFlags::VERIFICATION_METHOD_DISABLED)
+                }
             }
         }
     }
