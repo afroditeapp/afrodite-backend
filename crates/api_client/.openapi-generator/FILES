@@ -31,12 +31,14 @@ src/models/account_registration_platforms.rs
 src/models/account_setup.rs
 src/models/account_state_container.rs
 src/models/account_sync_version.rs
+src/models/account_verification_config.rs
 src/models/account_verification_error_flags_value.rs
 src/models/account_verification_methods_config.rs
 src/models/account_verification_queue_admin_item.rs
 src/models/account_verification_queue_item.rs
 src/models/account_verification_queue_status.rs
 src/models/account_verification_scope.rs
+src/models/account_verification_scopes_config.rs
 src/models/add_favorite_profile_result.rs
 src/models/add_public_key_result.rs
 src/models/admin_account_verification_config.rs
@@ -49,6 +51,9 @@ src/models/admin_notification_settings.rs
 src/models/admin_nsfw_detection_config.rs
 src/models/admin_profile_string_moderation_config.rs
 src/models/admin_security_content_verification_config.rs
+src/models/age_verification_config.rs
+src/models/age_verification_method.rs
+src/models/age_verification_methods_config.rs
 src/models/api_usage_count.rs
 src/models/api_usage_statistics.rs
 src/models/attribute.rs
@@ -259,6 +264,8 @@ src/models/perf_metric_values.rs
 src/models/permissions.rs
 src/models/post_account_verification_queue_item_result.rs
 src/models/post_account_verification_queue_remove_next_item.rs
+src/models/post_age_verification.rs
+src/models/post_age_verification_result.rs
 src/models/post_media_content_face_detected_value.rs
 src/models/post_media_content_face_verified_value.rs
 src/models/post_media_content_face_verified_value_item.rs
@@ -393,6 +400,4 @@ src/models/update_profile_text_report.rs
 src/models/update_report_result.rs
 src/models/vapid_public_key.rs
 src/models/verification_action.rs
-src/models/verification_config.rs
 src/models/verification_method.rs
-src/models/verification_methods_config.rs

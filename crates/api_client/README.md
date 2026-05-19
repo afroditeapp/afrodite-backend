@@ -40,6 +40,7 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**post_account_app_notification_settings**](docs/AccountApi.md#post_account_app_notification_settings) | **POST** /account_api/post_account_app_notification_settings | 
 *AccountApi* | [**post_account_setup**](docs/AccountApi.md#post_account_setup) | **POST** /account_api/account_setup | Setup non-changeable user information during `initial setup` state.
 *AccountApi* | [**post_account_verification_queue_item**](docs/AccountApi.md#post_account_verification_queue_item) | **POST** /account_api/account_verification_queue | Add account verification request to queue for current account.
+*AccountApi* | [**post_age_verification**](docs/AccountApi.md#post_age_verification) | **POST** /account_api/age_verification | Verify user's age once for current account.
 *AccountApi* | [**post_cancel_email_change**](docs/AccountApi.md#post_cancel_email_change) | **POST** /account_api/cancel_email_change | Cancel email changing process
 *AccountApi* | [**post_complete_setup**](docs/AccountApi.md#post_complete_setup) | **POST** /account_api/complete_setup | Complete initial setup.
 *AccountApi* | [**post_custom_report_empty**](docs/AccountApi.md#post_custom_report_empty) | **POST** /account_api/custom_report_empty | Send custom report without any content
@@ -267,12 +268,14 @@ Class | Method | HTTP request | Description
  - [AccountSetup](docs/AccountSetup.md)
  - [AccountStateContainer](docs/AccountStateContainer.md)
  - [AccountSyncVersion](docs/AccountSyncVersion.md)
+ - [AccountVerificationConfig](docs/AccountVerificationConfig.md)
  - [AccountVerificationErrorFlagsValue](docs/AccountVerificationErrorFlagsValue.md)
  - [AccountVerificationMethodsConfig](docs/AccountVerificationMethodsConfig.md)
  - [AccountVerificationQueueAdminItem](docs/AccountVerificationQueueAdminItem.md)
  - [AccountVerificationQueueItem](docs/AccountVerificationQueueItem.md)
  - [AccountVerificationQueueStatus](docs/AccountVerificationQueueStatus.md)
  - [AccountVerificationScope](docs/AccountVerificationScope.md)
+ - [AccountVerificationScopesConfig](docs/AccountVerificationScopesConfig.md)
  - [AddFavoriteProfileResult](docs/AddFavoriteProfileResult.md)
  - [AddPublicKeyResult](docs/AddPublicKeyResult.md)
  - [AdminAccountVerificationConfig](docs/AdminAccountVerificationConfig.md)
@@ -285,6 +288,9 @@ Class | Method | HTTP request | Description
  - [AdminNsfwDetectionConfig](docs/AdminNsfwDetectionConfig.md)
  - [AdminProfileStringModerationConfig](docs/AdminProfileStringModerationConfig.md)
  - [AdminSecurityContentVerificationConfig](docs/AdminSecurityContentVerificationConfig.md)
+ - [AgeVerificationConfig](docs/AgeVerificationConfig.md)
+ - [AgeVerificationMethod](docs/AgeVerificationMethod.md)
+ - [AgeVerificationMethodsConfig](docs/AgeVerificationMethodsConfig.md)
  - [ApiUsageCount](docs/ApiUsageCount.md)
  - [ApiUsageStatistics](docs/ApiUsageStatistics.md)
  - [Attribute](docs/Attribute.md)
@@ -494,6 +500,8 @@ Class | Method | HTTP request | Description
  - [Permissions](docs/Permissions.md)
  - [PostAccountVerificationQueueItemResult](docs/PostAccountVerificationQueueItemResult.md)
  - [PostAccountVerificationQueueRemoveNextItem](docs/PostAccountVerificationQueueRemoveNextItem.md)
+ - [PostAgeVerification](docs/PostAgeVerification.md)
+ - [PostAgeVerificationResult](docs/PostAgeVerificationResult.md)
  - [PostMediaContentFaceDetectedValue](docs/PostMediaContentFaceDetectedValue.md)
  - [PostMediaContentFaceVerifiedValue](docs/PostMediaContentFaceVerifiedValue.md)
  - [PostMediaContentFaceVerifiedValueItem](docs/PostMediaContentFaceVerifiedValueItem.md)
@@ -628,9 +636,7 @@ Class | Method | HTTP request | Description
  - [UpdateReportResult](docs/UpdateReportResult.md)
  - [VapidPublicKey](docs/VapidPublicKey.md)
  - [VerificationAction](docs/VerificationAction.md)
- - [VerificationConfig](docs/VerificationConfig.md)
  - [VerificationMethod](docs/VerificationMethod.md)
- - [VerificationMethodsConfig](docs/VerificationMethodsConfig.md)
 
 
 To get access to the crate's generated documentation, use:

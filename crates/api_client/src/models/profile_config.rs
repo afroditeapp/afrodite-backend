@@ -17,8 +17,6 @@ pub struct ProfileConfig {
     pub first_image: Option<Option<Box<models::FirstImageConfig>>>,
     #[serde(rename = "profile_name_regex", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub profile_name_regex: Option<Option<String>>,
-    #[serde(rename = "verification", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub verification: Option<Option<Box<models::VerificationConfig>>>,
 }
 
 impl ProfileConfig {
@@ -26,7 +24,6 @@ impl ProfileConfig {
         ProfileConfig {
             first_image: None,
             profile_name_regex: None,
-            verification: None,
         }
     }
 }

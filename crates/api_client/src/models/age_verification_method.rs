@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 
 /// 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
-pub enum VerificationMethod {
+pub enum AgeVerificationMethod {
     #[serde(rename = "Debug")]
     Debug,
     #[serde(rename = "Eudi")]
@@ -21,7 +21,7 @@ pub enum VerificationMethod {
 
 }
 
-impl std::fmt::Display for VerificationMethod {
+impl std::fmt::Display for AgeVerificationMethod {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::Debug => write!(f, "Debug"),
@@ -30,8 +30,8 @@ impl std::fmt::Display for VerificationMethod {
     }
 }
 
-impl Default for VerificationMethod {
-    fn default() -> VerificationMethod {
+impl Default for AgeVerificationMethod {
+    fn default() -> AgeVerificationMethod {
         Self::Debug
     }
 }

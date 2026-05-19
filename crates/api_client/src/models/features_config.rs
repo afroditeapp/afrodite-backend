@@ -13,6 +13,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct FeaturesConfig {
+    /// Show face verification status and filters
+    #[serde(rename = "face_verification", skip_serializing_if = "Option::is_none")]
+    pub face_verification: Option<bool>,
     /// Enable video calls
     #[serde(rename = "video_calls", skip_serializing_if = "Option::is_none")]
     pub video_calls: Option<bool>,
@@ -21,6 +24,7 @@ pub struct FeaturesConfig {
 impl FeaturesConfig {
     pub fn new() -> FeaturesConfig {
         FeaturesConfig {
+            face_verification: None,
             video_calls: None,
         }
     }

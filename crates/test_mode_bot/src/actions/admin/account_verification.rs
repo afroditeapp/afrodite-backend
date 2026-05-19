@@ -193,17 +193,20 @@ impl AdminBotAccountVerificationLogic {
 
     async fn parse_verification_method_action(
         verification_method: &VerificationMethod,
-        _verification_data: &str,
+        verification_data: &str,
     ) -> std::result::Result<VerificationMethodAction, AccountVerificationErrorFlags> {
         match verification_method {
-            VerificationMethod::DebugAccept => {
-                tokio::time::sleep(Duration::from_secs(2)).await;
-                Ok(VerificationMethodAction::Accept)
-            }
-            VerificationMethod::DebugReject => {
-                tokio::time::sleep(Duration::from_secs(2)).await;
-                Ok(VerificationMethodAction::Reject)
-            }
+            VerificationMethod::Debug => match verification_data {
+                "accept" => {
+                    tokio::time::sleep(Duration::from_secs(2)).await;
+                    Ok(VerificationMethodAction::Accept)
+                }
+                "reject" => {
+                    tokio::time::sleep(Duration::from_secs(2)).await;
+                    Ok(VerificationMethodAction::Reject)
+                }
+                _ => Err(AccountVerificationErrorFlags::VERIFICATION_DATA_PARSING_FAILED),
+            },
             VerificationMethod::Eudi => {
                 // TODO: Implement eudi verification method
                 Ok(VerificationMethodAction::Reject)

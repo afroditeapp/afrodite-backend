@@ -12,16 +12,16 @@ use crate::models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct AccountVerificationMethodsConfig {
+pub struct AgeVerificationMethodsConfig {
     #[serde(rename = "debug", skip_serializing_if = "Option::is_none")]
     pub debug: Option<bool>,
     #[serde(rename = "eudi", skip_serializing_if = "Option::is_none")]
     pub eudi: Option<bool>,
 }
 
-impl AccountVerificationMethodsConfig {
-    pub fn new() -> AccountVerificationMethodsConfig {
-        AccountVerificationMethodsConfig {
+impl AgeVerificationMethodsConfig {
+    pub fn new() -> AgeVerificationMethodsConfig {
+        AgeVerificationMethodsConfig {
             debug: None,
             eudi: None,
         }

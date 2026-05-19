@@ -13,6 +13,10 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ClientFeaturesConfig {
+    #[serde(rename = "account_verification", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub account_verification: Option<Option<Box<models::AccountVerificationConfig>>>,
+    #[serde(rename = "age_verification", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub age_verification: Option<Option<Box<models::AgeVerificationConfig>>>,
     #[serde(rename = "attribution", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub attribution: Option<Option<Box<models::AttributionConfig>>>,
     #[serde(rename = "chat", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -27,13 +31,13 @@ pub struct ClientFeaturesConfig {
     pub news: Option<Option<Box<models::NewsConfig>>>,
     #[serde(rename = "profile", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub profile: Option<Option<Box<models::ProfileConfig>>>,
-    #[serde(rename = "verification_methods", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub verification_methods: Option<Option<Box<models::VerificationMethodsConfig>>>,
 }
 
 impl ClientFeaturesConfig {
     pub fn new() -> ClientFeaturesConfig {
         ClientFeaturesConfig {
+            account_verification: None,
+            age_verification: None,
             attribution: None,
             chat: None,
             features: None,
@@ -41,7 +45,6 @@ impl ClientFeaturesConfig {
             map: None,
             news: None,
             profile: None,
-            verification_methods: None,
         }
     }
 }
