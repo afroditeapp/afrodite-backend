@@ -367,10 +367,7 @@ pub struct VerificationMethodsConfig {
 pub struct AccountVerificationMethodsConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
-    pub debug_accept: bool,
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub debug_reject: bool,
+    pub debug: bool,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub eudi: bool,

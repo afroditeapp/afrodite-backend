@@ -199,7 +199,7 @@ impl AdminBotAccountVerificationLogic {
     ) -> std::result::Result<VerificationMethodAction, AccountVerificationErrorFlags> {
         match verification_method {
             VerificationMethod::DebugAccept => {
-                if config.allowed_methods.debug_accept {
+                if config.allowed_methods.debug {
                     tokio::time::sleep(Duration::from_secs(2)).await;
                     Ok(VerificationMethodAction::Accept)
                 } else {
@@ -207,7 +207,7 @@ impl AdminBotAccountVerificationLogic {
                 }
             }
             VerificationMethod::DebugReject => {
-                if config.allowed_methods.debug_reject {
+                if config.allowed_methods.debug {
                     tokio::time::sleep(Duration::from_secs(2)).await;
                     Ok(VerificationMethodAction::Reject)
                 } else {

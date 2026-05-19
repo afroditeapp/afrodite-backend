@@ -21,9 +21,9 @@ use utoipa::ToSchema;
 #[diesel(sql_type = SmallInt)]
 #[repr(i16)]
 pub enum VerificationMethod {
-    DebugAccept = 0,
-    DebugReject = 1,
-    Eudi = 2,
+    /// Data: "accept" or "reject"
+    Debug = 0,
+    Eudi = 1,
 }
 
 #[derive(
