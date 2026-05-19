@@ -111,7 +111,6 @@ pub struct FaceVerificationConfig {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AccountVerificationConfig {
-    pub allowed_methods: model::account::AccountVerificationMethodsConfig,
     pub profile_age_range: bool,
     pub profile_name: bool,
     pub security_content: Option<SecurityContentVerificationConfig>,
@@ -129,7 +128,6 @@ impl AccountVerificationConfig {
         let file = file.unwrap_or_default();
 
         Some(Self {
-            allowed_methods: file.allowed_methods.unwrap_or_default(),
             profile_age_range: db.profile_age_range_enabled,
             profile_name: db.profile_name_enabled,
             security_content: SecurityContentVerificationConfig::new(

@@ -411,7 +411,6 @@ pub struct FaceVerificationFileConfig {
 
 #[derive(Debug, Clone, Deserialize, Default)]
 pub struct AccountVerificationFileConfig {
-    pub allowed_methods: Option<model::account::AccountVerificationMethodsConfig>,
     pub security_content: Option<SecurityContentVerificationFileConfig>,
 }
 

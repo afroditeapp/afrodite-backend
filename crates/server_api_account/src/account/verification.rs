@@ -1,6 +1,7 @@
 use axum::{Extension, extract::State};
 use model::{
-    AccountIdInternal, AdminBotNotificationTypes, AgeVerificationMethod, EventToClientInternal,
+    AccountIdInternal, AccountVerificationScope, AdminBotNotificationTypes, AgeVerificationMethod,
+    EventToClientInternal, VerificationMethod,
 };
 use model_account::{
     AccountVerificationQueueStatus, PostAccountVerificationQueueItem,
@@ -19,6 +20,45 @@ use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsA
 use simple_backend::create_counters;
 
 use crate::utils::{Json, StatusCode};
+
+fn is_account_verification_scope_empty(scope: &AccountVerificationScope) -> bool {
+    !scope.security_content && !scope.profile_age_range && !scope.profile_name
+}
+
+fn validate_account_verification_queue_item(
+    data: &PostAccountVerificationQueueItem,
+    state: &S,
+) -> bool {
+    let config = &state
+        .config()
+        .client_features_internal()
+        .account_verification;
+    let methods = config.methods.clone().unwrap_or_default();
+    let scopes = config.scopes.clone().unwrap_or_default();
+
+    let method_allowed = match data.verification_method {
+        VerificationMethod::Debug => methods.debug,
+        VerificationMethod::Eudi => methods.eudi,
+    };
+
+    if !method_allowed || is_account_verification_scope_empty(&data.verification_scope) {
+        return false;
+    }
+
+    if data.verification_scope.security_content && !scopes.security_content {
+        return false;
+    }
+
+    if data.verification_scope.profile_age_range && !scopes.profile_age_range {
+        return false;
+    }
+
+    if data.verification_scope.profile_name && !scopes.profile_name {
+        return false;
+    }
+
+    true
+}
 
 const PATH_GET_ACCOUNT_VERIFICATION_QUEUE_STATUS: &str = "/account_api/account_verification_queue";
 
@@ -94,6 +134,10 @@ pub async fn post_account_verification_queue_item(
         return Ok(
             PostAccountVerificationQueueItemResult::error_initial_setup_not_completed().into(),
         );
+    }
+
+    if !validate_account_verification_queue_item(&data, &state) {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
     let max_queue_length = state

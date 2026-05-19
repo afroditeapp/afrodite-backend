@@ -115,7 +115,6 @@ impl AdminBotAccountVerificationLogic {
 
         let account_id = (*item.account_id).clone();
         let method_action = match Self::parse_verification_method_action(
-            config,
             &item.verification_method,
             &item.verification_data,
         )
@@ -193,34 +192,21 @@ impl AdminBotAccountVerificationLogic {
     }
 
     async fn parse_verification_method_action(
-        config: &AccountVerificationConfig,
         verification_method: &VerificationMethod,
         _verification_data: &str,
     ) -> std::result::Result<VerificationMethodAction, AccountVerificationErrorFlags> {
         match verification_method {
             VerificationMethod::DebugAccept => {
-                if config.allowed_methods.debug {
-                    tokio::time::sleep(Duration::from_secs(2)).await;
-                    Ok(VerificationMethodAction::Accept)
-                } else {
-                    Err(AccountVerificationErrorFlags::VERIFICATION_METHOD_DISABLED)
-                }
+                tokio::time::sleep(Duration::from_secs(2)).await;
+                Ok(VerificationMethodAction::Accept)
             }
             VerificationMethod::DebugReject => {
-                if config.allowed_methods.debug {
-                    tokio::time::sleep(Duration::from_secs(2)).await;
-                    Ok(VerificationMethodAction::Reject)
-                } else {
-                    Err(AccountVerificationErrorFlags::VERIFICATION_METHOD_DISABLED)
-                }
+                tokio::time::sleep(Duration::from_secs(2)).await;
+                Ok(VerificationMethodAction::Reject)
             }
             VerificationMethod::Eudi => {
-                if config.allowed_methods.eudi {
-                    // TODO: Implement eudi verification method
-                    Ok(VerificationMethodAction::Reject)
-                } else {
-                    Err(AccountVerificationErrorFlags::VERIFICATION_METHOD_DISABLED)
-                }
+                // TODO: Implement eudi verification method
+                Ok(VerificationMethodAction::Reject)
             }
         }
     }

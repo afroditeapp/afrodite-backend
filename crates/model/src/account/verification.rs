@@ -51,7 +51,7 @@ pub enum AgeVerificationMethod {
 bitflags::bitflags! {
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     pub struct AccountVerificationErrorFlags: i16 {
-        const VERIFICATION_METHOD_DISABLED = 0x1;
+        const VERIFICATION_METHOD_NOT_CONFIGURED = 0x1;
         const VERIFICATION_DATA_PARSING_FAILED = 0x2;
         const VERIFICATION_DATA_VERIFICATION_FAILED = 0x4;
         const PROFILE_AGE_RANGE_VERIFICATION_FAILED = 0x8;
@@ -76,7 +76,7 @@ impl TryFrom<i16> for AccountVerificationErrorFlags {
 
 /// Value for account verification error flags.
 ///
-/// - VERIFICATION_METHOD_DISABLED = 0x1. Verification method is disabled.
+/// - VERIFICATION_METHOD_NOT_CONFIGURED = 0x1. Verification method is not configured.
 /// - VERIFICATION_DATA_PARSING_FAILED = 0x2. Verification data parsing failed.
 /// - VERIFICATION_DATA_VERIFICATION_FAILED = 0x4. Verification data verification failed.
 /// - PROFILE_AGE_RANGE_VERIFICATION_FAILED = 0x8. Profile age range verification failed.

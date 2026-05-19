@@ -153,7 +153,7 @@ pub struct ClientFeaturesConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     age_verification: Option<AgeVerificationConfig>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    verification_methods: Option<VerificationMethodsConfig>,
+    account_verification: Option<AccountVerificationConfig>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
@@ -199,6 +199,10 @@ pub struct FeaturesConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     video_calls: bool,
+    /// Show face verification status and filters
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    face_verification: bool,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
@@ -301,8 +305,6 @@ pub struct ProfileConfig {
     pub profile_name_regex: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub first_image: Option<FirstImageConfig>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub verification: Option<VerificationConfig>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -313,26 +315,6 @@ pub struct FirstImageConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub require_face_detected_when_viewing: bool,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct VerificationConfig {
-    /// Show face verification status and filters.
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub face: bool,
-    /// Show security content verification status and filters.
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub security_content: bool,
-    /// Show profile age range verification status and filters.
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub profile_age_range: bool,
-    /// Show profile name verification status and filters.
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub profile_name: bool,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
@@ -358,9 +340,11 @@ pub struct AgeVerificationMethodsConfig {
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
-pub struct VerificationMethodsConfig {
+pub struct AccountVerificationConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
-    account: Option<AccountVerificationMethodsConfig>,
+    pub methods: Option<AccountVerificationMethodsConfig>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub scopes: Option<AccountVerificationScopesConfig>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
@@ -371,6 +355,19 @@ pub struct AccountVerificationMethodsConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub eudi: bool,
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
+pub struct AccountVerificationScopesConfig {
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub security_content: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub profile_age_range: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub profile_name: bool,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]
