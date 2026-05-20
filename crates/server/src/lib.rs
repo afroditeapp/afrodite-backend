@@ -23,7 +23,7 @@ pub mod startup_tasks;
 pub mod task_utils;
 pub mod unlimited_likes;
 
-use std::sync::Arc;
+use std::{fs, sync::Arc};
 
 use api_doc::ApiDoc;
 use axum::Router;
@@ -137,6 +137,59 @@ pub struct DatingAppBusinessLogic {
 }
 
 impl DatingAppBusinessLogic {
+    const SERVER_VERSION_FILE_NAME: &'static str = "server_version.txt";
+
+    fn parse_major_minor(version: &str) -> Option<(u32, u32)> {
+        let mut parts = version.trim().split('.');
+        let major = parts.next()?.parse().ok()?;
+        let minor = parts.next()?.parse().ok()?;
+        Some((major, minor))
+    }
+
+    fn check_and_save_server_version(&self, server_version: &str) {
+        let data_dir = self.config.simple_backend().data_dir();
+        fs::create_dir_all(data_dir)
+            .unwrap_or_else(|e| panic!("Creating data dir {} failed: {}", data_dir.display(), e));
+
+        let server_version_path = data_dir.join(Self::SERVER_VERSION_FILE_NAME);
+
+        let current_major_minor = Self::parse_major_minor(server_version)
+            .unwrap_or_else(|| panic!("Invalid backend semver version: {server_version}"));
+
+        let save_version = if let Ok(previous_server_version) =
+            fs::read_to_string(&server_version_path)
+        {
+            let previous_server_version = previous_server_version.trim();
+            let previous_major_minor = Self::parse_major_minor(previous_server_version)
+                .unwrap_or_else(|| {
+                    panic!(
+                        "Invalid version in {}: {}",
+                        server_version_path.display(),
+                        previous_server_version
+                    )
+                });
+
+            if previous_major_minor > current_major_minor {
+                panic!(
+                    "Server major/minor version downgrade is not allowed. Stored version is {}, current version is {}. This check can be bypassed by deleting {} from data directory.",
+                    previous_server_version,
+                    server_version,
+                    Self::SERVER_VERSION_FILE_NAME,
+                );
+            }
+
+            previous_major_minor != current_major_minor
+        } else {
+            true
+        };
+
+        if save_version {
+            fs::write(&server_version_path, format!("{}\n", server_version)).unwrap_or_else(|e| {
+                panic!("Saving {} failed: {}", server_version_path.display(), e)
+            });
+        }
+    }
+
     fn add_obfuscation_supported_routes(
         &self,
         mut router: Router,
@@ -274,6 +327,8 @@ impl BusinessLogic for DatingAppBusinessLogic {
             .simple_backend()
             .backend_semver_version()
             .to_string();
+
+        self.check_and_save_server_version(&server_version);
 
         let (push_notification_sender, push_notification_receiver) =
             server_common::push_notifications::channel();
