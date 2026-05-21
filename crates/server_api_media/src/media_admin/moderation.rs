@@ -15,10 +15,7 @@ use server_api::{
 use server_data::write::GetWriteCommandsCommon;
 use server_data_media::{
     read::GetReadMediaCommands,
-    write::{
-        GetWriteCommandsMedia, media::InitialContentModerationResult,
-        media_admin::content::ContentModerationMode,
-    },
+    write::{GetWriteCommandsMedia, media_admin::content::ContentModerationMode},
 };
 use simple_backend::create_counters;
 
@@ -127,24 +124,10 @@ pub async fn post_moderate_media_content(
             .media()
             .content_id_internal(content_owner, data.content_id)
             .await?;
-        let info = cmds
-            .media_admin()
+        cmds.media_admin()
             .content()
             .moderate_media_content(mode, content_id)
             .await?;
-
-        match info.moderation_result {
-            InitialContentModerationResult::AllAccepted { .. } => {
-                cmds.events()
-                    .send_connected_event(
-                        content_id.content_owner(),
-                        EventToClientInternal::AccountStateChanged,
-                    )
-                    .await?;
-            }
-            InitialContentModerationResult::AllModeratedAndNotAccepted
-            | InitialContentModerationResult::NoChange => (),
-        }
 
         cmds.events()
             .send_connected_event(

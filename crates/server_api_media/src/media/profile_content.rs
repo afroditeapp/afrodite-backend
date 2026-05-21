@@ -6,7 +6,7 @@ use axum::{
 };
 use axum_extra::TypedHeader;
 use headers::ContentType;
-use model::{AdminNotificationTypes, EventToClientInternal};
+use model::AdminNotificationTypes;
 use model_media::{
     AccountId, AccountIdInternal, AccountState, GetProfileContentQueryParams,
     GetProfileContentResult, GetProfileContentResultInternal, Permissions, ProfileContent,
@@ -18,10 +18,7 @@ use server_api::{
     create_open_api_router, db_write,
 };
 use server_data::read::GetReadCommandsCommon;
-use server_data_media::{
-    read::GetReadMediaCommands,
-    write::{GetWriteCommandsMedia, media::InitialContentModerationResult},
-};
+use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use simple_backend::create_counters;
 
 use crate::{
@@ -279,25 +276,9 @@ pub async fn put_profile_content(
     }
 
     db_write!(state, move |cmds| {
-        let info = cmds
-            .media()
+        cmds.media()
             .update_profile_content(api_caller_account_id, new)
-            .await?;
-
-        match info {
-            InitialContentModerationResult::AllAccepted { .. } => {
-                cmds.events()
-                    .send_connected_event(
-                        api_caller_account_id,
-                        EventToClientInternal::AccountStateChanged,
-                    )
-                    .await?;
-            }
-            InitialContentModerationResult::AllModeratedAndNotAccepted
-            | InitialContentModerationResult::NoChange => (),
-        }
-
-        Ok(())
+            .await
     })?;
 
     state

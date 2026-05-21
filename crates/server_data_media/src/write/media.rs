@@ -1,12 +1,9 @@
 use std::collections::HashSet;
 
-use database::current::{
-    read::GetDbReadCommandsCommon,
-    write::{GetDbWriteCommandsCommon, common::CacheUpdateAccount},
-};
+use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
 use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia};
 use error_stack::ResultExt;
-use model::{Account, AccountState, ContentIdInternal, EventToClientInternal, ProfileVisibility};
+use model::{AccountState, ContentIdInternal, EventToClientInternal, ProfileVisibility};
 use model_media::{
     AccountIdInternal, ContentId, ContentIdDb, ContentSlot, CurrentAccountMediaInternal,
     NewContentParams, ProfileContent, ProfileContentModificationMetadata, SetProfileContent,
@@ -26,24 +23,6 @@ use crate::cache::CacheWriteMedia;
 
 mod notification;
 mod report;
-
-pub enum CacheUpdateInitialContentModerationResult {
-    /// Profile visibility changed from pending to normal.
-    AllAccepted {
-        account_after_visibility_change: CacheUpdateAccount,
-    },
-    AllModeratedAndNotAccepted,
-    NoChange,
-}
-
-pub enum InitialContentModerationResult {
-    /// Profile visibility changed from pending to normal.
-    AllAccepted {
-        account_after_visibility_change: Account,
-    },
-    AllModeratedAndNotAccepted,
-    NoChange,
-}
 
 pub struct DeleteContentResult {
     /// User can't remove in use images so this is true
@@ -141,7 +120,7 @@ impl WriteCommandsMedia<'_> {
         &self,
         id: AccountIdInternal,
         new: SetProfileContent,
-    ) -> Result<InitialContentModerationResult, DataError> {
+    ) -> Result<(), DataError> {
         let content_before_update = self
             .db_read(move |mut cmds| cmds.media().media_content().current_account_media(id))
             .await?;
@@ -348,15 +327,15 @@ impl WriteCommandsMedia<'_> {
     pub async fn remove_pending_state_from_profile_visibility_if_needed(
         &self,
         content_owner: AccountIdInternal,
-    ) -> Result<InitialContentModerationResult, DataError> {
+    ) -> Result<(), DataError> {
         let current_account = self
             .db_read(move |mut cmds| cmds.common().account(content_owner))
             .await?;
         let profile_visibility = current_account.profile_visibility();
 
-        let info = db_transaction!(self, move |mut cmds| {
+        let new_account = db_transaction!(self, move |mut cmds| {
             if !profile_visibility.is_pending() {
-                return Ok(CacheUpdateInitialContentModerationResult::NoChange);
+                return Ok(None);
             }
 
             let current_media = cmds
@@ -366,13 +345,9 @@ impl WriteCommandsMedia<'_> {
                 .current_account_media(content_owner)?;
 
             let mut all_accepted = current_media.iter_current_profile_content().count() > 0;
-            let mut all_moderated = current_media.iter_current_profile_content().count() > 0;
             for c in current_media.iter_current_profile_content() {
                 if !c.state().is_accepted() {
                     all_accepted = false;
-                }
-                if !c.state().is_moderated() {
-                    all_moderated = false;
                 }
             }
 
@@ -394,42 +369,27 @@ impl WriteCommandsMedia<'_> {
                     },
                 )?;
 
-                Ok(CacheUpdateInitialContentModerationResult::AllAccepted {
-                    account_after_visibility_change: new_account,
-                })
-            } else if all_moderated {
-                Ok(CacheUpdateInitialContentModerationResult::AllModeratedAndNotAccepted)
+                Ok(Some(new_account))
             } else {
-                Ok(CacheUpdateInitialContentModerationResult::NoChange)
+                Ok(None)
             }
         })?;
 
-        let info = match info {
-            CacheUpdateInitialContentModerationResult::AllAccepted {
-                account_after_visibility_change,
-            } => {
-                let account = self
-                    .handle()
-                    .common()
-                    .internal_handle_new_account_data_after_db_modification(
-                        content_owner,
-                        &current_account,
-                        account_after_visibility_change,
-                    )
-                    .await?;
-                InitialContentModerationResult::AllAccepted {
-                    account_after_visibility_change: account,
-                }
-            }
-            CacheUpdateInitialContentModerationResult::AllModeratedAndNotAccepted => {
-                InitialContentModerationResult::AllModeratedAndNotAccepted
-            }
-            CacheUpdateInitialContentModerationResult::NoChange => {
-                InitialContentModerationResult::NoChange
-            }
-        };
+        if let Some(new_account) = new_account {
+            self.handle()
+                .common()
+                .internal_handle_new_account_data_after_db_modification(
+                    content_owner,
+                    &current_account,
+                    new_account,
+                )
+                .await?;
+            self.events()
+                .send_connected_event(content_owner, EventToClientInternal::AccountStateChanged)
+                .await?;
+        }
 
-        Ok(info)
+        Ok(())
     }
 
     pub async fn update_content_usage(

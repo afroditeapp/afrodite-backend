@@ -11,11 +11,7 @@ use server_data::{
     result::WrappedContextExt, write::DbTransaction,
 };
 
-use crate::write::{GetWriteCommandsMedia, media::InitialContentModerationResult};
-
-pub struct ModerationResult {
-    pub moderation_result: InitialContentModerationResult,
-}
+use crate::write::GetWriteCommandsMedia;
 
 define_cmd_wrapper_write!(WriteCommandsProfileAdminContent);
 
@@ -24,7 +20,7 @@ impl WriteCommandsProfileAdminContent<'_> {
         &self,
         mode: ContentModerationMode,
         content_id: ContentIdInternal,
-    ) -> Result<ModerationResult, DataError> {
+    ) -> Result<(), DataError> {
         let current_content = self
             .db_read(move |mut cmds| {
                 cmds.media()
@@ -102,15 +98,12 @@ impl WriteCommandsProfileAdminContent<'_> {
                 .await?;
         }
 
-        let visibility_change = self
-            .handle()
+        self.handle()
             .media()
             .remove_pending_state_from_profile_visibility_if_needed(content_id.content_owner())
             .await?;
 
-        Ok(ModerationResult {
-            moderation_result: visibility_change,
-        })
+        Ok(())
     }
 
     pub async fn change_face_detected_value(
