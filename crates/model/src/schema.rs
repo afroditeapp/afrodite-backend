@@ -164,7 +164,6 @@ diesel::table! {
 diesel::table! {
     account_setup (account_id) {
         account_id -> Int8,
-        birthdate -> Nullable<Date>,
         is_adult -> Nullable<Bool>,
     }
 }
@@ -898,7 +897,6 @@ diesel::table! {
         profile_visibility_state_number -> Int2,
         sync_version -> Int2,
         unlimited_likes -> Bool,
-        birthdate -> Nullable<Date>,
         bot_account_type_number -> Nullable<Int2>,
         email_verified -> Bool,
         age_verified -> Bool,

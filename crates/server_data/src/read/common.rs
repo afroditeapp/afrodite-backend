@@ -1,8 +1,5 @@
 use database::current::read::GetDbReadCommandsCommon;
-use model::{
-    AccessTokenType, Account, AccountId, AccountIdInternal, BotAccountType, LatestBirthdate,
-    RefreshToken,
-};
+use model::{AccessTokenType, Account, AccountId, AccountIdInternal, BotAccountType, RefreshToken};
 use model_server_data::SearchGroupFlags;
 use server_common::data::IntoDataError;
 use simple_backend_model::NonEmptyString;
@@ -80,16 +77,6 @@ impl ReadCommandsCommon<'_> {
             })
             .await?;
         Ok(account)
-    }
-
-    pub async fn latest_birthdate(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<LatestBirthdate, DataError> {
-        self.db_read(move |mut cmds| cmds.common().state().other_shared_state(id))
-            .await
-            .into_error()
-            .map(|v| v.latest_birthdate())
     }
 
     pub async fn account_ids_vec(&self) -> Result<Vec<AccountId>, DataError> {

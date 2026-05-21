@@ -3138,7 +3138,6 @@ dependencies = [
 name = "model_account"
 version = "0.0.0"
 dependencies = [
- "chrono",
  "diesel",
  "model",
  "model_server_data",
@@ -3146,7 +3145,6 @@ dependencies = [
  "num_enum",
  "serde",
  "simple_backend_model",
- "utils",
  "utoipa",
 ]
 
@@ -6752,7 +6750,6 @@ checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 name = "utils"
 version = "0.0.0"
 dependencies = [
- "chrono",
  "pgp",
  "rand 0.8.5",
  "smallvec",

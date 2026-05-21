@@ -1,4 +1,3 @@
-use chrono::NaiveDate;
 use diesel::prelude::*;
 use model::{ClientType, ClientVersion, EmailLoginToken, NewsSyncVersion, UnixTime};
 use model_server_data::{
@@ -6,7 +5,6 @@ use model_server_data::{
 };
 use model_server_state::DemoAccountToken;
 use serde::{Deserialize, Serialize};
-use utils::time::age_in_years_from_birthdate;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{AccountId, AccountIdDb, AccountVerificationErrorFlagsValue, VerificationMethod};
@@ -229,25 +227,12 @@ pub struct InitEmailChange {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default, PartialEq, Eq)]
 pub struct SetAccountSetup {
-    /// String date with "YYYY-MM-DD" format.
-    ///
-    /// This is not required at the moment to reduce sensitive user data.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[schema(value_type = Option<String>)]
-    pub birthdate: Option<NaiveDate>,
     pub is_adult: bool,
 }
 
 impl SetAccountSetup {
     pub fn is_valid(&self) -> bool {
-        let birthdate_is_valid = if let Some(birthdate) = self.birthdate {
-            let age = age_in_years_from_birthdate(birthdate);
-            18 <= age && age <= 150
-        } else {
-            true
-        };
-
-        birthdate_is_valid && self.is_adult
+        self.is_adult
     }
 }
 
@@ -267,9 +252,6 @@ impl SetAccountSetup {
 #[diesel(table_name = crate::schema::account_setup)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct AccountSetup {
-    #[schema(value_type = Option<String>)]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    birthdate: Option<NaiveDate>,
     #[serde(skip_serializing_if = "Option::is_none")]
     is_adult: Option<bool>,
 }

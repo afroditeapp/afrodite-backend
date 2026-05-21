@@ -1,6 +1,4 @@
-use database::{
-    DieselDatabaseError, current::write::GetDbWriteCommandsCommon, define_current_write_commands,
-};
+use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{AccountCreatedTime, AccountId, AccountIdInternal};
@@ -48,18 +46,8 @@ impl CurrentWriteAccountData<'_> {
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::account_setup::dsl::*;
 
-        if let Some(birthdate_value) = &data.birthdate {
-            self.write()
-                .common()
-                .state()
-                .update_birthdate(id, *birthdate_value)?;
-        }
-
         update(account_setup.find(id.as_db_id()))
-            .set((
-                birthdate.eq(data.birthdate),
-                is_adult.eq(Some(data.is_adult)),
-            ))
+            .set(is_adult.eq(Some(data.is_adult)))
             .execute(self.conn())
             .into_db_error(id)?;
 

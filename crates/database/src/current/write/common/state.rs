@@ -1,4 +1,3 @@
-use chrono::NaiveDate;
 use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{
@@ -78,21 +77,6 @@ impl CurrentWriteCommonState<'_> {
 
         update(shared_state.find(id.as_db_id()))
             .set(unlimited_likes.eq(unlimited_likes_value))
-            .execute(self.conn())
-            .into_db_error(id)?;
-
-        Ok(())
-    }
-
-    pub fn update_birthdate(
-        &mut self,
-        id: AccountIdInternal,
-        birthdate_value: NaiveDate,
-    ) -> Result<(), DieselDatabaseError> {
-        use model::schema::shared_state::dsl::*;
-
-        update(shared_state.find(id.as_db_id()))
-            .set(birthdate.eq(birthdate_value))
             .execute(self.conn())
             .into_db_error(id)?;
 

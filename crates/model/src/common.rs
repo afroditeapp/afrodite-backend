@@ -1,5 +1,4 @@
 use base64::Engine;
-use chrono::NaiveDate;
 use diesel::{
     AsExpression, FromSqlRow,
     prelude::*,
@@ -586,7 +585,6 @@ pub struct SharedStateRaw {
     pub profile_visibility_state_number: ProfileVisibility,
     pub sync_version: AccountSyncVersion,
     pub unlimited_likes: bool,
-    pub birthdate: Option<NaiveDate>,
     pub bot_account_type_number: Option<BotAccountType>,
     pub initial_setup_completed_unix_time: InitialSetupCompletedTime,
 }
@@ -604,30 +602,16 @@ pub struct AccountStateRelatedSharedState {
     pub age_verified: bool,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default, PartialEq, Eq)]
-pub struct LatestBirthdate {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[schema(value_type = Option<String>)]
-    pub birthdate: Option<NaiveDate>,
-}
-
 #[derive(Debug, Clone, Default, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::shared_state)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct OtherSharedState {
     pub unlimited_likes: bool,
-    birthdate: Option<NaiveDate>,
     bot_account_type_number: Option<BotAccountType>,
     pub initial_setup_completed_unix_time: InitialSetupCompletedTime,
 }
 
 impl OtherSharedState {
-    pub fn latest_birthdate(&self) -> LatestBirthdate {
-        LatestBirthdate {
-            birthdate: self.birthdate,
-        }
-    }
-
     pub fn set_bot_account_type_number(&mut self, bot_type: BotAccountType) {
         self.bot_account_type_number = Some(bot_type);
     }

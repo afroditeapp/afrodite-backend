@@ -137,10 +137,6 @@ CREATE TABLE IF NOT EXISTS shared_state(
     -- concurrent updates.
     sync_version              SMALLINT             NOT NULL DEFAULT 0,
     unlimited_likes           BOOLEAN              NOT NULL DEFAULT FALSE,
-    -- Birthdate has YYYY-MM-DD format. This is in shared state if
-    -- birthdate validation using third party service is implemented
-    -- someday.
-    birthdate                 DATE,
     -- Null = not a bot account
     -- 0 = admin bot
     -- 1 = user bot
@@ -425,10 +421,6 @@ CREATE TABLE IF NOT EXISTS account_email_login_token_time(
 -- Information which can not change after account initial setup completes
 CREATE TABLE IF NOT EXISTS account_setup(
     account_id  BIGINT PRIMARY KEY NOT NULL,
-    -- Birthdate has YYYY-MM-DD format. This is the birthdate from user when
-    -- account initial setup is done. The birthdate in shared_state can
-    -- be modified later.
-    birthdate                 DATE,
     is_adult                  BOOLEAN,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
