@@ -33,8 +33,7 @@ pub async fn put_setting_profile_visiblity(
     ACCOUNT.put_setting_profile_visiblity.incr();
 
     db_write!(state, move |cmds| {
-        let new_account = cmds
-            .account()
+        cmds.account()
             .update_syncable_account_data(id, move |account| {
                 account.profile_visibility = if account.profile_visibility.is_pending() {
                     if new_value.value {
@@ -53,7 +52,7 @@ pub async fn put_setting_profile_visiblity(
         cmds.events()
             .send_connected_event(id.uuid, EventToClientInternal::AccountStateChanged)
             .await?;
-        Ok(new_account)
+        Ok(())
     })?;
 
     Ok(())

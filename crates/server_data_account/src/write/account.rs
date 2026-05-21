@@ -7,8 +7,7 @@ use delete::WriteCommandsAccountDelete;
 use email::WriteCommandsAccountEmail;
 use model::UnixTime;
 use model_account::{
-    Account, AccountIdInternal, AccountVerificationErrorFlagsValue, SetAccountSetup,
-    VerificationMethod,
+    AccountIdInternal, AccountVerificationErrorFlagsValue, SetAccountSetup, VerificationMethod,
 };
 use model_server_state::DemoAccountId;
 use news::WriteCommandsAccountNews;
@@ -68,7 +67,7 @@ impl WriteCommandsAccount<'_> {
         modify_action: impl FnOnce(&mut AccountUpdate) -> error_stack::Result<(), DieselDatabaseError>
         + Send
         + 'static,
-    ) -> Result<Account, DataError> {
+    ) -> Result<(), DataError> {
         self.update_syncable_account_data_for_completing_initial_setup(id, None, modify_action)
             .await
     }
@@ -81,7 +80,7 @@ impl WriteCommandsAccount<'_> {
         modify_action: impl FnOnce(&mut AccountUpdate) -> error_stack::Result<(), DieselDatabaseError>
         + Send
         + 'static,
-    ) -> Result<Account, DataError> {
+    ) -> Result<(), DataError> {
         let current_account = self
             .db_read(move |mut cmds| cmds.common().account(id))
             .await?;
@@ -101,8 +100,7 @@ impl WriteCommandsAccount<'_> {
             Ok(account)
         })?;
 
-        let new_account = self
-            .handle()
+        self.handle()
             .common()
             .internal_handle_new_account_data_after_db_modification(
                 id,
@@ -111,7 +109,7 @@ impl WriteCommandsAccount<'_> {
             )
             .await?;
 
-        Ok(new_account)
+        Ok(())
     }
 
     /// Only server WebSocket code should call this method.

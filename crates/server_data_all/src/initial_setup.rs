@@ -1,7 +1,7 @@
 use config::Config;
 use model::{
-    Account, AccountIdInternal, AccountState, ContentIdInternal, EmailMessages,
-    EventToClientInternal, Permissions,
+    AccountIdInternal, AccountState, ContentIdInternal, EmailMessages, EventToClientInternal,
+    Permissions,
 };
 use server_data::{
     DataError, cache::profile::UpdateLocationCacheState, db_manager::RouterDatabaseReadHandle,
@@ -21,7 +21,7 @@ pub async fn complete_initial_setup(
     read_handle: &RouterDatabaseReadHandle,
     write_handle: &WriteCommandRunnerHandle,
     id: AccountIdInternal,
-) -> server_common::result::Result<Account, server_common::data::DataError> {
+) -> server_common::result::Result<(), server_common::data::DataError> {
     let email_address_state = read_handle.account().email_address_state(id).await?;
     let sign_in_with_info = read_handle.account().account_sign_in_with_info(id).await?;
     let (matches_with_grant_admin_access_config, grant_admin_access_more_than_once) =
@@ -57,7 +57,7 @@ pub async fn complete_initial_setup(
             (false, false)
         };
 
-    let new_account = write_handle
+    write_handle
         .write(move |cmds| async move {
             // Second account state check as db_write quarantees synchronous
             // access.
@@ -89,8 +89,7 @@ pub async fn complete_initial_setup(
                 None
             };
 
-            let new_account = cmds
-                .account()
+            cmds.account()
                 .update_syncable_account_data_for_completing_initial_setup(
                     id,
                     enable_all_permissions,
@@ -133,9 +132,9 @@ pub async fn complete_initial_setup(
                 }
             }
 
-            Ok(new_account)
+            Ok(())
         })
         .await?;
 
-    Ok(new_account)
+    Ok(())
 }

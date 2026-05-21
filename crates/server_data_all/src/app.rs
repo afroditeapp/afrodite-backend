@@ -2,7 +2,7 @@ use axum::extract::ws::WebSocket;
 use config::Config;
 use futures::{FutureExt, future::BoxFuture};
 use model::{
-    Account, AccountIdInternal, AccountVerificationErrorFlags, AccountVerificationErrorFlagsValue,
+    AccountIdInternal, AccountVerificationErrorFlags, AccountVerificationErrorFlagsValue,
     ClientMessageForDataAllCrate, EditVerificationValues, EmailMessages, UnixTime,
     VerificationMethod,
 };
@@ -100,7 +100,7 @@ impl DataAllUtils for DataAllUtilsImpl {
         read_handle: &'a RouterDatabaseReadHandle,
         write_handle: &'a WriteCommandRunnerHandle,
         id: AccountIdInternal,
-    ) -> BoxFuture<'a, server_common::result::Result<Account, DataError>> {
+    ) -> BoxFuture<'a, server_common::result::Result<(), DataError>> {
         async move {
             crate::initial_setup::complete_initial_setup(config, read_handle, write_handle, id)
                 .await

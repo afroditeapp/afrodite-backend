@@ -13,7 +13,7 @@ use config::Config;
 use data_signer::DataSigner;
 use ip_address::IpAddressUsageTracker;
 use model::{
-    Account, AccountIdInternal, AccountVerificationErrorFlagsValue, ClientMessageForDataAllCrate,
+    AccountIdInternal, AccountVerificationErrorFlagsValue, ClientMessageForDataAllCrate,
     EditVerificationValues, UnixTime, VerificationMethod,
 };
 use model_chat::SignInWithInfo;
@@ -201,11 +201,10 @@ impl DataAllAccess<'_> {
         cmd.await
     }
 
-    /// Returns new [Account]
     pub async fn complete_initial_setup(
         &self,
         id: AccountIdInternal,
-    ) -> server_common::result::Result<Account, DataError> {
+    ) -> server_common::result::Result<(), DataError> {
         let cmd = self
             .utils()
             .complete_initial_setup(self.config(), self.read(), self.write(), id);

@@ -4,8 +4,8 @@ use axum::extract::ws::WebSocket;
 use config::{Config, file::EmailAddress};
 use futures::future::BoxFuture;
 use model::{
-    Account, AccountId, AccountIdInternal, AccountVerificationErrorFlagsValue,
-    ClientMessageForDataAllCrate, EditVerificationValues, UnixTime, VerificationMethod,
+    AccountId, AccountIdInternal, AccountVerificationErrorFlagsValue, ClientMessageForDataAllCrate,
+    EditVerificationValues, UnixTime, VerificationMethod,
 };
 use model_server_data::SignInWithInfo;
 pub use server_common::app::*;
@@ -154,7 +154,7 @@ pub trait DataAllUtils: Send + Sync + 'static {
         read_handle: &'a RouterDatabaseReadHandle,
         write_handle: &'a WriteCommandRunnerHandle,
         id: AccountIdInternal,
-    ) -> BoxFuture<'a, server_common::result::Result<Account, DataError>>;
+    ) -> BoxFuture<'a, server_common::result::Result<(), DataError>>;
 
     fn is_match<'a>(
         &self,
