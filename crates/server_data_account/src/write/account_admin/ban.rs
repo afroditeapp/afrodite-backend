@@ -53,17 +53,18 @@ impl WriteCommandsAccountBan<'_> {
         }
         let a = current_account.clone();
         let new_account = db_transaction!(self, move |mut cmds| {
-            let a = cmds.common().state().update_syncable_account_data(
-                id,
-                a,
-                move |state_container, _, visibility, _| {
-                    state_container.set_banned(banned_until.is_some());
+            let a = cmds
+                .common()
+                .state()
+                .update_syncable_account_data(id, a, move |account| {
+                    account.state.set_banned(banned_until.is_some());
                     if banned_until.is_some() {
-                        visibility.change_to_private_or_pending_private();
+                        account
+                            .profile_visibility
+                            .change_to_private_or_pending_private();
                     }
                     Ok(())
-                },
-            )?;
+                })?;
 
             cmds.account_admin().ban().set_banned_state(
                 id,

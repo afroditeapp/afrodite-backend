@@ -15,6 +15,14 @@ use crate::{
 
 define_current_write_commands!(CurrentWriteCommonState);
 
+pub struct AccountUpdate {
+    pub state: AccountStateContainer,
+    pub permissions: Permissions,
+    pub profile_visibility: ProfileVisibility,
+    pub email_verified: bool,
+    pub age_verified: bool,
+}
+
 impl CurrentWriteCommonState<'_> {
     pub fn insert_shared_state(
         &mut self,
@@ -120,72 +128,33 @@ impl CurrentWriteCommonState<'_> {
         Ok(())
     }
 
-    /// The only method which can modify AccountStateContainer, Permissions,
-    /// ProfileVisibility and email verification status.
+    /// The only method which can modify [Account].
     /// Updates automatically the AccountSyncVersion number.
     ///
-    /// Returns the modified Account.
+    /// Returns the modified [Account].
     pub fn update_syncable_account_data(
         &mut self,
         id: AccountIdInternal,
         account: Account,
-        modify_action: impl FnOnce(
-            &mut AccountStateContainer,
-            &mut Permissions,
-            &mut ProfileVisibility,
-            &mut bool, // Email verified
-        ) -> error_stack::Result<(), DieselDatabaseError>
+        modify_action: impl FnOnce(&mut AccountUpdate) -> error_stack::Result<(), DieselDatabaseError>
         + Send
         + 'static,
     ) -> Result<Account, DieselDatabaseError> {
-        self.update_syncable_account_data_with_age_verified(
-            id,
-            account,
-            move |state, permissions, visibility, email_verified, _age_verified| {
-                modify_action(state, permissions, visibility, email_verified)
-            },
-        )
-    }
-
-    /// The only method which can modify AccountStateContainer, Permissions,
-    /// ProfileVisibility, email verification status and age verification status.
-    /// Updates automatically the AccountSyncVersion number.
-    ///
-    /// Returns the modified Account.
-    pub fn update_syncable_account_data_with_age_verified(
-        &mut self,
-        id: AccountIdInternal,
-        account: Account,
-        modify_action: impl FnOnce(
-            &mut AccountStateContainer,
-            &mut Permissions,
-            &mut ProfileVisibility,
-            &mut bool, // Email verified
-            &mut bool, // Age verified
-        ) -> error_stack::Result<(), DieselDatabaseError>
-        + Send
-        + 'static,
-    ) -> Result<Account, DieselDatabaseError> {
-        let mut state = account.state_container();
-        let mut permissions = account.permissions();
-        let mut profile_visibility = account.profile_visibility();
-        let mut email_verified = account.email_verified();
-        let mut age_verified = account.age_verified();
-        modify_action(
-            &mut state,
-            &mut permissions,
-            &mut profile_visibility,
-            &mut email_verified,
-            &mut age_verified,
-        )
-        .map_err(|_| DieselDatabaseError::NotAllowed.report())?;
+        let mut account_mut = AccountUpdate {
+            state: account.state_container(),
+            permissions: account.permissions(),
+            profile_visibility: account.profile_visibility(),
+            email_verified: account.email_verified(),
+            age_verified: account.age_verified(),
+        };
+        modify_action(&mut account_mut).map_err(|_| DieselDatabaseError::NotAllowed.report())?;
         let new_version = account.sync_version().increment_if_not_max_value();
         let new_account = Account::new_from(
-            permissions,
-            state,
-            profile_visibility,
-            email_verified,
-            age_verified,
+            account_mut.permissions,
+            account_mut.state,
+            account_mut.profile_visibility,
+            account_mut.email_verified,
+            account_mut.age_verified,
             new_version,
         );
 

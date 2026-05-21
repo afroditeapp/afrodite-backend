@@ -35,17 +35,18 @@ impl WriteCommandsAccountDelete<'_> {
         }
         let a = current_account.clone();
         let new_account = db_transaction!(self, move |mut cmds| {
-            let a = cmds.common().state().update_syncable_account_data(
-                id,
-                a,
-                move |state_container, _, visibility, _| {
-                    state_container.set_pending_deletion(value);
+            let a = cmds
+                .common()
+                .state()
+                .update_syncable_account_data(id, a, move |account| {
+                    account.state.set_pending_deletion(value);
                     if value {
-                        visibility.change_to_private_or_pending_private();
+                        account
+                            .profile_visibility
+                            .change_to_private_or_pending_private();
                     }
                     Ok(())
-                },
-            )?;
+                })?;
 
             cmds.account()
                 .delete()
@@ -90,8 +91,10 @@ impl WriteCommandsAccountDelete<'_> {
         // Delete account from location index
         self.handle()
             .account()
-            .update_syncable_account_data(id, None, |_, _, visibility, _| {
-                visibility.change_to_private_or_pending_private();
+            .update_syncable_account_data(id, None, |account| {
+                account
+                    .profile_visibility
+                    .change_to_private_or_pending_private();
                 Ok(())
             })
             .await?;

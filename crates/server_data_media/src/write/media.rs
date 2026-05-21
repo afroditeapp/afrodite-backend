@@ -376,8 +376,8 @@ impl WriteCommandsMedia<'_> {
                 let new_account = cmds.common().state().update_syncable_account_data(
                     content_owner,
                     current_account.clone(),
-                    move |_, _, visibility, _| {
-                        *visibility = new_visibility;
+                    move |account| {
+                        account.profile_visibility = new_visibility;
                         Ok(())
                     },
                 )?;

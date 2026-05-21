@@ -15,6 +15,8 @@ mod server_info;
 mod state;
 mod token;
 
+pub use state::AccountUpdate;
+
 define_current_write_commands!(CurrentWriteCommon);
 
 impl<'a> CurrentWriteCommon<'a> {

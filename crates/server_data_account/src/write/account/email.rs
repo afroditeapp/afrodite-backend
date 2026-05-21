@@ -28,8 +28,8 @@ impl WriteCommandsAccountEmail<'_> {
     ) -> Result<(), DataError> {
         self.0
             .account()
-            .update_syncable_account_data(id, None, |_, _, _, verified| {
-                *verified = false;
+            .update_syncable_account_data(id, None, |account| {
+                account.email_verified = false;
                 Ok(())
             })
             .await?;
@@ -86,8 +86,8 @@ impl WriteCommandsAccountEmail<'_> {
             if !account.email_verified() {
                 self.0
                     .account()
-                    .update_syncable_account_data(account_id, None, |_, _, _, email_verified| {
-                        *email_verified = true;
+                    .update_syncable_account_data(account_id, None, |account| {
+                        account.email_verified = true;
                         Ok(())
                     })
                     .await?;
@@ -286,8 +286,8 @@ impl WriteCommandsAccountEmail<'_> {
 
         self.0
             .account()
-            .update_syncable_account_data(id, None, |_, _, _, email_verified| {
-                *email_verified = true;
+            .update_syncable_account_data(id, None, |account| {
+                account.email_verified = true;
                 Ok(())
             })
             .await?;

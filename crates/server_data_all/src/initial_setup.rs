@@ -91,22 +91,16 @@ pub async fn complete_initial_setup(
 
             let new_account = cmds
                 .account()
-                .update_syncable_account_data(
-                    id,
-                    enable_all_permissions,
-                    move |state, permissions, _, _| {
-                        if state.account_state() == AccountState::InitialSetup {
-                            state.complete_initial_setup();
-                            if enable_all_permissions.is_some() {
-                                warn!(
-                                    "Account detected as admin account. Enabling all permissions"
-                                );
-                                *permissions = Permissions::all_enabled();
-                            }
+                .update_syncable_account_data(id, enable_all_permissions, move |account| {
+                    if account.state.account_state() == AccountState::InitialSetup {
+                        account.state.complete_initial_setup();
+                        if enable_all_permissions.is_some() {
+                            warn!("Account detected as admin account. Enabling all permissions");
+                            account.permissions = Permissions::all_enabled();
                         }
-                        Ok(())
-                    },
-                )
+                    }
+                    Ok(())
+                })
                 .await?;
 
             // Update initial setup completed time to profile index

@@ -1,11 +1,14 @@
-use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
+use database::current::{
+    read::GetDbReadCommandsCommon,
+    write::{GetDbWriteCommandsCommon, common::AccountUpdate},
+};
 use database_account::current::write::GetDbWriteCommandsAccount;
 use delete::WriteCommandsAccountDelete;
 use email::WriteCommandsAccountEmail;
-use model::{AccountStateContainer, UnixTime};
+use model::UnixTime;
 use model_account::{
-    Account, AccountIdInternal, AccountVerificationErrorFlagsValue, Permissions, ProfileVisibility,
-    SetAccountSetup, VerificationMethod,
+    Account, AccountIdInternal, AccountVerificationErrorFlagsValue, SetAccountSetup,
+    VerificationMethod,
 };
 use model_server_state::DemoAccountId;
 use news::WriteCommandsAccountNews;
@@ -55,45 +58,15 @@ impl<'a> WriteCommandsAccount<'a> {
 }
 
 impl WriteCommandsAccount<'_> {
-    /// The only method which can modify AccountState, Permissions,
-    /// ProfileVisibility and email verification status.
+    /// The only method which can modify [Account].
     /// Profile index will be updated if the visibility changed.
     ///
-    /// Returns the modified Account.
+    /// Returns the modified [Account].
     pub async fn update_syncable_account_data(
         &self,
         id: AccountIdInternal,
         increment_admin_access_granted: Option<IncrementAdminAccessGrantedCount>,
-        modify_action: impl FnOnce(
-            &mut AccountStateContainer,
-            &mut Permissions,
-            &mut ProfileVisibility,
-            &mut bool, // Email verified
-        ) -> error_stack::Result<(), DieselDatabaseError>
-        + Send
-        + 'static,
-    ) -> Result<Account, DataError> {
-        self.update_syncable_account_data_internal(
-            id,
-            increment_admin_access_granted,
-            move |state, permissions, visibility, email_verified, _age_verified| {
-                modify_action(state, permissions, visibility, email_verified)
-            },
-        )
-        .await
-    }
-
-    async fn update_syncable_account_data_internal(
-        &self,
-        id: AccountIdInternal,
-        increment_admin_access_granted: Option<IncrementAdminAccessGrantedCount>,
-        modify_action: impl FnOnce(
-            &mut AccountStateContainer,
-            &mut Permissions,
-            &mut ProfileVisibility,
-            &mut bool, // Email verified
-            &mut bool, // Age verified
-        ) -> error_stack::Result<(), DieselDatabaseError>
+        modify_action: impl FnOnce(&mut AccountUpdate) -> error_stack::Result<(), DieselDatabaseError>
         + Send
         + 'static,
     ) -> Result<Account, DataError> {
@@ -102,10 +75,10 @@ impl WriteCommandsAccount<'_> {
             .await?;
         let a = current_account.clone();
         let new_account = db_transaction!(self, move |mut cmds| {
-            let account = cmds
-                .common()
-                .state()
-                .update_syncable_account_data_with_age_verified(id, a, modify_action)?;
+            let account =
+                cmds.common()
+                    .state()
+                    .update_syncable_account_data(id, a, modify_action)?;
 
             if increment_admin_access_granted.is_some() {
                 cmds.account()
@@ -184,8 +157,8 @@ impl WriteCommandsAccount<'_> {
     }
 
     pub async fn set_age_verified(&self, id: AccountIdInternal) -> Result<(), DataError> {
-        self.update_syncable_account_data_internal(id, None, |_, _, _, _, age_verified| {
-            *age_verified = true;
+        self.update_syncable_account_data(id, None, |account| {
+            account.age_verified = true;
             Ok(())
         })
         .await?;

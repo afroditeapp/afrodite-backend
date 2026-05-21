@@ -112,8 +112,8 @@ impl WriteCommandsCommon<'_> {
                 cmds.common().state().update_syncable_account_data(
                     id,
                     account,
-                    move |_, permissions, _, _| {
-                        enable_admin_permissions(permissions);
+                    move |account| {
+                        enable_admin_permissions(&mut account.permissions);
                         Ok(())
                     },
                 )?;
