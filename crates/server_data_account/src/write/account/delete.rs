@@ -91,7 +91,7 @@ impl WriteCommandsAccountDelete<'_> {
         // Delete account from location index
         self.handle()
             .account()
-            .update_syncable_account_data(id, None, |account| {
+            .update_syncable_account_data(id, |account| {
                 account
                     .profile_visibility
                     .change_to_private_or_pending_private();

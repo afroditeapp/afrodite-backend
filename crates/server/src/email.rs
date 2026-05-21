@@ -55,7 +55,7 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
                 if message == EmailMessages::EmailVerification {
                     db_write_raw!(self.state, move |cmds| {
                         cmds.account()
-                            .update_syncable_account_data(recipient, None, |account| {
+                            .update_syncable_account_data(recipient, |account| {
                                 account.email_verified = true;
                                 Ok(())
                             })

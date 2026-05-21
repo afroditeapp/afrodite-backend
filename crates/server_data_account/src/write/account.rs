@@ -65,7 +65,19 @@ impl WriteCommandsAccount<'_> {
     pub async fn update_syncable_account_data(
         &self,
         id: AccountIdInternal,
-        increment_admin_access_granted: Option<IncrementAdminAccessGrantedCount>,
+        modify_action: impl FnOnce(&mut AccountUpdate) -> error_stack::Result<(), DieselDatabaseError>
+        + Send
+        + 'static,
+    ) -> Result<Account, DataError> {
+        self.update_syncable_account_data_for_completing_initial_setup(id, None, modify_action)
+            .await
+    }
+
+    /// Use this only while completing initial setup.
+    pub async fn update_syncable_account_data_for_completing_initial_setup(
+        &self,
+        id: AccountIdInternal,
+        increment_admin_access_granted_count: Option<IncrementAdminAccessGrantedCount>,
         modify_action: impl FnOnce(&mut AccountUpdate) -> error_stack::Result<(), DieselDatabaseError>
         + Send
         + 'static,
@@ -80,7 +92,7 @@ impl WriteCommandsAccount<'_> {
                     .state()
                     .update_syncable_account_data(id, a, modify_action)?;
 
-            if increment_admin_access_granted.is_some() {
+            if increment_admin_access_granted_count.is_some() {
                 cmds.account()
                     .data()
                     .upsert_increment_admin_access_granted_count()?;
@@ -157,7 +169,7 @@ impl WriteCommandsAccount<'_> {
     }
 
     pub async fn set_age_verified(&self, id: AccountIdInternal) -> Result<(), DataError> {
-        self.update_syncable_account_data(id, None, |account| {
+        self.update_syncable_account_data(id, |account| {
             account.age_verified = true;
             Ok(())
         })
