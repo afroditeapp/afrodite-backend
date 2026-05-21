@@ -1,6 +1,9 @@
 use std::collections::HashSet;
 
-use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
+use database::current::{
+    read::GetDbReadCommandsCommon,
+    write::{GetDbWriteCommandsCommon, common::CacheUpdateAccount},
+};
 use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia};
 use error_stack::ResultExt;
 use model::{Account, AccountState, ContentIdInternal, EventToClientInternal, ProfileVisibility};
@@ -23,6 +26,15 @@ use crate::cache::CacheWriteMedia;
 
 mod notification;
 mod report;
+
+pub enum CacheUpdateInitialContentModerationResult {
+    /// Profile visibility changed from pending to normal.
+    AllAccepted {
+        account_after_visibility_change: CacheUpdateAccount,
+    },
+    AllModeratedAndNotAccepted,
+    NoChange,
+}
 
 pub enum InitialContentModerationResult {
     /// Profile visibility changed from pending to normal.
@@ -344,7 +356,7 @@ impl WriteCommandsMedia<'_> {
 
         let info = db_transaction!(self, move |mut cmds| {
             if !profile_visibility.is_pending() {
-                return Ok(InitialContentModerationResult::NoChange);
+                return Ok(CacheUpdateInitialContentModerationResult::NoChange);
             }
 
             let current_media = cmds
@@ -382,29 +394,40 @@ impl WriteCommandsMedia<'_> {
                     },
                 )?;
 
-                Ok(InitialContentModerationResult::AllAccepted {
+                Ok(CacheUpdateInitialContentModerationResult::AllAccepted {
                     account_after_visibility_change: new_account,
                 })
             } else if all_moderated {
-                Ok(InitialContentModerationResult::AllModeratedAndNotAccepted)
+                Ok(CacheUpdateInitialContentModerationResult::AllModeratedAndNotAccepted)
             } else {
-                Ok(InitialContentModerationResult::NoChange)
+                Ok(CacheUpdateInitialContentModerationResult::NoChange)
             }
         })?;
 
-        if let InitialContentModerationResult::AllAccepted {
-            account_after_visibility_change,
-        } = &info
-        {
-            self.handle()
-                .common()
-                .internal_handle_new_account_data_after_db_modification(
-                    content_owner,
-                    &current_account,
-                    account_after_visibility_change,
-                )
-                .await?;
-        }
+        let info = match info {
+            CacheUpdateInitialContentModerationResult::AllAccepted {
+                account_after_visibility_change,
+            } => {
+                let account = self
+                    .handle()
+                    .common()
+                    .internal_handle_new_account_data_after_db_modification(
+                        content_owner,
+                        &current_account,
+                        account_after_visibility_change,
+                    )
+                    .await?;
+                InitialContentModerationResult::AllAccepted {
+                    account_after_visibility_change: account,
+                }
+            }
+            CacheUpdateInitialContentModerationResult::AllModeratedAndNotAccepted => {
+                InitialContentModerationResult::AllModeratedAndNotAccepted
+            }
+            CacheUpdateInitialContentModerationResult::NoChange => {
+                InitialContentModerationResult::NoChange
+            }
+        };
 
         Ok(info)
     }

@@ -1,4 +1,7 @@
-use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
+use database::current::{
+    read::GetDbReadCommandsCommon,
+    write::{GetDbWriteCommandsCommon, common::CacheUpdateAccount},
+};
 use model::{
     Account, AccountIdInternal, BotAccountType, Permissions, ReportTypeInternal, UnixTime,
 };
@@ -93,23 +96,14 @@ impl WriteCommandsCommon<'_> {
             permissions.admin_verify_account = true;
         };
 
-        self.write_cache_common(id, |cache| {
-            cache.other_shared_state.set_bot_account_type_number(value);
-            if value == BotAccountType::Admin {
-                enable_admin_permissions(&mut cache.permissions);
-            }
-            Ok(())
-        })
-        .await?;
-
-        db_transaction!(self, move |mut cmds| {
+        let new_account = db_transaction!(self, move |mut cmds| {
             cmds.common()
                 .state()
                 .set_bot_account_type_number(id, value)?;
 
             if value == BotAccountType::Admin {
                 let account = cmds.read().common().account(id)?;
-                cmds.common().state().update_syncable_account_data(
+                let new_account = cmds.common().state().update_syncable_account_data(
                     id,
                     account,
                     move |account| {
@@ -117,18 +111,31 @@ impl WriteCommandsCommon<'_> {
                         Ok(())
                     },
                 )?;
+                Ok(Some(new_account))
+            } else {
+                Ok(None)
             }
+        })?;
 
+        self.write_cache_common(id, |cache| {
+            cache.other_shared_state.set_bot_account_type_number(value);
+            if let Some(new_account) = new_account {
+                cache.permissions = new_account.into_inner().permissions();
+            }
             Ok(())
         })
+        .await?;
+
+        Ok(())
     }
 
     pub async fn internal_handle_new_account_data_after_db_modification(
         &self,
         id: AccountIdInternal,
         current_account: &Account,
-        new_account: &Account,
-    ) -> Result<(), DataError> {
+        new_account: CacheUpdateAccount,
+    ) -> Result<Account, DataError> {
+        let new_account = new_account.into_inner();
         let new_account_clone = new_account.clone();
         self.write_cache_common(id, |cache| {
             cache.permissions = new_account_clone.permissions();
@@ -149,7 +156,7 @@ impl WriteCommandsCommon<'_> {
             .await?;
         }
 
-        Ok(())
+        Ok(new_account)
     }
 
     pub async fn update_initial_setup_completed_unix_time(

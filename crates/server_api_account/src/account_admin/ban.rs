@@ -1,5 +1,5 @@
 use axum::{Extension, extract::State};
-use model::{AccountIdInternal, EventToClientInternal, Permissions};
+use model::{AccountIdInternal, Permissions};
 use model_account::SetAccountBanState;
 use server_api::{
     S,
@@ -44,8 +44,7 @@ pub async fn post_set_ban_state(
     let internal_id = state.get_internal_id(ban_info.account).await?;
 
     db_write!(state, move |cmds| {
-        let new_account = cmds
-            .account_admin()
+        cmds.account_admin()
             .ban()
             .set_account_ban_state(
                 internal_id,
@@ -55,12 +54,6 @@ pub async fn post_set_ban_state(
                 ban_info.reason_details,
             )
             .await?;
-
-        if new_account.is_some() {
-            cmds.events()
-                .send_connected_event(internal_id.uuid, EventToClientInternal::AccountStateChanged)
-                .await?;
-        }
 
         Ok(())
     })?;

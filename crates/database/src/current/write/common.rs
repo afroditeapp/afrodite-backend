@@ -15,7 +15,7 @@ mod server_info;
 mod state;
 mod token;
 
-pub use state::AccountUpdate;
+pub use state::{AccountUpdate, CacheUpdateAccount};
 
 define_current_write_commands!(CurrentWriteCommon);
 

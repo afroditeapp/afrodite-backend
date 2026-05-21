@@ -71,7 +71,7 @@ impl WriteCommandsAccountDelete<'_> {
             .internal_handle_new_account_data_after_db_modification(
                 id,
                 &current_account,
-                &new_account,
+                new_account,
             )
             .await?;
 

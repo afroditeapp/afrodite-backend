@@ -1,11 +1,13 @@
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
 use database_account::current::{read::GetDbReadCommandsAccount, write::GetDbWriteCommandsAccount};
-use model::{Account, UnixTime};
+use model::{EventToClientInternal, UnixTime};
 use model_account::{
     AccountBanReasonCategory, AccountBanReasonDetails, AccountBannedAdminType, AccountIdInternal,
 };
 use server_data::{
-    DataError, db_transaction, define_cmd_wrapper_write,
+    DataError,
+    app::EventManagerProvider,
+    db_transaction, define_cmd_wrapper_write,
     read::DbRead,
     result::Result,
     write::{DbTransaction, GetWriteCommandsCommon},
@@ -21,7 +23,7 @@ impl WriteCommandsAccountBan<'_> {
         banned_until: Option<UnixTime>,
         reason_category: Option<AccountBanReasonCategory>,
         reason_details: Option<AccountBanReasonDetails>,
-    ) -> Result<Option<Account>, DataError> {
+    ) -> Result<(), DataError> {
         let (ban_state, current_account, admin_type) = self
             .db_read(move |mut cmds| {
                 let ban_state = cmds.account().ban().account_ban_time(id)?;
@@ -49,7 +51,7 @@ impl WriteCommandsAccountBan<'_> {
             .await?;
         if banned_until == ban_state.banned_until {
             // Already in correct state
-            return Ok(None);
+            return Ok(());
         }
         let a = current_account.clone();
         let new_account = db_transaction!(self, move |mut cmds| {
@@ -83,10 +85,14 @@ impl WriteCommandsAccountBan<'_> {
             .internal_handle_new_account_data_after_db_modification(
                 id,
                 &current_account,
-                &new_account,
+                new_account,
             )
             .await?;
 
-        Ok(Some(new_account))
+        self.event_manager()
+            .send_connected_event(id.uuid, EventToClientInternal::AccountStateChanged)
+            .await?;
+
+        Ok(())
     }
 }

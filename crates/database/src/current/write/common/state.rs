@@ -23,6 +23,21 @@ pub struct AccountUpdate {
     pub age_verified: bool,
 }
 
+#[must_use = "Account returned from DB update should be used to update cache before dropping"]
+pub struct CacheUpdateAccount(Account);
+
+impl CacheUpdateAccount {
+    pub fn into_inner(self) -> Account {
+        self.0
+    }
+}
+
+impl AsRef<Account> for CacheUpdateAccount {
+    fn as_ref(&self) -> &Account {
+        &self.0
+    }
+}
+
 impl CurrentWriteCommonState<'_> {
     pub fn insert_shared_state(
         &mut self,
@@ -131,7 +146,7 @@ impl CurrentWriteCommonState<'_> {
     /// The only method which can modify [Account].
     /// Updates automatically the AccountSyncVersion number.
     ///
-    /// Returns the modified [Account].
+    /// Returns the modified [Account] wrapped in [CacheUpdateAccount].
     pub fn update_syncable_account_data(
         &mut self,
         id: AccountIdInternal,
@@ -139,7 +154,7 @@ impl CurrentWriteCommonState<'_> {
         modify_action: impl FnOnce(&mut AccountUpdate) -> error_stack::Result<(), DieselDatabaseError>
         + Send
         + 'static,
-    ) -> Result<Account, DieselDatabaseError> {
+    ) -> Result<CacheUpdateAccount, DieselDatabaseError> {
         let mut account_mut = AccountUpdate {
             state: account.state_container(),
             permissions: account.permissions(),
@@ -161,7 +176,7 @@ impl CurrentWriteCommonState<'_> {
         self.account_permissions(id, new_account.permissions())?;
         self.update_account_related_shared_state(id, new_account.clone().into())?;
 
-        Ok(new_account)
+        Ok(CacheUpdateAccount(new_account))
     }
 
     /// Reset Account data version number to 0.
