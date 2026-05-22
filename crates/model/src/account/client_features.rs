@@ -324,7 +324,7 @@ pub struct AgeVerificationConfig {
     verify_during_initial_setup: bool,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
-    require: bool,
+    required: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub methods: Option<AgeVerificationMethodsConfig>,
 }
