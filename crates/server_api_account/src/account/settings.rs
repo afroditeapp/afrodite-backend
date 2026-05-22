@@ -1,5 +1,7 @@
 use axum::{Extension, extract::State};
-use model_account::{AccountIdInternal, BooleanSetting, EventToClientInternal, ProfileVisibility};
+use model_account::{
+    AccountIdInternal, AccountState, BooleanSetting, EventToClientInternal, ProfileVisibility,
+};
 use server_api::{S, create_open_api_router, db_write};
 use server_data_account::write::GetWriteCommandsAccount;
 use simple_backend::create_counters;
@@ -14,6 +16,9 @@ const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile_vis
 /// Update current or pending profile visiblity value.
 ///
 /// NOTE: Client uses this in initial setup.
+///
+/// # Limits
+/// - When [AccountState::Banned], the visiblity can only be set to private.
 #[utoipa::path(
     put,
     path = PATH_SETTING_PROFILE_VISIBILITY,
@@ -21,6 +26,7 @@ const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile_vis
     responses(
         (status = 200, description = "Update successfull."),
         (status = 401, description = "Unauthorized."),
+        (status = 403, description = "Forbidden."),
         (status = 500, description = "Internal server error."),
     ),
     security(("access_token" = [])),
@@ -28,9 +34,14 @@ const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile_vis
 pub async fn put_setting_profile_visiblity(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
+    Extension(account_state): Extension<AccountState>,
     Json(new_value): Json<BooleanSetting>,
 ) -> Result<(), StatusCode> {
     ACCOUNT.put_setting_profile_visiblity.incr();
+
+    if new_value.value && account_state == AccountState::Banned {
+        return Err(StatusCode::FORBIDDEN);
+    }
 
     db_write!(state, move |cmds| {
         cmds.account()

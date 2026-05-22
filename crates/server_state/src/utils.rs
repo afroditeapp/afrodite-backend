@@ -20,6 +20,8 @@ pub enum StatusCode {
     BAD_REQUEST,
     /// 401
     UNAUTHORIZED,
+    /// 403
+    FORBIDDEN,
     /// 500
     INTERNAL_SERVER_ERROR,
     /// 406
@@ -37,6 +39,7 @@ impl From<StatusCode> for hyper::StatusCode {
         match value {
             StatusCode::BAD_REQUEST => hyper::StatusCode::BAD_REQUEST,
             StatusCode::UNAUTHORIZED => hyper::StatusCode::UNAUTHORIZED,
+            StatusCode::FORBIDDEN => hyper::StatusCode::FORBIDDEN,
             StatusCode::INTERNAL_SERVER_ERROR => hyper::StatusCode::INTERNAL_SERVER_ERROR,
             StatusCode::NOT_ACCEPTABLE => hyper::StatusCode::NOT_ACCEPTABLE,
             StatusCode::NOT_FOUND => hyper::StatusCode::NOT_FOUND,
