@@ -15,8 +15,8 @@ use serde::{Deserialize, Serialize};
 pub struct AgeVerificationConfig {
     #[serde(rename = "methods", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub methods: Option<Option<Box<models::AgeVerificationMethodsConfig>>>,
-    #[serde(rename = "require", skip_serializing_if = "Option::is_none")]
-    pub require: Option<bool>,
+    #[serde(rename = "required", skip_serializing_if = "Option::is_none")]
+    pub required: Option<bool>,
     #[serde(rename = "verify_during_initial_setup", skip_serializing_if = "Option::is_none")]
     pub verify_during_initial_setup: Option<bool>,
 }
@@ -25,7 +25,7 @@ impl AgeVerificationConfig {
     pub fn new() -> AgeVerificationConfig {
         AgeVerificationConfig {
             methods: None,
-            require: None,
+            required: None,
             verify_during_initial_setup: None,
         }
     }

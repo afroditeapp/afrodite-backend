@@ -28,7 +28,6 @@ src/models/account_id.rs
 src/models/account_id_db_value.rs
 src/models/account_locked_state.rs
 src/models/account_registration_platforms.rs
-src/models/account_setup.rs
 src/models/account_state_container.rs
 src/models/account_sync_version.rs
 src/models/account_verification_config.rs
@@ -195,7 +194,6 @@ src/models/ip_country_statistics_value.rs
 src/models/jitsi_meet_url.rs
 src/models/language.rs
 src/models/last_seen_time_filter.rs
-src/models/latest_birthdate.rs
 src/models/latest_seen_message_info.rs
 src/models/latest_seen_message_info_list.rs
 src/models/likes_config.rs
@@ -366,7 +364,6 @@ src/models/server_maintenance_status.rs
 src/models/server_message_type.rs
 src/models/server_version.rs
 src/models/set_account_ban_state.rs
-src/models/set_account_setup.rs
 src/models/set_email_login_enabled.rs
 src/models/set_initial_email.rs
 src/models/set_profile_content.rs

@@ -29,16 +29,13 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**get_account_app_notification_settings**](docs/AccountApi.md#get_account_app_notification_settings) | **GET** /account_api/get_account_app_notification_settings | 
 *AccountApi* | [**get_account_ban_time**](docs/AccountApi.md#get_account_ban_time) | **GET** /account_api/account_ban_time/{aid} | Get account ban time
 *AccountApi* | [**get_account_deletion_request_state**](docs/AccountApi.md#get_account_deletion_request_state) | **GET** /account_api/get_account_deletion_request_state/{aid} | Get account deletion request state
-*AccountApi* | [**get_account_setup**](docs/AccountApi.md#get_account_setup) | **GET** /account_api/account_setup | Get non-changeable user information to account.
 *AccountApi* | [**get_account_state**](docs/AccountApi.md#get_account_state) | **GET** /account_api/state | Get current account state.
 *AccountApi* | [**get_account_verification_queue_status**](docs/AccountApi.md#get_account_verification_queue_status) | **GET** /account_api/account_verification_queue | Get account verification queue status for current account.
 *AccountApi* | [**get_email_address_state**](docs/AccountApi.md#get_email_address_state) | **GET** /account_api/email_address_state | 
-*AccountApi* | [**get_latest_birthdate**](docs/AccountApi.md#get_latest_birthdate) | **GET** /account_api/latest_birthdate | 
 *AccountApi* | [**get_news_item**](docs/AccountApi.md#get_news_item) | **GET** /account_api/news_item/{nid} | Get news item content using specific locale and fallback to locale \"en\" if news translation is not found.
 *AccountApi* | [**get_verify_email**](docs/AccountApi.md#get_verify_email) | **GET** /account_api/verify_email/{token} | Verify email address using the token sent via email. This endpoint is meant to be accessed via a link in the verification email. To workaround email security scanning related link accessing, the link can be opened multiple times.
 *AccountApi* | [**get_verify_new_email**](docs/AccountApi.md#get_verify_new_email) | **GET** /account_api/verify_new_email/{token} | Verify new email address using the token sent via email. This endpoint is meant to be accessed via a link in the verification email. To workaround email security scanning related link accessing, the link can be opened multiple times.
 *AccountApi* | [**post_account_app_notification_settings**](docs/AccountApi.md#post_account_app_notification_settings) | **POST** /account_api/post_account_app_notification_settings | 
-*AccountApi* | [**post_account_setup**](docs/AccountApi.md#post_account_setup) | **POST** /account_api/account_setup | Setup non-changeable user information during `initial setup` state.
 *AccountApi* | [**post_account_verification_queue_item**](docs/AccountApi.md#post_account_verification_queue_item) | **POST** /account_api/account_verification_queue | Add account verification request to queue for current account.
 *AccountApi* | [**post_age_verification**](docs/AccountApi.md#post_age_verification) | **POST** /account_api/age_verification | Verify user's age once for current account.
 *AccountApi* | [**post_cancel_email_change**](docs/AccountApi.md#post_cancel_email_change) | **POST** /account_api/cancel_email_change | Cancel email changing process
@@ -265,7 +262,6 @@ Class | Method | HTTP request | Description
  - [AccountIdDbValue](docs/AccountIdDbValue.md)
  - [AccountLockedState](docs/AccountLockedState.md)
  - [AccountRegistrationPlatforms](docs/AccountRegistrationPlatforms.md)
- - [AccountSetup](docs/AccountSetup.md)
  - [AccountStateContainer](docs/AccountStateContainer.md)
  - [AccountSyncVersion](docs/AccountSyncVersion.md)
  - [AccountVerificationConfig](docs/AccountVerificationConfig.md)
@@ -432,7 +428,6 @@ Class | Method | HTTP request | Description
  - [JitsiMeetUrl](docs/JitsiMeetUrl.md)
  - [Language](docs/Language.md)
  - [LastSeenTimeFilter](docs/LastSeenTimeFilter.md)
- - [LatestBirthdate](docs/LatestBirthdate.md)
  - [LatestSeenMessageInfo](docs/LatestSeenMessageInfo.md)
  - [LatestSeenMessageInfoList](docs/LatestSeenMessageInfoList.md)
  - [LikesConfig](docs/LikesConfig.md)
@@ -602,7 +597,6 @@ Class | Method | HTTP request | Description
  - [ServerMessageType](docs/ServerMessageType.md)
  - [ServerVersion](docs/ServerVersion.md)
  - [SetAccountBanState](docs/SetAccountBanState.md)
- - [SetAccountSetup](docs/SetAccountSetup.md)
  - [SetEmailLoginEnabled](docs/SetEmailLoginEnabled.md)
  - [SetInitialEmail](docs/SetInitialEmail.md)
  - [SetProfileContent](docs/SetProfileContent.md)

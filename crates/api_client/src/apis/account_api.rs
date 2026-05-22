@@ -42,15 +42,6 @@ pub enum GetAccountDeletionRequestStateError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`get_account_setup`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum GetAccountSetupError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
 /// struct for typed errors of method [`get_account_state`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -73,15 +64,6 @@ pub enum GetAccountVerificationQueueStatusError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetEmailAddressStateError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
-/// struct for typed errors of method [`get_latest_birthdate`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum GetLatestBirthdateError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -119,16 +101,6 @@ pub enum GetVerifyNewEmailError {
 #[serde(untagged)]
 pub enum PostAccountAppNotificationSettingsError {
     Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
-/// struct for typed errors of method [`post_account_setup`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum PostAccountSetupError {
-    Status401(),
-    Status406(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
@@ -489,43 +461,6 @@ pub async fn get_account_deletion_request_state(configuration: &configuration::C
     }
 }
 
-pub async fn get_account_setup(configuration: &configuration::Configuration, ) -> Result<models::AccountSetup, Error<GetAccountSetupError>> {
-
-    let uri_str = format!("{}/account_api/account_setup", configuration.base_path);
-    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
-
-    if let Some(ref user_agent) = configuration.user_agent {
-        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
-    }
-    if let Some(ref token) = configuration.bearer_access_token {
-        req_builder = req_builder.bearer_auth(token.to_owned());
-    };
-
-    let req = req_builder.build()?;
-    let resp = configuration.client.execute(req).await?;
-
-    let status = resp.status();
-    let content_type = resp
-        .headers()
-        .get("content-type")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("application/octet-stream");
-    let content_type = super::ContentType::from(content_type);
-
-    if !status.is_client_error() && !status.is_server_error() {
-        let content = resp.text().await?;
-        match content_type {
-            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::AccountSetup`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::AccountSetup`")))),
-        }
-    } else {
-        let content = resp.text().await?;
-        let entity: Option<GetAccountSetupError> = serde_json::from_str(&content).ok();
-        Err(Error::ResponseError(ResponseContent { status, content, entity }))
-    }
-}
-
 pub async fn get_account_state(configuration: &configuration::Configuration, ) -> Result<models::Account, Error<GetAccountStateError>> {
 
     let uri_str = format!("{}/account_api/state", configuration.base_path);
@@ -633,43 +568,6 @@ pub async fn get_email_address_state(configuration: &configuration::Configuratio
     } else {
         let content = resp.text().await?;
         let entity: Option<GetEmailAddressStateError> = serde_json::from_str(&content).ok();
-        Err(Error::ResponseError(ResponseContent { status, content, entity }))
-    }
-}
-
-pub async fn get_latest_birthdate(configuration: &configuration::Configuration, ) -> Result<models::LatestBirthdate, Error<GetLatestBirthdateError>> {
-
-    let uri_str = format!("{}/account_api/latest_birthdate", configuration.base_path);
-    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
-
-    if let Some(ref user_agent) = configuration.user_agent {
-        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
-    }
-    if let Some(ref token) = configuration.bearer_access_token {
-        req_builder = req_builder.bearer_auth(token.to_owned());
-    };
-
-    let req = req_builder.build()?;
-    let resp = configuration.client.execute(req).await?;
-
-    let status = resp.status();
-    let content_type = resp
-        .headers()
-        .get("content-type")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("application/octet-stream");
-    let content_type = super::ContentType::from(content_type);
-
-    if !status.is_client_error() && !status.is_server_error() {
-        let content = resp.text().await?;
-        match content_type {
-            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::LatestBirthdate`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::LatestBirthdate`")))),
-        }
-    } else {
-        let content = resp.text().await?;
-        let entity: Option<GetLatestBirthdateError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -801,35 +699,6 @@ pub async fn post_account_app_notification_settings(configuration: &configuratio
     }
 }
 
-pub async fn post_account_setup(configuration: &configuration::Configuration, set_account_setup: models::SetAccountSetup) -> Result<(), Error<PostAccountSetupError>> {
-    // add a prefix to parameters to efficiently prevent name collisions
-    let p_body_set_account_setup = set_account_setup;
-
-    let uri_str = format!("{}/account_api/account_setup", configuration.base_path);
-    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
-
-    if let Some(ref user_agent) = configuration.user_agent {
-        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
-    }
-    if let Some(ref token) = configuration.bearer_access_token {
-        req_builder = req_builder.bearer_auth(token.to_owned());
-    };
-    req_builder = req_builder.json(&p_body_set_account_setup);
-
-    let req = req_builder.build()?;
-    let resp = configuration.client.execute(req).await?;
-
-    let status = resp.status();
-
-    if !status.is_client_error() && !status.is_server_error() {
-        Ok(())
-    } else {
-        let content = resp.text().await?;
-        let entity: Option<PostAccountSetupError> = serde_json::from_str(&content).ok();
-        Err(Error::ResponseError(ResponseContent { status, content, entity }))
-    }
-}
-
 /// Adding new request requires initial setup to be completed.
 pub async fn post_account_verification_queue_item(configuration: &configuration::Configuration, account_verification_queue_item: models::AccountVerificationQueueItem) -> Result<models::PostAccountVerificationQueueItemResult, Error<PostAccountVerificationQueueItemError>> {
     // add a prefix to parameters to efficiently prevent name collisions
@@ -937,7 +806,7 @@ pub async fn post_cancel_email_change(configuration: &configuration::Configurati
     }
 }
 
-/// Media content with InSlot state will be removed.  Requirements:  - Account must be in `InitialSetup` state.  - Account must have a valid AccountSetup info set.  
+/// Media content with InSlot state will be removed.  Requirements:  - Account must be in `InitialSetup` state.  
 pub async fn post_complete_setup(configuration: &configuration::Configuration, ) -> Result<(), Error<PostCompleteSetupError>> {
 
     let uri_str = format!("{}/account_api/complete_setup", configuration.base_path);
