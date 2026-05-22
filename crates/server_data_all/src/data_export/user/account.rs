@@ -2,8 +2,7 @@ use database::{DbReadMode, DieselDatabaseError};
 use database_account::current::read::GetDbReadCommandsAccount;
 use model::UnixTime;
 use model_account::{
-    AccountEmailSendingStateRaw, AccountSetup, AccountStateTableRaw, EmailAddressState,
-    EmailLoginTokens,
+    AccountEmailSendingStateRaw, AccountStateTableRaw, EmailAddressState, EmailLoginTokens,
 };
 use model_chat::AccountAppNotificationSettings;
 use serde::Serialize;
@@ -15,7 +14,6 @@ use server_data::data_export::SourceAccount;
 #[derive(Serialize)]
 pub struct UserDataExportJsonAccount {
     email_address_state: EmailAddressState,
-    account_setup: AccountSetup,
     email_sending_states: AccountEmailSendingStateRaw,
     account_state_table: AccountStateTableRaw,
     account_notification_settings: AccountAppNotificationSettings,
@@ -36,7 +34,6 @@ impl UserDataExportJsonAccount {
             current.account().email().email_verification_token(id)?;
         let data = Self {
             email_address_state: current.account().data().email_address_state(id)?,
-            account_setup: current.account().data().account_setup(id)?,
             email_sending_states: current.account().email().email_sending_states(id)?,
             account_state_table: current.account().data().account_state_table_raw(id)?,
             account_notification_settings: current

@@ -13,7 +13,7 @@ use test_mode_bot::{
     BotState, action_array,
     actions::{
         BotAction,
-        account::{CompleteAccountSetup, Login, Register, SetAccountSetup},
+        account::{CompleteAccountSetup, Login, Register, SetInitialEmailAction},
         admin::content::ModerateContentModerationRequest,
         media::{SendImageToSlot, SetContent},
     },
@@ -82,7 +82,7 @@ impl TestContext {
         let mut account = Account::register_and_login(self, false).await?;
         account
             .run_actions(action_array![
-                SetAccountSetup::new(),
+                SetInitialEmailAction::new(),
                 SendImageToSlot::slot(0),
                 SetContent {
                     security_content_slot_i: Some(0),
@@ -180,7 +180,7 @@ impl TestContext {
         let mut account = Account::register_and_login(self, true).await?;
         account
             .run_actions(action_array![
-                SetAccountSetup::admin(),
+                SetInitialEmailAction::admin(),
                 SendImageToSlot::slot(0),
                 SetContent {
                     security_content_slot_i: Some(0),

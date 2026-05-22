@@ -3,8 +3,7 @@ use diesel::prelude::*;
 use error_stack::Result;
 use model::AccountIdInternal;
 use model_account::{
-    AccountGlobalState, AccountSetup, AccountStateTableRaw, EmailAddressState,
-    EmailAddressStateInternal,
+    AccountGlobalState, AccountStateTableRaw, EmailAddressState, EmailAddressStateInternal,
 };
 
 use crate::IntoDatabaseError;
@@ -12,19 +11,6 @@ use crate::IntoDatabaseError;
 define_current_read_commands!(CurrentReadAccountData);
 
 impl CurrentReadAccountData<'_> {
-    pub fn account_setup(
-        &mut self,
-        id: AccountIdInternal,
-    ) -> Result<AccountSetup, DieselDatabaseError> {
-        use crate::schema::account_setup::dsl::*;
-
-        account_setup
-            .filter(account_id.eq(id.as_db_id()))
-            .select(AccountSetup::as_select())
-            .first(self.conn())
-            .into_db_error(id)
-    }
-
     pub fn email_address_state(
         &mut self,
         id: AccountIdInternal,

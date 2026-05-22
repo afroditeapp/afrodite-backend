@@ -418,16 +418,6 @@ CREATE TABLE IF NOT EXISTS account_email_login_token_time(
             ON UPDATE CASCADE
 );
 
--- Information which can not change after account initial setup completes
-CREATE TABLE IF NOT EXISTS account_setup(
-    account_id  BIGINT PRIMARY KEY NOT NULL,
-    is_adult                  BOOLEAN,
-    FOREIGN KEY (account_id)
-        REFERENCES account_id (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE
-);
-
 -- Account related email sending state
 -- State numbers have these values
 -- 0 - Not sent

@@ -2,7 +2,7 @@ use std::{fmt::Debug, time::Duration};
 
 use api_client::{
     apis::{
-        account_api::{self, get_account_state, post_account_setup, post_complete_setup},
+        account_api::{self, get_account_state, post_complete_setup},
         account_bot_api::{post_bot_login, post_bot_register, post_remote_bot_login},
     },
     models::{
@@ -386,11 +386,11 @@ impl BotAction for AssertAccountState {
 }
 
 #[derive(Debug)]
-pub struct SetAccountSetup {
+pub struct SetInitialEmailAction {
     admin: bool,
 }
 
-impl SetAccountSetup {
+impl SetInitialEmailAction {
     pub const fn new() -> Self {
         Self { admin: false }
     }
@@ -400,23 +400,15 @@ impl SetAccountSetup {
     }
 }
 
-impl Default for SetAccountSetup {
+impl Default for SetInitialEmailAction {
     fn default() -> Self {
         Self::new()
     }
 }
 
 #[async_trait]
-impl BotAction for SetAccountSetup {
+impl BotAction for SetInitialEmailAction {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let setup = api_client::models::SetAccountSetup {
-            birthdate: None,
-            is_adult: true,
-        };
-        post_account_setup(&state.api(), setup)
-            .await
-            .change_context(TestError::ApiRequest)?;
-
         let email = if self.admin {
             ADMIN_BOT_EMAIL.to_string()
         } else {

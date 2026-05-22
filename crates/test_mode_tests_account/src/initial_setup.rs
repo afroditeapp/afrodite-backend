@@ -2,7 +2,7 @@ use api_client::apis::account_api::{get_account_state, post_complete_setup};
 use test_mode_bot::{
     action_array,
     actions::{
-        account::{AccountState, SetAccountSetup},
+        account::AccountState,
         media::{SendImageToSlot, SetContent},
     },
 };
@@ -16,32 +16,10 @@ async fn account_state_is_initial_setup_after_login(mut context: TestContext) ->
 }
 
 #[server_test]
-async fn complete_setup_fails_if_no_setup_info_is_set(mut context: TestContext) -> TestResult {
-    let mut account = context.new_account_in_initial_setup_state().await?;
-    account
-        .run_actions(action_array![
-            SendImageToSlot::slot(0),
-            SendImageToSlot::slot(1),
-            SetContent {
-                security_content_slot_i: Some(0),
-                content_0_slot_i: Some(1),
-            },
-        ])
-        .await?;
-
-    assert_failure(post_complete_setup(&account.account_api()).await)?;
-    assert_eq(
-        AccountState::InitialSetup,
-        get_account_state(&account.account_api()).await?.into(),
-    )
-}
-
-#[server_test]
 async fn initial_setup_successful(mut context: TestContext) -> TestResult {
     let mut account = context.new_account_in_initial_setup_state().await?;
     account
         .run_actions(action_array![
-            SetAccountSetup::new(),
             SendImageToSlot::slot(0),
             SendImageToSlot::slot(1),
             SetContent {

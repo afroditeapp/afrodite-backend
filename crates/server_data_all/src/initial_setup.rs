@@ -66,11 +66,6 @@ pub async fn complete_initial_setup(
                 return Err(DataError::NotAllowed.report());
             }
 
-            let account_setup = cmds.read().account().account_setup(id).await?;
-            if !account_setup.is_valid() {
-                return Err(DataError::NotAllowed.report());
-            }
-
             cmds.profile()
                 .set_initial_profile_age_from_current_profile(id)
                 .await?;

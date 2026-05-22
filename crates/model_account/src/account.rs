@@ -225,43 +225,6 @@ pub struct InitEmailChange {
     pub new_email: EmailAddress,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default, PartialEq, Eq)]
-pub struct SetAccountSetup {
-    pub is_adult: bool,
-}
-
-impl SetAccountSetup {
-    pub fn is_valid(&self) -> bool {
-        self.is_adult
-    }
-}
-
-#[derive(
-    Debug,
-    Clone,
-    Deserialize,
-    Serialize,
-    ToSchema,
-    Default,
-    PartialEq,
-    Eq,
-    Queryable,
-    Selectable,
-    Insertable,
-)]
-#[diesel(table_name = crate::schema::account_setup)]
-#[diesel(check_for_backend(crate::Db))]
-pub struct AccountSetup {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    is_adult: Option<bool>,
-}
-
-impl AccountSetup {
-    pub fn is_valid(&self) -> bool {
-        self.is_adult == Some(true)
-    }
-}
-
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, IntoParams)]
 pub struct BooleanSetting {
     pub value: bool,

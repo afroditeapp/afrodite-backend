@@ -6,9 +6,7 @@ use database_account::current::write::GetDbWriteCommandsAccount;
 use delete::WriteCommandsAccountDelete;
 use email::WriteCommandsAccountEmail;
 use model::UnixTime;
-use model_account::{
-    AccountIdInternal, AccountVerificationErrorFlagsValue, SetAccountSetup, VerificationMethod,
-};
+use model_account::{AccountIdInternal, AccountVerificationErrorFlagsValue, VerificationMethod};
 use model_server_state::DemoAccountId;
 use news::WriteCommandsAccountNews;
 use server_data::{
@@ -119,16 +117,6 @@ impl WriteCommandsAccount<'_> {
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.common().state().reset_account_data_version_number(id)
-        })
-    }
-
-    pub async fn account_setup(
-        &self,
-        id: AccountIdInternal,
-        account_setup: SetAccountSetup,
-    ) -> Result<(), DataError> {
-        db_transaction!(self, move |mut cmds| {
-            cmds.account().data().account_setup(id, &account_setup)
         })
     }
 

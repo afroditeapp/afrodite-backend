@@ -25,7 +25,7 @@ use test_mode_bot::{
     BotState, action_array,
     actions::{
         ActionArray, BotAction, RunActions,
-        account::{AccountState, AssertAccountState, CompleteAccountSetup, SetAccountSetup},
+        account::{AccountState, AssertAccountState, CompleteAccountSetup, SetInitialEmailAction},
         media::{SendImageToSlot, SetContent},
         profile::ChangeBotAgeAndOtherSettings,
     },
@@ -51,9 +51,9 @@ impl BotAction for DoInitialSetupIfNeeded {
 
         if !account_state.state.initial_setup_completed.unwrap_or(true) {
             if self.admin {
-                SetAccountSetup::admin()
+                SetInitialEmailAction::admin()
             } else {
-                SetAccountSetup::new()
+                SetInitialEmailAction::new()
             }
             .excecute_impl(state)
             .await?;

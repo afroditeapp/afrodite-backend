@@ -2,7 +2,7 @@ use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{AccountCreatedTime, AccountId, AccountIdInternal};
-use model_account::{AccountGlobalState, EmailAddress, EmailAddressStateInternal, SetAccountSetup};
+use model_account::{AccountGlobalState, EmailAddress, EmailAddressStateInternal};
 use simple_backend_utils::db::MyRunQueryDsl;
 
 use crate::IntoDatabaseError;
@@ -19,35 +19,6 @@ impl CurrentWriteAccountData<'_> {
 
         insert_into(account_email_address_state)
             .values((account_id.eq(id.as_db_id()), email.eq(internal.email)))
-            .execute(self.conn())
-            .into_db_error(id)?;
-
-        Ok(())
-    }
-
-    pub fn insert_default_account_setup(
-        &mut self,
-        id: AccountIdInternal,
-    ) -> Result<(), DieselDatabaseError> {
-        use model::schema::account_setup::dsl::*;
-
-        insert_into(account_setup)
-            .values(account_id.eq(id.as_db_id()))
-            .execute(self.conn())
-            .into_db_error(id)?;
-
-        Ok(())
-    }
-
-    pub fn account_setup(
-        &mut self,
-        id: AccountIdInternal,
-        data: &SetAccountSetup,
-    ) -> Result<(), DieselDatabaseError> {
-        use model::schema::account_setup::dsl::*;
-
-        update(account_setup.find(id.as_db_id()))
-            .set(is_adult.eq(Some(data.is_adult)))
             .execute(self.conn())
             .into_db_error(id)?;
 

@@ -162,13 +162,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    account_setup (account_id) {
-        account_id -> Int8,
-        is_adult -> Nullable<Bool>,
-    }
-}
-
-diesel::table! {
     account_state (account_id) {
         account_id -> Int8,
         account_deletion_request_unix_time -> Nullable<Int8>,
@@ -943,7 +936,6 @@ diesel::joinable!(account_email_verification_token_time -> account_id (account_i
 diesel::joinable!(account_id -> used_account_ids (id));
 diesel::joinable!(account_interaction_index -> account_interaction (interaction_id));
 diesel::joinable!(account_permissions -> account_id (account_id));
-diesel::joinable!(account_setup -> account_id (account_id));
 diesel::joinable!(admin_notification_settings -> account_id (account_id));
 diesel::joinable!(admin_notification_subscriptions -> account_id (account_id));
 diesel::joinable!(api_usage_statistics_metric_value -> account_id (account_id));
@@ -1012,7 +1004,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     account_interaction,
     account_interaction_index,
     account_permissions,
-    account_setup,
     account_state,
     admin_notification_settings,
     admin_notification_subscriptions,

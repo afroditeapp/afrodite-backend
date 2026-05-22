@@ -92,7 +92,6 @@ impl RegisterAccount<'_> {
             .account()
             .data()
             .insert_email_address_state(id, EmailAddressStateInternal::default())?;
-        current.account().data().insert_default_account_setup(id)?;
         current.account().data().insert_account_state(id)?;
         current
             .account()

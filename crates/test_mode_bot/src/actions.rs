@@ -13,7 +13,7 @@ use error_stack::{Result, ResultExt};
 use test_mode_utils::client::TestError;
 
 use self::{
-    account::{AssertAccountState, CompleteAccountSetup, Login, Register, SetAccountSetup},
+    account::{AssertAccountState, CompleteAccountSetup, Login, Register, SetInitialEmailAction},
     media::{SendImageToSlot, SetContent},
 };
 use super::BotState;
@@ -335,7 +335,7 @@ impl BotAction for RunActionsIf {
 pub const TO_NORMAL_STATE: ActionArray = action_array![
     Register,
     Login,
-    SetAccountSetup::new(),
+    SetInitialEmailAction::new(),
     SendImageToSlot::slot(0),
     SetContent {
         security_content_slot_i: Some(0),
@@ -349,7 +349,7 @@ pub const TO_NORMAL_STATE: ActionArray = action_array![
 pub const TO_ADMIN_NORMAL_STATE: ActionArray = action_array![
     Register,
     Login,
-    SetAccountSetup::admin(),
+    SetInitialEmailAction::admin(),
     SendImageToSlot::slot(0),
     SetContent {
         security_content_slot_i: Some(0),
