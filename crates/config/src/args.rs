@@ -5,6 +5,7 @@ use std::{fmt, num::NonZeroU8, path::PathBuf};
 use clap::{Args, Parser, ValueEnum};
 use error_stack::ResultExt;
 use manager_config::args::ManagerApiClientMode;
+use model::AccountId;
 use reqwest::Url;
 use simple_backend_config::args::ServerMode;
 use simple_backend_utils::{
@@ -306,6 +307,25 @@ pub enum DataModeSubMode {
     Load {
         #[command(subcommand)]
         mode: DataLoadSubMode,
+    },
+    /// Edit data in database
+    Edit {
+        #[command(subcommand)]
+        mode: DataEditSubMode,
+    },
+}
+
+fn parse_account_id(input: &str) -> Result<AccountId, String> {
+    AccountId::try_from(input.to_string())
+}
+
+#[derive(Parser, Debug, Clone)]
+pub enum DataEditSubMode {
+    /// Grant Permissions::admin_edit_permissions for account
+    GrantAdminEditPermissions {
+        /// Account ID
+        #[arg(value_parser = parse_account_id)]
+        account_id: AccountId,
     },
 }
 

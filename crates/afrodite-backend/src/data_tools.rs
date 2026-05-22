@@ -2,7 +2,7 @@ use std::{path::PathBuf, sync::Arc};
 
 use config::{
     GetConfigError,
-    args::{DataLoadSubMode, DataMode, DataModeSubMode, DataViewSubMode},
+    args::{DataEditSubMode, DataLoadSubMode, DataMode, DataModeSubMode, DataViewSubMode},
 };
 use database::{
     DbReaderRaw, DbWriter,
@@ -11,7 +11,8 @@ use database::{
 use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia};
 use error_stack::{Result, report};
 use model::{
-    AccountIdInternal, BotConfig, DynamicServerConfig, EmailMessages, ImageProcessingDynamicConfig,
+    AccountId, AccountIdInternal, BotConfig, DynamicServerConfig, EmailMessages,
+    ImageProcessingDynamicConfig,
 };
 use model_server_data::ProfileAttributesSchemaExport;
 use server_data::{
@@ -67,7 +68,10 @@ pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
         return Err(report!(GetConfigError::SimpleBackendError));
     }
 
-    let _lock = if let DataModeSubMode::Load { .. } = mode.mode {
+    let _lock = if matches!(
+        mode.mode,
+        DataModeSubMode::Load { .. } | DataModeSubMode::Edit { .. }
+    ) {
         let lock = process_lock::acquire_server_lock(&mode.data_dir)
             .map_err(|e| report!(GetConfigError::LoadFileError).attach_printable(e))?;
         Some(lock)
@@ -156,6 +160,15 @@ pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
                             translations,
                         )
                         .await
+                    }
+                }
+            }
+            DataModeSubMode::Edit { mode: edit_mode } => {
+                let writer = DbWriter::new(write_handle.current_write_handle());
+
+                match edit_mode {
+                    DataEditSubMode::GrantAdminEditPermissions { account_id } => {
+                        handle_grant_admin_edit_permissions(&reader, &writer, account_id).await
                     }
                 }
             }
@@ -338,4 +351,51 @@ async fn handle_view_dynamic_server_config(reader: &DbReaderRaw<'_>) {
         .unwrap();
 
     println!("{}", toml::to_string_pretty(&config).unwrap());
+}
+
+async fn handle_grant_admin_edit_permissions(
+    reader: &DbReaderRaw<'_>,
+    writer: &DbWriter<'_>,
+    account_id: AccountId,
+) {
+    let internal_id = reader
+        .db_read(move |mut cmds| {
+            let internal_id = cmds
+                .common()
+                .account_ids_internal()?
+                .into_iter()
+                .find(|id| id.as_id() == account_id)
+                .ok_or_else(|| report!(database::DieselDatabaseError::NotFound))?;
+
+            Ok(internal_id)
+        })
+        .await
+        .unwrap();
+
+    writer
+        .db_transaction_raw(move |mut cmds| {
+            let account = cmds.read().common().account(internal_id)?;
+            let new_permissions = model::Permissions {
+                admin_edit_permissions: true,
+                ..account.permissions()
+            };
+
+            let _updated_account = cmds.common().state().update_syncable_account_data(
+                internal_id,
+                account,
+                move |account| {
+                    account.permissions = new_permissions;
+                    Ok(())
+                },
+            )?;
+
+            Ok(())
+        })
+        .await
+        .unwrap();
+
+    println!(
+        "Granted Permissions::admin_edit_permissions for account {}",
+        internal_id.as_id()
+    );
 }
