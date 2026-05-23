@@ -10,7 +10,6 @@ mod upload;
 
 use process::ProcessManagerData;
 pub use process::{ContentProcessingReceiver, Data, ProcessingState, UploadInfo};
-use upload::UploadManagerData;
 pub use upload::UploadPermit;
 
 pub struct ContentProcessingOngoing;
@@ -27,7 +26,6 @@ pub enum ProcessingPhase {
 }
 
 pub struct ContentProcessingManagerData {
-    upload: UploadManagerData,
     process: ProcessManagerData,
     processing_locks: RwLock<HashMap<AccountIdDb, Arc<Mutex<ProcessingPhase>>>>,
 }
@@ -37,7 +35,6 @@ impl ContentProcessingManagerData {
         let (process, receiver) = ProcessManagerData::new();
         (
             Self {
-                upload: UploadManagerData::new(),
                 process,
                 processing_locks: RwLock::new(HashMap::new()),
             },
@@ -67,9 +64,7 @@ impl ContentProcessingManagerData {
         &self,
         content_owner: AccountIdInternal,
     ) -> std::result::Result<UploadPermit, ContentProcessingOngoing> {
-        self.upload
-            .begin_upload(self.processing_phase_lock(content_owner).await)
-            .await
+        upload::begin_upload(self.processing_phase_lock(content_owner).await).await
     }
 
     pub async fn queue_new_content(
