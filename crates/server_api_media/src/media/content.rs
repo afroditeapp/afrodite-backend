@@ -248,6 +248,7 @@ const PATH_PUT_UPLOAD_CONTENT: &str = "/media_api/upload_content";
 /// Ongoing upload can be cancelled by starting another upload. When processing
 /// is ongoing, uploading can't be done.
 ///
+/// Content uploading will fail if content file size exceeds 10 MiB.
 /// Content processing will fail if image content resolution width or height
 /// value is less than 512.
 #[utoipa::path(
