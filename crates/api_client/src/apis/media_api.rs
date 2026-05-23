@@ -44,12 +44,11 @@ pub enum GetContentError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`get_content_slot_state`]
+/// struct for typed errors of method [`get_content_processing_state`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum GetContentSlotStateError {
+pub enum GetContentProcessingStateError {
     Status401(),
-    Status406(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
@@ -121,16 +120,6 @@ pub enum PostProfileContentReportError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`put_content_to_content_slot`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum PutContentToContentSlotError {
-    Status401(),
-    Status406(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
 /// struct for typed errors of method [`put_profile_content`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -145,6 +134,17 @@ pub enum PutProfileContentError {
 #[serde(untagged)]
 pub enum PutSecurityContentInfoError {
     Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`put_upload_content`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PutUploadContentError {
+    Status401(),
+    Status406(),
+    Status429(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
@@ -254,12 +254,9 @@ pub async fn get_content(configuration: &configuration::Configuration, aid: &str
     }
 }
 
-/// Slots from 0 to 6 are available.  
-pub async fn get_content_slot_state(configuration: &configuration::Configuration, slot_id: i32) -> Result<models::ContentProcessingState, Error<GetContentSlotStateError>> {
-    // add a prefix to parameters to efficiently prevent name collisions
-    let p_path_slot_id = slot_id;
+pub async fn get_content_processing_state(configuration: &configuration::Configuration, ) -> Result<models::ContentProcessingState, Error<GetContentProcessingStateError>> {
 
-    let uri_str = format!("{}/media_api/content_slot/{slot_id}", configuration.base_path, slot_id=p_path_slot_id);
+    let uri_str = format!("{}/media_api/content_processing_state", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -289,7 +286,7 @@ pub async fn get_content_slot_state(configuration: &configuration::Configuration
         }
     } else {
         let content = resp.text().await?;
-        let entity: Option<GetContentSlotStateError> = serde_json::from_str(&content).ok();
+        let entity: Option<GetContentProcessingStateError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -556,54 +553,6 @@ pub async fn post_profile_content_report(configuration: &configuration::Configur
     }
 }
 
-/// Processing ID will be returned and processing of the content will begin. Events about the content processing will be sent to the client.  The state of the processing can be also queired. The querying is required to receive the content ID.  Slots from 0 to 6 are available.  One account can only have one content in upload or processing state. New upload might potentially delete the previous if processing of it is not complete.  Content processing will fail if image content resolution width or height value is less than 512.  
-pub async fn put_content_to_content_slot(configuration: &configuration::Configuration, slot_id: i32, secure_capture: bool, content_type: models::MediaContentUploadType, body: Vec<u8>) -> Result<models::ContentProcessingId, Error<PutContentToContentSlotError>> {
-    // add a prefix to parameters to efficiently prevent name collisions
-    let p_path_slot_id = slot_id;
-    let p_query_secure_capture = secure_capture;
-    let p_query_content_type = content_type;
-    let p_body_body = body;
-
-    let uri_str = format!("{}/media_api/content_slot/{slot_id}", configuration.base_path, slot_id=p_path_slot_id);
-    let mut req_builder = configuration.client.request(reqwest::Method::PUT, &uri_str);
-
-    req_builder = req_builder.query(&[("secure_capture", &p_query_secure_capture.to_string())]);
-    req_builder = req_builder.query(&[("content_type", &p_query_content_type.to_string())]);
-    if let Some(ref user_agent) = configuration.user_agent {
-        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
-    }
-    if let Some(ref token) = configuration.bearer_access_token {
-        req_builder = req_builder.bearer_auth(token.to_owned());
-    };
-    let file = std::io::Cursor::new(p_body_body);
-    let stream = FramedRead::new(file, BytesCodec::new());
-    req_builder = req_builder.body(reqwest::Body::wrap_stream(stream));
-
-    let req = req_builder.build()?;
-    let resp = configuration.client.execute(req).await?;
-
-    let status = resp.status();
-    let content_type = resp
-        .headers()
-        .get("content-type")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("application/octet-stream");
-    let content_type = super::ContentType::from(content_type);
-
-    if !status.is_client_error() && !status.is_server_error() {
-        let content = resp.text().await?;
-        match content_type {
-            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::ContentProcessingId`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::ContentProcessingId`")))),
-        }
-    } else {
-        let content = resp.text().await?;
-        let entity: Option<PutContentToContentSlotError> = serde_json::from_str(&content).ok();
-        Err(Error::ResponseError(ResponseContent { status, content, entity }))
-    }
-}
-
 /// This also moves the content to moderation if it is not already in moderation or moderated.  Also profile visibility moves from pending to normal when all profile content is moderated as accepted.  # Restrictions - All content must be owned by the account. - All content must be images.
 pub async fn put_profile_content(configuration: &configuration::Configuration, set_profile_content: models::SetProfileContent) -> Result<models::UpdateProfileContentResult, Error<PutProfileContentError>> {
     // add a prefix to parameters to efficiently prevent name collisions
@@ -671,6 +620,57 @@ pub async fn put_security_content_info(configuration: &configuration::Configurat
     } else {
         let content = resp.text().await?;
         let entity: Option<PutSecurityContentInfoError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// The processed content is saved to content processing slot when account state is [model::AccountState::InitialSetup]. In other states the slot number is ignored and content goes directly to moderation. Slots from 0 to 6 are available.  When no errors are returned, processing of the content will begin. Events about the content processing will be sent to the client.  One account can only have one content in upload or processing ongoing. Ongoing upload can be cancelled by starting another upload. When processing is ongoing, uploading can't be done.  Content uploading will fail if content file size exceeds 10 MiB. Content processing will fail if image content resolution width or height value is less than 512.
+pub async fn put_upload_content(configuration: &configuration::Configuration, slot_id: i32, processing_id_from_client: i32, secure_capture: bool, content_type: models::MediaContentUploadType, body: Vec<u8>) -> Result<models::PutContentToContentSlotResult, Error<PutUploadContentError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_slot_id = slot_id;
+    let p_query_processing_id_from_client = processing_id_from_client;
+    let p_query_secure_capture = secure_capture;
+    let p_query_content_type = content_type;
+    let p_body_body = body;
+
+    let uri_str = format!("{}/media_api/upload_content", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::PUT, &uri_str);
+
+    req_builder = req_builder.query(&[("slot_id", &p_query_slot_id.to_string())]);
+    req_builder = req_builder.query(&[("processing_id_from_client", &p_query_processing_id_from_client.to_string())]);
+    req_builder = req_builder.query(&[("secure_capture", &p_query_secure_capture.to_string())]);
+    req_builder = req_builder.query(&[("content_type", &p_query_content_type.to_string())]);
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    let file = std::io::Cursor::new(p_body_body);
+    let stream = FramedRead::new(file, BytesCodec::new());
+    req_builder = req_builder.body(reqwest::Body::wrap_stream(stream));
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::PutContentToContentSlotResult`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::PutContentToContentSlotResult`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PutUploadContentError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

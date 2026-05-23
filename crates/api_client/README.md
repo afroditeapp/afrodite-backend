@@ -183,7 +183,7 @@ Class | Method | HTTP request | Description
 *MediaApi* | [**delete_content**](docs/MediaApi.md#delete_content) | **DELETE** /media_api/content/{aid}/{cid} | Delete content data.
 *MediaApi* | [**get_all_account_media_content**](docs/MediaApi.md#get_all_account_media_content) | **GET** /media_api/all_account_media_content/{aid} | Get list of all media content on the server for one account.
 *MediaApi* | [**get_content**](docs/MediaApi.md#get_content) | **GET** /media_api/content/{aid}/{cid} | Get content data
-*MediaApi* | [**get_content_slot_state**](docs/MediaApi.md#get_content_slot_state) | **GET** /media_api/content_slot/{slot_id} | Get state of content slot.
+*MediaApi* | [**get_content_processing_state**](docs/MediaApi.md#get_content_processing_state) | **GET** /media_api/content_processing_state | Get current content processing state for account.
 *MediaApi* | [**get_map_tile**](docs/MediaApi.md#get_map_tile) | **GET** /media_api/map_tile/{z}/{x}/{y} | Get map tile PNG file.
 *MediaApi* | [**get_media_app_notification_settings**](docs/MediaApi.md#get_media_app_notification_settings) | **GET** /media_api/get_media_app_notification_settings | 
 *MediaApi* | [**get_media_content_info**](docs/MediaApi.md#get_media_content_info) | **GET** /media_api/media_content_info | Get my profile and security content
@@ -191,9 +191,9 @@ Class | Method | HTTP request | Description
 *MediaApi* | [**get_profile_content_info_binary**](docs/MediaApi.md#get_profile_content_info_binary) | **GET** /media_api/profile_content_info_binary/{aid} | Get current profile content for selected profile as compact binary payload.
 *MediaApi* | [**post_media_app_notification_settings**](docs/MediaApi.md#post_media_app_notification_settings) | **POST** /media_api/post_media_app_notification_settings | 
 *MediaApi* | [**post_profile_content_report**](docs/MediaApi.md#post_profile_content_report) | **POST** /media_api/profile_content_report | Report profile content.
-*MediaApi* | [**put_content_to_content_slot**](docs/MediaApi.md#put_content_to_content_slot) | **PUT** /media_api/content_slot/{slot_id} | Upload content to server. The content is saved to content processing slot when account state is [model::AccountState::InitialSetup]. In other states the slot number is ignored and content goes directly to moderation.
 *MediaApi* | [**put_profile_content**](docs/MediaApi.md#put_profile_content) | **PUT** /media_api/profile_content | Set new profile content for current account.
 *MediaApi* | [**put_security_content_info**](docs/MediaApi.md#put_security_content_info) | **PUT** /media_api/security_content_info | Set current security content for current account.
+*MediaApi* | [**put_upload_content**](docs/MediaApi.md#put_upload_content) | **PUT** /media_api/upload_content | Upload content to server for processing.
 *MediaAdminApi* | [**get_image_processing_config**](docs/MediaAdminApi.md#get_image_processing_config) | **GET** /media_api/image_processing_config | Get image processing configuration
 *MediaAdminApi* | [**get_image_processing_config_warnings**](docs/MediaAdminApi.md#get_image_processing_config_warnings) | **GET** /media_api/image_processing_config_warnings | Get image processing config warnings
 *MediaAdminApi* | [**get_media_content_face_verified_null_list**](docs/MediaAdminApi.md#get_media_content_face_verified_null_list) | **GET** /media_api/media_content_face_verified_null_list | Get first page of accounts with security selfie and content where `face_verified` is NULL and `face_detected` is true or `face_detected_manual` is true. Oldest security content set time is first and count 25.
@@ -332,7 +332,6 @@ Class | Method | HTTP request | Description
  - [ContentInfo](docs/ContentInfo.md)
  - [ContentInfoDetailed](docs/ContentInfoDetailed.md)
  - [ContentModerationState](docs/ContentModerationState.md)
- - [ContentProcessingId](docs/ContentProcessingId.md)
  - [ContentProcessingState](docs/ContentProcessingState.md)
  - [ContentProcessingStateType](docs/ContentProcessingStateType.md)
  - [ContentSlot](docs/ContentSlot.md)
@@ -556,6 +555,7 @@ Class | Method | HTTP request | Description
  - [PushNotificationDeviceToken](docs/PushNotificationDeviceToken.md)
  - [PushNotificationEncryptionKey](docs/PushNotificationEncryptionKey.md)
  - [PushNotificationInfoSyncVersion](docs/PushNotificationInfoSyncVersion.md)
+ - [PutContentToContentSlotResult](docs/PutContentToContentSlotResult.md)
  - [ReceivedLikeId](docs/ReceivedLikeId.md)
  - [ReceivedLikesIteratorState](docs/ReceivedLikesIteratorState.md)
  - [ReceivedLikesPage](docs/ReceivedLikesPage.md)

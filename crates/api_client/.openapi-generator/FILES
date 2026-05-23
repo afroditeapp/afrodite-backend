@@ -98,7 +98,6 @@ src/models/content_id.rs
 src/models/content_info.rs
 src/models/content_info_detailed.rs
 src/models/content_moderation_state.rs
-src/models/content_processing_id.rs
 src/models/content_processing_state.rs
 src/models/content_processing_state_type.rs
 src/models/content_slot.rs
@@ -323,6 +322,7 @@ src/models/publication_id.rs
 src/models/push_notification_device_token.rs
 src/models/push_notification_encryption_key.rs
 src/models/push_notification_info_sync_version.rs
+src/models/put_content_to_content_slot_result.rs
 src/models/received_like_id.rs
 src/models/received_likes_iterator_state.rs
 src/models/received_likes_page.rs

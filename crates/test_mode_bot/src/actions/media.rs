@@ -2,8 +2,8 @@ use std::{fmt::Debug, path::PathBuf};
 
 use api_client::{
     apis::media_api::{
-        get_content_slot_state, put_content_to_content_slot, put_profile_content,
-        put_security_content_info,
+        get_content_processing_state, put_profile_content, put_security_content_info,
+        put_upload_content,
     },
     models::{ContentId, ContentProcessingStateType, MediaContentUploadType, SetProfileContent},
 };
@@ -65,9 +65,11 @@ impl SendImageToSlot {
             }
         };
 
-        let _ = put_content_to_content_slot(
+        let processing_id_from_client = i32::from(state.next_ws_request_id());
+        let upload_result = put_upload_content(
             &state.api(),
             self.slot,
+            processing_id_from_client,
             self.slot == 0, // secure capture
             MediaContentUploadType::Image,
             img_data.clone(),
@@ -75,15 +77,21 @@ impl SendImageToSlot {
         .await
         .change_context(TestError::ApiRequest)?;
 
+        if upload_result.error.unwrap_or(false) {
+            return Err(TestError::ApiRequest.report());
+        }
+
         async fn wait_for_content_id(
-            slot: i32,
+            processing_id_from_client: u8,
             state: &mut BotState,
         ) -> Result<ContentId, TestError> {
             let event_waiting_result = state
                 .wait_event(|e| match e.content_processing_state_changed.as_ref() {
                     Some(content_processing_state) => {
-                        content_processing_state.new_state.state
-                            == ContentProcessingStateType::Completed
+                        content_processing_state.processing_id_from_client
+                            == processing_id_from_client
+                            && content_processing_state.new_state.state
+                                == Some(Some(ContentProcessingStateType::Completed))
                     }
                     _ => false,
                 })
@@ -96,28 +104,39 @@ impl SendImageToSlot {
             }
 
             loop {
-                let slot_state = get_content_slot_state(&state.api(), slot)
+                let state_from_api = get_content_processing_state(&state.api())
                     .await
                     .change_context(TestError::ApiRequest)?;
 
-                match slot_state.state {
-                    ContentProcessingStateType::Empty
-                    | ContentProcessingStateType::Failed
-                    | ContentProcessingStateType::NsfwDetected => {
+                match state_from_api.processing_id_from_client.flatten() {
+                    None => return Err(TestError::ApiRequest.report()),
+                    Some(id) if id != i32::from(processing_id_from_client) => {
                         return Err(TestError::ApiRequest.report());
                     }
-                    ContentProcessingStateType::Processing
-                    | ContentProcessingStateType::InQueue => {
+                    Some(_) => (),
+                }
+
+                match state_from_api.state.flatten() {
+                    None
+                    | Some(ContentProcessingStateType::Failed)
+                    | Some(ContentProcessingStateType::NsfwDetected) => {
+                        return Err(TestError::ApiRequest.report());
+                    }
+                    Some(ContentProcessingStateType::Processing)
+                    | Some(ContentProcessingStateType::InQueue) => {
                         tokio::time::sleep(std::time::Duration::from_millis(200)).await
                     }
-                    ContentProcessingStateType::Completed => {
-                        return Ok(*slot_state.cid.flatten().expect("Content ID is missing"));
+                    Some(ContentProcessingStateType::Completed) => {
+                        match state_from_api.cid.clone().flatten() {
+                            None => return Err(TestError::ApiRequest.report()),
+                            Some(cid) => return Ok(*cid),
+                        }
                     }
                 }
             }
         }
 
-        let content_id = wait_for_content_id(self.slot, state).await?;
+        let content_id = wait_for_content_id(processing_id_from_client as u8, state).await?;
         state.media.slots[self.slot as usize] = Some(content_id);
 
         let img_data = if self.mark_copied_image {
@@ -130,9 +149,11 @@ impl SendImageToSlot {
         };
 
         if let Some(slot) = self.copy_to_slot {
-            let _ = put_content_to_content_slot(
+            let processing_id_from_client = i32::from(state.next_ws_request_id());
+            let upload_result = put_upload_content(
                 &state.api(),
                 slot,
+                processing_id_from_client,
                 slot == 0, // slot 0 is for secure capture
                 MediaContentUploadType::Image,
                 img_data,
@@ -140,7 +161,11 @@ impl SendImageToSlot {
             .await
             .change_context(TestError::ApiRequest)?;
 
-            let content_id = wait_for_content_id(slot, state).await?;
+            if upload_result.error.unwrap_or(false) {
+                return Err(TestError::ApiRequest.report());
+            }
+
+            let content_id = wait_for_content_id(processing_id_from_client as u8, state).await?;
             state.media.slots[slot as usize] = Some(content_id);
         }
 

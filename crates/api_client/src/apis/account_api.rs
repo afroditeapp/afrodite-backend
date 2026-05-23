@@ -330,6 +330,7 @@ pub enum PostSignInWithLoginError {
 #[serde(untagged)]
 pub enum PutSettingProfileVisiblityError {
     Status401(),
+    Status403(),
     Status500(),
     UnknownValue(serde_json::Value),
 }
@@ -1593,7 +1594,7 @@ pub async fn post_sign_in_with_login(configuration: &configuration::Configuratio
     }
 }
 
-/// NOTE: Client uses this in initial setup.
+/// NOTE: Client uses this in initial setup.  # Limits - When [AccountState::Banned], the visiblity can only be set to private.
 pub async fn put_setting_profile_visiblity(configuration: &configuration::Configuration, boolean_setting: models::BooleanSetting) -> Result<(), Error<PutSettingProfileVisiblityError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_boolean_setting = boolean_setting;

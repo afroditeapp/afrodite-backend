@@ -14,8 +14,6 @@ use serde::{Deserialize, Serialize};
 /// 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum ContentProcessingStateType {
-    #[serde(rename = "Empty")]
-    Empty,
     #[serde(rename = "InQueue")]
     InQueue,
     #[serde(rename = "Processing")]
@@ -32,7 +30,6 @@ pub enum ContentProcessingStateType {
 impl std::fmt::Display for ContentProcessingStateType {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Self::Empty => write!(f, "Empty"),
             Self::InQueue => write!(f, "InQueue"),
             Self::Processing => write!(f, "Processing"),
             Self::Completed => write!(f, "Completed"),
@@ -44,7 +41,7 @@ impl std::fmt::Display for ContentProcessingStateType {
 
 impl Default for ContentProcessingStateType {
     fn default() -> ContentProcessingStateType {
-        Self::Empty
+        Self::InQueue
     }
 }
 

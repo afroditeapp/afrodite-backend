@@ -1,11 +1,6 @@
 use std::fmt;
 
-use crate::{
-    apis::{
-        Error, ResponseContent, chat_api::{GetPendingMessagesError, GetPublicKeyError, PostAddPublicKeyError, PostSendMessageError}, configuration, media_api::{GetContentError, PutContentToContentSlotError}
-    },
-    models::{AccountId, ContentId, Location, MediaContentType, SendMessageResult, UnixTime},
-};
+use crate::models::{AccountId, ContentId, Location, UnixTime};
 
 impl fmt::Display for AccountId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

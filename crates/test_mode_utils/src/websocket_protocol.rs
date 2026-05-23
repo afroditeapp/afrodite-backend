@@ -196,8 +196,10 @@ fn convert_server_event_to_client_for_test_mode(
 fn convert_content_processing_state(
     state: ContentProcessingStateInternal,
 ) -> ContentProcessingState {
-    let mut converted =
-        ContentProcessingState::new(convert_content_processing_state_type(state.state_type()));
+    let mut converted = ContentProcessingState::new();
+    converted.state = Some(Some(convert_content_processing_state_type(
+        state.state_type(),
+    )));
 
     match state {
         ContentProcessingStateInternal::InQueue {
