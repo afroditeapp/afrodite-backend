@@ -205,6 +205,18 @@ pub struct MediaApiLimits<'a> {
 }
 
 impl MediaApiLimits<'_> {
+    pub async fn put_upload_content(&self) -> Result<(), ApiLimitError> {
+        self.limits
+            .check(|state, config| {
+                state
+                    .put_upload_content
+                    .increment_and_check_is_limit_reached(
+                        config.limits_media().put_upload_content_daily_max_count,
+                    )
+            })
+            .await
+    }
+
     pub async fn get_profile_content_info(&self) -> Result<(), ApiLimitError> {
         self.limits
             .check(|state, config| {

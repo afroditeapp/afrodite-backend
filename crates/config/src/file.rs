@@ -76,6 +76,7 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # [limits.media]
 # max_content_count = 20
 # unused_content_wait_duration = "90d"
+# put_upload_content_daily_max_count = 100
 # get_profile_content_info_daily_max_count = 2000
 
 # [limits.profile]
@@ -437,6 +438,7 @@ impl Default for ChatLimitsConfig {
 pub struct MediaLimitsConfig {
     pub max_content_count: u8,
     pub unused_content_wait_duration: DurationValue,
+    pub put_upload_content_daily_max_count: u16,
     pub get_profile_content_info_daily_max_count: u16,
 }
 
@@ -445,6 +447,7 @@ impl Default for MediaLimitsConfig {
         Self {
             max_content_count: 20,
             unused_content_wait_duration: DurationValue::from_days(90),
+            put_upload_content_daily_max_count: 100,
             get_profile_content_info_daily_max_count: 2000,
         }
     }

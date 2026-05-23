@@ -42,6 +42,7 @@ pub struct AllApiLimits {
     pub post_get_next_profile_page: ApiLimitState,
     pub get_profile: ApiLimitState,
     // Media
+    pub put_upload_content: ApiLimitState,
     pub get_profile_content_info: ApiLimitState,
     // Chat
     pub post_send_message: ApiLimitState,

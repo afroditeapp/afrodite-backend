@@ -13,7 +13,7 @@ use model_media::{
 };
 use server_api::{
     S,
-    app::{ApiUsageTrackerProvider, GetConfig},
+    app::{ApiLimitsProvider, ApiUsageTrackerProvider, GetConfig},
     create_open_api_router, db_write,
     result::WrappedResultExt,
     utils::{IfNoneMatchExtensions, cache_control_for_images},
@@ -258,6 +258,7 @@ const PATH_PUT_UPLOAD_CONTENT: &str = "/media_api/upload_content";
     responses(
         (status = 200, description = "Image upload result.", body = PutContentToContentSlotResult),
         (status = 401, description = "Unauthorized."),
+        (status = 429, description = "Too many requests."),
         (status = 406, description = "Unknown slot ID."),
         (status = 500, description = "Internal server error."),
     ),
@@ -270,6 +271,11 @@ pub async fn put_upload_content(
     content_data: Body,
 ) -> Result<Json<PutContentToContentSlotResult>, StatusCode> {
     MEDIA.put_upload_content.incr();
+    state
+        .api_limits(account_id)
+        .media()
+        .put_upload_content()
+        .await?;
 
     let slot = TryInto::<ContentSlot>::try_into(new_content_params.slot_id as i16)
         .map_err(|_| StatusCode::NOT_ACCEPTABLE)?;
