@@ -361,10 +361,21 @@ impl<'de> Deserialize<'de> for Gender {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Default)]
+#[derive(Debug, Clone, Deserialize)]
+#[serde(default)]
 pub struct ProfileStringModerationFileConfig {
     pub llm: Option<LlmStringModerationFileConfig>,
-    pub concurrency: Option<u8>,
+    /// Default value is 4.
+    pub concurrency: u8,
+}
+
+impl Default for ProfileStringModerationFileConfig {
+    fn default() -> Self {
+        Self {
+            llm: None,
+            concurrency: 4,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -383,7 +394,8 @@ pub struct LlmStringModerationFileConfig {
     pub retry_wait_times_in_seconds: Vec<u16>,
 }
 
-#[derive(Debug, Clone, Deserialize, Default)]
+#[derive(Debug, Clone, Deserialize)]
+#[serde(default)]
 pub struct ContentModerationFileConfig {
     /// Neural network based detection.
     /// Actions: reject, move_to_human, accept and delete.
@@ -395,18 +407,39 @@ pub struct ContentModerationFileConfig {
     /// The secondary LLM moderation will run if primary results with ignore
     /// action.
     pub llm_secondary: Option<LlmContentModerationFileConfig>,
-    #[serde(default)]
     pub debug_log_delete: bool,
     /// Default value is 4.
-    pub concurrency: Option<u8>,
+    pub concurrency: u8,
 }
 
-#[derive(Debug, Clone, Deserialize, Default)]
+impl Default for ContentModerationFileConfig {
+    fn default() -> Self {
+        Self {
+            nsfw_detection: None,
+            llm_primary: None,
+            llm_secondary: None,
+            debug_log_delete: false,
+            concurrency: 4,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(default)]
 pub struct FaceVerificationFileConfig {
     /// Large language model based face verification.
     pub llm: Option<LlmContentModerationFileConfig>,
     /// Default value is 4.
-    pub concurrency: Option<u8>,
+    pub concurrency: u8,
+}
+
+impl Default for FaceVerificationFileConfig {
+    fn default() -> Self {
+        Self {
+            llm: None,
+            concurrency: 4,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Default)]
@@ -414,11 +447,21 @@ pub struct AccountVerificationFileConfig {
     pub security_content: Option<SecurityContentVerificationFileConfig>,
 }
 
-#[derive(Debug, Clone, Deserialize, Default)]
+#[derive(Debug, Clone, Deserialize)]
+#[serde(default)]
 pub struct SecurityContentVerificationFileConfig {
     pub llm: Option<LlmContentModerationFileConfig>,
     /// Default value is 4.
-    pub concurrency: Option<u8>,
+    pub concurrency: u8,
+}
+
+impl Default for SecurityContentVerificationFileConfig {
+    fn default() -> Self {
+        Self {
+            llm: None,
+            concurrency: 4,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Deserialize)]

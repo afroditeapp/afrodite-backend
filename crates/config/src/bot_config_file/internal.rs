@@ -13,8 +13,6 @@ use serde::{Deserialize, Serialize};
 pub use simple_backend_model::NsfwDetectionThresholds;
 use url::Url;
 
-const LLM_CONCURRENCY_DEFAULT: u8 = 4;
-
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ProfileStringModerationConfig {
     pub accept_single_visible_character: bool,
@@ -38,7 +36,7 @@ impl ProfileStringModerationConfig {
             accept_single_visible_character: db.accept_single_visible_character,
             llm: LlmStringModerationConfig::new(db.llm, db.llm_enabled, file.llm),
             default_action: db.default_action,
-            concurrency: file.concurrency.unwrap_or(LLM_CONCURRENCY_DEFAULT),
+            concurrency: file.concurrency,
         })
     }
 }
@@ -160,7 +158,7 @@ impl SecurityContentVerificationConfig {
         Some(Self {
             llm: LlmSecurityContentVerificationConfig::new(db.llm, db.llm_enabled, file.llm),
             default_action: db.default_action,
-            concurrency: file.concurrency.unwrap_or(LLM_CONCURRENCY_DEFAULT),
+            concurrency: file.concurrency,
         })
     }
 }
@@ -217,7 +215,7 @@ impl FaceVerificationConfig {
         Some(Self {
             llm: LlmFaceVerificationConfig::new(db.llm, db.llm_enabled, file.llm),
             default_action: db.default_action,
-            concurrency: file.concurrency.unwrap_or(LLM_CONCURRENCY_DEFAULT),
+            concurrency: file.concurrency,
         })
     }
 }
@@ -253,7 +251,7 @@ impl ContentModerationConfig {
             ),
             default_action: db.default_action,
             debug_log_delete: file.debug_log_delete,
-            concurrency: file.concurrency.unwrap_or(LLM_CONCURRENCY_DEFAULT),
+            concurrency: file.concurrency,
         })
     }
 }
