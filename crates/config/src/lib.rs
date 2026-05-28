@@ -41,7 +41,10 @@ use simple_backend_utils::{
 
 use self::file::{ConfigFile, LocationConfig};
 use crate::{
-    file::{ClientVersionTrackingConfig, GeneralConfig, MinClientVersion, ProfileLimitsConfig},
+    file::{
+        ApiConfig, ClientVersionTrackingConfig, GeneralConfig, MinClientVersion,
+        ProfileLimitsConfig,
+    },
     file_notification_content::NotificationContentFile,
 };
 
@@ -255,8 +258,12 @@ impl Config {
         self.file.api.app_update_available.as_ref()
     }
 
-    pub fn remote_bot_login(&self) -> &RemoteBotLoginConfig {
-        &self.file.remote_bot_login
+    pub fn api(&self) -> &ApiConfig {
+        &self.file.api
+    }
+
+    pub fn remote_bot_login(&self) -> Option<&RemoteBotLoginConfig> {
+        self.file.remote_bot_login.as_ref()
     }
 
     pub fn automatic_profile_search(&self) -> &AutomaticProfileSearchConfig {

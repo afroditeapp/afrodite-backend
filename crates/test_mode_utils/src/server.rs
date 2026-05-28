@@ -119,13 +119,13 @@ fn new_config(config: &TestMode, bot_api_port: u16) -> (ConfigFile, SimpleBacken
             email: EmailAddress(ADMIN_BOT_EMAIL.to_string()),
         }
         .into(),
-        general: config::file::GeneralConfig {
+        general: config::file::GeneralConfig::default(),
+        api: ApiConfig {
             debug_disable_api_limits: config.selected_benchmark().is_some(),
             ..Default::default()
         },
-        api: ApiConfig::default(),
         automatic_profile_search: AutomaticProfileSearchConfig::default(),
-        remote_bot_login: config::file::RemoteBotLoginConfig::default(),
+        remote_bot_login: None,
         scheduled_tasks: ScheduledTasksConfig::default(),
         location: if let Some(SelectedBenchmark::GetProfileList) = config.selected_benchmark() {
             let mut location = DEFAULT_LOCATION_CONFIG_BENCHMARK;

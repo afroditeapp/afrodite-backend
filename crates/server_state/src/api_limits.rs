@@ -83,7 +83,7 @@ impl<'a> ApiLimits<'a> {
             .await
             .change_context(ApiLimitError::Cache)?;
 
-        if is_limit_reached && !self.config.general().debug_disable_api_limits {
+        if is_limit_reached && !self.config.api().debug_disable_api_limits {
             Err(ApiLimitError::LimitReached.report())
         } else {
             Ok(())

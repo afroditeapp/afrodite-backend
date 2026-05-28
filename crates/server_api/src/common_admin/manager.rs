@@ -253,7 +253,7 @@ pub async fn post_trigger_server_data_reset(
         return Err(StatusCode::UNAUTHORIZED);
     }
 
-    if !state.config().general().debug_allow_backend_data_reset {
+    if !state.config().api().debug_allow_backend_data_reset {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 

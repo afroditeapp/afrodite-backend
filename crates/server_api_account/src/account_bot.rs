@@ -151,19 +151,15 @@ pub async fn post_remote_get_bots(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let config = state.config().remote_bot_login();
-
-    if let Some(access_config) = config.access()
-        && !is_ip_address_accepted(&state, address, access_config).await
-    {
-        return Err(StatusCode::NOT_FOUND);
-    }
-
-    let Some(configured_password) = config.password() else {
+    let Some(config) = state.config().remote_bot_login() else {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     };
 
-    if configured_password != info.password {
+    if !is_ip_address_accepted(&state, address, config.access()).await {
+        return Err(StatusCode::NOT_FOUND);
+    }
+
+    if config.password() != info.password {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
@@ -271,19 +267,15 @@ pub async fn post_remote_bot_login(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let config = state.config().remote_bot_login();
-
-    if let Some(access_config) = config.access()
-        && !is_ip_address_accepted(&state, address, access_config).await
-    {
-        return Err(StatusCode::NOT_FOUND);
-    }
-
-    let Some(configured_password) = config.password() else {
+    let Some(config) = state.config().remote_bot_login() else {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     };
 
-    if configured_password != info.password {
+    if !is_ip_address_accepted(&state, address, config.access()).await {
+        return Err(StatusCode::NOT_FOUND);
+    }
+
+    if config.password() != info.password {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 

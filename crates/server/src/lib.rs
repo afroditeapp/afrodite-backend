@@ -235,7 +235,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
         let mut router =
             CommonRoutes::routes_without_obfuscation_support(state.clone(), web_socket_manager);
 
-        if state.s.config().remote_bot_login().password().is_some() {
+        if state.s.config().remote_bot_login().is_some() {
             router = router.merge(RemoteBotApiRoutes::router(state.s.clone()))
         }
         router = router.merge(AccountRoutes::routes_without_obfuscation_support(
@@ -260,7 +260,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
 
         let api_obfuscation_enabled =
             state.s.config().api_obfuscation_salt().is_some() && !state.disable_api_obfuscation;
-        if api_obfuscation_enabled && state.s.config().remote_bot_login().password().is_some() {
+        if api_obfuscation_enabled && state.s.config().remote_bot_login().is_some() {
             router = self.add_obfuscation_supported_routes(
                 router,
                 StateForRouterCreation {

@@ -150,9 +150,8 @@ pub struct ConfigFile {
     pub automatic_profile_search: AutomaticProfileSearchConfig,
     #[serde(default)]
     pub scheduled_tasks: ScheduledTasksConfig,
-    #[serde(default)]
-    pub remote_bot_login: RemoteBotLoginConfig,
 
+    pub remote_bot_login: Option<RemoteBotLoginConfig>,
     pub grant_admin_access: Option<GrantAdminAccessConfig>,
     pub location: Option<LocationConfig>,
     pub demo_accounts: Option<Vec<DemoAccountConfig>>,
@@ -170,7 +169,7 @@ impl ConfigFile {
             api: ApiConfig::default(),
             automatic_profile_search: AutomaticProfileSearchConfig::default(),
             scheduled_tasks: ScheduledTasksConfig::default(),
-            remote_bot_login: RemoteBotLoginConfig::default(),
+            remote_bot_login: None,
             grant_admin_access: None,
             location: None,
             demo_accounts: None,
@@ -206,20 +205,18 @@ impl ConfigFile {
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct GeneralConfig {
-    /// Allow using backend data reset API.
-    #[serde(default)]
-    pub debug_allow_backend_data_reset: bool,
-    #[serde(default)]
-    pub debug_websocket_logging: bool,
-    #[serde(default)]
-    pub debug_disable_api_limits: bool,
     /// Make sure to use higer value than the server process nice
     /// value as lower values require privileges.
     pub bot_process_nice_value: Option<i8>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(default)]
 pub struct ApiConfig {
+    /// Allow using backend data reset API.
+    pub debug_allow_backend_data_reset: bool,
+    pub debug_websocket_logging: bool,
+    pub debug_disable_api_limits: bool,
     pub obfuscation_salt: Option<String>,
     pub min_client_version: Option<MinClientVersion>,
     pub client_version_tracking: Option<ClientVersionTrackingConfig>,
@@ -294,6 +291,7 @@ pub struct GrantAdminAccessConfig {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(default)]
 pub struct LocationConfig {
     /// "y-axis" angle for top left corner of the location index.
     pub latitude_top_left: f64,
@@ -337,6 +335,7 @@ pub struct LimitsConfig {
 
 /// Common limits config for all server components
 #[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(default)]
 pub struct CommonLimitsConfig {
     pub processed_report_deletion_wait_duration: ProcessedReportDeletionConfig,
     pub send_report_daily_max_count: u16,
@@ -354,6 +353,7 @@ impl Default for CommonLimitsConfig {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(default)]
 pub struct ProcessedReportDeletionConfig {
     pub profile_name: DurationValue,
     pub profile_text: DurationValue,
@@ -370,6 +370,7 @@ impl Default for ProcessedReportDeletionConfig {
 
 /// Account related limits config
 #[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(default)]
 pub struct AccountLimitsConfig {
     pub inactivity_logout_wait_duration: DurationValue,
     pub account_deletion_wait_duration: DurationValue,
@@ -407,6 +408,7 @@ impl Default for AccountLimitsConfig {
 
 /// Chat releated limits config
 #[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(default)]
 pub struct ChatLimitsConfig {
     pub max_public_key_count: u16,
     pub send_message_daily_max_count: u16,
@@ -435,6 +437,7 @@ impl Default for ChatLimitsConfig {
 
 /// Media related limits config
 #[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(default)]
 pub struct MediaLimitsConfig {
     pub max_content_count: u8,
     pub unused_content_wait_duration: DurationValue,
@@ -455,6 +458,7 @@ impl Default for MediaLimitsConfig {
 
 /// Profile related limits config
 #[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(default)]
 pub struct ProfileLimitsConfig {
     /// Used also for automatic profile search specific iterator
     pub profile_iterator_reset_daily_max_count: u16,
@@ -481,7 +485,7 @@ impl Default for ProfileLimitsConfig {
 /// will enable demo account HTTP routes.
 ///
 /// WARNING: Demo account gives access to all/specific accounts.
-#[derive(Debug, Deserialize, Default, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct DemoAccountConfig {
     pub database_id: DemoAccountId,
     pub username: String,
@@ -528,22 +532,23 @@ impl MinClientVersion {
 /// Remote bot login config
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct RemoteBotLoginConfig {
-    pub password: Option<String>,
+    password: String,
     #[serde(flatten)]
-    pub access: Option<IpAddressAccessConfig>,
+    access: IpAddressAccessConfig,
 }
 
 impl RemoteBotLoginConfig {
-    pub fn password(&self) -> Option<&str> {
-        self.password.as_deref()
+    pub fn password(&self) -> &str {
+        &self.password
     }
 
-    pub fn access(&self) -> Option<&IpAddressAccessConfig> {
-        self.access.as_ref()
+    pub fn access(&self) -> &IpAddressAccessConfig {
+        &self.access
     }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(default)]
 pub struct AutomaticProfileSearchConfig {
     pub daily_start_time: UtcTimeValue,
     pub daily_end_time: UtcTimeValue,

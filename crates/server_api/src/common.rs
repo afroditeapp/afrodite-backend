@@ -322,7 +322,7 @@ async fn handle_socket(
     mut ws_manager: WebSocketManager,
     info: WebSocketClientInfo,
 ) {
-    if state.config().general().debug_websocket_logging {
+    if state.config().api().debug_websocket_logging {
         info!(
             "handle_socket for '{}', address: {}",
             id.id.as_ref(),
@@ -367,7 +367,7 @@ async fn handle_socket(
                     }
                 },
                 Err(e) => {
-                    if state.config().general().debug_websocket_logging {
+                    if state.config().api().debug_websocket_logging {
                         error!("handle_socket_result returned error {e:?} for '{}', address: {}", id.id.as_ref(), address);
                     }
 
@@ -390,7 +390,7 @@ async fn handle_socket(
 
     drop(quit_lock);
 
-    if state.config().general().debug_websocket_logging {
+    if state.config().api().debug_websocket_logging {
         info!(
             "Connection for '{}' closed, address: {}",
             id.id.as_ref(),
@@ -650,7 +650,7 @@ async fn handle_socket_result(
                     },
                     None => {
                         // New connection created another event receiver.
-                        if state.config().general().debug_websocket_logging {
+                        if state.config().api().debug_websocket_logging {
                             error!("Event receiver channel broken: id: {}, address: {}", id.id.as_ref(), address);
                         }
                         break;
@@ -659,7 +659,7 @@ async fn handle_socket_result(
             }
             _ = timeout_timer.wait_timeout() => {
                 // Connection timeout
-                if state.config().general().debug_websocket_logging {
+                if state.config().api().debug_websocket_logging {
                     info!("Connection timeout for '{}', address: {}", id.id.as_ref(), address);
                 }
                 break;
@@ -677,7 +677,7 @@ async fn handle_socket_result(
                 match pending_flags {
                     Ok(flags) => {
                         if flags.contains(PushNotificationFlags::PENDING_CHAT_NOTIFICATION) {
-                            if state.config().general().debug_websocket_logging {
+                            if state.config().api().debug_websocket_logging {
                                 info!(
                                     "Pending chat notification flag still set after timeout for '{}', address: {}. Closing websocket.",
                                     id.id.as_ref(),
@@ -688,7 +688,7 @@ async fn handle_socket_result(
                         }
                     }
                     Err(e) => {
-                        if state.config().general().debug_websocket_logging {
+                        if state.config().api().debug_websocket_logging {
                             error!(
                                 "Failed to check pending push notification flags for '{}', address: {}, error: {e:?}",
                                 id.id.as_ref(),
