@@ -150,10 +150,9 @@ fn new_config(config: &TestMode, bot_api_port: u16) -> (ConfigFile, SimpleBacken
 
     let simple_backend_config = SimpleBackendConfigFile {
         general: GeneralConfig {
-            allow_public_api_without_tls: None,
-            debug: Some(true),
+            debug: true,
             debug_face_detection_result: Some(true),
-            log_timestamp: None,
+            ..Default::default()
         },
         database: DatabaseConfig::sqlite(),
         socket: SocketConfig {

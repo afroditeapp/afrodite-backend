@@ -157,7 +157,7 @@ impl SimpleBackendConfig {
     /// * SQLite in RAM mode is allowed.
     /// * Atomic boolean `RUNNING_IN_DEBUG_MODE` is set to `true`.
     pub fn debug_mode(&self) -> bool {
-        self.file.general.debug.unwrap_or(false)
+        self.file.general.debug
     }
 
     pub fn sign_in_with_urls(&self) -> &SignInWithUrls {
@@ -221,7 +221,7 @@ impl SimpleBackendConfig {
     }
 
     pub fn log_timestamp(&self) -> bool {
-        self.file.general.log_timestamp.unwrap_or(true)
+        self.file.general.log_timestamp
     }
 
     pub fn email_sending(&self) -> Option<&file::EmailSendingConfig> {
@@ -322,11 +322,8 @@ pub fn get_config(
     if file_config.socket.public_api_enabled()
         && public_api_tls_config.is_none()
         && file_config.lets_encrypt.is_none()
-        && !file_config.general.debug.unwrap_or_default()
-        && !file_config
-            .general
-            .allow_public_api_without_tls
-            .unwrap_or_default()
+        && !file_config.general.debug
+        && !file_config.general.allow_public_api_without_tls
     {
         return Err(GetConfigError::TlsConfigMissing).attach_printable(
             "TLS certificate or Let's Encrypt must be configured if public API is enabled and allow_public_api_without_tls is false and debug mode is false",
@@ -357,7 +354,7 @@ pub fn get_config(
     }
 
     let sqlite_in_ram = if args_config.sqlite_in_ram {
-        if file_config.general.debug.unwrap_or_default() {
+        if file_config.general.debug {
             true
         } else {
             return Err(GetConfigError::SqliteInRamNotAllowed)

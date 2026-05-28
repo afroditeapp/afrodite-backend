@@ -288,16 +288,28 @@ impl ConfigFileUtils {
     }
 }
 
-#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(default)]
 pub struct GeneralConfig {
-    pub debug: Option<bool>,
+    pub debug: bool,
     /// Allow public API without backend TLS cert, for setups where TLS
     /// termination is handled by a reverse proxy.
-    pub allow_public_api_without_tls: Option<bool>,
+    pub allow_public_api_without_tls: bool,
     /// Override face detection result with this value
     pub debug_face_detection_result: Option<bool>,
     /// Write timestamp to log messages. Enabled by default.
-    pub log_timestamp: Option<bool>,
+    pub log_timestamp: bool,
+}
+
+impl Default for GeneralConfig {
+    fn default() -> Self {
+        Self {
+            debug: false,
+            allow_public_api_without_tls: false,
+            debug_face_detection_result: None,
+            log_timestamp: true,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
@@ -492,22 +504,21 @@ pub struct StaticFilePackageHostingConfig {
     /// If directory contains multiple files the latest version
     /// is selected as the primary version.
     pub package_dir: Option<PathBuf>,
-    #[serde(flatten, default)]
+    #[serde(flatten)]
     pub acccess: IpAddressAccessConfig,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Default, Deserialize, Serialize, Clone)]
+#[serde(default)]
 pub struct IpAddressAccessConfig {
-    #[serde(default)]
     pub allow_all_ip_addresses: bool,
     /// Allow access from specific IP addresses.
-    #[serde(default)]
     pub ip_allowlist: Vec<IpAddr>,
     /// Allow access from specific IP countries.
     ///
     /// All strings are converted to uppercase as it is assumed that
     /// MaxMind DB contains uppercase country codes.
-    #[serde(default, deserialize_with = "ip_country_allowlist_from_vec_string")]
+    #[serde(deserialize_with = "ip_country_allowlist_from_vec_string")]
     pub ip_country_allowlist: Vec<String>,
 }
 
@@ -566,10 +577,10 @@ fn validate_path(input: &Path) -> std::result::Result<(), String> {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(default)]
 pub struct ImageProcessingStaticConfig {
     /// Jpeg quality value. Value is clamped between 1-100.
     /// Mozjpeg library recommends 60-80 values
-    #[serde(default = "default_jpeg_quality")]
     pub(crate) jpeg_quality: u8,
     pub seetaface: Option<SeetaFaceConfig>,
     pub nsfw_detection: Option<NsfwDetectionConfig>,
@@ -578,14 +589,10 @@ pub struct ImageProcessingStaticConfig {
     pub process_nice_value: Option<i8>,
 }
 
-fn default_jpeg_quality() -> u8 {
-    60
-}
-
 impl Default for ImageProcessingStaticConfig {
     fn default() -> Self {
         Self {
-            jpeg_quality: default_jpeg_quality(),
+            jpeg_quality: 60,
             seetaface: None,
             nsfw_detection: None,
             process_nice_value: None,
@@ -748,12 +755,13 @@ impl DatabaseConfig {
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(default)]
 pub struct SqliteConfig {
-    #[serde(default)]
     pub vacuum: SqliteVacuumConfig,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(default)]
 pub struct SqliteVacuumConfig {
     /// Minimum wait time since database file creation before running VACUUM
     pub min_wait_time: DurationValue,
