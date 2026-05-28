@@ -190,7 +190,7 @@ impl BotTestRunner {
             bot_data.insert(s.task, s);
         }
         let mut data: Vec<BotPersistentState> = bot_data.into_values().collect();
-        data.sort_by(|a, b| a.task.cmp(&b.task));
+        data.sort_by_key(|a| a.task);
 
         StateData {
             test_name: new.test_name,

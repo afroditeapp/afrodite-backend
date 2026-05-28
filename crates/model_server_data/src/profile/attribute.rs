@@ -87,7 +87,7 @@ pub struct SortedProfileAttributes {
 impl SortedProfileAttributes {
     pub fn new(attributes: Vec<ProfileAttributeValue>) -> Self {
         let mut attributes = attributes;
-        attributes.sort_by(|a, b| a.id.cmp(&b.id));
+        attributes.sort_by_key(|a| a.id);
         Self { attributes }
     }
 

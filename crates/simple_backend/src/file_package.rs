@@ -308,6 +308,7 @@ impl PackageDirManager {
     /// The first package is the latest package
     fn sorted_packages(self) -> Vec<(VersionNumber, PathBuf)> {
         let mut packages = self.packages.into_iter().collect::<Vec<_>>();
+        #[allow(clippy::unnecessary_sort_by)]
         packages.sort_by(|a, b| b.0.cmp(&a.0));
         packages
     }

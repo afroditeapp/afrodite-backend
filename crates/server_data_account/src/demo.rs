@@ -41,10 +41,7 @@ impl AccessibleAccountsInfoUtils for AccessibleAccountsInfo {
             .demo_account_owned_account_ids(demo_account_id)
             .await?;
 
-        Ok(accounts
-            .into_iter()
-            .chain(database_accounts.into_iter())
-            .collect())
+        Ok(accounts.into_iter().chain(database_accounts).collect())
     }
 
     async fn contains(
