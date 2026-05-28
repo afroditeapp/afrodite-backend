@@ -198,20 +198,30 @@ pub struct DirConfig {
     pub scripts: PathBuf,
 }
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(default)]
 pub struct GeneralConfig {
     /// Write timestamp to log messages. Enabled by default.
-    log_timestamp: Option<bool>,
-    debug: Option<bool>,
+    log_timestamp: bool,
+    debug: bool,
 }
 
 impl GeneralConfig {
     pub fn log_timestamp(&self) -> bool {
-        self.log_timestamp.unwrap_or(true)
+        self.log_timestamp
     }
 
     pub fn debug(&self) -> bool {
-        self.debug.unwrap_or_default()
+        self.debug
+    }
+}
+
+impl Default for GeneralConfig {
+    fn default() -> Self {
+        Self {
+            log_timestamp: true,
+            debug: false,
+        }
     }
 }
 
@@ -303,17 +313,15 @@ pub struct SoftwareUpdateGitHubConfig {
 pub struct SimplePatternPath(pub PathBuf);
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
+#[serde(default)]
 pub struct ManualTasksConfig {
     /// Allow manual backend data reset
     pub allow_backend_data_reset: Option<BackendDataResetConfig>,
     /// Allow manual backend restart
-    #[serde(default)]
     pub allow_backend_restart: bool,
     /// Allow manaual system reboot
-    #[serde(default)]
     pub allow_system_reboot: bool,
     /// Allow manual system shutdown
-    #[serde(default)]
     pub allow_system_shutdown: bool,
 }
 
