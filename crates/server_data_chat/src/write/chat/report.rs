@@ -19,8 +19,12 @@ impl WriteCommandsChatReport<'_> {
         &self,
         creator: AccountIdInternal,
         target: AccountIdInternal,
-        message: NewChatMessageReportInternal,
+        messages: Vec<NewChatMessageReportInternal>,
     ) -> Result<UpdateReportResult, DataError> {
+        if messages.is_empty() {
+            return Ok(UpdateReportResult::success());
+        }
+
         let interaction = self
             .handle()
             .read()
@@ -42,22 +46,33 @@ impl WriteCommandsChatReport<'_> {
             })
             .await?;
 
-        if reports.len() >= ReportType::MAX_COUNT {
+        let mut messages_to_insert = Vec::with_capacity(messages.len());
+
+        for message in messages {
+            let current_report = reports.iter().find(|v| {
+                v.report.content.chat_message.as_ref() == Some(&message.to_chat_message_report())
+            });
+            if current_report.is_some() {
+                continue;
+            }
+
+            messages_to_insert.push(message);
+        }
+
+        if reports.len() + messages_to_insert.len() > ReportType::MAX_COUNT {
             return Ok(UpdateReportResult::too_many_reports());
         }
 
-        let current_report = reports.iter().find(|v| {
-            v.report.content.chat_message.as_ref() == Some(&message.to_chat_message_report())
-        });
-        if current_report.is_some() {
-            // Already reported
+        if messages_to_insert.is_empty() {
             return Ok(UpdateReportResult::success());
         }
 
         db_transaction!(self, move |mut cmds| {
-            cmds.chat()
-                .report()
-                .insert_chat_message_report(creator, target, message)?;
+            for message in messages_to_insert {
+                cmds.chat()
+                    .report()
+                    .insert_chat_message_report(creator, target, message)?;
+            }
             Ok(())
         })?;
 

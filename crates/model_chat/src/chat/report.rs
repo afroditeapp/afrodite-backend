@@ -5,10 +5,15 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct UpdateChatMessageReport {
-    pub target: AccountId,
+pub struct ChatMessageReportData {
     pub server_signed_message_base64: String,
     pub decryption_key_base64: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct UpdateChatMessageReport {
+    pub target: AccountId,
+    pub messages: Vec<ChatMessageReportData>,
 }
 
 #[derive(Debug, Clone, Insertable)]
