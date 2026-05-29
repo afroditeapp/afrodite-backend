@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{NonEmptyString, UnixTime};
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
 
 use crate::{
     AccountId, AccountIdDb, AccountIdInternal, ChatMessageReport, ContentId, ProfileAge, ReportId,
@@ -145,4 +145,11 @@ pub struct ReportIteratorQueryInternal {
     pub page: i64,
     pub aid: AccountIdInternal,
     pub mode: ReportIteratorMode,
+}
+
+#[derive(Debug, Default, Clone, Deserialize, Serialize, IntoParams)]
+pub struct WaitingReportPageQuery {
+    /// Wanted report types. Empty list means all report types.
+    #[serde(default)]
+    pub wanted_report_types: Vec<ReportType>,
 }

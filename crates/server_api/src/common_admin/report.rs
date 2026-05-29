@@ -1,7 +1,11 @@
-use axum::{Extension, extract::State};
+use axum::{
+    Extension,
+    extract::{Query, State},
+};
 use model::{
     AccountIdInternal, GetChatMessageReports, GetChatMessageReportsInternal, GetReportList,
     Permissions, ProcessReport, ReportIteratorQuery, ReportIteratorQueryInternal, UnixTime,
+    WaitingReportPageQuery,
 };
 use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
 use simple_backend::create_counters;
@@ -18,6 +22,7 @@ const PATH_GET_WAITING_REPORT_PAGE: &str = "/common_api/waiting_report_page";
 #[utoipa::path(
     get,
     path = PATH_GET_WAITING_REPORT_PAGE,
+    params(WaitingReportPageQuery),
     responses(
         (status = 200, description = "Successful", body = GetReportList),
         (status = 401, description = "Unauthorized"),
@@ -31,6 +36,7 @@ const PATH_GET_WAITING_REPORT_PAGE: &str = "/common_api/waiting_report_page";
 pub async fn get_waiting_report_page(
     State(state): State<S>,
     Extension(permissions): Extension<Permissions>,
+    Query(query): Query<WaitingReportPageQuery>,
 ) -> Result<Json<GetReportList>, StatusCode> {
     COMMON.get_waiting_report_page.incr();
 
@@ -42,7 +48,7 @@ pub async fn get_waiting_report_page(
         .read()
         .common_admin()
         .report()
-        .get_waiting_report_list()
+        .get_waiting_report_list(&query.wanted_report_types)
         .await?;
 
     Ok(r.into())

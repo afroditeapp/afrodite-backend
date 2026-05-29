@@ -14,8 +14,12 @@ use crate::{
 define_current_read_commands!(CurrentReadCommonAdminReport);
 
 impl CurrentReadCommonAdminReport<'_> {
-    pub fn get_reports_page(&mut self) -> Result<GetReportList, DieselDatabaseError> {
-        let reports = self.get_waiting_reports_page()?;
+    /// Empty report type list disables report type filtering.
+    pub fn get_reports_page(
+        &mut self,
+        wanted_report_types: Vec<ReportTypeInternal>,
+    ) -> Result<GetReportList, DieselDatabaseError> {
+        let reports = self.get_waiting_reports_page(wanted_report_types)?;
 
         let mut page = vec![];
 
@@ -33,12 +37,17 @@ impl CurrentReadCommonAdminReport<'_> {
         })
     }
 
-    fn get_waiting_reports_page(&mut self) -> Result<Vec<ReportInternal>, DieselDatabaseError> {
+    fn get_waiting_reports_page(
+        &mut self,
+        wanted_report_types: Vec<ReportTypeInternal>,
+    ) -> Result<Vec<ReportInternal>, DieselDatabaseError> {
         use crate::schema::{account_id, common_report::dsl::*};
 
         let (creator_aid, target_aid) = alias!(account_id as creator_aid, account_id as target_aid);
 
         const PAGE_SIZE: i64 = 25;
+
+        let all_types = wanted_report_types.is_empty();
 
         let values: Vec<(
             AccountId,
@@ -52,6 +61,11 @@ impl CurrentReadCommonAdminReport<'_> {
             .inner_join(creator_aid.on(creator_account_id.eq(creator_aid.field(account_id::id))))
             .inner_join(target_aid.on(target_account_id.eq(target_aid.field(account_id::id))))
             .filter(processing_state.eq(ReportProcessingState::Waiting))
+            .filter(
+                all_types
+                    .as_sql::<Bool>()
+                    .or(report_type_number.eq_any(wanted_report_types)),
+            )
             .select((
                 creator_aid.field(account_id::uuid),
                 creator_account_id,

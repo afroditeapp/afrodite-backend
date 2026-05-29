@@ -1,15 +1,35 @@
 use database::current::read::GetDbReadCommandsCommon;
-use model::{GetChatMessageReportsInternal, GetReportList, ReportIteratorQueryInternal};
+use model::{
+    GetChatMessageReportsInternal, GetReportList, ReportIteratorQueryInternal, ReportType,
+    ReportTypeInternal,
+};
+use simple_backend_utils::IntoReportFromString;
 
 use crate::{DataError, IntoDataError, define_cmd_wrapper_read, read::DbRead, result::Result};
 
 define_cmd_wrapper_read!(ReadCommandsCommonAdminReport);
 
 impl ReadCommandsCommonAdminReport<'_> {
-    pub async fn get_waiting_report_list(&self) -> Result<GetReportList, DataError> {
-        self.db_read(move |mut cmds| cmds.common_admin().report().get_reports_page())
-            .await
-            .into_error()
+    /// Empty report type list disables report type filtering.
+    pub async fn get_waiting_report_list(
+        &self,
+        wanted_report_types: &[ReportType],
+    ) -> Result<GetReportList, DataError> {
+        let mut wanted_report_types_internal = Vec::with_capacity(wanted_report_types.len());
+        for report_type in wanted_report_types {
+            let report_type_internal =
+                TryInto::<ReportTypeInternal>::try_into(Into::<i16>::into(report_type.n))
+                    .into_error_string(DataError::NotAllowed)?;
+            wanted_report_types_internal.push(report_type_internal);
+        }
+
+        self.db_read(move |mut cmds| {
+            cmds.common_admin()
+                .report()
+                .get_reports_page(wanted_report_types_internal)
+        })
+        .await
+        .into_error()
     }
 
     pub async fn get_report_iterator_page(

@@ -134,6 +134,37 @@ where
     }
 }
 
+impl diesel::serialize::ToSql<diesel::sql_types::SmallInt, diesel::pg::Pg> for ReportTypeInternal
+where
+    i16: diesel::serialize::ToSql<diesel::sql_types::SmallInt, diesel::pg::Pg>,
+{
+    fn to_sql<'b>(
+        &'b self,
+        out: &mut diesel::serialize::Output<'b, '_, diesel::pg::Pg>,
+    ) -> diesel::serialize::Result {
+        let value = self.db_value();
+        <i16 as diesel::serialize::ToSql<diesel::sql_types::SmallInt, diesel::pg::Pg>>::to_sql(
+            &value,
+            &mut out.reborrow(),
+        )
+    }
+}
+
+impl diesel::serialize::ToSql<diesel::sql_types::SmallInt, diesel::sqlite::Sqlite>
+    for ReportTypeInternal
+where
+    i16: diesel::serialize::ToSql<diesel::sql_types::SmallInt, diesel::sqlite::Sqlite>,
+{
+    fn to_sql<'b>(
+        &'b self,
+        out: &mut diesel::serialize::Output<'b, '_, diesel::sqlite::Sqlite>,
+    ) -> diesel::serialize::Result {
+        let value: i32 = self.db_value().into();
+        out.set_value(value);
+        Ok(diesel::serialize::IsNull::No)
+    }
+}
+
 impl From<ReportTypeInternal> for ReportType {
     fn from(value: ReportTypeInternal) -> Self {
         Self { n: value.to_i8() }
