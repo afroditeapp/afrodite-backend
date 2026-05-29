@@ -15,7 +15,7 @@ use reqwest::Url;
 use server_data::index::info::LocationIndexInfoCreator;
 use simple_backend_config::file::{
     DatabaseConfig, GeneralConfig, IpInfoConfig, PushNotificationConfig, SignInWithConfig,
-    SimpleBackendConfigFile, SocketConfig, VideoCallingConfig,
+    SimpleBackendConfigFile, SocketConfig, TlsConfig, VideoCallingConfig,
 };
 use tokio::{
     io::{AsyncBufReadExt, AsyncRead},
@@ -162,9 +162,8 @@ fn new_config(config: &TestMode, bot_api_port: u16) -> (ConfigFile, SimpleBacken
         },
         push_notifications: PushNotificationConfig::default(),
         sign_in_with: SignInWithConfig::default(),
+        tls: TlsConfig::default(),
         manager: None,
-        tls: None,
-        lets_encrypt: None,
         tile_map: None,
         email_sending: None,
         static_file_package_hosting: None,

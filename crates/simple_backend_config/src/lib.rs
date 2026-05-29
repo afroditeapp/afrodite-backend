@@ -27,7 +27,10 @@ use simple_backend_utils::dir::abs_path_for_directory_or_file_which_might_not_ex
 use tokio_rustls::rustls::ServerConfig;
 use web_push::{PartialVapidSignatureBuilder, VapidSignatureBuilder};
 
-use self::file::{ManagerConfig, SignInWithGoogleConfig, SimpleBackendConfigFile, SocketConfig};
+use self::file::{
+    ManagerConfig, PublicApiTlsConfig, SignInWithGoogleConfig, SimpleBackendConfigFile,
+    SocketConfig,
+};
 use crate::file::{
     ApnsConfig, DatabaseConfig, FcmConfig, ImageProcessingStaticConfig, LetsEncryptConfig,
     WebPushConfig,
@@ -201,7 +204,10 @@ impl SimpleBackendConfig {
     }
 
     pub fn lets_encrypt_config(&self) -> Option<&file::LetsEncryptConfig> {
-        self.file.lets_encrypt.as_ref()
+        match &self.file.tls.public_api {
+            Some(file::PublicApiTlsConfig::LetsEncrypt(config)) => Some(config),
+            _ => None,
+        }
     }
 
     pub fn lets_encrypt_cache_dir(&self) -> PathBuf {
@@ -305,32 +311,36 @@ pub fn get_config(
             .attach_printable("APNs key file does not exist");
     }
 
-    let public_api_tls_config = match file_config.tls.clone().and_then(|v| v.public_api) {
-        Some(tls_config) => Some(Arc::new(generate_server_config(
-            tls_config.key.as_path(),
-            tls_config.cert.as_path(),
+    let public_api_tls_config = match &file_config.tls.public_api {
+        Some(PublicApiTlsConfig::Manual(config)) => Some(Arc::new(generate_server_config(
+            config.key.as_path(),
+            config.cert.as_path(),
         )?)),
-        None => None,
+        _ => None,
     };
 
-    if public_api_tls_config.is_some() && file_config.lets_encrypt.is_some() {
-        return Err(GetConfigError::TlsConfigMissing).attach_printable(
-            "Only either TLS certificate or Let's Encrypt should be configured for public API",
-        );
-    }
+    let lets_encrypt_config = match &file_config.tls.public_api {
+        Some(PublicApiTlsConfig::LetsEncrypt(config)) => Some(config),
+        _ => None,
+    };
+
+    let tls_disabled = matches!(
+        &file_config.tls.public_api,
+        Some(PublicApiTlsConfig::Disable(true))
+    );
 
     if file_config.socket.public_api_enabled()
         && public_api_tls_config.is_none()
-        && file_config.lets_encrypt.is_none()
+        && lets_encrypt_config.is_none()
         && !file_config.general.debug
-        && !file_config.general.allow_public_api_without_tls
+        && !tls_disabled
     {
         return Err(GetConfigError::TlsConfigMissing).attach_printable(
-            "TLS certificate or Let's Encrypt must be configured if public API is enabled and allow_public_api_without_tls is false and debug mode is false",
+            "TLS certificate or Let's Encrypt must be configured if public API is enabled and TLS is not disabled and debug mode is false",
         );
     }
 
-    if let Some(lets_encrypt_config) = file_config.lets_encrypt.as_ref() {
+    if let Some(lets_encrypt_config) = lets_encrypt_config {
         let cache_dir = data_dir.join(LetsEncryptConfig::CACHE_DIR_NAME);
         if !cache_dir.exists() {
             fs::create_dir_all(&cache_dir).change_context(GetConfigError::DirCreationError)?

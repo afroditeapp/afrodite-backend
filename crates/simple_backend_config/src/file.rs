@@ -19,7 +19,6 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 
 # [general]
 # log_timestamp = true
-# allow_public_api_without_tls = false
 
 [socket]
 public_api = "127.0.0.1:3000"
@@ -82,14 +81,18 @@ local_bot_api_port = 3001
 # send_limit_per_minute = 1, # optional, by default no limit
 # send_limit_per_day = 10,   # optional, by default no limit
 
+# Allow public API without TLS, for setups where TLS
+# termination is handled by a reverse proxy.
 # [tls.public_api]
+# disable = true
+
+# [tls.public_api.manual]
 # cert = "server_config/public_api.crt"
 # key = "server_config/public_api.key"
 
 # Configuring Let's Encrypt will create socket public_api:443 if public API
 # is not on port 443.
-#
-# [lets_encrypt]
+# [tls.public_api.lets_encrypt]
 # domains = ["example.com"]
 # email = "test@example.com"
 # production_servers = false
@@ -151,23 +154,14 @@ pub struct SimpleBackendConfigFile {
     pub push_notifications: PushNotificationConfig,
     #[serde(default)]
     pub sign_in_with: SignInWithConfig,
+    #[serde(default)]
+    pub tls: TlsConfig,
 
     pub database: DatabaseConfig,
 
     pub tile_map: Option<TileMapConfig>,
     pub manager: Option<ManagerConfig>,
     pub email_sending: Option<EmailSendingConfig>,
-
-    /// Manual TLS certificates.
-    ///
-    /// TLS certificate or Let's Encrypt must be configured for public API
-    /// when debug mode is disabled.
-    pub tls: Option<TlsConfig>,
-    /// Let's Encrypt TLS certificates for public API.
-    ///
-    /// TLS certificate or Let's Encrypt must be configured for public API
-    /// when debug mode is disabled.
-    pub lets_encrypt: Option<LetsEncryptConfig>,
 
     pub static_file_package_hosting: Option<StaticFilePackageHostingConfig>,
     pub image_processing: Option<ImageProcessingStaticConfig>,
@@ -190,11 +184,10 @@ impl SimpleBackendConfigFile {
             database: DatabaseConfig::sqlite(),
             push_notifications: PushNotificationConfig::default(),
             sign_in_with: SignInWithConfig::default(),
+            tls: TlsConfig::default(),
             email_sending: None,
             tile_map: None,
             manager: None,
-            tls: None,
-            lets_encrypt: None,
             static_file_package_hosting: None,
             image_processing: None,
             ip_info: IpInfoConfig::default(),
@@ -292,9 +285,6 @@ impl ConfigFileUtils {
 #[serde(default)]
 pub struct GeneralConfig {
     pub debug: bool,
-    /// Allow public API without backend TLS cert, for setups where TLS
-    /// termination is handled by a reverse proxy.
-    pub allow_public_api_without_tls: bool,
     /// Override face detection result with this value
     pub debug_face_detection_result: Option<bool>,
     /// Write timestamp to log messages. Enabled by default.
@@ -305,7 +295,6 @@ impl Default for GeneralConfig {
     fn default() -> Self {
         Self {
             debug: false,
-            allow_public_api_without_tls: false,
             debug_face_detection_result: None,
             log_timestamp: true,
         }
@@ -467,13 +456,27 @@ impl std::convert::TryFrom<String> for EmailFromHeader {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct TlsConfig {
     pub public_api: Option<PublicApiTlsConfig>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct PublicApiTlsConfig {
+pub enum PublicApiTlsConfig {
+    /// Manual TLS certificates
+    #[serde(rename = "manual")]
+    Manual(ManualTlsConfig),
+    /// Let's Encrypt TLS certificates for public API
+    #[serde(rename = "lets_encrypt")]
+    LetsEncrypt(LetsEncryptConfig),
+    /// Allow public API without TLS, for setups where TLS
+    /// termination is handled by a reverse proxy.
+    #[serde(rename = "disable")]
+    Disable(bool),
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct ManualTlsConfig {
     pub cert: PathBuf,
     pub key: PathBuf,
 }
