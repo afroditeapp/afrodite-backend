@@ -120,6 +120,11 @@ pub struct ProcessReport {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct ProcessReports {
+    pub values: Vec<ProcessReport>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub enum ReportIteratorMode {
     Received,
     Sent,

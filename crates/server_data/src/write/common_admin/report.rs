@@ -1,9 +1,10 @@
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
-use model::{AccountIdInternal, ReportContent, ReportType, ReportTypeInternal};
+use model::{AccountIdInternal, ProcessReport, ReportContent, ReportType, ReportTypeInternal};
 use simple_backend_utils::IntoReportFromString;
 
 use crate::{
     DataError, db_transaction, define_cmd_wrapper_write,
+    id::ToAccountIdInternal,
     read::DbRead,
     result::{Result, WrappedContextExt},
     write::DbTransaction,
@@ -12,7 +13,7 @@ use crate::{
 define_cmd_wrapper_write!(WriteCommandsCommonAdminReport);
 
 impl WriteCommandsCommonAdminReport<'_> {
-    pub async fn process_report(
+    async fn process_single_report(
         &self,
         moderator_id: AccountIdInternal,
         creator: AccountIdInternal,
@@ -44,5 +45,25 @@ impl WriteCommandsCommonAdminReport<'_> {
         } else {
             Err(DataError::NotAllowed.report())
         }
+    }
+
+    pub async fn process_reports(
+        &self,
+        moderator_id: AccountIdInternal,
+        reports: Vec<ProcessReport>,
+    ) -> Result<(), DataError> {
+        for report in reports {
+            let creator = self.to_account_id_internal(report.creator).await?;
+            let target = self.to_account_id_internal(report.target).await?;
+            self.process_single_report(
+                moderator_id,
+                creator,
+                target,
+                report.report_type,
+                report.content,
+            )
+            .await?;
+        }
+        Ok(())
     }
 }

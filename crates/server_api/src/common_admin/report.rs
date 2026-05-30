@@ -4,7 +4,7 @@ use axum::{
 };
 use model::{
     AccountIdInternal, GetChatMessageReports, GetChatMessageReportsInternal, GetReportList,
-    Permissions, ProcessReport, ReportIteratorQuery, ReportIteratorQueryInternal, UnixTime,
+    Permissions, ProcessReports, ReportIteratorQuery, ReportIteratorQueryInternal, UnixTime,
     WaitingReportPageQuery,
 };
 use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
@@ -54,12 +54,12 @@ pub async fn get_waiting_report_page(
     Ok(r.into())
 }
 
-const PATH_POST_PROCESS_REPORT: &str = "/common_api/process_report";
+const PATH_POST_PROCESS_REPORTS: &str = "/common_api/process_reports";
 
 #[utoipa::path(
     post,
-    path = PATH_POST_PROCESS_REPORT,
-    request_body = ProcessReport,
+    path = PATH_POST_PROCESS_REPORTS,
+    request_body = ProcessReports,
     responses(
         (status = 200, description = "Successful"),
         (status = 401, description = "Unauthorized"),
@@ -70,31 +70,22 @@ const PATH_POST_PROCESS_REPORT: &str = "/common_api/process_report";
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_process_report(
+pub async fn post_process_reports(
     State(state): State<S>,
     Extension(permissions): Extension<Permissions>,
     Extension(moderator_id): Extension<AccountIdInternal>,
-    Json(data): Json<ProcessReport>,
+    Json(data): Json<ProcessReports>,
 ) -> Result<(), StatusCode> {
-    COMMON.post_process_report.incr();
+    COMMON.post_process_reports.incr();
 
     if !permissions.admin_process_reports {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let creator = state.get_internal_id(data.creator).await?;
-    let target = state.get_internal_id(data.target).await?;
-
     db_write!(state, move |cmds| {
         cmds.common_admin()
             .report()
-            .process_report(
-                moderator_id,
-                creator,
-                target,
-                data.report_type,
-                data.content,
-            )
+            .process_reports(moderator_id, data.values)
             .await?;
         Ok(())
     })?;
@@ -229,7 +220,7 @@ pub async fn post_get_chat_message_reports(
 create_open_api_router!(
         fn router_report,
         get_waiting_report_page,
-        post_process_report,
+        post_process_reports,
         get_latest_report_iterator_start_position,
         post_get_report_iterator_page,
         post_get_chat_message_reports,
@@ -240,7 +231,7 @@ create_counters!(
     COMMON,
     COMMON_ADMIN_REPORT_COUNTERS_LIST,
     get_waiting_report_page,
-    post_process_report,
+    post_process_reports,
     get_latest_report_iterator_start_position,
     post_get_report_iterator_page,
     post_get_chat_message_reports,
