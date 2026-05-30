@@ -147,20 +147,6 @@ impl TestContext {
         .await
     }
 
-    pub async fn new_man_4_man_18_years(&mut self) -> Result<Account, TestError> {
-        self.new_account_with_settings(
-            18,
-            "M",
-            18,
-            18,
-            SearchGroups {
-                man_for_man: Some(true),
-                ..SearchGroups::default()
-            },
-        )
-        .await
-    }
-
     pub async fn new_woman_18_years(&mut self) -> Result<Account, TestError> {
         self.new_account_with_settings(
             18,

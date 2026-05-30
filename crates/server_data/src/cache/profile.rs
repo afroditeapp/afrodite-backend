@@ -163,7 +163,7 @@ impl<I: InternalWriting> UpdateLocationCacheState for I {
                 let profile_visibility = e
                     .common
                     .account_state_related_shared_state
-                    .profile_visibility();
+                    .is_profile_visible();
                 let p = &e.profile;
                 Ok((
                     p.location.current_position.profile_location(),
@@ -174,7 +174,7 @@ impl<I: InternalWriting> UpdateLocationCacheState for I {
             .await
             .change_context(DataError::Cache)?;
 
-        if profile_visibility.is_currently_public() {
+        if profile_visibility {
             self.location_index_write_handle()
                 .update_profile_data(id.as_id(), profile_data, location)
                 .await

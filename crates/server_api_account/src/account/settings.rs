@@ -13,7 +13,7 @@ use crate::{
 
 const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile_visibility";
 
-/// Update current or pending profile visiblity value.
+/// Update current profile visiblity value.
 ///
 /// NOTE: Client uses this in initial setup.
 ///
@@ -46,13 +46,7 @@ pub async fn put_setting_profile_visiblity(
     db_write!(state, move |cmds| {
         cmds.account()
             .update_syncable_account_data(id, move |account| {
-                account.profile_visibility = if account.profile_visibility.is_pending() {
-                    if new_value.value {
-                        ProfileVisibility::PendingPublic
-                    } else {
-                        ProfileVisibility::PendingPrivate
-                    }
-                } else if new_value.value {
+                account.profile_visibility = if new_value.value {
                     ProfileVisibility::Public
                 } else {
                     ProfileVisibility::Private

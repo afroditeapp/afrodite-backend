@@ -142,7 +142,7 @@ impl CurrentWriteCommonState<'_> {
         let mut account_mut = AccountUpdate {
             state: account.state_container(),
             permissions: account.permissions(),
-            profile_visibility: account.profile_visibility(),
+            profile_visibility: account.profile_visibility_raw(),
             email_verified: account.email_verified(),
             age_verified: account.age_verified(),
         };

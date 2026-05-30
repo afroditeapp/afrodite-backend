@@ -98,11 +98,6 @@ impl WriteCommandsProfileAdminContent<'_> {
                 .await?;
         }
 
-        self.handle()
-            .media()
-            .remove_pending_state_from_profile_visibility_if_needed(content_id.content_owner())
-            .await?;
-
         Ok(())
     }
 

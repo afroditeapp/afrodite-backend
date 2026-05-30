@@ -53,7 +53,7 @@ impl Account {
                 pending_deletion: shared_state.account_state_pending_deletion,
             },
             permissions,
-            visibility: shared_state.profile_visibility(),
+            visibility: shared_state.profile_visibility_state_number,
             email_verified: shared_state.email_verified,
             age_verified: shared_state.age_verified,
             sync_version: shared_state.sync_version,
@@ -90,8 +90,12 @@ impl Account {
         self.permissions.clone()
     }
 
-    pub fn profile_visibility(&self) -> ProfileVisibility {
+    pub fn profile_visibility_raw(&self) -> ProfileVisibility {
         self.visibility
+    }
+
+    pub fn is_profile_visible(&self) -> bool {
+        Into::<AccountStateRelatedSharedState>::into(self.clone()).is_profile_visible()
     }
 
     pub fn sync_version(&self) -> AccountSyncVersion {
@@ -272,35 +276,11 @@ impl Permissions {
 #[repr(i16)]
 #[derive(Default)]
 pub enum ProfileVisibility {
-    /// Profile is currently private and its visibility is not
-    /// changed when initial moderation request will be moderated as accepted.
-    #[default]
-    PendingPrivate = 0,
-    /// Profile is currently private and its visibility will
-    /// change to public when initial moderation request will be moderated as
-    /// accepted.
-    PendingPublic = 1,
     /// Profile is currently private.
-    Private = 2,
+    #[default]
+    Private = 0,
     /// Profile is currently public.
-    Public = 3,
-}
-
-impl ProfileVisibility {
-    pub fn is_currently_public(&self) -> bool {
-        *self == Self::Public
-    }
-
-    pub fn is_pending(&self) -> bool {
-        *self == Self::PendingPrivate || *self == Self::PendingPublic
-    }
-
-    pub fn change_to_private_or_pending_private(&mut self) {
-        match *self {
-            Self::Public | Self::Private => *self = Self::Private,
-            Self::PendingPublic | Self::PendingPrivate => *self = Self::PendingPrivate,
-        };
-    }
+    Public = 1,
 }
 
 #[derive(Debug, Clone, Copy, Hash, Eq, PartialEq, Deserialize)]

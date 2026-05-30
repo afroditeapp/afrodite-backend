@@ -1,9 +1,9 @@
 use std::collections::HashSet;
 
-use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
+use database::current::read::GetDbReadCommandsCommon;
 use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia};
 use error_stack::ResultExt;
-use model::{AccountState, ContentIdInternal, EventToClientInternal, ProfileVisibility};
+use model::{AccountState, ContentIdInternal, EventToClientInternal};
 use model_media::{
     AccountIdInternal, ContentId, ContentIdDb, ContentSlot, CurrentAccountMediaInternal,
     NewContentParams, ProfileContent, ProfileContentModificationMetadata, SetProfileContent,
@@ -16,7 +16,7 @@ use server_data::{
     file::{FileWrite, utils::TmpContentFile},
     read::DbRead,
     result::Result,
-    write::{DbTransaction, GetWriteCommandsCommon},
+    write::DbTransaction,
 };
 
 use crate::cache::CacheWriteMedia;
@@ -142,10 +142,7 @@ impl WriteCommandsMedia<'_> {
         self.public_profile_content_cache_update(id, &modification)
             .await?;
 
-        self.update_content_usage(id, content_before_update).await?;
-
-        self.remove_pending_state_from_profile_visibility_if_needed(id)
-            .await
+        self.update_content_usage(id, content_before_update).await
     }
 
     pub async fn update_security_content(
@@ -320,74 +317,6 @@ impl WriteCommandsMedia<'_> {
         .await?;
 
         self.update_location_cache_profile(id).await?;
-
-        Ok(())
-    }
-
-    pub async fn remove_pending_state_from_profile_visibility_if_needed(
-        &self,
-        content_owner: AccountIdInternal,
-    ) -> Result<(), DataError> {
-        let current_account = self
-            .db_read(move |mut cmds| cmds.common().account(content_owner))
-            .await?;
-        let profile_visibility = current_account.profile_visibility();
-
-        let new_account = db_transaction!(self, move |mut cmds| {
-            if !profile_visibility.is_pending() {
-                return Ok(None);
-            }
-
-            let current_media = cmds
-                .read()
-                .media()
-                .media_content()
-                .current_account_media(content_owner)?;
-
-            let mut all_accepted = current_media.iter_current_profile_content().count() > 0;
-            for c in current_media.iter_current_profile_content() {
-                if !c.state().is_accepted() {
-                    all_accepted = false;
-                }
-            }
-
-            if all_accepted {
-                let current_account = cmds.read().common().account(content_owner)?;
-                let visibility = current_account.profile_visibility();
-                let new_visibility = match visibility {
-                    ProfileVisibility::Public => ProfileVisibility::Public,
-                    ProfileVisibility::Private => ProfileVisibility::Private,
-                    ProfileVisibility::PendingPublic => ProfileVisibility::Public,
-                    ProfileVisibility::PendingPrivate => ProfileVisibility::Private,
-                };
-                let new_account = cmds.common().state().update_syncable_account_data(
-                    content_owner,
-                    current_account.clone(),
-                    move |account| {
-                        account.profile_visibility = new_visibility;
-                        Ok(())
-                    },
-                )?;
-
-                Ok(Some(new_account))
-            } else {
-                Ok(None)
-            }
-        })?;
-
-        if let Some(new_account) = new_account {
-            self.handle()
-                .common()
-                .internal_handle_new_account_data_after_db_modification(
-                    content_owner,
-                    &current_account,
-                    new_account,
-                )
-                .await?;
-            self.events()
-                .send_connected_event(content_owner, EventToClientInternal::AccountStateChanged)
-                .await?;
-        }
 
         Ok(())
     }

@@ -269,7 +269,7 @@ impl DbDataToCacheLoader {
         let account = db
             .db_read(move |mut cmds| cmds.common().account(account_id))
             .await?;
-        if account.profile_visibility().is_currently_public() {
+        if account.is_profile_visible() {
             index_writer
                 .lock()
                 .await

@@ -49,8 +49,7 @@ async fn read_profile_result(
         .common()
         .account(requested_profile)
         .await?
-        .profile_visibility()
-        .is_currently_public();
+        .is_profile_visible();
 
     if visibility
         || permissions.admin_view_all_profiles

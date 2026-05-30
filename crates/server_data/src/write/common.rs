@@ -146,14 +146,9 @@ impl WriteCommandsCommon<'_> {
 
         // Other related state updating
 
-        if current_account.profile_visibility().is_currently_public()
-            != new_account.profile_visibility().is_currently_public()
-        {
-            self.profile_update_location_index_visibility(
-                id,
-                new_account.profile_visibility().is_currently_public(),
-            )
-            .await?;
+        if current_account.is_profile_visible() != new_account.is_profile_visible() {
+            self.profile_update_location_index_visibility(id, new_account.is_profile_visible())
+                .await?;
         }
 
         Ok(new_account)

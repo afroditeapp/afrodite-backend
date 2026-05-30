@@ -13,7 +13,7 @@ pub enum StatisticsGender {
 pub enum StatisticsProfileVisibility {
     #[default]
     Public,
-    /// Includes [crate::ProfileVisibility::PendingPublic]
+    /// Includes accounts which have not completed initial setup.
     Private,
     All,
 }

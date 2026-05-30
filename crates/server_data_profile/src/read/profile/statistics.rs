@@ -32,10 +32,10 @@ impl ReadCommandsProfileStatistics<'_> {
                 account_count_bots_excluded += 1;
             }
 
-            let visibility = e.account_state_related_shared_state.profile_visibility();
+            let visibility = e.account_state_related_shared_state.is_profile_visible();
 
             let groups = p.state.search_group_flags;
-            if visibility.is_currently_public() {
+            if visibility {
                 if groups.is_man() {
                     public_profile_counts.men += 1;
                 } else if groups.is_woman() {
@@ -48,12 +48,12 @@ impl ReadCommandsProfileStatistics<'_> {
             match profile_visibility {
                 StatisticsProfileVisibility::All => (),
                 StatisticsProfileVisibility::Public => {
-                    if !visibility.is_currently_public() {
+                    if !visibility {
                         return;
                     }
                 }
                 StatisticsProfileVisibility::Private => {
-                    if visibility.is_currently_public() {
+                    if visibility {
                         return;
                     }
                 }

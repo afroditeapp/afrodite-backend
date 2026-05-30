@@ -1,7 +1,7 @@
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
 use database_account::current::{read::GetDbReadCommandsAccount, write::GetDbWriteCommandsAccount};
 use model::EventToClientInternal;
-use model_account::{AccountIdInternal, EmailSendingState};
+use model_account::{AccountIdInternal, EmailSendingState, ProfileVisibility};
 use server_data::{
     DataError,
     db_manager::InternalWriting,
@@ -41,9 +41,7 @@ impl WriteCommandsAccountDelete<'_> {
                 .update_syncable_account_data(id, a, move |account| {
                     account.state.set_pending_deletion(value);
                     if value {
-                        account
-                            .profile_visibility
-                            .change_to_private_or_pending_private();
+                        account.profile_visibility = ProfileVisibility::Private;
                     }
                     Ok(())
                 })?;
@@ -92,9 +90,7 @@ impl WriteCommandsAccountDelete<'_> {
         self.handle()
             .account()
             .update_syncable_account_data(id, |account| {
-                account
-                    .profile_visibility
-                    .change_to_private_or_pending_private();
+                account.profile_visibility = ProfileVisibility::Private;
                 Ok(())
             })
             .await?;

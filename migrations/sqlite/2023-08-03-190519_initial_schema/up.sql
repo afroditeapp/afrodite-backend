@@ -127,10 +127,8 @@ CREATE TABLE IF NOT EXISTS shared_state(
     account_state_initial_setup_completed   BOOLEAN             NOT NULL DEFAULT FALSE,
     account_state_banned                    BOOLEAN             NOT NULL DEFAULT FALSE,
     account_state_pending_deletion          BOOLEAN             NOT NULL DEFAULT FALSE,
-    -- pending private = 0
-    -- pending public = 1
-    -- private = 2
-    -- public = 3
+    -- private = 0
+    -- public = 1
     profile_visibility_state_number SMALLINT NOT NULL DEFAULT 0,
     -- Version number which only account server increments.
     -- Used in receiving end to avoid saving old state in case of

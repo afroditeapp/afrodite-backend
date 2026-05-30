@@ -625,8 +625,9 @@ impl OtherSharedState {
 }
 
 impl AccountStateRelatedSharedState {
-    pub fn profile_visibility(&self) -> ProfileVisibility {
-        self.profile_visibility_state_number
+    pub fn is_profile_visible(&self) -> bool {
+        self.account_state_initial_setup_completed
+            && self.profile_visibility_state_number == ProfileVisibility::Public
     }
 
     pub fn state_container(&self) -> AccountStateContainer {
@@ -641,7 +642,7 @@ impl AccountStateRelatedSharedState {
 impl From<Account> for AccountStateRelatedSharedState {
     fn from(account: Account) -> Self {
         Self {
-            profile_visibility_state_number: account.profile_visibility(),
+            profile_visibility_state_number: account.profile_visibility_raw(),
             account_state_initial_setup_completed: account
                 .state_container()
                 .initial_setup_completed,

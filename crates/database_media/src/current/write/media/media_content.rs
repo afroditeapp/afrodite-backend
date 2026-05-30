@@ -251,7 +251,7 @@ impl CurrentWriteMediaContent<'_> {
         let current_time = UnixTime::current_time();
 
         let account = self.read().common().account(content_uploader)?;
-        let initial_content_value = account.profile_visibility().is_pending();
+        let initial_content_value = !account.state_container().initial_setup_completed();
         let (slot_number_value, state_value) = if let Some(slot) = slot {
             (slot, ContentModerationState::InSlot)
         } else {

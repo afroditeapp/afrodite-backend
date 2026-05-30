@@ -3,6 +3,7 @@ use database_account::current::{read::GetDbReadCommandsAccount, write::GetDbWrit
 use model::{EventToClientInternal, UnixTime};
 use model_account::{
     AccountBanReasonCategory, AccountBanReasonDetails, AccountBannedAdminType, AccountIdInternal,
+    ProfileVisibility,
 };
 use server_data::{
     DataError,
@@ -100,9 +101,7 @@ impl WriteCommandsAccountBan<'_> {
                 .update_syncable_account_data(id, a, move |account| {
                     account.state.set_banned(banned_until.is_some());
                     if banned_until.is_some() {
-                        account
-                            .profile_visibility
-                            .change_to_private_or_pending_private();
+                        account.profile_visibility = ProfileVisibility::Private;
                     }
                     Ok(())
                 })?;

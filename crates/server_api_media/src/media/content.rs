@@ -135,8 +135,7 @@ pub async fn get_content(
         .common()
         .account(requested_profile_internal_id)
         .await?
-        .profile_visibility()
-        .is_currently_public();
+        .is_profile_visible();
 
     let internal = state
         .read()
