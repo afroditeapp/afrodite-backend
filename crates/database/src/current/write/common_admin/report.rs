@@ -33,7 +33,7 @@ impl CurrentWriteCommonAdminReport<'_> {
         update(common_report)
             .filter(id.eq(report_id))
             .set((
-                moderator_account_id.eq(moderator_id.as_db_id()),
+                processed_by_account_id.eq(moderator_id.as_db_id()),
                 processing_state.eq(state),
                 processing_state_change_unix_time.eq(time),
             ))

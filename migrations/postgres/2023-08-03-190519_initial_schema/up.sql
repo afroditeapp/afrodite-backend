@@ -162,7 +162,7 @@ CREATE TABLE IF NOT EXISTS common_report(
     -- Values from 64 to 127 are reserved for custom reports.
     report_type_number      SMALLINT            NOT NULL,
     creation_unix_time      BIGINT              NOT NULL,
-    moderator_account_id    BIGINT,
+    processed_by_account_id BIGINT,
     -- 0 = Waiting
     -- 1 = ProcessedByAdminBot
     -- 2 = ProcessedByAdmin
@@ -176,7 +176,7 @@ CREATE TABLE IF NOT EXISTS common_report(
         REFERENCES account_id (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE,
-    FOREIGN KEY (moderator_account_id)
+    FOREIGN KEY (processed_by_account_id)
         REFERENCES account_id (id)
             ON DELETE SET NULL
             ON UPDATE CASCADE

@@ -308,7 +308,7 @@ diesel::table! {
         target_account_id -> Int8,
         report_type_number -> Int2,
         creation_unix_time -> Int8,
-        moderator_account_id -> Nullable<Int8>,
+        processed_by_account_id -> Nullable<Int8>,
         processing_state -> Int2,
         processing_state_change_unix_time -> Int8,
     }
