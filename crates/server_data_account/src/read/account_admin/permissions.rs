@@ -12,10 +12,10 @@ impl ReadCommandsAccountPermissionsAdmin<'_> {
 
         self.cache()
             .read_cache_for_all_accounts(|aid, entry| {
-                if entry.common.permissions != Permissions::default() {
+                if entry.common.account.permissions() != Permissions::default() {
                     admins.push(AdminInfo {
                         aid: aid.uuid,
-                        permissions: entry.common.permissions.clone(),
+                        permissions: entry.common.account.permissions(),
                     });
                 }
                 Ok(())

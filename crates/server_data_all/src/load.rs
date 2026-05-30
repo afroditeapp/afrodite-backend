@@ -7,7 +7,7 @@ use database_media::current::read::GetDbReadCommandsMedia;
 use database_profile::current::read::GetDbReadCommandsProfile;
 use error_stack::{Result, ResultExt};
 use futures::stream::{self, StreamExt};
-use model::AccountIdInternal;
+use model::{Account, AccountIdInternal};
 use server_common::data::WithInfo;
 pub use server_common::data::cache::CacheError;
 use server_data::{
@@ -84,7 +84,6 @@ impl DbDataToCacheLoader {
         let permissions = db
             .db_read(move |mut cmds| cmds.common().state().account_permissions(account_id))
             .await?;
-        cache_common.permissions = permissions;
         let state = db
             .db_read(move |mut cmds| {
                 cmds.common()
@@ -92,7 +91,7 @@ impl DbDataToCacheLoader {
                     .account_state_related_shared_state(account_id)
             })
             .await?;
-        cache_common.account_state_related_shared_state = state;
+        cache_common.account = Account::new_from_internal_types(permissions, state);
         let other_state = db
             .db_read(move |mut cmds| cmds.common().state().other_shared_state(account_id))
             .await?;

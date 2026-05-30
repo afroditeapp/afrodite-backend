@@ -69,12 +69,7 @@ impl ReadCommandsCommon<'_> {
 
     pub async fn account(&self, id: AccountIdInternal) -> Result<Account, DataError> {
         let account = self
-            .read_cache_common(id, |cache| {
-                Ok(Account::new_from_internal_types(
-                    cache.permissions.clone(),
-                    cache.account_state_related_shared_state.clone(),
-                ))
-            })
+            .read_cache_common(id, |cache| Ok(cache.account.clone()))
             .await?;
         Ok(account)
     }

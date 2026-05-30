@@ -1,7 +1,6 @@
 use model::{
-    AccessToken, AccessTokenType, AccessTokenUnixTime, AccountStateRelatedSharedState,
-    IpAddressInternal, LoginSession, OtherSharedState, Permissions, PushNotificationFlags,
-    RefreshToken,
+    AccessToken, AccessTokenType, AccessTokenUnixTime, Account, IpAddressInternal, LoginSession,
+    OtherSharedState, PushNotificationFlags, RefreshToken,
 };
 use model_server_data::{AppNotificationSettingsInternal, AuthPair};
 
@@ -10,8 +9,7 @@ use crate::{cache::api_limits::AllApiLimits, event::EventSender};
 
 #[derive(Debug)]
 pub struct CacheCommon {
-    pub permissions: Permissions,
-    pub account_state_related_shared_state: AccountStateRelatedSharedState,
+    pub account: Account,
     pub other_shared_state: OtherSharedState,
     pub current_connection: Option<ConnectionInfo>,
     login_session: Option<LoginSession>,
@@ -113,8 +111,7 @@ impl CacheCommon {
 impl Default for CacheCommon {
     fn default() -> Self {
         CacheCommon {
-            permissions: Permissions::default(),
-            account_state_related_shared_state: AccountStateRelatedSharedState::default(),
+            account: Account::default(),
             other_shared_state: OtherSharedState::default(),
             current_connection: None,
             login_session: None,

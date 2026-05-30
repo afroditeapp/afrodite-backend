@@ -185,11 +185,8 @@ impl DatabaseCache {
             if is_valid {
                 Some((
                     entry.account_entry.account_id_internal,
-                    r.common.permissions.clone(),
-                    r.common
-                        .account_state_related_shared_state
-                        .state_container()
-                        .account_state(),
+                    r.common.account.permissions(),
+                    r.common.account.state(),
                 ))
             } else {
                 None

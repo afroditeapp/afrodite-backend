@@ -120,7 +120,7 @@ impl WriteCommandsCommon<'_> {
         self.write_cache_common(id, |cache| {
             cache.other_shared_state.set_bot_account_type_number(value);
             if let Some(new_account) = new_account {
-                cache.permissions = new_account.into_inner().permissions();
+                cache.account = new_account.into_inner();
             }
             Ok(())
         })
@@ -138,8 +138,7 @@ impl WriteCommandsCommon<'_> {
         let new_account = new_account.into_inner();
         let new_account_clone = new_account.clone();
         self.write_cache_common(id, |cache| {
-            cache.permissions = new_account_clone.permissions();
-            cache.account_state_related_shared_state = new_account_clone.into();
+            cache.account = new_account_clone;
             Ok(())
         })
         .await?;

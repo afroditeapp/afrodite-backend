@@ -160,10 +160,7 @@ impl<I: InternalWriting> UpdateLocationCacheState for I {
         let (location, profile_data, profile_visibility) = self
             .cache()
             .read_cache(id.as_id(), |e| {
-                let profile_visibility = e
-                    .common
-                    .account_state_related_shared_state
-                    .is_profile_visible();
+                let profile_visibility = e.common.account.is_profile_visible();
                 let p = &e.profile;
                 Ok((
                     p.location.current_position.profile_location(),

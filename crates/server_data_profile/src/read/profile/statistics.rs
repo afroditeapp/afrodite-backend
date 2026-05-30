@@ -32,7 +32,7 @@ impl ReadCommandsProfileStatistics<'_> {
                 account_count_bots_excluded += 1;
             }
 
-            let visibility = e.account_state_related_shared_state.is_profile_visible();
+            let visibility = e.account.is_profile_visible();
 
             let groups = p.state.search_group_flags;
             if visibility {
