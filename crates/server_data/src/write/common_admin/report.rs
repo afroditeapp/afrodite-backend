@@ -37,7 +37,7 @@ impl WriteCommandsCommonAdminReport<'_> {
             db_transaction!(self, move |mut cmds| {
                 cmds.common_admin()
                     .report()
-                    .mark_report_done(moderator_id, id)?;
+                    .mark_report_processed(moderator_id, id)?;
                 Ok(())
             })?;
             Ok(())

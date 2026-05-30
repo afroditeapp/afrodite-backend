@@ -212,7 +212,14 @@ impl ReportType {
 pub enum ReportProcessingState {
     #[default]
     Waiting = 0,
-    Done = 1,
+    ProcessedByAdminBot = 1,
+    ProcessedByAdmin = 2,
+}
+
+impl ReportProcessingState {
+    pub const fn processed_states() -> [Self; 2] {
+        [Self::ProcessedByAdminBot, Self::ProcessedByAdmin]
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, IntoParams, PartialEq)]

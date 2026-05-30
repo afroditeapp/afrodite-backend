@@ -44,7 +44,7 @@ impl CurrentWriteCommonReport<'_> {
 
         delete(common_report)
             .filter(report_type_number.eq(type_number.db_value()))
-            .filter(processing_state.eq(ReportProcessingState::Done))
+            .filter(processing_state.eq_any(ReportProcessingState::processed_states()))
             .filter(processing_state_change_unix_time.ge(deletion_allowed_time))
             .execute(self.conn())
             .into_db_error(())?;

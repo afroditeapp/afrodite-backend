@@ -14,12 +14,6 @@ pub struct ReportInternal {
     pub target_db_id: AccountIdDb,
 }
 
-impl ReportInternal {
-    pub fn state(&self) -> ReportProcessingState {
-        ReportProcessingState::Waiting
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct ReportDetailedInfoInternal {
     pub creator: AccountId,

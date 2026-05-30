@@ -164,7 +164,8 @@ CREATE TABLE IF NOT EXISTS common_report(
     creation_unix_time      BIGINT              NOT NULL,
     moderator_account_id    BIGINT,
     -- 0 = Waiting
-    -- 1 = Done
+    -- 1 = ProcessedByAdminBot
+    -- 2 = ProcessedByAdmin
     processing_state        SMALLINT            NOT NULL    DEFAULT 0,
     processing_state_change_unix_time BIGINT    NOT NULL,
     FOREIGN KEY (creator_account_id)
