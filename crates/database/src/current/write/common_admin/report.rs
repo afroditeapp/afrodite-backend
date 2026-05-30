@@ -14,6 +14,7 @@ impl CurrentWriteCommonAdminReport<'_> {
         &mut self,
         moderator_id: AccountIdInternal,
         report_id: ReportIdDb,
+        valid: bool,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::common_report::dsl::*;
 
@@ -24,10 +25,11 @@ impl CurrentWriteCommonAdminReport<'_> {
             .state()
             .other_shared_state(moderator_id)?
             .is_bot();
-        let state = if is_bot {
-            ReportProcessingState::ProcessedByAdminBot
-        } else {
-            ReportProcessingState::ProcessedByAdmin
+        let state = match (valid, is_bot) {
+            (true, true) => ReportProcessingState::ValidByAdminBot,
+            (true, false) => ReportProcessingState::ValidByAdmin,
+            (false, true) => ReportProcessingState::InvalidByAdminBot,
+            (false, false) => ReportProcessingState::InvalidByAdmin,
         };
 
         update(common_report)

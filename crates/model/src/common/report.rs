@@ -212,13 +212,20 @@ impl ReportType {
 pub enum ReportProcessingState {
     #[default]
     Waiting = 0,
-    ProcessedByAdminBot = 1,
-    ProcessedByAdmin = 2,
+    ValidByAdminBot = 1,
+    ValidByAdmin = 2,
+    InvalidByAdminBot = 3,
+    InvalidByAdmin = 4,
 }
 
 impl ReportProcessingState {
-    pub const fn processed_states() -> [Self; 2] {
-        [Self::ProcessedByAdminBot, Self::ProcessedByAdmin]
+    pub const fn processed_states() -> [Self; 4] {
+        [
+            Self::ValidByAdminBot,
+            Self::ValidByAdmin,
+            Self::InvalidByAdminBot,
+            Self::InvalidByAdmin,
+        ]
     }
 }
 

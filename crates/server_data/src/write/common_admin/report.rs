@@ -20,6 +20,7 @@ impl WriteCommandsCommonAdminReport<'_> {
         target: AccountIdInternal,
         report_type: ReportType,
         content: ReportContent,
+        valid: bool,
     ) -> Result<(), DataError> {
         let report_type = TryInto::<ReportTypeInternal>::try_into(Into::<i16>::into(report_type.n))
             .into_error_string(DataError::NotAllowed)?;
@@ -38,7 +39,7 @@ impl WriteCommandsCommonAdminReport<'_> {
             db_transaction!(self, move |mut cmds| {
                 cmds.common_admin()
                     .report()
-                    .mark_report_processed(moderator_id, id)?;
+                    .mark_report_processed(moderator_id, id, valid)?;
                 Ok(())
             })?;
             Ok(())
@@ -61,6 +62,7 @@ impl WriteCommandsCommonAdminReport<'_> {
                 target,
                 report.report_type,
                 report.content,
+                report.valid,
             )
             .await?;
         }

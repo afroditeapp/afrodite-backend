@@ -117,6 +117,8 @@ pub struct ProcessReport {
     pub target: AccountId,
     pub report_type: ReportType,
     pub content: ReportContent,
+    /// True marks the report as Valid, false marks it as Invalid.
+    pub valid: bool,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
