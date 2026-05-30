@@ -55,11 +55,11 @@ impl CurrentReadProfileModeration<'_> {
                 show_bot_moderations
                     .and(
                         profile_moderation::state_type
-                            .eq(ProfileStringModerationState::WaitingBotOrHumanModeration),
+                            .eq(ProfileStringModerationState::WaitingAdminBot),
                     )
                     .or(is_not_bot.and(
                         profile_moderation::state_type
-                            .eq(ProfileStringModerationState::WaitingHumanModeration),
+                            .eq(ProfileStringModerationState::WaitingAdmin),
                     )),
             )
             .order((

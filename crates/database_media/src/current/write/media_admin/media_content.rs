@@ -49,14 +49,14 @@ impl CurrentWriteMediaAdminMediaContent<'_> {
 
         let next_state = if accepted {
             if moderator_is_bot {
-                ContentModerationState::AcceptedByBot
+                ContentModerationState::AcceptedByAdminBot
             } else {
-                ContentModerationState::AcceptedByHuman
+                ContentModerationState::AcceptedByAdmin
             }
         } else if moderator_is_bot {
-            ContentModerationState::RejectedByBot
+            ContentModerationState::RejectedByAdminBot
         } else {
-            ContentModerationState::RejectedByHuman
+            ContentModerationState::RejectedByAdmin
         };
 
         update(media_content::table)
@@ -81,7 +81,7 @@ impl CurrentWriteMediaAdminMediaContent<'_> {
     ) -> Result<ContentModerationState, DieselDatabaseError> {
         use model::schema::media_content;
 
-        let next_state = ContentModerationState::WaitingHumanModeration;
+        let next_state = ContentModerationState::WaitingAdmin;
 
         update(media_content::table)
             .filter(media_content::id.eq(content_id.as_db_id()))

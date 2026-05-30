@@ -32,7 +32,7 @@ impl CurrentWriteModeration<'_> {
         let new_state = if name_accepted {
             ProfileStringModerationState::AcceptedByAllowlist
         } else {
-            ProfileStringModerationState::WaitingBotOrHumanModeration
+            ProfileStringModerationState::WaitingAdminBot
         };
 
         insert_into(profile_moderation)
@@ -72,7 +72,7 @@ impl CurrentWriteModeration<'_> {
                 .into_db_error(id)?;
             Ok(None)
         } else {
-            let new_state = ProfileStringModerationState::WaitingBotOrHumanModeration;
+            let new_state = ProfileStringModerationState::WaitingAdminBot;
 
             insert_into(profile_moderation)
                 .values((

@@ -772,13 +772,13 @@ CREATE TABLE IF NOT EXISTS profile_moderation(
     -- 0 = ProfileName
     -- 1 = ProfileText
     content_type            SMALLINT            NOT NULL,
-    -- 0 = WaitingBotOrHumanModeration
-    -- 1 = WaitingHumanModeration
-    -- 2 = AcceptedByBot
-    -- 3 = AcceptedByHuman
+    -- 0 = WaitingAdminBot
+    -- 1 = WaitingAdmin
+    -- 2 = AcceptedByAdminBot
+    -- 3 = AcceptedByAdmin
     -- 4 = AcceptedByAllowlist
-    -- 5 = RejectedByBot
-    -- 6 = RejectedByHuman
+    -- 5 = RejectedByAdminBot
+    -- 6 = RejectedByAdmin
     state_type               SMALLINT           NOT NULL,
     rejected_reason_category SMALLINT,
     -- Null or non-empty string
@@ -857,12 +857,12 @@ CREATE TABLE IF NOT EXISTS media_content(
     --                      is possible.
     -- State values:
     -- 0 = Empty (InSlot),
-    -- 1 = WaitingBotOrHumanModeration (InModeration)
-    -- 2 = WaitingHumanModeration (InModeration)
-    -- 3 = AcceptedByBot (ModeratedAsAccepted)
-    -- 4 = AcceptedByHuman (ModeratedAsAccepted)
-    -- 5 = RejectedByBot (ModeratedAsRejected)
-    -- 6 = RejectedByHuman (ModeratedAsRejected)
+    -- 1 = WaitingAdminBot (InModeration)
+    -- 2 = WaitingAdmin (InModeration)
+    -- 3 = AcceptedByAdminBot (ModeratedAsAccepted)
+    -- 4 = AcceptedByAdmin (ModeratedAsAccepted)
+    -- 5 = RejectedByAdminBot (ModeratedAsRejected)
+    -- 6 = RejectedByAdmin (ModeratedAsRejected)
     moderation_state     SMALLINT            NOT NULL    DEFAULT 0,
     moderation_rejected_reason_category SMALLINT,
     -- Null or non-empty string

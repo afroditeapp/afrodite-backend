@@ -158,39 +158,39 @@ pub enum ContentModerationState {
     #[default]
     InSlot = 0,
     /// InModeration
-    WaitingBotOrHumanModeration = 1,
+    WaitingAdminBot = 1,
     /// InModeration
-    WaitingHumanModeration = 2,
+    WaitingAdmin = 2,
     /// ModeratedAsAccepted
-    AcceptedByBot = 3,
+    AcceptedByAdminBot = 3,
     /// ModeratedAsAccepted
-    AcceptedByHuman = 4,
+    AcceptedByAdmin = 4,
     /// ModeratedAsRejected
-    RejectedByBot = 5,
+    RejectedByAdminBot = 5,
     /// ModeratedAsRejected
-    RejectedByHuman = 6,
+    RejectedByAdmin = 6,
 }
 
 impl ContentModerationState {
     pub fn is_rejected(&self) -> bool {
         match self {
-            Self::RejectedByBot | Self::RejectedByHuman => true,
+            Self::RejectedByAdminBot | Self::RejectedByAdmin => true,
             Self::InSlot
-            | Self::WaitingBotOrHumanModeration
-            | Self::WaitingHumanModeration
-            | Self::AcceptedByBot
-            | Self::AcceptedByHuman => false,
+            | Self::WaitingAdminBot
+            | Self::WaitingAdmin
+            | Self::AcceptedByAdminBot
+            | Self::AcceptedByAdmin => false,
         }
     }
 
     pub fn is_accepted(&self) -> bool {
         match self {
-            Self::AcceptedByBot | Self::AcceptedByHuman => true,
+            Self::AcceptedByAdminBot | Self::AcceptedByAdmin => true,
             Self::InSlot
-            | Self::WaitingBotOrHumanModeration
-            | Self::WaitingHumanModeration
-            | Self::RejectedByBot
-            | Self::RejectedByHuman => false,
+            | Self::WaitingAdminBot
+            | Self::WaitingAdmin
+            | Self::RejectedByAdminBot
+            | Self::RejectedByAdmin => false,
         }
     }
 
@@ -200,24 +200,24 @@ impl ContentModerationState {
 
     pub fn is_in_moderation(&self) -> bool {
         match self {
-            Self::WaitingBotOrHumanModeration | Self::WaitingHumanModeration => true,
+            Self::WaitingAdminBot | Self::WaitingAdmin => true,
             Self::InSlot
-            | Self::RejectedByBot
-            | Self::RejectedByHuman
-            | Self::AcceptedByBot
-            | Self::AcceptedByHuman => false,
+            | Self::RejectedByAdminBot
+            | Self::RejectedByAdmin
+            | Self::AcceptedByAdminBot
+            | Self::AcceptedByAdmin => false,
         }
     }
 
     pub fn is_in_slot(&self) -> bool {
         match self {
             Self::InSlot => true,
-            Self::WaitingBotOrHumanModeration
-            | Self::WaitingHumanModeration
-            | Self::RejectedByBot
-            | Self::RejectedByHuman
-            | Self::AcceptedByBot
-            | Self::AcceptedByHuman => false,
+            Self::WaitingAdminBot
+            | Self::WaitingAdmin
+            | Self::RejectedByAdminBot
+            | Self::RejectedByAdmin
+            | Self::AcceptedByAdminBot
+            | Self::AcceptedByAdmin => false,
         }
     }
 }

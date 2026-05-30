@@ -68,14 +68,14 @@ impl CurrentWriteProfileAdminModeration<'_> {
 
         let next_state = if accepted {
             if moderator_is_bot {
-                ProfileStringModerationState::AcceptedByBot
+                ProfileStringModerationState::AcceptedByAdminBot
             } else {
-                ProfileStringModerationState::AcceptedByHuman
+                ProfileStringModerationState::AcceptedByAdmin
             }
         } else if moderator_is_bot {
-            ProfileStringModerationState::RejectedByBot
+            ProfileStringModerationState::RejectedByAdminBot
         } else {
-            ProfileStringModerationState::RejectedByHuman
+            ProfileStringModerationState::RejectedByAdmin
         };
 
         {
@@ -105,7 +105,7 @@ impl CurrentWriteProfileAdminModeration<'_> {
     ) -> Result<ProfileStringModerationState, DieselDatabaseError> {
         use model::schema::profile_moderation::dsl::*;
 
-        let next_state = ProfileStringModerationState::WaitingHumanModeration;
+        let next_state = ProfileStringModerationState::WaitingAdmin;
 
         update(profile_moderation)
             .filter(account_id.eq(id.as_db_id()))

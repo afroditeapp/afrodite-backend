@@ -42,23 +42,23 @@ pub enum ProfileStringModerationContentType {
 #[diesel(sql_type = SmallInt)]
 #[repr(i16)]
 pub enum ProfileStringModerationState {
-    WaitingBotOrHumanModeration = 0,
-    WaitingHumanModeration = 1,
-    AcceptedByBot = 2,
-    AcceptedByHuman = 3,
+    WaitingAdminBot = 0,
+    WaitingAdmin = 1,
+    AcceptedByAdminBot = 2,
+    AcceptedByAdmin = 3,
     AcceptedByAllowlist = 4,
-    RejectedByBot = 5,
-    RejectedByHuman = 6,
+    RejectedByAdminBot = 5,
+    RejectedByAdmin = 6,
 }
 
 impl ProfileStringModerationState {
     pub fn is_accepted(&self) -> bool {
         match self {
-            Self::AcceptedByBot | Self::AcceptedByHuman | Self::AcceptedByAllowlist => true,
-            Self::WaitingBotOrHumanModeration
-            | Self::WaitingHumanModeration
-            | Self::RejectedByBot
-            | Self::RejectedByHuman => false,
+            Self::AcceptedByAdminBot | Self::AcceptedByAdmin | Self::AcceptedByAllowlist => true,
+            Self::WaitingAdminBot
+            | Self::WaitingAdmin
+            | Self::RejectedByAdminBot
+            | Self::RejectedByAdmin => false,
         }
     }
 }

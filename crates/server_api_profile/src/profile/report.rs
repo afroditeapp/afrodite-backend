@@ -20,7 +20,7 @@ const PATH_POST_REPORT_PROFILE_NAME: &str = "/profile_api/report_profile_name";
 ///
 /// If profile name is reported and it is bot moderated, the name's
 /// moderation state changes to
-/// [model_profile::ProfileStringModerationState::WaitingHumanModeration].
+/// [model_profile::ProfileStringModerationState::WaitingAdmin].
 #[utoipa::path(
     post,
     path = PATH_POST_REPORT_PROFILE_NAME,
@@ -63,7 +63,7 @@ const PATH_POST_REPORT_PROFILE_TEXT: &str = "/profile_api/report_profile_text";
 ///
 /// If profile text is reported and it is bot moderated, the text's
 /// moderation state changes to
-/// [model_profile::ProfileStringModerationState::WaitingHumanModeration].
+/// [model_profile::ProfileStringModerationState::WaitingAdmin].
 #[utoipa::path(
     post,
     path = PATH_POST_REPORT_PROFILE_TEXT,

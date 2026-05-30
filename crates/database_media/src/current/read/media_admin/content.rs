@@ -58,12 +58,10 @@ impl CurrentReadMediaAdminContent<'_> {
             .filter(
                 show_bot_moderations
                     .and(
-                        media_content::moderation_state
-                            .eq(ContentModerationState::WaitingBotOrHumanModeration),
+                        media_content::moderation_state.eq(ContentModerationState::WaitingAdminBot),
                     )
                     .or(is_not_bot.and(
-                        media_content::moderation_state
-                            .eq(ContentModerationState::WaitingHumanModeration),
+                        media_content::moderation_state.eq(ContentModerationState::WaitingAdmin),
                     )),
             )
             .filter(media_content::content_type_number.eq(params.content_type))

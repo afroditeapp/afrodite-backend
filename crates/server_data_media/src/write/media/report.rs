@@ -31,7 +31,7 @@ impl WriteCommandsMediaReport<'_> {
             .iter_current_profile_content()
             .find(|v| v.uuid == content);
         if let Some(profile_content) = profile_content {
-            if profile_content.state() == ContentModerationState::AcceptedByBot {
+            if profile_content.state() == ContentModerationState::AcceptedByAdminBot {
                 let content_id_internal =
                     ContentIdInternal::new(target, profile_content.uuid, profile_content.id);
                 self.handle()

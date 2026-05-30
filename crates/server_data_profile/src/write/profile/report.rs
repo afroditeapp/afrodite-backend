@@ -31,7 +31,7 @@ impl WriteCommandsProfileReport<'_> {
         }
 
         if target_data.name_moderation_info.as_ref().map(|v| v.state)
-            == Some(ProfileStringModerationState::AcceptedByBot)
+            == Some(ProfileStringModerationState::AcceptedByAdminBot)
         {
             self.handle()
                 .profile_admin()
@@ -101,7 +101,7 @@ impl WriteCommandsProfileReport<'_> {
         }
 
         if target_data.text_moderation_info.as_ref().map(|v| v.state)
-            == Some(ProfileStringModerationState::AcceptedByBot)
+            == Some(ProfileStringModerationState::AcceptedByAdminBot)
         {
             self.handle()
                 .profile_admin()

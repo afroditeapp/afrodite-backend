@@ -128,7 +128,7 @@ impl CurrentWriteMediaContent<'_> {
                     .media_content()
                     .update_content_moderation_state(
                         content_id,
-                        ContentModerationState::WaitingBotOrHumanModeration,
+                        ContentModerationState::WaitingAdminBot,
                     )?;
             }
         }
@@ -182,7 +182,7 @@ impl CurrentWriteMediaContent<'_> {
                 .media_content()
                 .update_content_moderation_state(
                     content_id,
-                    ContentModerationState::WaitingBotOrHumanModeration,
+                    ContentModerationState::WaitingAdminBot,
                 )?;
         }
 
@@ -257,7 +257,7 @@ impl CurrentWriteMediaContent<'_> {
         } else {
             (
                 ContentSlot::Content0,
-                ContentModerationState::WaitingBotOrHumanModeration,
+                ContentModerationState::WaitingAdminBot,
             )
         };
 

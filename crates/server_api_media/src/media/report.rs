@@ -20,7 +20,7 @@ const PATH_POST_PROFILE_CONTENT_REPORT: &str = "/media_api/profile_content_repor
 ///
 /// If profile content is reported and it is bot moderated, the content's
 /// moderation state changes to
-/// [model_media::ContentModerationState::WaitingHumanModeration].
+/// [model_media::ContentModerationState::WaitingAdmin].
 #[utoipa::path(
     post,
     path = PATH_POST_PROFILE_CONTENT_REPORT,
