@@ -3,7 +3,9 @@ use model::{AccountIdInternal, ProcessReport, ReportContent, ReportType, ReportT
 use simple_backend_utils::IntoReportFromString;
 
 use crate::{
-    DataError, db_transaction, define_cmd_wrapper_write,
+    DataError, IntoDataError,
+    app::GetConfig,
+    db_transaction, define_cmd_wrapper_write,
     id::ToAccountIdInternal,
     read::DbRead,
     result::{Result, WrappedContextExt},
@@ -48,24 +50,50 @@ impl WriteCommandsCommonAdminReport<'_> {
         }
     }
 
-    pub async fn process_reports(
+    pub async fn process_reports_and_get_report_spammers(
         &self,
         moderator_id: AccountIdInternal,
         reports: Vec<ProcessReport>,
-    ) -> Result<(), DataError> {
-        for report in reports {
+    ) -> Result<Vec<AccountIdInternal>, DataError> {
+        let mut creators_set: std::collections::HashSet<AccountIdInternal> =
+            std::collections::HashSet::new();
+        for report in &reports {
             let creator = self.to_account_id_internal(report.creator).await?;
+            creators_set.insert(creator);
             let target = self.to_account_id_internal(report.target).await?;
             self.process_single_report(
                 moderator_id,
                 creator,
                 target,
                 report.report_type,
-                report.content,
+                report.content.clone(),
                 report.valid,
             )
             .await?;
         }
-        Ok(())
+
+        let threshold = self
+            .config()
+            .limits_common()
+            .auto_ban_spam_reporters_invalid_report_threshold;
+
+        let mut reporters_to_ban = Vec::new();
+        for creator in &creators_set {
+            let creator_db_id = *creator.as_db_id();
+            let count = self
+                .db_read(move |mut cmds| {
+                    cmds.common_admin()
+                        .report()
+                        .get_invalid_report_count_for_report_spammer_detection(creator_db_id)
+                })
+                .await
+                .into_error()?;
+
+            if count >= threshold as i64 {
+                reporters_to_ban.push(*creator);
+            }
+        }
+
+        Ok(reporters_to_ban)
     }
 }

@@ -227,6 +227,14 @@ impl ReportProcessingState {
             Self::InvalidByAdmin,
         ]
     }
+
+    pub const fn invalid_states() -> [Self; 2] {
+        [Self::InvalidByAdminBot, Self::InvalidByAdmin]
+    }
+
+    pub const fn valid_states() -> [Self; 2] {
+        [Self::ValidByAdminBot, Self::ValidByAdmin]
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, IntoParams, PartialEq)]

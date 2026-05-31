@@ -82,13 +82,17 @@ pub async fn post_process_reports(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    db_write!(state, move |cmds| {
+    let reporters_to_ban = db_write!(state, move |cmds| {
         cmds.common_admin()
             .report()
-            .process_reports(moderator_id, data.values)
-            .await?;
-        Ok(())
+            .process_reports_and_get_report_spammers(moderator_id, data.values)
+            .await
     })?;
+
+    state
+        .data_all_access()
+        .auto_ban_spam_reporters(reporters_to_ban)
+        .await?;
 
     Ok(())
 }

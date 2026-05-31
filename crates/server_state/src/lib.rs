@@ -271,6 +271,16 @@ impl DataAllAccess<'_> {
         );
         cmd.await
     }
+
+    pub async fn auto_ban_spam_reporters(
+        &self,
+        reporters_to_ban: Vec<AccountIdInternal>,
+    ) -> server_common::result::Result<(), DataError> {
+        let cmd = self
+            .utils()
+            .auto_ban_spam_reporters(self.write(), reporters_to_ban);
+        cmd.await
+    }
 }
 
 /// Macro for writing data with simpler syntax.

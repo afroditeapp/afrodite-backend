@@ -1,10 +1,11 @@
 use server_data::define_cmd_wrapper_write;
 
-mod ban;
+pub mod ban;
 mod client_features;
 mod login;
 mod news;
 mod permissions;
+pub use ban::SetAccountBanStateMode;
 pub use client_features::SaveInfoBannersResult;
 define_cmd_wrapper_write!(WriteCommandsAccountAdmin);
 

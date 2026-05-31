@@ -6,14 +6,14 @@ use model::{
     ClientMessageForDataAllCrate, EditVerificationValues, EmailMessages, UnixTime,
     VerificationMethod,
 };
-use model_account::{EmailAddress, SignInWithInfo};
+use model_account::{AccountBanReasonCategory, EmailAddress, SignInWithInfo};
 use server_common::websocket::WebSocketError;
 use server_data::{
     DataError, app::DataAllUtils, data_export::DataExportCmd, data_reset::BACKEND_DATA_RESET_STATE,
     db_manager::RouterDatabaseReadHandle, result::WrappedContextExt,
     write_commands::WriteCommandRunnerHandle,
 };
-use server_data_account::write::GetWriteCommandsAccount;
+use server_data_account::write::{GetWriteCommandsAccount, account_admin::SetAccountBanStateMode};
 use server_data_chat::read::GetReadChatCommands;
 use simple_backend::manager_client::ManagerApiClient;
 
@@ -213,6 +213,45 @@ impl DataAllUtils for DataAllUtilsImpl {
                         )
                         .await?;
 
+                    Ok(())
+                })
+                .await
+        }
+        .boxed()
+    }
+
+    fn auto_ban_spam_reporters<'a>(
+        &self,
+        write_command_runner: &'a WriteCommandRunnerHandle,
+        reporters_to_ban: Vec<AccountIdInternal>,
+    ) -> BoxFuture<'a, server_common::result::Result<(), DataError>> {
+        async move {
+            if reporters_to_ban.is_empty() {
+                return Ok(());
+            }
+
+            write_command_runner
+                .write(move |cmds| async move {
+                    let ban_duration = cmds
+                        .write_handle()
+                        .config()
+                        .limits_common()
+                        .auto_ban_spam_reporters_ban_duration;
+                    for creator in reporters_to_ban {
+                        let banned_until =
+                            UnixTime::current_time().add_seconds(ban_duration.seconds);
+                        cmds.account_admin()
+                            .ban()
+                            .set_account_ban_state(
+                                creator,
+                                SetAccountBanStateMode::AutoBan {
+                                    banned_until,
+                                    reason_category: Some(AccountBanReasonCategory::REPORT_SPAM),
+                                    reason_details: None,
+                                },
+                            )
+                            .await?;
+                    }
                     Ok(())
                 })
                 .await

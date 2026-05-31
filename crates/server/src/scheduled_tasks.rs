@@ -14,7 +14,10 @@ use server_api::{
 };
 use server_common::result::{Result, WrappedResultExt};
 use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
-use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
+use server_data_account::{
+    read::GetReadCommandsAccount,
+    write::{GetWriteCommandsAccount, account_admin::SetAccountBanStateMode},
+};
 use server_data_profile::{
     read::GetReadProfileCommands, statistics::ProfileStatisticsCacheUtils,
     write::GetWriteCommandsProfile,
@@ -409,7 +412,7 @@ impl ScheduledTaskManager {
             db_write_raw!(self.state, move |cmds| {
                 cmds.account_admin()
                     .ban()
-                    .set_account_ban_state(id, None, None, None, None)
+                    .set_account_ban_state(id, SetAccountBanStateMode::Clear)
                     .await
             })
             .await

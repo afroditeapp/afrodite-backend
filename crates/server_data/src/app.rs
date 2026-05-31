@@ -183,6 +183,12 @@ pub trait DataAllUtils: Send + Sync + 'static {
         values: EditVerificationValues,
     ) -> BoxFuture<'a, server_common::result::Result<(), DataError>>;
 
+    fn auto_ban_spam_reporters<'a>(
+        &self,
+        write_command_runner: &'a WriteCommandRunnerHandle,
+        reporters_to_ban: Vec<AccountIdInternal>,
+    ) -> BoxFuture<'a, server_common::result::Result<(), DataError>>;
+
     #[allow(clippy::too_many_arguments)]
     fn process_account_verification_queue_item<'a>(
         &self,

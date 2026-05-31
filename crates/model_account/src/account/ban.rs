@@ -29,6 +29,7 @@ pub enum AccountBannedAdminType {
     #[default]
     Human = 0,
     Bot = 1,
+    Server = 2,
 }
 
 /// Numeric category for account ban reason.
@@ -57,6 +58,10 @@ pub enum AccountBannedAdminType {
 #[diesel(sql_type = SmallInt)]
 pub struct AccountBanReasonCategory {
     pub value: i16,
+}
+
+impl AccountBanReasonCategory {
+    pub const REPORT_SPAM: Self = Self { value: 4 };
 }
 
 impl TryFrom<i16> for AccountBanReasonCategory {

@@ -15,44 +15,83 @@ use server_data::{
 
 define_cmd_wrapper_write!(WriteCommandsAccountBan);
 
+pub enum SetAccountBanStateMode {
+    Clear,
+    AutoBan {
+        banned_until: UnixTime,
+        reason_category: Option<AccountBanReasonCategory>,
+        reason_details: Option<AccountBanReasonDetails>,
+    },
+    BanOrUnban {
+        admin_id: AccountIdInternal,
+        banned_until: Option<UnixTime>,
+        reason_category: Option<AccountBanReasonCategory>,
+        reason_details: Option<AccountBanReasonDetails>,
+    },
+}
+
 impl WriteCommandsAccountBan<'_> {
     pub async fn set_account_ban_state(
         &self,
         id: AccountIdInternal,
-        admin_id: Option<AccountIdInternal>,
-        banned_until: Option<UnixTime>,
-        reason_category: Option<AccountBanReasonCategory>,
-        reason_details: Option<AccountBanReasonDetails>,
+        mode: SetAccountBanStateMode,
     ) -> Result<(), DataError> {
-        let (ban_state, current_account, admin_type) = self
+        let (banned_until, admin_id, admin_type, reason_category, reason_details) = match mode {
+            SetAccountBanStateMode::Clear => (None, None, None, None, None),
+            SetAccountBanStateMode::AutoBan {
+                banned_until,
+                reason_category,
+                reason_details,
+            } => (
+                Some(banned_until),
+                None,
+                Some(AccountBannedAdminType::Server),
+                reason_category,
+                reason_details,
+            ),
+            SetAccountBanStateMode::BanOrUnban {
+                admin_id,
+                banned_until,
+                reason_category,
+                reason_details,
+            } => {
+                let admin_type = self
+                    .db_read(move |mut cmds| {
+                        cmds.common()
+                            .state()
+                            .other_shared_state(admin_id)
+                            .map(|state| {
+                                if state.is_bot() {
+                                    AccountBannedAdminType::Bot
+                                } else {
+                                    AccountBannedAdminType::Human
+                                }
+                            })
+                    })
+                    .await?;
+                (
+                    banned_until,
+                    Some(admin_id),
+                    Some(admin_type),
+                    reason_category,
+                    reason_details,
+                )
+            }
+        };
+
+        let (ban_state, current_account) = self
             .db_read(move |mut cmds| {
                 let ban_state = cmds.account().ban().account_ban_time(id)?;
                 let current_account = cmds.common().account(id)?;
-                let admin_type = if banned_until.is_some() {
-                    admin_id
-                        .map(|admin_id| {
-                            cmds.common()
-                                .state()
-                                .other_shared_state(admin_id)
-                                .map(|state| {
-                                    if state.is_bot() {
-                                        AccountBannedAdminType::Bot
-                                    } else {
-                                        AccountBannedAdminType::Human
-                                    }
-                                })
-                        })
-                        .transpose()?
-                } else {
-                    None
-                };
-                Ok((ban_state, current_account, admin_type))
+                Ok((ban_state, current_account))
             })
             .await?;
+
         if banned_until == ban_state.banned_until {
             // Already in correct state
             return Ok(());
         }
+
         let a = current_account.clone();
         let new_account = db_transaction!(self, move |mut cmds| {
             let a = cmds

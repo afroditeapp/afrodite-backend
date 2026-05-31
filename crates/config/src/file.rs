@@ -45,6 +45,8 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # [limits.common]
 # send_report_daily_max_count = 20
 # websocket_connection_attempts_daily_max_count = 150
+# auto_ban_spam_reporters_invalid_report_threshold = 10
+# auto_ban_spam_reporters_ban_duration = "90d"
 #
 # [limits.common.processed_report_deletion_wait_duration]
 # profile_name = "90d"
@@ -340,6 +342,8 @@ pub struct CommonLimitsConfig {
     pub processed_report_deletion_wait_duration: ProcessedReportDeletionConfig,
     pub send_report_daily_max_count: u16,
     pub websocket_connection_attempts_daily_max_count: u16,
+    pub auto_ban_spam_reporters_invalid_report_threshold: u16,
+    pub auto_ban_spam_reporters_ban_duration: DurationValue,
 }
 
 impl Default for CommonLimitsConfig {
@@ -348,6 +352,8 @@ impl Default for CommonLimitsConfig {
             processed_report_deletion_wait_duration: ProcessedReportDeletionConfig::default(),
             send_report_daily_max_count: 20,
             websocket_connection_attempts_daily_max_count: 150,
+            auto_ban_spam_reporters_invalid_report_threshold: 10,
+            auto_ban_spam_reporters_ban_duration: DurationValue::from_days(90),
         }
     }
 }
