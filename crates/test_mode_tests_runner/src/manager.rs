@@ -141,6 +141,7 @@ impl TestTask {
             Some(AdditionalSettings {
                 log_to_memory: true,
                 account_server_api_port: Some(self.api_port),
+                modify_config: self.test.modify_config,
             }),
         )
         .await;

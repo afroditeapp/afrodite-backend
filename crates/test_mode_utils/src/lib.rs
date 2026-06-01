@@ -13,6 +13,11 @@ pub mod server;
 pub mod state;
 pub mod websocket_protocol;
 
+pub struct ServerConfigEditor<'a> {
+    pub server: &'a mut config::file::ConfigFile,
+    pub simple_backend: &'a mut simple_backend_config::file::SimpleBackendConfigFile,
+}
+
 /// Workaround for api_client error type conversion to
 /// avoid change_context calls.
 pub struct ServerTestError {

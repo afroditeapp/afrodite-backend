@@ -10,17 +10,22 @@ mod context;
 pub mod prelude;
 
 pub use test_mode_macro::server_test;
+pub use test_mode_utils::ServerConfigEditor;
 
 pub use crate::context::TestContext;
 
 /// [server_test] requires this
 pub type TestResult = Result<(), ServerTestError>;
 
+/// Function that modifies server config before the server starts.
+pub type ModifyConfigFn = fn(ServerConfigEditor);
+
 /// [server_test] requires this
 pub struct TestFunction {
     pub name: &'static str,
     pub module_path: &'static str,
     pub function: fn(TestContext) -> Box<dyn Future<Output = TestResult> + Send>,
+    pub modify_config: Option<ModifyConfigFn>,
 }
 
 /// [server_test] requires this

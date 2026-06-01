@@ -51,6 +51,7 @@ pub struct AdditionalSettings {
     /// Store logs in RAM instead of using standard output or error.
     pub log_to_memory: bool,
     pub account_server_api_port: Option<u16>,
+    pub modify_config: Option<fn(crate::ServerConfigEditor)>,
 }
 
 pub struct ServerManager {
@@ -77,7 +78,15 @@ impl ServerManager {
         let bot_api_port = settings
             .account_server_api_port
             .unwrap_or(config.api_urls.api_url.port().unwrap());
-        let account_config = new_config(&config, bot_api_port);
+        let mut account_config = new_config(&config, bot_api_port);
+
+        if let Some(modify_config) = settings.modify_config {
+            modify_config(crate::ServerConfigEditor {
+                server: &mut account_config.0,
+                simple_backend: &mut account_config.1,
+            });
+        }
+
         let servers = vec![
             ServerInstance::new(
                 server_instance_config,
