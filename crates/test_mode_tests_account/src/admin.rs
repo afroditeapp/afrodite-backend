@@ -1,6 +1,21 @@
 use api_client::apis::{account_admin_api::post_delete_account, account_api::get_account_state};
 use test_mode_tests::prelude::*;
 
+fn disable_grant_admin_access(config: ServerConfigEditor) {
+    config.server.grant_admin_access = None;
+}
+
+#[server_test(modify_server_config_with = "disable_grant_admin_access")]
+async fn admin_rights_granting_does_not_work_when_disabled(mut context: TestContext) -> TestResult {
+    let account = context.new_admin().await?;
+    assert_eq(
+        get_account_state(&account.account().account_api())
+            .await?
+            .permissions,
+        Default::default(),
+    )
+}
+
 #[server_test]
 async fn admin_rights_granting_only_grants_rights_once_by_default(
     mut context: TestContext,
