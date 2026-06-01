@@ -5834,10 +5834,10 @@ dependencies = [
  "reqwest",
  "simple_backend_utils",
  "test_mode_bot_runner",
+ "test_mode_test_runner",
  "test_mode_tests_account",
  "test_mode_tests_media",
  "test_mode_tests_profile",
- "test_mode_tests_runner",
  "test_mode_utils",
  "tracing-subscriber",
 ]
@@ -5902,6 +5902,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "test_mode_test_runner"
+version = "0.0.0"
+dependencies = [
+ "config",
+ "futures",
+ "inventory",
+ "num_cpus",
+ "reqwest",
+ "test_mode_test_utils",
+ "test_mode_utils",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "test_mode_test_utils"
 version = "0.0.0"
 dependencies = [
@@ -5948,21 +5963,6 @@ dependencies = [
  "test_mode_bot",
  "test_mode_test_utils",
  "test_mode_utils",
-]
-
-[[package]]
-name = "test_mode_tests_runner"
-version = "0.0.0"
-dependencies = [
- "config",
- "futures",
- "inventory",
- "num_cpus",
- "reqwest",
- "test_mode_test_utils",
- "test_mode_utils",
- "tokio",
- "tracing",
 ]
 
 [[package]]

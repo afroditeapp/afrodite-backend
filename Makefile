@@ -35,11 +35,11 @@ CARGO_CRATE_ARGS = 	-p config \
 					-p test_mode_bot_runner \
 					-p test_mode_test_macro \
 					-p test_mode_test_utils \
+					-p test_mode_test_runner \
 					-p test_mode_tests \
 					-p test_mode_tests_account \
 					-p test_mode_tests_profile \
 					-p test_mode_tests_media \
-					-p test_mode_tests_runner \
 					-p test_mode_utils \
 					-p utils \
 					-p simple_backend \
@@ -157,11 +157,11 @@ code-stats:
 	crates/test_mode_bot_runner \
 	crates/test_mode_test_macro \
 	crates/test_mode_test_utils \
+	crates/test_mode_test_runner \
 	crates/test_mode_tests \
 	crates/test_mode_tests_account \
 	crates/test_mode_tests_media \
 	crates/test_mode_tests_profile \
-	crates/test_mode_tests_runner \
 	crates/test_mode_utils \
 	crates/utils \
 	crates/simple_backend \

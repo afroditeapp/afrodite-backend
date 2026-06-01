@@ -1,5 +1,5 @@
 [package]
-name = "test_mode_tests_runner"
+name = "test_mode_test_runner"
 version = "0.0.0"
 edition = "2024"
 

@@ -14,7 +14,7 @@ use config::{
 };
 use simple_backend_utils::dir::abs_path_for_directory_or_file_which_might_not_exists;
 use test_mode_bot_runner::BotTestRunner;
-use test_mode_tests_runner::QaTestRunner;
+use test_mode_test_runner::QaTestRunner;
 use test_mode_utils::server::ServerInstanceConfig;
 
 pub struct TestRunner {

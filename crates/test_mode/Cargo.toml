@@ -15,9 +15,9 @@ reqwest = { workspace = true }
 config = { path = "../config" }
 test_mode_bot_runner = { path = "../test_mode_bot_runner" }
 test_mode_utils = { path = "../test_mode_utils" }
+test_mode_test_runner = { path = "../test_mode_test_runner" }
 test_mode_tests_account = { path = "../test_mode_tests_account" }
 test_mode_tests_profile = { path = "../test_mode_tests_profile" }
 test_mode_tests_media = { path = "../test_mode_tests_media" }
-test_mode_tests_runner = { path = "../test_mode_tests_runner" }
 
 simple_backend_utils = { path = "../simple_backend_utils" }
