@@ -1,7 +1,7 @@
 use std::sync::{Arc, atomic::AtomicBool};
 
 use config::args::TestMode;
-use test_mode_tests::{TestContext, TestFunction, TestResult};
+use test_mode_test_utils::{TestContext, TestFunction, TestResult};
 use test_mode_utils::{
     ServerTestError,
     server::{AdditionalSettings, ServerInstanceConfig, ServerManager},

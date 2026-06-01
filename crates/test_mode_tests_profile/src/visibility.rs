@@ -7,7 +7,7 @@ use api_client::{
     models::{ProfileVisibility, SearchAgeRange, SearchGroups},
 };
 use test_mode_bot::actions::account::SetProfileVisibility;
-use test_mode_tests::prelude::*;
+use test_mode_test_utils::prelude::*;
 
 #[server_test]
 async fn visiblity_updates_in_initial_setup_state(mut context: TestContext) -> TestResult {

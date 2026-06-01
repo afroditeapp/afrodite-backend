@@ -6,7 +6,7 @@ use test_mode_bot::{
         media::{SendImageToSlot, SetContent},
     },
 };
-use test_mode_tests::prelude::*;
+use test_mode_test_utils::prelude::*;
 
 #[server_test]
 async fn account_state_is_initial_setup_after_login(mut context: TestContext) -> TestResult {

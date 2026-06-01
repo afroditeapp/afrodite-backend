@@ -2,7 +2,7 @@ use api_client::{
     apis::profile_api::{get_profile, post_profile},
     models::ProfileUpdate,
 };
-use test_mode_tests::prelude::*;
+use test_mode_test_utils::prelude::*;
 use test_mode_utils::client::TestError;
 
 #[server_test]

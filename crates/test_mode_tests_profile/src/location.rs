@@ -1,6 +1,6 @@
 use api_client::{apis::profile_api::get_location, models::Location};
 use test_mode_bot::actions::profile::UpdateLocation;
-use test_mode_tests::prelude::*;
+use test_mode_test_utils::prelude::*;
 
 const LOCATION_LAT_LON_10: Location = Location {
     latitude: 10.0,

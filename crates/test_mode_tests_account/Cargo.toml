@@ -10,4 +10,4 @@ inventory = { workspace = true }
 
 api_client = { path = "../api_client" }
 test_mode_bot = { path = "../test_mode_bot" }
-test_mode_tests = { path = "../test_mode_tests" }
+test_mode_test_utils = { path = "../test_mode_test_utils" }

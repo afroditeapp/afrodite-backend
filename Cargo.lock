@@ -5893,7 +5893,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "test_mode_macro"
+name = "test_mode_test_macro"
 version = "0.0.0"
 dependencies = [
  "inventory",
@@ -5902,7 +5902,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "test_mode_tests"
+name = "test_mode_test_utils"
 version = "0.0.0"
 dependencies = [
  "api_client",
@@ -5911,10 +5911,14 @@ dependencies = [
  "inventory",
  "reqwest",
  "test_mode_bot",
- "test_mode_macro",
+ "test_mode_test_macro",
  "test_mode_utils",
  "tokio",
 ]
+
+[[package]]
+name = "test_mode_tests"
+version = "0.0.0"
 
 [[package]]
 name = "test_mode_tests_account"
@@ -5923,7 +5927,7 @@ dependencies = [
  "api_client",
  "inventory",
  "test_mode_bot",
- "test_mode_tests",
+ "test_mode_test_utils",
 ]
 
 [[package]]
@@ -5932,7 +5936,7 @@ version = "0.0.0"
 dependencies = [
  "inventory",
  "test_mode_bot",
- "test_mode_tests",
+ "test_mode_test_utils",
 ]
 
 [[package]]
@@ -5942,7 +5946,7 @@ dependencies = [
  "api_client",
  "inventory",
  "test_mode_bot",
- "test_mode_tests",
+ "test_mode_test_utils",
  "test_mode_utils",
 ]
 
@@ -5955,7 +5959,7 @@ dependencies = [
  "inventory",
  "num_cpus",
  "reqwest",
- "test_mode_tests",
+ "test_mode_test_utils",
  "test_mode_utils",
  "tokio",
  "tracing",

@@ -98,14 +98,14 @@ pub fn server_test(attr: TokenStream, input: TokenStream) -> TokenStream {
 
         mod #hidden_mod_name {
             pub fn #hidden_fn_name(
-                test_context: test_mode_tests::TestContext,
-            ) -> Box<dyn std::future::Future<Output = test_mode_tests::TestResult> + Send> {
+                test_context: test_mode_test_utils::TestContext,
+            ) -> Box<dyn std::future::Future<Output = test_mode_test_utils::TestResult> + Send> {
                 Box::new(super::#test_fn_name(test_context))
             }
         }
 
         inventory::submit! {
-            test_mode_tests::TestFunction {
+            test_mode_test_utils::TestFunction {
                 name: stringify!(#test_fn_name),
                 module_path: module_path!(),
                 function: #hidden_mod_name::#hidden_fn_name,

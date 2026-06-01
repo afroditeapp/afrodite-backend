@@ -2,7 +2,7 @@ use test_mode_bot::{
     action_array,
     actions::{AssertFailure, media::SendImageToSlot},
 };
-use test_mode_tests::prelude::*;
+use test_mode_test_utils::prelude::*;
 
 #[server_test]
 async fn save_content_only_has_7_slots_available(mut context: TestContext) -> TestResult {

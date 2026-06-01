@@ -16,4 +16,4 @@ inventory = { workspace = true }
 
 config = { path = "../config" }
 test_mode_utils = { path = "../test_mode_utils" }
-test_mode_tests = { path = "../test_mode_tests" }
+test_mode_test_utils = { path = "../test_mode_test_utils" }

@@ -3,13 +3,13 @@
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
 
-//! Runner for tests marked with [test_mode_tests::server_test] macro.
+//! Runner for tests marked with [test_mode_test_utils::server_test] macro.
 
 use std::sync::Arc;
 
 use config::args::{QaTestConfig, TestMode};
 use manager::{ManagerEvent, ManagerEventReceiver, TestManager};
-use test_mode_tests::TestFunction;
+use test_mode_test_utils::TestFunction;
 use test_mode_utils::{ServerTestError, server::ServerInstanceConfig};
 use tokio::{select, signal};
 use tracing::{error, info};

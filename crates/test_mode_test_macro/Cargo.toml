@@ -1,5 +1,5 @@
 [package]
-name = "test_mode_macro"
+name = "test_mode_test_macro"
 version = "0.0.0"
 edition = "2024"
 

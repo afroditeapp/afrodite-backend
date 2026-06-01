@@ -1,5 +1,5 @@
 use api_client::apis::{account_admin_api::post_delete_account, account_api::get_account_state};
-use test_mode_tests::prelude::*;
+use test_mode_test_utils::prelude::*;
 
 fn disable_grant_admin_access(config: ServerConfigEditor) {
     config.server.grant_admin_access = None;
