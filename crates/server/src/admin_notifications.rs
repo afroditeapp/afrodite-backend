@@ -268,7 +268,7 @@ impl AdminNotificationManager {
             .read()
             .common_admin()
             .report()
-            .get_waiting_report_list(&[])
+            .get_waiting_reports_page(&[])
             .await
             .change_context(AdminNotificationError::DatabaseError)?
             .values;

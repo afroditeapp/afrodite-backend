@@ -17,11 +17,11 @@ define_current_read_commands!(CurrentReadCommonAdminReport);
 
 impl CurrentReadCommonAdminReport<'_> {
     /// Empty report type list disables report type filtering.
-    pub fn get_reports_page(
+    pub fn get_waiting_reports_page(
         &mut self,
         wanted_report_types: Vec<ReportTypeInternal>,
     ) -> Result<GetReportList, DieselDatabaseError> {
-        let reports = self.get_waiting_reports_page(wanted_report_types)?;
+        let reports = self.get_waiting_reports_page_internal(wanted_report_types)?;
 
         let mut page = vec![];
 
@@ -39,7 +39,7 @@ impl CurrentReadCommonAdminReport<'_> {
         })
     }
 
-    fn get_waiting_reports_page(
+    fn get_waiting_reports_page_internal(
         &mut self,
         wanted_report_types: Vec<ReportTypeInternal>,
     ) -> Result<Vec<ReportInternal>, DieselDatabaseError> {

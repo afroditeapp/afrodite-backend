@@ -11,7 +11,7 @@ define_cmd_wrapper_read!(ReadCommandsCommonAdminReport);
 
 impl ReadCommandsCommonAdminReport<'_> {
     /// Empty report type list disables report type filtering.
-    pub async fn get_waiting_report_list(
+    pub async fn get_waiting_reports_page(
         &self,
         wanted_report_types: &[ReportType],
     ) -> Result<GetReportList, DataError> {
@@ -26,7 +26,7 @@ impl ReadCommandsCommonAdminReport<'_> {
         self.db_read(move |mut cmds| {
             cmds.common_admin()
                 .report()
-                .get_reports_page(wanted_report_types_internal)
+                .get_waiting_reports_page(wanted_report_types_internal)
         })
         .await
         .into_error()

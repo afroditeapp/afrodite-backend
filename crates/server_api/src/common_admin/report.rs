@@ -1,11 +1,8 @@
-use axum::{
-    Extension,
-    extract::{Query, State},
-};
+use axum::{Extension, extract::State};
 use model::{
     AccountIdInternal, GetChatMessageReports, GetChatMessageReportsInternal, GetReportList,
-    Permissions, ProcessReports, ReportIteratorQuery, ReportIteratorQueryInternal, UnixTime,
-    WaitingReportPageQuery,
+    GetWaitingReportsPage, Permissions, ProcessReports, ReportIteratorQuery,
+    ReportIteratorQueryInternal, UnixTime,
 };
 use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
 use simple_backend::create_counters;
@@ -17,12 +14,13 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-const PATH_GET_WAITING_REPORT_PAGE: &str = "/common_api/waiting_report_page";
+const PATH_POST_GET_WAITING_REPORTS_PAGE: &str = "/common_api/waiting_reports_page";
 
+/// Get max 25 waiting reports from oldest to newest.
 #[utoipa::path(
-    get,
-    path = PATH_GET_WAITING_REPORT_PAGE,
-    params(WaitingReportPageQuery),
+    post,
+    path = PATH_POST_GET_WAITING_REPORTS_PAGE,
+    request_body = GetWaitingReportsPage,
     responses(
         (status = 200, description = "Successful", body = GetReportList),
         (status = 401, description = "Unauthorized"),
@@ -33,12 +31,12 @@ const PATH_GET_WAITING_REPORT_PAGE: &str = "/common_api/waiting_report_page";
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_waiting_report_page(
+pub async fn post_get_waiting_reports_page(
     State(state): State<S>,
     Extension(permissions): Extension<Permissions>,
-    Query(query): Query<WaitingReportPageQuery>,
+    Json(data): Json<GetWaitingReportsPage>,
 ) -> Result<Json<GetReportList>, StatusCode> {
-    COMMON.get_waiting_report_page.incr();
+    COMMON.post_get_waiting_reports_page.incr();
 
     if !permissions.admin_process_reports {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
@@ -48,7 +46,7 @@ pub async fn get_waiting_report_page(
         .read()
         .common_admin()
         .report()
-        .get_waiting_report_list(&query.wanted_report_types)
+        .get_waiting_reports_page(&data.wanted_report_types)
         .await?;
 
     Ok(r.into())
@@ -223,7 +221,7 @@ pub async fn post_get_chat_message_reports(
 
 create_open_api_router!(
         fn router_report,
-        get_waiting_report_page,
+        post_get_waiting_reports_page,
         post_process_reports,
         get_latest_report_iterator_start_position,
         post_get_report_iterator_page,
@@ -234,7 +232,7 @@ create_counters!(
     CommonCounters,
     COMMON,
     COMMON_ADMIN_REPORT_COUNTERS_LIST,
-    get_waiting_report_page,
+    post_get_waiting_reports_page,
     post_process_reports,
     get_latest_report_iterator_start_position,
     post_get_report_iterator_page,
