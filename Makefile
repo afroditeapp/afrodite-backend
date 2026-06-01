@@ -144,6 +144,7 @@ code-stats:
 	crates/server_api_profile \
 	crates/server_api_media \
 	crates/server_api_chat \
+	crates/server_common \
 	crates/server_data \
 	crates/server_data_all \
 	crates/server_data_account \
@@ -151,7 +152,15 @@ code-stats:
 	crates/server_data_media \
 	crates/server_data_chat \
 	crates/test_mode \
+	crates/test_mode_bot \
+	crates/test_mode_bot_runner \
 	crates/test_mode_macro \
+	crates/test_mode_tests \
+	crates/test_mode_tests_account \
+	crates/test_mode_tests_media \
+	crates/test_mode_tests_profile \
+	crates/test_mode_tests_runner \
+	crates/test_mode_utils \
 	crates/utils \
 	crates/simple_backend \
 	crates/simple_backend_utils \
