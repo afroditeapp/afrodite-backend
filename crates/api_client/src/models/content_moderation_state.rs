@@ -17,18 +17,18 @@ use serde::{Deserialize, Serialize};
 pub enum ContentModerationState {
     #[serde(rename = "InSlot")]
     InSlot,
-    #[serde(rename = "WaitingBotOrHumanModeration")]
-    WaitingBotOrHumanModeration,
-    #[serde(rename = "WaitingHumanModeration")]
-    WaitingHumanModeration,
-    #[serde(rename = "AcceptedByBot")]
-    AcceptedByBot,
-    #[serde(rename = "AcceptedByHuman")]
-    AcceptedByHuman,
-    #[serde(rename = "RejectedByBot")]
-    RejectedByBot,
-    #[serde(rename = "RejectedByHuman")]
-    RejectedByHuman,
+    #[serde(rename = "WaitingAdminBot")]
+    WaitingAdminBot,
+    #[serde(rename = "WaitingAdmin")]
+    WaitingAdmin,
+    #[serde(rename = "AcceptedByAdminBot")]
+    AcceptedByAdminBot,
+    #[serde(rename = "AcceptedByAdmin")]
+    AcceptedByAdmin,
+    #[serde(rename = "RejectedByAdminBot")]
+    RejectedByAdminBot,
+    #[serde(rename = "RejectedByAdmin")]
+    RejectedByAdmin,
 
 }
 
@@ -36,12 +36,12 @@ impl std::fmt::Display for ContentModerationState {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::InSlot => write!(f, "InSlot"),
-            Self::WaitingBotOrHumanModeration => write!(f, "WaitingBotOrHumanModeration"),
-            Self::WaitingHumanModeration => write!(f, "WaitingHumanModeration"),
-            Self::AcceptedByBot => write!(f, "AcceptedByBot"),
-            Self::AcceptedByHuman => write!(f, "AcceptedByHuman"),
-            Self::RejectedByBot => write!(f, "RejectedByBot"),
-            Self::RejectedByHuman => write!(f, "RejectedByHuman"),
+            Self::WaitingAdminBot => write!(f, "WaitingAdminBot"),
+            Self::WaitingAdmin => write!(f, "WaitingAdmin"),
+            Self::AcceptedByAdminBot => write!(f, "AcceptedByAdminBot"),
+            Self::AcceptedByAdmin => write!(f, "AcceptedByAdmin"),
+            Self::RejectedByAdminBot => write!(f, "RejectedByAdminBot"),
+            Self::RejectedByAdmin => write!(f, "RejectedByAdmin"),
         }
     }
 }

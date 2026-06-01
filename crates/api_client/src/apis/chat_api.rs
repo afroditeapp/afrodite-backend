@@ -210,6 +210,7 @@ pub enum PostChatEmailNotificationSettingsError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PostChatMessageReportError {
+    Status400(),
     Status401(),
     Status429(),
     Status500(),
@@ -1101,7 +1102,7 @@ pub async fn post_chat_email_notification_settings(configuration: &configuration
     }
 }
 
-/// The report target must be a match.
+/// The report target must be a match. Supports reporting at most 10 messages per request.
 pub async fn post_chat_message_report(configuration: &configuration::Configuration, update_chat_message_report: models::UpdateChatMessageReport) -> Result<models::UpdateReportResult, Error<PostChatMessageReportError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_update_chat_message_report = update_chat_message_report;

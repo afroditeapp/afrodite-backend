@@ -14,40 +14,40 @@ use serde::{Deserialize, Serialize};
 /// 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum ProfileStringModerationState {
-    #[serde(rename = "WaitingBotOrHumanModeration")]
-    WaitingBotOrHumanModeration,
-    #[serde(rename = "WaitingHumanModeration")]
-    WaitingHumanModeration,
-    #[serde(rename = "AcceptedByBot")]
-    AcceptedByBot,
-    #[serde(rename = "AcceptedByHuman")]
-    AcceptedByHuman,
+    #[serde(rename = "WaitingAdminBot")]
+    WaitingAdminBot,
+    #[serde(rename = "WaitingAdmin")]
+    WaitingAdmin,
+    #[serde(rename = "AcceptedByAdminBot")]
+    AcceptedByAdminBot,
+    #[serde(rename = "AcceptedByAdmin")]
+    AcceptedByAdmin,
     #[serde(rename = "AcceptedByAllowlist")]
     AcceptedByAllowlist,
-    #[serde(rename = "RejectedByBot")]
-    RejectedByBot,
-    #[serde(rename = "RejectedByHuman")]
-    RejectedByHuman,
+    #[serde(rename = "RejectedByAdminBot")]
+    RejectedByAdminBot,
+    #[serde(rename = "RejectedByAdmin")]
+    RejectedByAdmin,
 
 }
 
 impl std::fmt::Display for ProfileStringModerationState {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Self::WaitingBotOrHumanModeration => write!(f, "WaitingBotOrHumanModeration"),
-            Self::WaitingHumanModeration => write!(f, "WaitingHumanModeration"),
-            Self::AcceptedByBot => write!(f, "AcceptedByBot"),
-            Self::AcceptedByHuman => write!(f, "AcceptedByHuman"),
+            Self::WaitingAdminBot => write!(f, "WaitingAdminBot"),
+            Self::WaitingAdmin => write!(f, "WaitingAdmin"),
+            Self::AcceptedByAdminBot => write!(f, "AcceptedByAdminBot"),
+            Self::AcceptedByAdmin => write!(f, "AcceptedByAdmin"),
             Self::AcceptedByAllowlist => write!(f, "AcceptedByAllowlist"),
-            Self::RejectedByBot => write!(f, "RejectedByBot"),
-            Self::RejectedByHuman => write!(f, "RejectedByHuman"),
+            Self::RejectedByAdminBot => write!(f, "RejectedByAdminBot"),
+            Self::RejectedByAdmin => write!(f, "RejectedByAdmin"),
         }
     }
 }
 
 impl Default for ProfileStringModerationState {
     fn default() -> ProfileStringModerationState {
-        Self::WaitingBotOrHumanModeration
+        Self::WaitingAdminBot
     }
 }
 

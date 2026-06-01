@@ -18,6 +18,8 @@ pub enum AccountBannedAdminType {
     Human,
     #[serde(rename = "Bot")]
     Bot,
+    #[serde(rename = "Server")]
+    Server,
 
 }
 
@@ -26,6 +28,7 @@ impl std::fmt::Display for AccountBannedAdminType {
         match self {
             Self::Human => write!(f, "Human"),
             Self::Bot => write!(f, "Bot"),
+            Self::Server => write!(f, "Server"),
         }
     }
 }

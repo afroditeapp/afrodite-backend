@@ -79,6 +79,7 @@ src/models/chat_app_notification_settings.rs
 src/models/chat_config.rs
 src/models/chat_email_notification_settings.rs
 src/models/chat_message_report.rs
+src/models/chat_message_report_data.rs
 src/models/chat_privacy_settings.rs
 src/models/check_online_status_config.rs
 src/models/client_config.rs
@@ -176,6 +177,7 @@ src/models/get_profile_string_state.rs
 src/models/get_push_notification_info.rs
 src/models/get_report_list.rs
 src/models/get_sent_message.rs
+src/models/get_waiting_reports_page.rs
 src/models/image_processing_dynamic_config.rs
 src/models/image_processing_warnings.rs
 src/models/info_banner.rs
@@ -275,6 +277,7 @@ src/models/post_start_data_export.rs
 src/models/post_video_call_url_result.rs
 src/models/predefined_banner.rs
 src/models/process_report.rs
+src/models/process_reports.rs
 src/models/profile.rs
 src/models/profile_age_counts.rs
 src/models/profile_age_range_verification_admin_info.rs

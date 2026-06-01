@@ -14,10 +14,6 @@ use serde::{Deserialize, Serialize};
 /// 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum ProfileVisibility {
-    #[serde(rename = "PendingPrivate")]
-    PendingPrivate,
-    #[serde(rename = "PendingPublic")]
-    PendingPublic,
     #[serde(rename = "Private")]
     Private,
     #[serde(rename = "Public")]
@@ -28,8 +24,6 @@ pub enum ProfileVisibility {
 impl std::fmt::Display for ProfileVisibility {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Self::PendingPrivate => write!(f, "PendingPrivate"),
-            Self::PendingPublic => write!(f, "PendingPublic"),
             Self::Private => write!(f, "Private"),
             Self::Public => write!(f, "Public"),
         }
@@ -38,7 +32,7 @@ impl std::fmt::Display for ProfileVisibility {
 
 impl Default for ProfileVisibility {
     fn default() -> ProfileVisibility {
-        Self::PendingPrivate
+        Self::Private
     }
 }
 

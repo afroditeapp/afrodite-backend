@@ -512,7 +512,7 @@ pub async fn post_media_app_notification_settings(configuration: &configuration:
     }
 }
 
-/// If profile content is reported and it is bot moderated, the content's moderation state changes to [model_media::ContentModerationState::WaitingHumanModeration].
+/// If profile content is reported and it is bot moderated, the content's moderation state changes to [model_media::ContentModerationState::WaitingAdmin].
 pub async fn post_profile_content_report(configuration: &configuration::Configuration, update_profile_content_report: models::UpdateProfileContentReport) -> Result<models::UpdateReportResult, Error<PostProfileContentReportError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_update_profile_content_report = update_profile_content_report;

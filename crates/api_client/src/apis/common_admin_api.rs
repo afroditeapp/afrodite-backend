@@ -123,15 +123,6 @@ pub enum GetSystemInfoError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`get_waiting_report_page`]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum GetWaitingReportPageError {
-    Status401(),
-    Status500(),
-    UnknownValue(serde_json::Value),
-}
-
 /// struct for typed errors of method [`post_admin_notification_settings`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -232,10 +223,19 @@ pub enum PostGetReportIteratorPageError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_process_report`]
+/// struct for typed errors of method [`post_get_waiting_reports_page`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostProcessReportError {
+pub enum PostGetWaitingReportsPageError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_process_reports`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostProcessReportsError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -778,43 +778,6 @@ pub async fn get_system_info(configuration: &configuration::Configuration, manag
     }
 }
 
-pub async fn get_waiting_report_page(configuration: &configuration::Configuration, ) -> Result<models::GetReportList, Error<GetWaitingReportPageError>> {
-
-    let uri_str = format!("{}/common_api/waiting_report_page", configuration.base_path);
-    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
-
-    if let Some(ref user_agent) = configuration.user_agent {
-        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
-    }
-    if let Some(ref token) = configuration.bearer_access_token {
-        req_builder = req_builder.bearer_auth(token.to_owned());
-    };
-
-    let req = req_builder.build()?;
-    let resp = configuration.client.execute(req).await?;
-
-    let status = resp.status();
-    let content_type = resp
-        .headers()
-        .get("content-type")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("application/octet-stream");
-    let content_type = super::ContentType::from(content_type);
-
-    if !status.is_client_error() && !status.is_server_error() {
-        let content = resp.text().await?;
-        match content_type {
-            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::GetReportList`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::GetReportList`")))),
-        }
-    } else {
-        let content = resp.text().await?;
-        let entity: Option<GetWaitingReportPageError> = serde_json::from_str(&content).ok();
-        Err(Error::ResponseError(ResponseContent { status, content, entity }))
-    }
-}
-
 /// # Access Requires [Permissions::admin_subscribe_admin_notifications].
 pub async fn post_admin_notification_settings(configuration: &configuration::Configuration, admin_notification_settings: models::AdminNotificationSettings) -> Result<(), Error<PostAdminNotificationSettingsError>> {
     // add a prefix to parameters to efficiently prevent name collisions
@@ -1210,11 +1173,11 @@ pub async fn post_get_report_iterator_page(configuration: &configuration::Config
     }
 }
 
-pub async fn post_process_report(configuration: &configuration::Configuration, process_report: models::ProcessReport) -> Result<(), Error<PostProcessReportError>> {
+pub async fn post_get_waiting_reports_page(configuration: &configuration::Configuration, get_waiting_reports_page: models::GetWaitingReportsPage) -> Result<models::GetReportList, Error<PostGetWaitingReportsPageError>> {
     // add a prefix to parameters to efficiently prevent name collisions
-    let p_body_process_report = process_report;
+    let p_body_get_waiting_reports_page = get_waiting_reports_page;
 
-    let uri_str = format!("{}/common_api/process_report", configuration.base_path);
+    let uri_str = format!("{}/common_api/waiting_reports_page", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -1223,7 +1186,47 @@ pub async fn post_process_report(configuration: &configuration::Configuration, p
     if let Some(ref token) = configuration.bearer_access_token {
         req_builder = req_builder.bearer_auth(token.to_owned());
     };
-    req_builder = req_builder.json(&p_body_process_report);
+    req_builder = req_builder.json(&p_body_get_waiting_reports_page);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::GetReportList`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::GetReportList`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostGetWaitingReportsPageError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn post_process_reports(configuration: &configuration::Configuration, process_reports: models::ProcessReports) -> Result<(), Error<PostProcessReportsError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_process_reports = process_reports;
+
+    let uri_str = format!("{}/common_api/process_reports", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_process_reports);
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
@@ -1234,7 +1237,7 @@ pub async fn post_process_report(configuration: &configuration::Configuration, p
         Ok(())
     } else {
         let content = resp.text().await?;
-        let entity: Option<PostProcessReportError> = serde_json::from_str(&content).ok();
+        let entity: Option<PostProcessReportsError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

@@ -1098,7 +1098,7 @@ pub async fn post_profile_to_database_debug_mode_benchmark(configuration: &confi
     }
 }
 
-/// If profile name is reported and it is bot moderated, the name's moderation state changes to [model_profile::ProfileStringModerationState::WaitingHumanModeration].
+/// If profile name is reported and it is bot moderated, the name's moderation state changes to [model_profile::ProfileStringModerationState::WaitingAdmin].
 pub async fn post_report_profile_name(configuration: &configuration::Configuration, update_profile_name_report: models::UpdateProfileNameReport) -> Result<models::UpdateReportResult, Error<PostReportProfileNameError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_update_profile_name_report = update_profile_name_report;
@@ -1139,7 +1139,7 @@ pub async fn post_report_profile_name(configuration: &configuration::Configurati
     }
 }
 
-/// If profile text is reported and it is bot moderated, the text's moderation state changes to [model_profile::ProfileStringModerationState::WaitingHumanModeration].
+/// If profile text is reported and it is bot moderated, the text's moderation state changes to [model_profile::ProfileStringModerationState::WaitingAdmin].
 pub async fn post_report_profile_text(configuration: &configuration::Configuration, update_profile_text_report: models::UpdateProfileTextReport) -> Result<models::UpdateReportResult, Error<PostReportProfileTextError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_update_profile_text_report = update_profile_text_report;

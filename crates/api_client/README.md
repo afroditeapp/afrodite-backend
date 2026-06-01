@@ -61,7 +61,7 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**post_set_account_deletion_request_state**](docs/AccountApi.md#post_set_account_deletion_request_state) | **POST** /account_api/set_account_deletion_request_state/{aid} | Request account deletion or cancel the deletion
 *AccountApi* | [**post_set_email_login_enabled**](docs/AccountApi.md#post_set_email_login_enabled) | **POST** /account_api/set_email_login_enabled | Enable or disable email login for an account.
 *AccountApi* | [**post_sign_in_with_login**](docs/AccountApi.md#post_sign_in_with_login) | **POST** /account_api/sign_in_with_login | Start new session with sign in with Apple or Google.
-*AccountApi* | [**put_setting_profile_visiblity**](docs/AccountApi.md#put_setting_profile_visiblity) | **PUT** /account_api/settings/profile_visibility | Update current or pending profile visiblity value.
+*AccountApi* | [**put_setting_profile_visiblity**](docs/AccountApi.md#put_setting_profile_visiblity) | **PUT** /account_api/settings/profile_visibility | Update current profile visiblity value.
 *AccountApi* | [**put_setting_unlimited_likes**](docs/AccountApi.md#put_setting_unlimited_likes) | **PUT** /account_api/settings/unlimited_likes | 
 *AccountAdminApi* | [**delete_news_item**](docs/AccountAdminApi.md#delete_news_item) | **DELETE** /account_api/delete_news/{nid} | 
 *AccountAdminApi* | [**delete_news_translation**](docs/AccountAdminApi.md#delete_news_translation) | **DELETE** /account_api/delete_news_translation/{nid}/{locale} | 
@@ -159,7 +159,6 @@ Class | Method | HTTP request | Description
 *CommonAdminApi* | [**get_server_version**](docs/CommonAdminApi.md#get_server_version) | **GET** /common_api/server_version | Get server version.
 *CommonAdminApi* | [**get_software_update_status**](docs/CommonAdminApi.md#get_software_update_status) | **GET** /common_api/software_info | Get software version information from manager instance.
 *CommonAdminApi* | [**get_system_info**](docs/CommonAdminApi.md#get_system_info) | **GET** /common_api/system_info | Get system information from manager instance.
-*CommonAdminApi* | [**get_waiting_report_page**](docs/CommonAdminApi.md#get_waiting_report_page) | **GET** /common_api/waiting_report_page | 
 *CommonAdminApi* | [**post_admin_notification_settings**](docs/CommonAdminApi.md#post_admin_notification_settings) | **POST** /common_api/admin_notification_settings | Save admin notification settings.
 *CommonAdminApi* | [**post_admin_notification_subscriptions**](docs/CommonAdminApi.md#post_admin_notification_subscriptions) | **POST** /common_api/admin_notification_subscriptions | Save admin notification subscriptions.
 *CommonAdminApi* | [**post_bot_config**](docs/CommonAdminApi.md#post_bot_config) | **POST** /common_api/bot_config | Save bot config.
@@ -171,7 +170,8 @@ Class | Method | HTTP request | Description
 *CommonAdminApi* | [**post_get_ip_country_statistics**](docs/CommonAdminApi.md#post_get_ip_country_statistics) | **POST** /common_api/ip_country_statistics | Get IP country statistics.
 *CommonAdminApi* | [**post_get_perf_data**](docs/CommonAdminApi.md#post_get_perf_data) | **POST** /common_api/perf_data | Get performance data
 *CommonAdminApi* | [**post_get_report_iterator_page**](docs/CommonAdminApi.md#post_get_report_iterator_page) | **POST** /common_api/report_iterator_page | Get report iterator page.
-*CommonAdminApi* | [**post_process_report**](docs/CommonAdminApi.md#post_process_report) | **POST** /common_api/process_report | 
+*CommonAdminApi* | [**post_get_waiting_reports_page**](docs/CommonAdminApi.md#post_get_waiting_reports_page) | **POST** /common_api/waiting_reports_page | Get max 25 waiting reports from oldest to newest.
+*CommonAdminApi* | [**post_process_reports**](docs/CommonAdminApi.md#post_process_reports) | **POST** /common_api/process_reports | 
 *CommonAdminApi* | [**post_schedule_task**](docs/CommonAdminApi.md#post_schedule_task) | **POST** /common_api/schedule_task | Schedule task.
 *CommonAdminApi* | [**post_trigger_server_data_reset**](docs/CommonAdminApi.md#post_trigger_server_data_reset) | **POST** /common_api/trigger_server_data_reset | Trigger server data reset.
 *CommonAdminApi* | [**post_trigger_server_restart**](docs/CommonAdminApi.md#post_trigger_server_restart) | **POST** /common_api/trigger_server_restart | Trigger server restart.
@@ -313,6 +313,7 @@ Class | Method | HTTP request | Description
  - [ChatConfig](docs/ChatConfig.md)
  - [ChatEmailNotificationSettings](docs/ChatEmailNotificationSettings.md)
  - [ChatMessageReport](docs/ChatMessageReport.md)
+ - [ChatMessageReportData](docs/ChatMessageReportData.md)
  - [ChatPrivacySettings](docs/ChatPrivacySettings.md)
  - [CheckOnlineStatusConfig](docs/CheckOnlineStatusConfig.md)
  - [ClientConfig](docs/ClientConfig.md)
@@ -410,6 +411,7 @@ Class | Method | HTTP request | Description
  - [GetPushNotificationInfo](docs/GetPushNotificationInfo.md)
  - [GetReportList](docs/GetReportList.md)
  - [GetSentMessage](docs/GetSentMessage.md)
+ - [GetWaitingReportsPage](docs/GetWaitingReportsPage.md)
  - [ImageProcessingDynamicConfig](docs/ImageProcessingDynamicConfig.md)
  - [ImageProcessingWarnings](docs/ImageProcessingWarnings.md)
  - [InfoBanner](docs/InfoBanner.md)
@@ -508,6 +510,7 @@ Class | Method | HTTP request | Description
  - [PostVideoCallUrlResult](docs/PostVideoCallUrlResult.md)
  - [PredefinedBanner](docs/PredefinedBanner.md)
  - [ProcessReport](docs/ProcessReport.md)
+ - [ProcessReports](docs/ProcessReports.md)
  - [Profile](docs/Profile.md)
  - [ProfileAgeCounts](docs/ProfileAgeCounts.md)
  - [ProfileAgeRangeVerificationAdminInfo](docs/ProfileAgeRangeVerificationAdminInfo.md)
