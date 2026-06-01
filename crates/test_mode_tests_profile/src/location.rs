@@ -10,13 +10,7 @@ const LOCATION_LAT_LON_10: Location = Location {
 #[server_test]
 async fn location_updates_correctly(mut context: TestContext) -> TestResult {
     let mut account = context.new_account_in_initial_setup_state().await?;
-    assert_ne(
-        LOCATION_LAT_LON_10,
-        get_location(&account.account_api()).await?,
-    )?;
+    assert_ne(LOCATION_LAT_LON_10, get_location(&account.api()).await?)?;
     account.run(UpdateLocation(LOCATION_LAT_LON_10)).await?;
-    assert_eq(
-        LOCATION_LAT_LON_10,
-        get_location(&account.account_api()).await?,
-    )
+    assert_eq(LOCATION_LAT_LON_10, get_location(&account.api()).await?)
 }

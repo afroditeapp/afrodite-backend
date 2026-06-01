@@ -11,7 +11,7 @@ use test_mode_test_utils::prelude::*;
 #[server_test]
 async fn account_state_is_initial_setup_after_login(mut context: TestContext) -> TestResult {
     let account = context.new_account_in_initial_setup_state().await?;
-    let state = get_account_state(&account.account_api()).await?;
+    let state = get_account_state(&account.api()).await?;
     assert_eq(AccountState::InitialSetup, state.into())
 }
 
@@ -29,9 +29,9 @@ async fn initial_setup_successful(mut context: TestContext) -> TestResult {
         ])
         .await?;
 
-    post_complete_setup(&account.account_api()).await?;
+    post_complete_setup(&account.api()).await?;
     assert_eq(
         AccountState::Normal,
-        get_account_state(&account.account_api()).await?.into(),
+        get_account_state(&account.api()).await?.into(),
     )
 }

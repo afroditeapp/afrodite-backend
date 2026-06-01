@@ -26,7 +26,7 @@ fn set_spam_report_threshold_1(config: ServerConfigEditor) {
 
 async fn get_first_content_id(account: &Account) -> TestResult<ContentId> {
     let result = api_client::apis::media_api::get_profile_content_info(
-        &account.media_api(),
+        &account.api(),
         &account.account_id_string(),
         None,
         None,
@@ -44,8 +44,7 @@ async fn process_all_reports_as(context: &mut TestContext, valid: bool) -> TestR
     let admin = context.new_admin_and_moderate_initial_content().await?;
 
     let waiting_reports =
-        post_get_waiting_reports_page(&admin.account().account_api(), GetWaitingReportsPage::new())
-            .await?;
+        post_get_waiting_reports_page(&admin.account().api(), GetWaitingReportsPage::new()).await?;
     assert_ne(waiting_reports.values.len(), 0)?;
 
     let process_reports: Vec<ProcessReport> = waiting_reports
@@ -62,11 +61,7 @@ async fn process_all_reports_as(context: &mut TestContext, valid: bool) -> TestR
         })
         .collect();
 
-    post_process_reports(
-        &admin.account().account_api(),
-        ProcessReports::new(process_reports),
-    )
-    .await?;
+    post_process_reports(&admin.account().api(), ProcessReports::new(process_reports)).await?;
 
     Ok(())
 }
@@ -82,7 +77,7 @@ async fn simple_auto_ban_spam_reporters_test(
     let target_content_id = get_first_content_id(&target).await?;
 
     let report_result = post_profile_content_report(
-        &reporter.account_api(),
+        &reporter.api(),
         UpdateProfileContentReport::new(target_content_id, target.account_id()),
     )
     .await?;
@@ -90,7 +85,7 @@ async fn simple_auto_ban_spam_reporters_test(
 
     process_all_reports_as(&mut context, valid).await?;
 
-    let banned = get_account_state(&reporter.account_api())
+    let banned = get_account_state(&reporter.api())
         .await?
         .state
         .banned
@@ -123,15 +118,15 @@ async fn auto_ban_spam_reporters_threshold_1_valid_and_invalid_reports_do_not_ba
 
     let target_content_id = get_first_content_id(&target).await?;
     let report_result = post_profile_content_report(
-        &reporter.account_api(),
+        &reporter.api(),
         UpdateProfileContentReport::new(target_content_id, target.account_id()),
     )
     .await?;
     assert(!report_result.error.unwrap_or(false))?;
 
-    let target_profile = get_my_profile(&target.account_api()).await?;
+    let target_profile = get_my_profile(&target.api()).await?;
     let report_result = post_report_profile_name(
-        &reporter.account_api(),
+        &reporter.api(),
         UpdateProfileNameReport::new(
             target_profile.profile.name.unwrap_or_default(),
             target.account_id(),
@@ -143,8 +138,7 @@ async fn auto_ban_spam_reporters_threshold_1_valid_and_invalid_reports_do_not_ba
     let admin = context.new_admin_and_moderate_initial_content().await?;
 
     let waiting_reports =
-        post_get_waiting_reports_page(&admin.account().account_api(), GetWaitingReportsPage::new())
-            .await?;
+        post_get_waiting_reports_page(&admin.account().api(), GetWaitingReportsPage::new()).await?;
     assert_eq(waiting_reports.values.len(), 2)?;
 
     let mut process_reports: Vec<ProcessReport> = Vec::new();
@@ -174,13 +168,9 @@ async fn auto_ban_spam_reporters_threshold_1_valid_and_invalid_reports_do_not_ba
         ));
     }
 
-    post_process_reports(
-        &admin.account().account_api(),
-        ProcessReports::new(process_reports),
-    )
-    .await?;
+    post_process_reports(&admin.account().api(), ProcessReports::new(process_reports)).await?;
 
-    let banned = get_account_state(&reporter.account_api())
+    let banned = get_account_state(&reporter.api())
         .await?
         .state
         .banned
