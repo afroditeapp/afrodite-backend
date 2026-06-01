@@ -281,12 +281,12 @@ pub struct Admin {
 }
 
 impl Admin {
-    pub fn account(&self) -> &Account {
-        &self.account
+    pub fn api(&self) -> Arc<Configuration> {
+        self.account.api()
     }
 
-    pub fn account_mut(&mut self) -> &mut Account {
-        &mut self.account
+    pub fn account_id(&self) -> AccountId {
+        self.account.account_id()
     }
 
     pub async fn accept_pending_content_moderations_for_initial_images(

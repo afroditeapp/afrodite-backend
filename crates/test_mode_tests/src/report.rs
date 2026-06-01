@@ -44,7 +44,7 @@ async fn process_all_reports_as(context: &mut TestContext, valid: bool) -> TestR
     let admin = context.new_admin_and_moderate_initial_content().await?;
 
     let waiting_reports =
-        post_get_waiting_reports_page(&admin.account().api(), GetWaitingReportsPage::new()).await?;
+        post_get_waiting_reports_page(&admin.api(), GetWaitingReportsPage::new()).await?;
     assert_ne(waiting_reports.values.len(), 0)?;
 
     let process_reports: Vec<ProcessReport> = waiting_reports
@@ -61,7 +61,7 @@ async fn process_all_reports_as(context: &mut TestContext, valid: bool) -> TestR
         })
         .collect();
 
-    post_process_reports(&admin.account().api(), ProcessReports::new(process_reports)).await?;
+    post_process_reports(&admin.api(), ProcessReports::new(process_reports)).await?;
 
     Ok(())
 }
@@ -138,7 +138,7 @@ async fn auto_ban_spam_reporters_threshold_1_valid_and_invalid_reports_do_not_ba
     let admin = context.new_admin_and_moderate_initial_content().await?;
 
     let waiting_reports =
-        post_get_waiting_reports_page(&admin.account().api(), GetWaitingReportsPage::new()).await?;
+        post_get_waiting_reports_page(&admin.api(), GetWaitingReportsPage::new()).await?;
     assert_eq(waiting_reports.values.len(), 2)?;
 
     let mut process_reports: Vec<ProcessReport> = Vec::new();
@@ -168,7 +168,7 @@ async fn auto_ban_spam_reporters_threshold_1_valid_and_invalid_reports_do_not_ba
         ));
     }
 
-    post_process_reports(&admin.account().api(), ProcessReports::new(process_reports)).await?;
+    post_process_reports(&admin.api(), ProcessReports::new(process_reports)).await?;
 
     let banned = get_account_state(&reporter.api())
         .await?
