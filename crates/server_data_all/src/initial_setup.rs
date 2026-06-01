@@ -1,7 +1,7 @@
 use config::Config;
 use model::{
-    AccountIdInternal, AccountState, ContentIdInternal, EmailMessages, EventToClientInternal,
-    Permissions,
+    AccountIdInternal, AccountState, BotAccountType, ContentIdInternal, EmailMessages,
+    EventToClientInternal, Permissions,
 };
 use server_data::{
     DataError, cache::profile::UpdateLocationCacheState, db_manager::RouterDatabaseReadHandle,
@@ -83,6 +83,12 @@ pub async fn complete_initial_setup(
             } else {
                 None
             };
+
+            if enable_all_permissions.is_some() && cmds.read().common().is_bot(id).await? {
+                cmds.common()
+                    .set_bot_account_type_number(id, BotAccountType::Admin)
+                    .await?;
+            }
 
             cmds.account()
                 .update_syncable_account_data_for_completing_initial_setup(

@@ -74,9 +74,9 @@ pub const PATH_BOT_REGISTER: &str = "/account_api/bot_register";
 ///
 /// Available only from local bot API port.
 ///
-/// Registered account is by default user bot account. Changing the account to
-/// admin bot account can be done by changing email address of the account
-/// to `admin@example.com` when the account is in initial setup state.
+/// Registered account is by default a user bot account. Changing the account to
+/// an admin bot account is possible using server's admin access granting
+/// feature (check GrantAdminAccessConfig).
 #[utoipa::path(
     post,
     path = PATH_BOT_REGISTER,
