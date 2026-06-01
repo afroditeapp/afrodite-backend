@@ -38,6 +38,7 @@ impl TestRunner {
     }
 
     pub async fn run(self) {
+        test_mode_tests::call_this_to_make_sure_that_crate_is_linked();
         test_mode_tests_account::call_this_to_make_sure_that_crate_is_linked();
         test_mode_tests_profile::call_this_to_make_sure_that_crate_is_linked();
         test_mode_tests_media::call_this_to_make_sure_that_crate_is_linked();

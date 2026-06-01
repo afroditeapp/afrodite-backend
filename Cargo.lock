@@ -5835,6 +5835,7 @@ dependencies = [
  "simple_backend_utils",
  "test_mode_bot_runner",
  "test_mode_test_runner",
+ "test_mode_tests",
  "test_mode_tests_account",
  "test_mode_tests_media",
  "test_mode_tests_profile",
@@ -5934,6 +5935,13 @@ dependencies = [
 [[package]]
 name = "test_mode_tests"
 version = "0.0.0"
+dependencies = [
+ "api_client",
+ "config",
+ "inventory",
+ "simple_backend_utils",
+ "test_mode_test_utils",
+]
 
 [[package]]
 name = "test_mode_tests_account"

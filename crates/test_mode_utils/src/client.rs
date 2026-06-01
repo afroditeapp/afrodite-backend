@@ -54,6 +54,9 @@ pub enum TestError {
     #[error("Joining text to URL failed")]
     ApiUrlJoinError,
 
+    #[error("Invalid value")]
+    InvalidValue,
+
     #[error("Missing value")]
     MissingValue,
 

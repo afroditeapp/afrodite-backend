@@ -12,10 +12,10 @@ pub mod prelude;
 pub use test_mode_test_macro::server_test;
 pub use test_mode_utils::ServerConfigEditor;
 
-pub use crate::context::TestContext;
+pub use crate::context::{Account, Admin, TestContext};
 
 /// [server_test] requires this
-pub type TestResult = Result<(), ServerTestError>;
+pub type TestResult<T = ()> = Result<T, ServerTestError>;
 
 /// Function that modifies server config before the server starts.
 pub type ModifyConfigFn = fn(ServerConfigEditor);

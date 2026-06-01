@@ -6,3 +6,10 @@ edition = "2024"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+inventory = { workspace = true }
+
+config = { path = "../config" }
+simple_backend_utils = { path = "../simple_backend_utils" }
+
+api_client = { path = "../api_client" }
+test_mode_test_utils = { path = "../test_mode_test_utils" }
