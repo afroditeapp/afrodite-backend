@@ -148,9 +148,15 @@ pub struct ReportIteratorQueryInternal {
     pub mode: ReportIteratorMode,
 }
 
-#[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]
-pub struct GetWaitingReportsPage {
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub enum ReportQueueType {
+    Waiting,
+    ProcessedByAdminBot,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct GetReportQueuePage {
     /// Wanted report types. Empty list means all report types.
-    #[serde(default)]
     pub wanted_report_types: Vec<ReportType>,
+    pub queue_type: ReportQueueType,
 }

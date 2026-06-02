@@ -1,6 +1,8 @@
 use std::time::Duration;
 
-use model::{AdminNotification, NotificationEvent, PendingAppNotificationInternal};
+use model::{
+    AdminNotification, NotificationEvent, PendingAppNotificationInternal, ReportQueueType,
+};
 use model_media::{
     GetMediaContentPendingModerationParams, MediaContentType, ModerationQueueType,
     ProfileStringModerationContentType,
@@ -268,7 +270,7 @@ impl AdminNotificationManager {
             .read()
             .common_admin()
             .report()
-            .get_waiting_reports_page(&[])
+            .get_reports_page(&[], ReportQueueType::Waiting)
             .await
             .change_context(AdminNotificationError::DatabaseError)?
             .values;

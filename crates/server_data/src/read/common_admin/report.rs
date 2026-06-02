@@ -1,7 +1,7 @@
 use database::current::read::GetDbReadCommandsCommon;
 use model::{
-    GetChatMessageReportsInternal, GetReportList, ReportIteratorQueryInternal, ReportType,
-    ReportTypeInternal,
+    GetChatMessageReportsInternal, GetReportList, ReportIteratorQueryInternal, ReportQueueType,
+    ReportType, ReportTypeInternal,
 };
 use simple_backend_utils::IntoReportFromString;
 
@@ -11,9 +11,10 @@ define_cmd_wrapper_read!(ReadCommandsCommonAdminReport);
 
 impl ReadCommandsCommonAdminReport<'_> {
     /// Empty report type list disables report type filtering.
-    pub async fn get_waiting_reports_page(
+    pub async fn get_reports_page(
         &self,
         wanted_report_types: &[ReportType],
+        queue_type: ReportQueueType,
     ) -> Result<GetReportList, DataError> {
         let mut wanted_report_types_internal = Vec::with_capacity(wanted_report_types.len());
         for report_type in wanted_report_types {
@@ -26,7 +27,7 @@ impl ReadCommandsCommonAdminReport<'_> {
         self.db_read(move |mut cmds| {
             cmds.common_admin()
                 .report()
-                .get_waiting_reports_page(wanted_report_types_internal)
+                .get_reports_page(wanted_report_types_internal, queue_type)
         })
         .await
         .into_error()

@@ -5,7 +5,8 @@ use error_stack::Result;
 use model::{
     AccountId, AccountIdDb, GetChatMessageReportsInternal, GetReportList,
     ReportDetailedInfoInternal, ReportIdDb, ReportInternal, ReportIteratorMode,
-    ReportIteratorQueryInternal, ReportProcessingState, ReportTypeInternal, UnixTime,
+    ReportIteratorQueryInternal, ReportProcessingState, ReportQueueType, ReportTypeInternal,
+    UnixTime,
 };
 
 use crate::{
@@ -17,11 +18,12 @@ define_current_read_commands!(CurrentReadCommonAdminReport);
 
 impl CurrentReadCommonAdminReport<'_> {
     /// Empty report type list disables report type filtering.
-    pub fn get_waiting_reports_page(
+    pub fn get_reports_page(
         &mut self,
         wanted_report_types: Vec<ReportTypeInternal>,
+        queue_type: ReportQueueType,
     ) -> Result<GetReportList, DieselDatabaseError> {
-        let reports = self.get_waiting_reports_page_internal(wanted_report_types)?;
+        let reports = self.get_reports_page_internal(wanted_report_types, queue_type)?;
 
         let mut page = vec![];
 
@@ -39,9 +41,10 @@ impl CurrentReadCommonAdminReport<'_> {
         })
     }
 
-    fn get_waiting_reports_page_internal(
+    fn get_reports_page_internal(
         &mut self,
         wanted_report_types: Vec<ReportTypeInternal>,
+        queue_type: ReportQueueType,
     ) -> Result<Vec<ReportInternal>, DieselDatabaseError> {
         use crate::schema::{account_id, common_report::dsl::*};
 
@@ -51,18 +54,29 @@ impl CurrentReadCommonAdminReport<'_> {
 
         let all_types = wanted_report_types.is_empty();
 
+        let states = match queue_type {
+            ReportQueueType::Waiting => [ReportProcessingState::Waiting].as_slice(),
+            ReportQueueType::ProcessedByAdminBot => [
+                ReportProcessingState::ValidByAdminBot,
+                ReportProcessingState::InvalidByAdminBot,
+            ]
+            .as_slice(),
+        };
+
+        #[allow(clippy::type_complexity)]
         let values: Vec<(
             AccountId,
             AccountIdDb,
             AccountId,
             AccountIdDb,
             ReportIdDb,
+            ReportProcessingState,
             ReportTypeInternal,
             UnixTime,
         )> = common_report
             .inner_join(creator_aid.on(creator_account_id.eq(creator_aid.field(account_id::id))))
             .inner_join(target_aid.on(target_account_id.eq(target_aid.field(account_id::id))))
-            .filter(processing_state.eq(ReportProcessingState::Waiting))
+            .filter(processing_state.eq_any(states))
             .filter(
                 all_types
                     .as_sql::<Bool>()
@@ -74,6 +88,7 @@ impl CurrentReadCommonAdminReport<'_> {
                 target_aid.field(account_id::uuid),
                 target_account_id,
                 id,
+                processing_state,
                 report_type_number,
                 creation_unix_time,
             ))
@@ -91,6 +106,7 @@ impl CurrentReadCommonAdminReport<'_> {
                     target,
                     target_db_id,
                     report_id,
+                    report_state,
                     report_type,
                     creation_time,
                 )| {
@@ -98,7 +114,7 @@ impl CurrentReadCommonAdminReport<'_> {
                         info: ReportDetailedInfoInternal {
                             creator,
                             target,
-                            processing_state: ReportProcessingState::Waiting,
+                            processing_state: report_state,
                             report_type,
                             creation_time,
                         },
