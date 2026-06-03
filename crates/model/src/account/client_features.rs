@@ -340,6 +340,30 @@ pub struct AgeVerificationMethodsConfig {
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
+pub struct AccountVerificationPlatforms {
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub android: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub ios: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub web: bool,
+}
+
+impl AccountVerificationPlatforms {
+    pub fn is_enabled_for(&self, client_type: crate::ClientType) -> bool {
+        match client_type {
+            crate::ClientType::Android => self.android,
+            crate::ClientType::Ios => self.ios,
+            crate::ClientType::Web => self.web,
+            crate::ClientType::Bot => false,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
 pub struct AccountVerificationConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub methods: Option<AccountVerificationMethodsConfig>,
@@ -349,25 +373,25 @@ pub struct AccountVerificationConfig {
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
 pub struct AccountVerificationMethodsConfig {
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub debug: bool,
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub eudi: bool,
+    #[serde(default)]
+    #[schema(default)]
+    pub debug: AccountVerificationPlatforms,
+    #[serde(default)]
+    #[schema(default)]
+    pub eudi: AccountVerificationPlatforms,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
 pub struct AccountVerificationScopesConfig {
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub security_content: bool,
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub profile_age_range: bool,
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub profile_name: bool,
+    #[serde(default)]
+    #[schema(default)]
+    pub security_content: AccountVerificationPlatforms,
+    #[serde(default)]
+    #[schema(default)]
+    pub profile_age_range: AccountVerificationPlatforms,
+    #[serde(default)]
+    #[schema(default)]
+    pub profile_name: AccountVerificationPlatforms,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]

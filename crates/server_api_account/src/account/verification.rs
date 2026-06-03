@@ -1,7 +1,7 @@
 use axum::{Extension, extract::State};
 use model::{
     AccountIdInternal, AccountVerificationScope, AdminBotNotificationTypes, AgeVerificationMethod,
-    EventToClientInternal, VerificationMethod,
+    ClientType, EventToClientInternal, VerificationMethod,
 };
 use model_account::{
     AccountVerificationQueueStatus, PostAccountVerificationQueueItem,
@@ -28,6 +28,7 @@ fn is_account_verification_scope_empty(scope: &AccountVerificationScope) -> bool
 fn validate_account_verification_queue_item(
     data: &PostAccountVerificationQueueItem,
     state: &S,
+    client_type: ClientType,
 ) -> bool {
     let config = &state
         .config()
@@ -37,23 +38,27 @@ fn validate_account_verification_queue_item(
     let scopes = config.scopes.clone().unwrap_or_default();
 
     let method_allowed = match data.verification_method {
-        VerificationMethod::Debug => methods.debug,
-        VerificationMethod::Eudi => methods.eudi,
+        VerificationMethod::Debug => methods.debug.is_enabled_for(client_type),
+        VerificationMethod::Eudi => methods.eudi.is_enabled_for(client_type),
     };
 
     if !method_allowed || is_account_verification_scope_empty(&data.verification_scope) {
         return false;
     }
 
-    if data.verification_scope.security_content && !scopes.security_content {
+    if data.verification_scope.security_content
+        && !scopes.security_content.is_enabled_for(client_type)
+    {
         return false;
     }
 
-    if data.verification_scope.profile_age_range && !scopes.profile_age_range {
+    if data.verification_scope.profile_age_range
+        && !scopes.profile_age_range.is_enabled_for(client_type)
+    {
         return false;
     }
 
-    if data.verification_scope.profile_name && !scopes.profile_name {
+    if data.verification_scope.profile_name && !scopes.profile_name.is_enabled_for(client_type) {
         return false;
     }
 
@@ -136,7 +141,17 @@ pub async fn post_account_verification_queue_item(
         );
     }
 
-    if !validate_account_verification_queue_item(&data, &state) {
+    let Some(client_type) = state
+        .read()
+        .common()
+        .client_config()
+        .client_login_session_platform(api_caller_account_id)
+        .await?
+    else {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    };
+
+    if !validate_account_verification_queue_item(&data, &state, client_type) {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
