@@ -146,6 +146,33 @@ impl SignInWithInfoTrait for AppleAccountInfo {
     }
 }
 
+async fn validate_login_platform(state: &S, client_type: ClientType) -> Result<(), LoginResult> {
+    let config = state
+        .dynamic_server_config_manager()
+        .dynamic_server_config()
+        .await
+        .unwrap_or_default()
+        .account_login_platforms;
+
+    let enabled = match client_type {
+        ClientType::Android => config.android,
+        ClientType::Ios => config.ios,
+        ClientType::Web => config.web,
+        ClientType::Bot => false,
+    };
+
+    if enabled {
+        return Ok(());
+    }
+
+    let any_enabled = config.android || config.ios || config.web;
+    if any_enabled {
+        Err(LoginResult::error_login_platform_disabled())
+    } else {
+        Err(LoginResult::error_login_all_platforms_disabled())
+    }
+}
+
 /// Start new session with sign in with Apple or Google.
 ///
 /// Registers new account if it does not exist, when registration is enabled
@@ -171,6 +198,10 @@ pub async fn post_sign_in_with_login(
         && !min_version.received_version_is_accepted(tokens.client_info.client_version)
     {
         return Ok(LoginResult::error_unsupported_client().into());
+    }
+
+    if let Err(error) = validate_login_platform(&state, tokens.client_info.client_type).await {
+        return Ok(error.into());
     }
 
     let r = if let Some(apple) = tokens.apple {
@@ -444,6 +475,10 @@ async fn post_email_login_with_token_impl(
         && !min_version.received_version_is_accepted(request.client_info.client_version)
     {
         return Ok(LoginResult::error_unsupported_client().into());
+    }
+
+    if let Err(error) = validate_login_platform(&state, request.client_info.client_type).await {
+        return Ok(error.into());
     }
 
     let Ok(client_token) = request.client_token.bytes() else {
