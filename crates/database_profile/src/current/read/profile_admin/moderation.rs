@@ -1,74 +1,55 @@
-use database::{
-    DieselDatabaseError, IntoDatabaseError, current::read::GetDbReadCommandsCommon,
-    define_current_read_commands,
-};
+use database::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
 use error_stack::Result;
 use model_profile::{
-    AccountIdInternal, GetProfileStringPendingModerationList,
-    GetProfileStringPendingModerationParams, ProfileStringModerationContentType,
-    ProfileStringModerationState, ProfileStringPendingModeration,
+    ProfileStringModerationContentType, ProfileStringModerationQueuePage,
+    ProfileStringModerationQueueType, ProfileStringModerationState, ProfileStringPendingModeration,
 };
 
 define_current_read_commands!(CurrentReadProfileModeration);
 
 impl CurrentReadProfileModeration<'_> {
-    pub fn profile_string_pending_moderation_list_using_moderator_id(
+    pub fn profile_string_moderation_page(
         &mut self,
-        moderator_id: AccountIdInternal,
-        params: GetProfileStringPendingModerationParams,
-    ) -> Result<GetProfileStringPendingModerationList, DieselDatabaseError> {
-        let is_bot = self
-            .read()
-            .common()
-            .state()
-            .other_shared_state(moderator_id)?
-            .is_bot();
-        self.profile_string_pending_moderation_list(is_bot, params)
-    }
-
-    pub fn profile_string_pending_moderation_list(
-        &mut self,
-        is_bot: bool,
-        params: GetProfileStringPendingModerationParams,
-    ) -> Result<GetProfileStringPendingModerationList, DieselDatabaseError> {
+        content_type: ProfileStringModerationContentType,
+        queue_type: ProfileStringModerationQueueType,
+    ) -> Result<ProfileStringModerationQueuePage, DieselDatabaseError> {
         use crate::schema::{account_id, profile, profile_moderation};
 
         const LIMIT: i64 = 25;
 
-        let is_bot =
-            diesel::expression::AsExpression::<diesel::sql_types::Bool>::as_expression(is_bot);
-        let is_not_bot = is_bot.eq(false);
+        let states = match queue_type {
+            ProfileStringModerationQueueType::WaitingAdminBot => {
+                [ProfileStringModerationState::WaitingAdminBot].as_slice()
+            }
+            ProfileStringModerationQueueType::WaitingAdmin => {
+                [ProfileStringModerationState::WaitingAdmin].as_slice()
+            }
+            ProfileStringModerationQueueType::ProcessedByAdminBot => [
+                ProfileStringModerationState::AcceptedByAdminBot,
+                ProfileStringModerationState::RejectedByAdminBot,
+            ]
+            .as_slice(),
+        };
 
-        let show_bot_moderations =
-            diesel::expression::AsExpression::<diesel::sql_types::Bool>::as_expression(
-                params.show_values_which_bots_can_moderate,
-            );
+        if states.is_empty() {
+            return Ok(ProfileStringModerationQueuePage { values: vec![] });
+        }
 
         let query = profile::table
             .inner_join(account_id::table)
             .inner_join(
                 profile_moderation::table.on(profile_moderation::account_id.eq(account_id::id)),
             )
-            .filter(profile_moderation::content_type.eq(params.content_type))
-            .filter(
-                show_bot_moderations
-                    .and(
-                        profile_moderation::state_type
-                            .eq(ProfileStringModerationState::WaitingAdminBot),
-                    )
-                    .or(is_not_bot.and(
-                        profile_moderation::state_type
-                            .eq(ProfileStringModerationState::WaitingAdmin),
-                    )),
-            )
+            .filter(profile_moderation::content_type.eq(content_type))
+            .filter(profile_moderation::state_type.eq_any(states))
             .order((
                 profile_moderation::created_unix_time.asc(),
                 account_id::id.asc(),
             ))
             .limit(LIMIT);
 
-        let values = match params.content_type {
+        let values = match content_type {
             ProfileStringModerationContentType::ProfileName => query
                 .filter(profile::profile_name.is_not_null())
                 .select((
@@ -90,6 +71,6 @@ impl CurrentReadProfileModeration<'_> {
         }
         .into_db_error(())?;
 
-        Ok(GetProfileStringPendingModerationList { values })
+        Ok(ProfileStringModerationQueuePage { values })
     }
 }

@@ -7,7 +7,7 @@ use model_media::{
     GetMediaContentPendingModerationParams, MediaContentType, ModerationQueueType,
     ProfileStringModerationContentType,
 };
-use model_profile::GetProfileStringPendingModerationParams;
+use model_profile::ProfileStringModerationQueueType;
 use server_api::{
     app::{EventManagerProvider, WriteData},
     db_write_raw,
@@ -251,11 +251,12 @@ impl AdminNotificationManager {
             .read()
             .profile_admin()
             .moderation()
-            .profile_string_pending_moderation_list(
-                is_bot,
-                GetProfileStringPendingModerationParams {
-                    content_type,
-                    show_values_which_bots_can_moderate: is_bot,
+            .profile_string_moderation_page(
+                content_type,
+                if is_bot {
+                    ProfileStringModerationQueueType::WaitingAdminBot
+                } else {
+                    ProfileStringModerationQueueType::WaitingAdmin
                 },
             )
             .await

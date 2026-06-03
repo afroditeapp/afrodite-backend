@@ -4,9 +4,9 @@ use axum::{
 };
 use model::{AccountId, AdminNotificationTypes, NotificationEvent, PendingAppNotificationInternal};
 use model_profile::{
-    AccountIdInternal, EventToClientInternal, GetProfileStringPendingModerationList,
-    GetProfileStringPendingModerationParams, GetProfileStringState, GetProfileStringStateParams,
-    Permissions, PostModerateProfileString, ProfileStringModerationContentType,
+    AccountIdInternal, EventToClientInternal, GetProfileStringModerationQueuePageParams,
+    GetProfileStringState, GetProfileStringStateParams, Permissions, PostModerateProfileString,
+    ProfileStringModerationContentType, ProfileStringModerationQueuePage,
 };
 use server_api::{
     S,
@@ -25,21 +25,22 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-const PATH_GET_PROFILE_STRING_PENDING_MODERATION_LIST: &str =
-    "/profile_api/profile_string_pending_moderation";
+const PATH_GET_PROFILE_STRING_MODERATION_QUEUE_PAGE: &str =
+    "/profile_api/profile_string_moderation_queue_page";
 
-/// Get first page of pending profile string moderations. Oldest item is first and count 25.
+/// Get the first page from profile string moderation queue.
+/// The first item is the oldest item and max 25 items are returned.
 ///
 /// # Access
 /// * [Permissions::admin_moderate_profile_names] or
 ///   [Permissions::admin_moderate_profile_texts] depending
-///   on [GetProfilePendingModerationParams::content_type].
+///   on [GetProfileStringModerationQueuePageParams::content_type].
 #[utoipa::path(
     get,
-    path = PATH_GET_PROFILE_STRING_PENDING_MODERATION_LIST,
-    params(GetProfileStringPendingModerationParams),
+    path = PATH_GET_PROFILE_STRING_MODERATION_QUEUE_PAGE,
+    params(GetProfileStringModerationQueuePageParams),
     responses(
-        (status = 200, description = "Successful", body = GetProfileStringPendingModerationList),
+        (status = 200, description = "Successful", body = ProfileStringModerationQueuePage),
         (status = 401, description = "Unauthorized"),
         (
             status = 500,
@@ -48,13 +49,12 @@ const PATH_GET_PROFILE_STRING_PENDING_MODERATION_LIST: &str =
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_profile_string_pending_moderation_list(
+pub async fn get_profile_string_moderation_queue_page(
     State(state): State<S>,
-    Extension(moderator_id): Extension<AccountIdInternal>,
     Extension(permissions): Extension<Permissions>,
-    Query(params): Query<GetProfileStringPendingModerationParams>,
-) -> Result<Json<GetProfileStringPendingModerationList>, StatusCode> {
-    PROFILE.get_profile_string_pending_moderation_list.incr();
+    Query(params): Query<GetProfileStringModerationQueuePageParams>,
+) -> Result<Json<ProfileStringModerationQueuePage>, StatusCode> {
+    PROFILE.get_profile_string_moderation_queue_page.incr();
 
     match params.content_type {
         ProfileStringModerationContentType::ProfileName => {
@@ -73,7 +73,7 @@ pub async fn get_profile_string_pending_moderation_list(
         .read()
         .profile_admin()
         .moderation()
-        .profile_string_pending_moderation_list_using_moderator_id(moderator_id, params)
+        .profile_string_moderation_page(params.content_type, params.queue_type)
         .await?;
 
     Ok(r.into())
@@ -260,7 +260,7 @@ pub async fn get_profile_string_state(
 
 create_open_api_router!(
         fn router_admin_moderation,
-        get_profile_string_pending_moderation_list,
+        get_profile_string_moderation_queue_page,
         post_moderate_profile_string,
         get_profile_string_state,
 );
@@ -269,7 +269,7 @@ create_counters!(
     ProfileCounters,
     PROFILE,
     PROFILE_ADMIN_MODERATION_COUNTERS_LIST,
-    get_profile_string_pending_moderation_list,
+    get_profile_string_moderation_queue_page,
     post_moderate_profile_string,
     get_profile_string_state,
 );

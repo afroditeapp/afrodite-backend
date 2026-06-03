@@ -10,14 +10,21 @@ use crate::{
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct GetProfileStringPendingModerationList {
+pub struct ProfileStringModerationQueuePage {
     pub values: Vec<ProfileStringPendingModeration>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub enum ProfileStringModerationQueueType {
+    WaitingAdminBot,
+    WaitingAdmin,
+    ProcessedByAdminBot,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, IntoParams)]
-pub struct GetProfileStringPendingModerationParams {
+pub struct GetProfileStringModerationQueuePageParams {
     pub content_type: ProfileStringModerationContentType,
-    pub show_values_which_bots_can_moderate: bool,
+    pub queue_type: ProfileStringModerationQueueType,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema, Queryable)]
