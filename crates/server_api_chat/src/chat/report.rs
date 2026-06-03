@@ -2,7 +2,7 @@ use axum::{Extension, extract::State};
 use base64::Engine;
 use model::{AdminNotificationTypes, UpdateReportResult};
 use model_chat::{
-    AccountIdInternal, NewChatMessageReportInternal, SignedMessageData, UpdateChatMessageReport,
+    AccountIdInternal, NewChatMessageReportInternal, SignedMessageData, UpdateChatMessageReports,
 };
 use server_api::{
     S,
@@ -18,7 +18,7 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-const PATH_POST_CHAT_MESSAGE_REPORT: &str = "/chat_api/chat_message_report";
+const PATH_POST_CHAT_MESSAGE_REPORTS: &str = "/chat_api/chat_message_reports";
 const MAX_REPORTED_MESSAGES_PER_REQUEST: usize = 10;
 
 /// Report chat message.
@@ -27,8 +27,8 @@ const MAX_REPORTED_MESSAGES_PER_REQUEST: usize = 10;
 /// Supports reporting at most 10 messages per request.
 #[utoipa::path(
     post,
-    path = PATH_POST_CHAT_MESSAGE_REPORT,
-    request_body = UpdateChatMessageReport,
+    path = PATH_POST_CHAT_MESSAGE_REPORTS,
+    request_body = UpdateChatMessageReports,
     responses(
         (status = 200, description = "Successfull.", body = UpdateReportResult),
         (status = 400, description = "Invalid request."),
@@ -38,12 +38,12 @@ const MAX_REPORTED_MESSAGES_PER_REQUEST: usize = 10;
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_chat_message_report(
+pub async fn post_chat_message_reports(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
-    Json(update): Json<UpdateChatMessageReport>,
+    Json(update): Json<UpdateChatMessageReports>,
 ) -> Result<Json<UpdateReportResult>, StatusCode> {
-    CHAT.post_chat_message_report.incr();
+    CHAT.post_chat_message_reports.incr();
     state.api_limits(account_id).common().send_report().await?;
 
     if update.messages.is_empty() || update.messages.len() > MAX_REPORTED_MESSAGES_PER_REQUEST {
@@ -108,12 +108,12 @@ pub async fn post_chat_message_report(
 
 create_open_api_router!(
         fn router_chat_report,
-        post_chat_message_report,
+        post_chat_message_reports,
 );
 
 create_counters!(
     ChatCounters,
     CHAT,
     CHAT_REPORT_COUNTERS_LIST,
-    post_chat_message_report,
+    post_chat_message_reports,
 );

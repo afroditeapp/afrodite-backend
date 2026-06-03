@@ -11,7 +11,7 @@ pub struct ChatMessageReportData {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct UpdateChatMessageReport {
+pub struct UpdateChatMessageReports {
     pub target: AccountId,
     pub messages: Vec<ChatMessageReportData>,
 }
