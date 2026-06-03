@@ -6,7 +6,9 @@ use model::{
     ClientMessageForDataAllCrate, EditVerificationValues, EmailMessages, UnixTime,
     VerificationMethod,
 };
-use model_account::{AccountBanReasonCategory, EmailAddress, SignInWithInfo};
+use model_account::{
+    AccountBanReasonCategory, AccountBanReasonDetails, EmailAddress, SignInWithInfo,
+};
 use server_common::websocket::WebSocketError;
 use server_data::{
     DataError, app::DataAllUtils, data_export::DataExportCmd, data_reset::BACKEND_DATA_RESET_STATE,
@@ -16,6 +18,7 @@ use server_data::{
 use server_data_account::write::{GetWriteCommandsAccount, account_admin::SetAccountBanStateMode};
 use server_data_chat::read::GetReadChatCommands;
 use simple_backend::manager_client::ManagerApiClient;
+use simple_backend_model::NonEmptyString;
 
 use crate::{register::RegisterAccount, unlimited_likes::UnlimitedLikesUpdate};
 
@@ -247,7 +250,11 @@ impl DataAllUtils for DataAllUtilsImpl {
                                 SetAccountBanStateMode::AutoBan {
                                     banned_until,
                                     reason_category: Some(AccountBanReasonCategory::REPORT_SPAM),
-                                    reason_details: None,
+                                    reason_details: Some(AccountBanReasonDetails::new(
+                                        NonEmptyString::from_string(
+                                            "Too many reports were marked as spam by bot or human admin. If you think the reports were valid, contact app support.".to_string()
+                                        ).unwrap(),
+                                    )),
                                 },
                             )
                             .await?;

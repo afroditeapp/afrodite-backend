@@ -40,3 +40,4 @@ database_media = { path = "../database_media" }
 database_chat = { path = "../database_chat" }
 
 simple_backend = { path = "../simple_backend" }
+simple_backend_model = { path = "../simple_backend_model" }
