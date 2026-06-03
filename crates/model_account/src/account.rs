@@ -74,7 +74,11 @@ pub struct LoginResult {
 
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
-    error_account_registration_disabled: bool,
+    error_registration_platform_disabled: bool,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_registration_all_platforms_disabled: bool,
 
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
@@ -135,10 +139,18 @@ impl LoginResult {
         }
     }
 
-    pub fn error_account_registration_disabled() -> Self {
+    pub fn error_registration_platform_disabled() -> Self {
         Self {
             error: true,
-            error_account_registration_disabled: true,
+            error_registration_platform_disabled: true,
+            ..Default::default()
+        }
+    }
+
+    pub fn error_registration_all_platforms_disabled() -> Self {
+        Self {
+            error: true,
+            error_registration_all_platforms_disabled: true,
             ..Default::default()
         }
     }

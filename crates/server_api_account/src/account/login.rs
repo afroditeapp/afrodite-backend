@@ -146,6 +146,36 @@ impl SignInWithInfoTrait for AppleAccountInfo {
     }
 }
 
+async fn validate_registration_platform(
+    state: &S,
+    client_type: ClientType,
+) -> Result<(), LoginResult> {
+    let config = state
+        .dynamic_server_config_manager()
+        .dynamic_server_config()
+        .await
+        .unwrap_or_default()
+        .account_registration_platforms;
+
+    let enabled = match client_type {
+        ClientType::Android => config.android,
+        ClientType::Ios => config.ios,
+        ClientType::Web => config.web,
+        ClientType::Bot => false,
+    };
+
+    if enabled {
+        return Ok(());
+    }
+
+    let any_enabled = config.android || config.ios || config.web;
+    if any_enabled {
+        Err(LoginResult::error_registration_platform_disabled())
+    } else {
+        Err(LoginResult::error_registration_all_platforms_disabled())
+    }
+}
+
 async fn validate_login_platform(state: &S, client_type: ClientType) -> Result<(), LoginResult> {
     let config = state
         .dynamic_server_config_manager()
@@ -255,22 +285,8 @@ async fn handle_sign_in_with_info(
     if let Some(already_existing_account) = already_existing_account {
         login_impl(already_existing_account.as_id(), address, state).await
     } else {
-        let config = state
-            .dynamic_server_config_manager()
-            .dynamic_server_config()
-            .await
-            .unwrap_or_default()
-            .account_registration_platforms;
-
-        let registration_enabled = match client_type {
-            ClientType::Android => config.android,
-            ClientType::Ios => config.ios,
-            ClientType::Web => config.web,
-            ClientType::Bot => false,
-        };
-
-        if !registration_enabled {
-            return Ok(LoginResult::error_account_registration_disabled());
+        if let Err(error) = validate_registration_platform(state, client_type).await {
+            return Ok(error);
         }
 
         let email: EmailAddress = info
