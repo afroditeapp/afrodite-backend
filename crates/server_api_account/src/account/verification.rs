@@ -211,6 +211,16 @@ pub async fn post_age_verification(
         return Ok(PostAgeVerificationResult::error_age_already_verified().into());
     }
 
+    let Some(client_type) = state
+        .read()
+        .common()
+        .client_config()
+        .client_login_session_platform(api_caller_account_id)
+        .await?
+    else {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    };
+
     let methods = state
         .config()
         .client_features_internal()
@@ -220,13 +230,13 @@ pub async fn post_age_verification(
         .unwrap_or_default();
     let age_18_or_older = match data.verification_method {
         AgeVerificationMethod::Debug => {
-            if !methods.debug {
+            if !methods.debug.is_enabled_for(client_type) {
                 return Err(StatusCode::INTERNAL_SERVER_ERROR);
             }
             true
         }
         AgeVerificationMethod::Eudi => {
-            if !methods.eudi {
+            if !methods.eudi.is_enabled_for(client_type) {
                 return Err(StatusCode::INTERNAL_SERVER_ERROR);
             }
             // TODO: Implement

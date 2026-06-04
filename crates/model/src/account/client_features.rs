@@ -318,25 +318,49 @@ pub struct FirstImageConfig {
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
+pub struct AgeVerificationPlatforms {
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub android: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub ios: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub web: bool,
+}
+
+impl AgeVerificationPlatforms {
+    pub fn is_enabled_for(&self, client_type: crate::ClientType) -> bool {
+        match client_type {
+            crate::ClientType::Android => self.android,
+            crate::ClientType::Ios => self.ios,
+            crate::ClientType::Web => self.web,
+            crate::ClientType::Bot => false,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
 pub struct AgeVerificationConfig {
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    verify_during_initial_setup: bool,
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    required: bool,
+    #[serde(default)]
+    #[schema(default)]
+    verify_during_initial_setup: AgeVerificationPlatforms,
+    #[serde(default)]
+    #[schema(default)]
+    required: AgeVerificationPlatforms,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub methods: Option<AgeVerificationMethodsConfig>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
 pub struct AgeVerificationMethodsConfig {
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub debug: bool,
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub eudi: bool,
+    #[serde(default)]
+    #[schema(default)]
+    pub debug: AgeVerificationPlatforms,
+    #[serde(default)]
+    #[schema(default)]
+    pub eudi: AgeVerificationPlatforms,
 }
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
