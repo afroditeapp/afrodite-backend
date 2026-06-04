@@ -4,7 +4,7 @@ use model::{
     AdminNotification, NotificationEvent, PendingAppNotificationInternal, ReportQueueType,
 };
 use model_media::{
-    GetMediaContentPendingModerationParams, MediaContentType, ModerationQueueType,
+    MediaContentModerationQueueType, MediaContentModerationType, MediaContentType,
     ProfileStringModerationContentType,
 };
 use model_profile::ProfileStringModerationQueueType;
@@ -120,13 +120,17 @@ impl AdminNotificationManager {
         // Check all categories, so that every notification contains full info
         let notification = AdminNotification {
             moderate_initial_media_content_bot: self
-                .is_initial_content_moderation_needed(true)
+                .is_content_moderation_needed(true, MediaContentModerationType::Initial)
                 .await?,
             moderate_initial_media_content_human: self
-                .is_initial_content_moderation_needed(false)
+                .is_content_moderation_needed(false, MediaContentModerationType::Initial)
                 .await?,
-            moderate_media_content_bot: self.is_content_moderation_needed(true).await?,
-            moderate_media_content_human: self.is_content_moderation_needed(false).await?,
+            moderate_media_content_bot: self
+                .is_content_moderation_needed(true, MediaContentModerationType::Normal)
+                .await?,
+            moderate_media_content_human: self
+                .is_content_moderation_needed(false, MediaContentModerationType::Normal)
+                .await?,
             moderate_profile_texts_bot: self
                 .is_profile_string_moderation_needed(
                     ProfileStringModerationContentType::ProfileText,
@@ -197,42 +201,22 @@ impl AdminNotificationManager {
         Ok(())
     }
 
-    async fn is_initial_content_moderation_needed(
-        &self,
-        is_bot: bool,
-    ) -> Result<bool, AdminNotificationError> {
-        let values = self
-            .state
-            .read()
-            .media_admin()
-            .profile_content_pending_moderation_list(
-                is_bot,
-                GetMediaContentPendingModerationParams {
-                    content_type: MediaContentType::JpegImage,
-                    queue: ModerationQueueType::InitialMediaModeration,
-                    show_content_which_bots_can_moderate: is_bot,
-                },
-            )
-            .await
-            .change_context(AdminNotificationError::DatabaseError)?
-            .values;
-        Ok(!values.is_empty())
-    }
-
     async fn is_content_moderation_needed(
         &self,
         is_bot: bool,
+        moderation_type: MediaContentModerationType,
     ) -> Result<bool, AdminNotificationError> {
         let values = self
             .state
             .read()
             .media_admin()
-            .profile_content_pending_moderation_list(
-                is_bot,
-                GetMediaContentPendingModerationParams {
-                    content_type: MediaContentType::JpegImage,
-                    queue: ModerationQueueType::MediaModeration,
-                    show_content_which_bots_can_moderate: is_bot,
+            .media_content_moderation_queue_page(
+                MediaContentType::JpegImage,
+                moderation_type,
+                if is_bot {
+                    MediaContentModerationQueueType::WaitingAdminBot
+                } else {
+                    MediaContentModerationQueueType::WaitingAdmin
                 },
             )
             .await

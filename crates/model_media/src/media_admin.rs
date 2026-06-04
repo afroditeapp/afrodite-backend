@@ -9,20 +9,27 @@ use crate::{
 };
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema)]
-pub enum ModerationQueueType {
-    MediaModeration,
-    InitialMediaModeration,
+pub enum MediaContentModerationType {
+    Normal,
+    Initial,
+}
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema)]
+pub enum MediaContentModerationQueueType {
+    WaitingAdminBot,
+    WaitingAdmin,
+    ProcessedByAdminBot,
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
-pub struct GetMediaContentPendingModerationParams {
+pub struct GetMediaContentModerationQueuePageParams {
     pub content_type: MediaContentType,
-    pub queue: ModerationQueueType,
-    pub show_content_which_bots_can_moderate: bool,
+    pub moderation_type: MediaContentModerationType,
+    pub queue_type: MediaContentModerationQueueType,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-pub struct GetMediaContentPendingModerationList {
+pub struct MediaContentModerationQueuePage {
     pub values: Vec<MediaContentPendingModeration>,
 }
 

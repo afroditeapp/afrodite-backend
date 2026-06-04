@@ -4,8 +4,8 @@ use axum::{
 };
 use model::{AdminNotificationTypes, NotificationEvent, PendingAppNotificationInternal};
 use model_media::{
-    AccountIdInternal, EventToClientInternal, GetMediaContentPendingModerationList,
-    GetMediaContentPendingModerationParams, Permissions, PostModerateMediaContent,
+    AccountIdInternal, EventToClientInternal, GetMediaContentModerationQueuePageParams,
+    MediaContentModerationQueuePage, Permissions, PostModerateMediaContent,
 };
 use server_api::{
     S,
@@ -25,16 +25,17 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-const PATH_GET_MEDIA_CONTENT_PENDING_MODERATION_LIST: &str =
-    "/media_api/media_content_pending_moderation";
+const PATH_GET_MEDIA_CONTENT_MODERATION_QUEUE_PAGE: &str =
+    "/media_api/media_content_moderation_queue_page";
 
-/// Get first page of pending media content moderations. Oldest item is first and count 25.
+/// Get the first page from media content moderation queue.
+/// The first item is the oldest item and max 25 items are returned.
 #[utoipa::path(
     get,
-    path = PATH_GET_MEDIA_CONTENT_PENDING_MODERATION_LIST,
-    params(GetMediaContentPendingModerationParams),
+    path = PATH_GET_MEDIA_CONTENT_MODERATION_QUEUE_PAGE,
+    params(GetMediaContentModerationQueuePageParams),
     responses(
-        (status = 200, description = "Successful", body = GetMediaContentPendingModerationList),
+        (status = 200, description = "Successful", body = MediaContentModerationQueuePage),
         (status = 401, description = "Unauthorized"),
         (
             status = 500,
@@ -43,13 +44,12 @@ const PATH_GET_MEDIA_CONTENT_PENDING_MODERATION_LIST: &str =
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_media_content_pending_moderation_list(
+pub async fn get_media_content_moderation_queue_page(
     State(state): State<S>,
-    Extension(moderator_id): Extension<AccountIdInternal>,
     Extension(permissions): Extension<Permissions>,
-    Query(params): Query<GetMediaContentPendingModerationParams>,
-) -> Result<Json<GetMediaContentPendingModerationList>, StatusCode> {
-    MEDIA_ADMIN.get_media_content_pending_moderation_list.incr();
+    Query(params): Query<GetMediaContentModerationQueuePageParams>,
+) -> Result<Json<MediaContentModerationQueuePage>, StatusCode> {
+    MEDIA_ADMIN.get_media_content_moderation_queue_page.incr();
 
     if !permissions.admin_moderate_media_content {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
@@ -58,7 +58,11 @@ pub async fn get_media_content_pending_moderation_list(
     let r = state
         .read()
         .media_admin()
-        .media_content_pending_moderation_list_using_moderator_id(moderator_id, params)
+        .media_content_moderation_queue_page(
+            params.content_type,
+            params.moderation_type,
+            params.queue_type,
+        )
         .await?;
 
     Ok(r.into())
@@ -177,7 +181,7 @@ pub async fn post_moderate_media_content(
 
 create_open_api_router!(
         fn router_admin_moderation,
-        get_media_content_pending_moderation_list,
+        get_media_content_moderation_queue_page,
         post_moderate_media_content,
 );
 
@@ -185,6 +189,6 @@ create_counters!(
     MediaAdminCounters,
     MEDIA_ADMIN,
     MEDIA_ADMIN_MODERATION_COUNTERS_LIST,
-    get_media_content_pending_moderation_list,
+    get_media_content_moderation_queue_page,
     post_moderate_media_content,
 );

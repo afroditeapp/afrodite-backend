@@ -1,14 +1,12 @@
-use database::{
-    DieselDatabaseError, current::read::GetDbReadCommandsCommon, define_current_read_commands,
-};
+use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
 use error_stack::Result;
 use model::ContentId;
 use model_media::{
     AccountIdInternal, ContentModerationState, GetMediaContentFaceVerifiedNullList,
-    GetMediaContentPendingModerationList, GetMediaContentPendingModerationParams,
-    MediaContentFaceVerifiedNullByAccount, MediaContentPendingModeration, MediaContentRaw,
-    ModerationQueueType,
+    MediaContentFaceVerifiedNullByAccount, MediaContentModerationQueuePage,
+    MediaContentModerationQueueType, MediaContentModerationType, MediaContentPendingModeration,
+    MediaContentRaw, MediaContentType,
 };
 
 use crate::IntoDatabaseError;
@@ -16,55 +14,39 @@ use crate::IntoDatabaseError;
 define_current_read_commands!(CurrentReadMediaAdminContent);
 
 impl CurrentReadMediaAdminContent<'_> {
-    pub fn media_content_pending_moderation_list_using_moderator_id(
+    pub fn media_content_moderation_queue_page(
         &mut self,
-        moderator_id: AccountIdInternal,
-        params: GetMediaContentPendingModerationParams,
-    ) -> Result<GetMediaContentPendingModerationList, DieselDatabaseError> {
-        let is_bot = self
-            .read()
-            .common()
-            .state()
-            .other_shared_state(moderator_id)?
-            .is_bot();
-        self.media_content_pending_moderation_list(is_bot, params)
-    }
-
-    pub fn media_content_pending_moderation_list(
-        &mut self,
-        is_bot: bool,
-        params: GetMediaContentPendingModerationParams,
-    ) -> Result<GetMediaContentPendingModerationList, DieselDatabaseError> {
+        content_type: MediaContentType,
+        moderation_type: MediaContentModerationType,
+        queue_type: MediaContentModerationQueueType,
+    ) -> Result<MediaContentModerationQueuePage, DieselDatabaseError> {
         use crate::schema::{account_id, media_content};
 
         const LIMIT: i64 = 25;
 
-        let is_bot =
-            diesel::expression::AsExpression::<diesel::sql_types::Bool>::as_expression(is_bot);
-        let is_not_bot = is_bot.eq(false);
+        let initial_content_value = match moderation_type {
+            MediaContentModerationType::Initial => true,
+            MediaContentModerationType::Normal => false,
+        };
 
-        let show_bot_moderations =
-            diesel::expression::AsExpression::<diesel::sql_types::Bool>::as_expression(
-                params.show_content_which_bots_can_moderate,
-            );
-
-        let initial_content_value = match params.queue {
-            ModerationQueueType::InitialMediaModeration => true,
-            ModerationQueueType::MediaModeration => false,
+        let states = match queue_type {
+            MediaContentModerationQueueType::WaitingAdminBot => {
+                [ContentModerationState::WaitingAdminBot].as_slice()
+            }
+            MediaContentModerationQueueType::WaitingAdmin => {
+                [ContentModerationState::WaitingAdmin].as_slice()
+            }
+            MediaContentModerationQueueType::ProcessedByAdminBot => [
+                ContentModerationState::AcceptedByAdminBot,
+                ContentModerationState::RejectedByAdminBot,
+            ]
+            .as_slice(),
         };
 
         let values = media_content::table
             .inner_join(account_id::table.on(media_content::account_id.eq(account_id::id)))
-            .filter(
-                show_bot_moderations
-                    .and(
-                        media_content::moderation_state.eq(ContentModerationState::WaitingAdminBot),
-                    )
-                    .or(is_not_bot.and(
-                        media_content::moderation_state.eq(ContentModerationState::WaitingAdmin),
-                    )),
-            )
-            .filter(media_content::content_type_number.eq(params.content_type))
+            .filter(media_content::moderation_state.eq_any(states))
+            .filter(media_content::content_type_number.eq(content_type))
             .filter(media_content::initial_content.eq(initial_content_value))
             .select((
                 account_id::uuid,
@@ -80,7 +62,7 @@ impl CurrentReadMediaAdminContent<'_> {
             .load::<MediaContentPendingModeration>(self.conn())
             .into_db_error(())?;
 
-        Ok(GetMediaContentPendingModerationList { values })
+        Ok(MediaContentModerationQueuePage { values })
     }
 
     pub fn media_content_face_verified_null_list(

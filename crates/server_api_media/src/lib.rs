@@ -25,7 +25,8 @@ pub use server_common::{data::DataError, result};
         // Media
         model_media::MediaContentUploadType,
         // Media admin
-        model_media::ModerationQueueType,
+        model_media::MediaContentModerationType,
+        model_media::MediaContentModerationQueueType,
     )),
     modifiers(&SecurityApiAccessTokenDefault),
 )]

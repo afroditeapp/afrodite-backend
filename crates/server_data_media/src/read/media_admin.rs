@@ -1,8 +1,8 @@
 use database_media::current::read::GetDbReadCommandsMedia;
-use model::{AccountIdInternal, ImageProcessingDynamicConfig};
+use model::ImageProcessingDynamicConfig;
 use model_media::{
-    GetMediaContentFaceVerifiedNullList, GetMediaContentPendingModerationList,
-    GetMediaContentPendingModerationParams,
+    GetMediaContentFaceVerifiedNullList, MediaContentModerationQueuePage,
+    MediaContentModerationQueueType, MediaContentModerationType, MediaContentType,
 };
 use server_common::result::Result;
 use server_data::{DataError, IntoDataError, define_cmd_wrapper_read, read::DbRead};
@@ -10,29 +10,16 @@ use server_data::{DataError, IntoDataError, define_cmd_wrapper_read, read::DbRea
 define_cmd_wrapper_read!(ReadCommandsMediaAdmin);
 
 impl ReadCommandsMediaAdmin<'_> {
-    pub async fn media_content_pending_moderation_list_using_moderator_id(
+    pub async fn media_content_moderation_queue_page(
         &self,
-        moderator_id: AccountIdInternal,
-        params: GetMediaContentPendingModerationParams,
-    ) -> Result<GetMediaContentPendingModerationList, DataError> {
+        content_type: MediaContentType,
+        moderation_type: MediaContentModerationType,
+        queue_type: MediaContentModerationQueueType,
+    ) -> Result<MediaContentModerationQueuePage, DataError> {
         self.db_read(move |mut cmds| {
             cmds.media_admin()
                 .content()
-                .media_content_pending_moderation_list_using_moderator_id(moderator_id, params)
-        })
-        .await
-        .into_error()
-    }
-
-    pub async fn profile_content_pending_moderation_list(
-        &self,
-        is_bot: bool,
-        params: GetMediaContentPendingModerationParams,
-    ) -> Result<GetMediaContentPendingModerationList, DataError> {
-        self.db_read(move |mut cmds| {
-            cmds.media_admin()
-                .content()
-                .media_content_pending_moderation_list(is_bot, params)
+                .media_content_moderation_queue_page(content_type, moderation_type, queue_type)
         })
         .await
         .into_error()
