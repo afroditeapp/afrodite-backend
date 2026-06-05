@@ -223,10 +223,10 @@ pub enum PostGetReportIteratorPageError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_get_waiting_reports_page`]
+/// struct for typed errors of method [`post_get_report_queue_page`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostGetWaitingReportsPageError {
+pub enum PostGetReportQueuePageError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -1173,11 +1173,11 @@ pub async fn post_get_report_iterator_page(configuration: &configuration::Config
     }
 }
 
-pub async fn post_get_waiting_reports_page(configuration: &configuration::Configuration, get_waiting_reports_page: models::GetWaitingReportsPage) -> Result<models::GetReportList, Error<PostGetWaitingReportsPageError>> {
+pub async fn post_get_report_queue_page(configuration: &configuration::Configuration, get_report_queue_page: models::GetReportQueuePage) -> Result<models::GetReportList, Error<PostGetReportQueuePageError>> {
     // add a prefix to parameters to efficiently prevent name collisions
-    let p_body_get_waiting_reports_page = get_waiting_reports_page;
+    let p_body_get_report_queue_page = get_report_queue_page;
 
-    let uri_str = format!("{}/common_api/waiting_reports_page", configuration.base_path);
+    let uri_str = format!("{}/common_api/report_queue_page", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -1186,7 +1186,7 @@ pub async fn post_get_waiting_reports_page(configuration: &configuration::Config
     if let Some(ref token) = configuration.bearer_access_token {
         req_builder = req_builder.bearer_auth(token.to_owned());
     };
-    req_builder = req_builder.json(&p_body_get_waiting_reports_page);
+    req_builder = req_builder.json(&p_body_get_report_queue_page);
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
@@ -1208,7 +1208,7 @@ pub async fn post_get_waiting_reports_page(configuration: &configuration::Config
         }
     } else {
         let content = resp.text().await?;
-        let entity: Option<PostGetWaitingReportsPageError> = serde_json::from_str(&content).ok();
+        let entity: Option<PostGetReportQueuePageError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

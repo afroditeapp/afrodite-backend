@@ -3,8 +3,8 @@ use std::{fmt::Debug, sync::Arc};
 use api_client::{
     apis::{media_admin_api, media_api},
     models::{
-        MediaContentModerationRejectedReasonDetails, MediaContentPendingModeration,
-        MediaContentType, ModerationQueueType,
+        MediaContentModerationQueueType, MediaContentModerationRejectedReasonDetails,
+        MediaContentModerationType, MediaContentPendingModeration, MediaContentType,
     },
 };
 use async_openai::{
@@ -113,21 +113,24 @@ impl ContentModerationState {
 
 #[derive(Debug)]
 pub struct ModerateContentModerationRequest {
-    queue: ModerationQueueType,
+    moderation_type: MediaContentModerationType,
     moderate_all: bool,
 }
 
 impl ModerateContentModerationRequest {
     pub const fn moderate_all_initial_content() -> Self {
         Self {
-            queue: ModerationQueueType::InitialMediaModeration,
+            moderation_type: MediaContentModerationType::Initial,
             moderate_all: true,
         }
     }
 
-    pub const fn from_queue(queue: ModerationQueueType, moderate_all: bool) -> Self {
+    pub const fn from_queue(
+        moderation_type: MediaContentModerationType,
+        moderate_all: bool,
+    ) -> Self {
         Self {
-            queue,
+            moderation_type,
             moderate_all,
         }
     }
@@ -137,11 +140,11 @@ impl ModerateContentModerationRequest {
 impl BotAction for ModerateContentModerationRequest {
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         loop {
-            let list = media_admin_api::get_media_content_pending_moderation_list(
+            let list = media_admin_api::get_media_content_moderation_queue_page(
                 &state.api(),
                 MediaContentType::JpegImage,
-                self.queue,
-                true,
+                self.moderation_type,
+                MediaContentModerationQueueType::WaitingAdminBot,
             )
             .await
             .change_context(TestError::ApiRequest)?;
@@ -200,15 +203,15 @@ pub struct AdminBotContentModerationLogic;
 impl AdminBotContentModerationLogic {
     async fn moderate_one_page(
         api: &ApiClient,
-        queue: ModerationQueueType,
+        moderation_type: MediaContentModerationType,
         config: &ContentModerationConfig,
         state: &mut ContentModerationState,
     ) -> Result<Option<EmptyPage>, TestError> {
-        let list = media_admin_api::get_media_content_pending_moderation_list(
+        let list = media_admin_api::get_media_content_moderation_queue_page(
             &api.api(),
             MediaContentType::JpegImage,
-            queue,
-            true,
+            moderation_type,
+            MediaContentModerationQueueType::WaitingAdminBot,
         )
         .await
         .change_context(TestError::ApiRequest)?;
@@ -577,7 +580,7 @@ impl AdminBotContentModerationLogic {
             loop {
                 if let Some(EmptyPage) = Self::moderate_one_page(
                     api,
-                    ModerationQueueType::InitialMediaModeration,
+                    MediaContentModerationType::Initial,
                     config,
                     moderation_state,
                 )
@@ -592,7 +595,7 @@ impl AdminBotContentModerationLogic {
             loop {
                 if let Some(EmptyPage) = Self::moderate_one_page(
                     api,
-                    ModerationQueueType::MediaModeration,
+                    MediaContentModerationType::Normal,
                     config,
                     moderation_state,
                 )

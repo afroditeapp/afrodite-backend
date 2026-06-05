@@ -206,10 +206,10 @@ pub enum PostChatEmailNotificationSettingsError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`post_chat_message_report`]
+/// struct for typed errors of method [`post_chat_message_reports`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PostChatMessageReportError {
+pub enum PostChatMessageReportsError {
     Status400(),
     Status401(),
     Status429(),
@@ -1103,11 +1103,11 @@ pub async fn post_chat_email_notification_settings(configuration: &configuration
 }
 
 /// The report target must be a match. Supports reporting at most 10 messages per request.
-pub async fn post_chat_message_report(configuration: &configuration::Configuration, update_chat_message_report: models::UpdateChatMessageReport) -> Result<models::UpdateReportResult, Error<PostChatMessageReportError>> {
+pub async fn post_chat_message_reports(configuration: &configuration::Configuration, update_chat_message_reports: models::UpdateChatMessageReports) -> Result<models::UpdateReportResult, Error<PostChatMessageReportsError>> {
     // add a prefix to parameters to efficiently prevent name collisions
-    let p_body_update_chat_message_report = update_chat_message_report;
+    let p_body_update_chat_message_reports = update_chat_message_reports;
 
-    let uri_str = format!("{}/chat_api/chat_message_report", configuration.base_path);
+    let uri_str = format!("{}/chat_api/chat_message_reports", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -1116,7 +1116,7 @@ pub async fn post_chat_message_report(configuration: &configuration::Configurati
     if let Some(ref token) = configuration.bearer_access_token {
         req_builder = req_builder.bearer_auth(token.to_owned());
     };
-    req_builder = req_builder.json(&p_body_update_chat_message_report);
+    req_builder = req_builder.json(&p_body_update_chat_message_reports);
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
@@ -1138,7 +1138,7 @@ pub async fn post_chat_message_report(configuration: &configuration::Configurati
         }
     } else {
         let content = resp.text().await?;
-        let entity: Option<PostChatMessageReportError> = serde_json::from_str(&content).ok();
+        let entity: Option<PostChatMessageReportsError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

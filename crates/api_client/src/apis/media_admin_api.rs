@@ -42,10 +42,10 @@ pub enum GetMediaContentFaceVerifiedNullListError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`get_media_content_pending_moderation_list`]
+/// struct for typed errors of method [`get_media_content_moderation_queue_page`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum GetMediaContentPendingModerationListError {
+pub enum GetMediaContentModerationQueuePageError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -219,18 +219,18 @@ pub async fn get_media_content_face_verified_null_list(configuration: &configura
     }
 }
 
-pub async fn get_media_content_pending_moderation_list(configuration: &configuration::Configuration, content_type: models::MediaContentType, queue: models::ModerationQueueType, show_content_which_bots_can_moderate: bool) -> Result<models::GetMediaContentPendingModerationList, Error<GetMediaContentPendingModerationListError>> {
+pub async fn get_media_content_moderation_queue_page(configuration: &configuration::Configuration, content_type: models::MediaContentType, moderation_type: models::MediaContentModerationType, queue_type: models::MediaContentModerationQueueType) -> Result<models::MediaContentModerationQueuePage, Error<GetMediaContentModerationQueuePageError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_query_content_type = content_type;
-    let p_query_queue = queue;
-    let p_query_show_content_which_bots_can_moderate = show_content_which_bots_can_moderate;
+    let p_query_moderation_type = moderation_type;
+    let p_query_queue_type = queue_type;
 
-    let uri_str = format!("{}/media_api/media_content_pending_moderation", configuration.base_path);
+    let uri_str = format!("{}/media_api/media_content_moderation_queue_page", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
     req_builder = req_builder.query(&[("content_type", &p_query_content_type.to_string())]);
-    req_builder = req_builder.query(&[("queue", &p_query_queue.to_string())]);
-    req_builder = req_builder.query(&[("show_content_which_bots_can_moderate", &p_query_show_content_which_bots_can_moderate.to_string())]);
+    req_builder = req_builder.query(&[("moderation_type", &p_query_moderation_type.to_string())]);
+    req_builder = req_builder.query(&[("queue_type", &p_query_queue_type.to_string())]);
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -253,12 +253,12 @@ pub async fn get_media_content_pending_moderation_list(configuration: &configura
         let content = resp.text().await?;
         match content_type {
             ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::GetMediaContentPendingModerationList`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::GetMediaContentPendingModerationList`")))),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::MediaContentModerationQueuePage`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::MediaContentModerationQueuePage`")))),
         }
     } else {
         let content = resp.text().await?;
-        let entity: Option<GetMediaContentPendingModerationListError> = serde_json::from_str(&content).ok();
+        let entity: Option<GetMediaContentModerationQueuePageError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

@@ -14,11 +14,11 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AccountVerificationScopesConfig {
     #[serde(rename = "profile_age_range", skip_serializing_if = "Option::is_none")]
-    pub profile_age_range: Option<bool>,
+    pub profile_age_range: Option<Box<models::AccountVerificationPlatforms>>,
     #[serde(rename = "profile_name", skip_serializing_if = "Option::is_none")]
-    pub profile_name: Option<bool>,
+    pub profile_name: Option<Box<models::AccountVerificationPlatforms>>,
     #[serde(rename = "security_content", skip_serializing_if = "Option::is_none")]
-    pub security_content: Option<bool>,
+    pub security_content: Option<Box<models::AccountVerificationPlatforms>>,
 }
 
 impl AccountVerificationScopesConfig {

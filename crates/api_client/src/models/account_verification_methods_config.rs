@@ -14,9 +14,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AccountVerificationMethodsConfig {
     #[serde(rename = "debug", skip_serializing_if = "Option::is_none")]
-    pub debug: Option<bool>,
+    pub debug: Option<Box<models::AccountVerificationPlatforms>>,
     #[serde(rename = "eudi", skip_serializing_if = "Option::is_none")]
-    pub eudi: Option<bool>,
+    pub eudi: Option<Box<models::AccountVerificationPlatforms>>,
 }
 
 impl AccountVerificationMethodsConfig {

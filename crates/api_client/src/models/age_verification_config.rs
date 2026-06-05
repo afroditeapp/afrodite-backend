@@ -16,9 +16,9 @@ pub struct AgeVerificationConfig {
     #[serde(rename = "methods", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub methods: Option<Option<Box<models::AgeVerificationMethodsConfig>>>,
     #[serde(rename = "required", skip_serializing_if = "Option::is_none")]
-    pub required: Option<bool>,
+    pub required: Option<Box<models::AgeVerificationPlatforms>>,
     #[serde(rename = "verify_during_initial_setup", skip_serializing_if = "Option::is_none")]
-    pub verify_during_initial_setup: Option<bool>,
+    pub verify_during_initial_setup: Option<Box<models::AgeVerificationPlatforms>>,
 }
 
 impl AgeVerificationConfig {

@@ -13,14 +13,17 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct DynamicServerConfig {
-    #[serde(rename = "account_registration_platforms")]
-    pub account_registration_platforms: Box<models::AccountRegistrationPlatforms>,
+    #[serde(rename = "account_login_platforms", skip_serializing_if = "Option::is_none")]
+    pub account_login_platforms: Option<Box<models::AccountLoginPlatforms>>,
+    #[serde(rename = "account_registration_platforms", skip_serializing_if = "Option::is_none")]
+    pub account_registration_platforms: Option<Box<models::AccountRegistrationPlatforms>>,
 }
 
 impl DynamicServerConfig {
-    pub fn new(account_registration_platforms: models::AccountRegistrationPlatforms) -> DynamicServerConfig {
+    pub fn new() -> DynamicServerConfig {
         DynamicServerConfig {
-            account_registration_platforms: Box::new(account_registration_platforms),
+            account_login_platforms: None,
+            account_registration_platforms: None,
         }
     }
 }

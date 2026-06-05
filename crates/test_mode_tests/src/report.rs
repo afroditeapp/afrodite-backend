@@ -1,12 +1,12 @@
 use api_client::{
     apis::{
         account_api::get_account_state,
-        common_admin_api::{post_get_waiting_reports_page, post_process_reports},
+        common_admin_api::{post_get_report_queue_page, post_process_reports},
         media_api::post_profile_content_report,
         profile_api::{get_my_profile, post_report_profile_name},
     },
     models::{
-        ContentId, GetWaitingReportsPage, ProcessReport, ProcessReports, ReportType,
+        ContentId, GetReportQueuePage, ProcessReport, ProcessReports, ReportQueueType, ReportType,
         UpdateProfileContentReport, UpdateProfileNameReport,
     },
 };
@@ -43,8 +43,11 @@ async fn get_first_content_id(account: &Account) -> TestResult<ContentId> {
 async fn process_all_reports_as(context: &mut TestContext, valid: bool) -> TestResult {
     let admin = context.new_admin_and_moderate_initial_content().await?;
 
-    let waiting_reports =
-        post_get_waiting_reports_page(&admin.api(), GetWaitingReportsPage::new()).await?;
+    let waiting_reports = post_get_report_queue_page(
+        &admin.api(),
+        GetReportQueuePage::new(ReportQueueType::Waiting, vec![]),
+    )
+    .await?;
     assert_ne(waiting_reports.values.len(), 0)?;
 
     let process_reports: Vec<ProcessReport> = waiting_reports
@@ -137,8 +140,11 @@ async fn auto_ban_spam_reporters_threshold_1_valid_and_invalid_reports_do_not_ba
 
     let admin = context.new_admin_and_moderate_initial_content().await?;
 
-    let waiting_reports =
-        post_get_waiting_reports_page(&admin.api(), GetWaitingReportsPage::new()).await?;
+    let waiting_reports = post_get_report_queue_page(
+        &admin.api(),
+        GetReportQueuePage::new(ReportQueueType::Waiting, vec![]),
+    )
+    .await?;
     assert_eq(waiting_reports.values.len(), 2)?;
 
     let mut process_reports: Vec<ProcessReport> = Vec::new();

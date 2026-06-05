@@ -5,7 +5,7 @@ use api_client::{
         configuration::Configuration,
         profile_api::{post_profile, post_search_age_range, post_search_groups},
     },
-    models::{AccountId, ModerationQueueType, ProfileUpdate, SearchAgeRange, SearchGroups},
+    models::{AccountId, MediaContentModerationType, ProfileUpdate, SearchAgeRange, SearchGroups},
 };
 use config::{args::TestMode, bot_config_file::BotConfigFile};
 use error_stack::{Result, ResultExt};
@@ -292,16 +292,19 @@ impl Admin {
     pub async fn accept_pending_content_moderations_for_initial_images(
         &mut self,
     ) -> Result<(), TestError> {
-        self.accept_pending_content_moderations(ModerationQueueType::InitialMediaModeration)
+        self.accept_pending_content_moderations(MediaContentModerationType::Initial)
             .await
     }
 
     pub async fn accept_pending_content_moderations(
         &mut self,
-        queue: ModerationQueueType,
+        moderation_type: MediaContentModerationType,
     ) -> Result<(), TestError> {
         self.account
-            .run(ModerateContentModerationRequest::from_queue(queue, true))
+            .run(ModerateContentModerationRequest::from_queue(
+                moderation_type,
+                true,
+            ))
             .await?;
         Ok(())
     }

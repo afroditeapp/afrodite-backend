@@ -3,8 +3,8 @@ use std::{fmt::Debug, sync::Arc};
 use api_client::{
     apis::profile_admin_api,
     models::{
-        ProfileStringModerationContentType, ProfileStringModerationRejectedReasonDetails,
-        ProfileStringPendingModeration,
+        ProfileStringModerationContentType, ProfileStringModerationQueueType,
+        ProfileStringModerationRejectedReasonDetails, ProfileStringPendingModeration,
     },
 };
 use async_openai::{
@@ -62,10 +62,10 @@ impl AdminBotProfileStringModerationLogic {
         config: &ProfileStringModerationConfig,
         state: &mut ProfileStringModerationState,
     ) -> Result<Option<EmptyPage>, TestError> {
-        let list = profile_admin_api::get_profile_string_pending_moderation_list(
+        let list = profile_admin_api::get_profile_string_moderation_queue_page(
             &api.api(),
             self.content_type,
-            true,
+            ProfileStringModerationQueueType::WaitingAdminBot,
         )
         .await
         .change_context(TestError::ApiRequest)?;
