@@ -53,6 +53,9 @@ pub struct BotConfigFile {
     pub content_moderation: Option<ContentModerationFileConfig>,
     pub face_verification: Option<FaceVerificationFileConfig>,
     pub account_verification: Option<AccountVerificationFileConfig>,
+    /// Common LLM config used as fallback when content-specific LLM config
+    /// does not provide its own connection settings.
+    pub llm: Option<LlmConfig>,
     /// Config required for starting backend in remote bot mode.
     pub remote_bot_mode: Option<RemoteBotModeConfig>,
     /// If None, reading location from server config file next
@@ -378,13 +381,20 @@ impl Default for ProfileStringModerationFileConfig {
     }
 }
 
+/// Common LLM configuration fields shared across moderation configs.
 #[derive(Debug, Clone, Deserialize)]
-pub struct LlmStringModerationFileConfig {
+pub struct LlmConfig {
     /// For example "http://localhost:11434/v1"
     pub openai_api_url: Url,
     pub model: String,
     pub temperature: Option<f32>,
     pub seed: Option<i64>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct LlmStringModerationFileConfig {
+    #[serde(flatten)]
+    pub llm: Option<LlmConfig>,
     #[serde(default)]
     pub debug_log_results: bool,
     /// Wait times in seconds between retry attempts. The length of this vector
@@ -473,11 +483,8 @@ pub struct NsfwDetectionFileConfig {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct LlmContentModerationFileConfig {
-    /// For example "http://localhost:11434/v1"
-    pub openai_api_url: Url,
-    pub model: String,
-    pub temperature: Option<f32>,
-    pub seed: Option<i64>,
+    #[serde(flatten)]
+    pub llm: Option<LlmConfig>,
     #[serde(default)]
     pub debug_log_results: bool,
     /// Wait times in seconds between retry attempts. The length of this vector

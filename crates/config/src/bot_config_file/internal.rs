@@ -26,6 +26,7 @@ impl ProfileStringModerationConfig {
         db: AdminProfileStringModerationConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::ProfileStringModerationFileConfig>,
+        common_llm: Option<crate::bot_config_file::LlmConfig>,
     ) -> Option<Self> {
         if !db_enabled {
             return None;
@@ -34,7 +35,7 @@ impl ProfileStringModerationConfig {
 
         Some(Self {
             accept_single_visible_character: db.accept_single_visible_character,
-            llm: LlmStringModerationConfig::new(db.llm, db.llm_enabled, file.llm),
+            llm: LlmStringModerationConfig::new(db.llm, db.llm_enabled, file.llm, common_llm),
             default_action: db.default_action,
             concurrency: file.concurrency,
         })
@@ -64,17 +65,19 @@ impl LlmStringModerationConfig {
         db: AdminLlmStringModerationConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::LlmStringModerationFileConfig>,
+        common_llm: Option<crate::bot_config_file::LlmConfig>,
     ) -> Option<Self> {
         if !db_enabled {
             return None;
         }
         let file = file?;
+        let llm = file.llm.or(common_llm)?;
 
         Some(Self {
-            openai_api_url: file.openai_api_url,
-            model: file.model,
-            temperature: file.temperature,
-            seed: file.seed,
+            openai_api_url: llm.openai_api_url,
+            model: llm.model,
+            temperature: llm.temperature,
+            seed: llm.seed,
             system_text: db.system_text,
             user_text_template: db.user_text_template,
             expected_response: db.expected_response,
@@ -119,6 +122,7 @@ impl AccountVerificationConfig {
         db: AdminAccountVerificationConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::AccountVerificationFileConfig>,
+        common_llm: Option<crate::bot_config_file::LlmConfig>,
     ) -> Option<Self> {
         if !db_enabled {
             return None;
@@ -132,6 +136,7 @@ impl AccountVerificationConfig {
                 db.security_content,
                 db.security_content_enabled,
                 file.security_content,
+                common_llm,
             ),
         })
     }
@@ -149,6 +154,7 @@ impl SecurityContentVerificationConfig {
         db: model::common_admin::AdminSecurityContentVerificationConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::SecurityContentVerificationFileConfig>,
+        common_llm: Option<crate::bot_config_file::LlmConfig>,
     ) -> Option<Self> {
         if !db_enabled {
             return None;
@@ -156,7 +162,12 @@ impl SecurityContentVerificationConfig {
         let file = file.unwrap_or_default();
 
         Some(Self {
-            llm: LlmSecurityContentVerificationConfig::new(db.llm, db.llm_enabled, file.llm),
+            llm: LlmSecurityContentVerificationConfig::new(
+                db.llm,
+                db.llm_enabled,
+                file.llm,
+                common_llm,
+            ),
             default_action: db.default_action,
             concurrency: file.concurrency,
         })
@@ -181,17 +192,19 @@ impl LlmSecurityContentVerificationConfig {
         db: AdminLlmSecurityContentVerificationConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::LlmContentModerationFileConfig>,
+        common_llm: Option<crate::bot_config_file::LlmConfig>,
     ) -> Option<Self> {
         if !db_enabled {
             return None;
         }
         let file = file?;
+        let llm = file.llm.or(common_llm)?;
 
         Some(Self {
-            openai_api_url: file.openai_api_url,
-            model: file.model,
-            temperature: file.temperature,
-            seed: file.seed,
+            openai_api_url: llm.openai_api_url,
+            model: llm.model,
+            temperature: llm.temperature,
+            seed: llm.seed,
             system_text: db.system_text,
             expected_response: db.expected_response,
             debug_log_results: file.debug_log_results,
@@ -206,6 +219,7 @@ impl FaceVerificationConfig {
         db: AdminFaceVerificationConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::FaceVerificationFileConfig>,
+        common_llm: Option<crate::bot_config_file::LlmConfig>,
     ) -> Option<Self> {
         if !db_enabled {
             return None;
@@ -213,7 +227,7 @@ impl FaceVerificationConfig {
         let file = file.unwrap_or_default();
 
         Some(Self {
-            llm: LlmFaceVerificationConfig::new(db.llm, db.llm_enabled, file.llm),
+            llm: LlmFaceVerificationConfig::new(db.llm, db.llm_enabled, file.llm, common_llm),
             default_action: db.default_action,
             concurrency: file.concurrency,
         })
@@ -225,6 +239,7 @@ impl ContentModerationConfig {
         db: AdminContentModerationConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::ContentModerationFileConfig>,
+        common_llm: Option<crate::bot_config_file::LlmConfig>,
     ) -> Option<Self> {
         if !db_enabled {
             return None;
@@ -243,11 +258,13 @@ impl ContentModerationConfig {
                 db.llm_primary,
                 db.llm_primary_enabled,
                 file.llm_primary,
+                common_llm.clone(),
             ),
             llm_secondary: LlmContentModerationConfig::new(
                 db.llm_secondary,
                 db.llm_secondary_enabled,
                 file.llm_secondary,
+                common_llm,
             ),
             default_action: db.default_action,
             debug_log_delete: file.debug_log_delete,
@@ -324,17 +341,19 @@ impl LlmFaceVerificationConfig {
         db: AdminLlmFaceVerificationConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::LlmContentModerationFileConfig>,
+        common_llm: Option<crate::bot_config_file::LlmConfig>,
     ) -> Option<Self> {
         if !db_enabled {
             return None;
         }
         let file = file?;
+        let llm = file.llm.or(common_llm)?;
 
         Some(Self {
-            openai_api_url: file.openai_api_url,
-            model: file.model,
-            temperature: file.temperature,
-            seed: file.seed,
+            openai_api_url: llm.openai_api_url,
+            model: llm.model,
+            temperature: llm.temperature,
+            seed: llm.seed,
             system_text: db.system_text,
             expected_response: db.expected_response,
             debug_log_results: file.debug_log_results,
@@ -349,17 +368,19 @@ impl LlmContentModerationConfig {
         db: AdminLlmContentModerationConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::LlmContentModerationFileConfig>,
+        common_llm: Option<crate::bot_config_file::LlmConfig>,
     ) -> Option<Self> {
         if !db_enabled {
             return None;
         }
         let file = file?;
+        let llm = file.llm.or(common_llm)?;
 
         Some(Self {
-            openai_api_url: file.openai_api_url,
-            model: file.model,
-            temperature: file.temperature,
-            seed: file.seed,
+            openai_api_url: llm.openai_api_url,
+            model: llm.model,
+            temperature: llm.temperature,
+            seed: llm.seed,
             system_text: db.system_text,
             expected_response: db.expected_response,
             ignore_rejected: db.ignore_rejected,
@@ -390,26 +411,31 @@ pub fn merge(
         db.profile_name_moderation,
         db.profile_name_moderation_enabled,
         file.profile_name_moderation,
+        file.llm.clone(),
     );
     let text = ProfileStringModerationConfig::new(
         db.profile_text_moderation,
         db.profile_text_moderation_enabled,
         file.profile_text_moderation,
+        file.llm.clone(),
     );
     let content = ContentModerationConfig::new(
         db.content_moderation,
         db.content_moderation_enabled,
         file.content_moderation,
+        file.llm.clone(),
     );
     let face_verification = FaceVerificationConfig::new(
         db.face_verification,
         db.face_verification_enabled,
         file.face_verification,
+        file.llm.clone(),
     );
     let account_verification = AccountVerificationConfig::new(
         db.account_verification,
         db.account_verification_enabled,
         file.account_verification,
+        file.llm,
     );
     (name, text, content, face_verification, account_verification)
 }
