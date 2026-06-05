@@ -317,7 +317,62 @@ pub struct FirstImageConfig {
     pub require_face_detected_when_viewing: bool,
 }
 
-#[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
+/// Helper type for deserializing a platform bool as either
+/// a boolean (applied to all platforms) or a struct with
+/// per-platform fields.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+enum BoolOrPlatforms {
+    Bool(bool),
+    Platforms {
+        #[serde(default)]
+        android: bool,
+        #[serde(default)]
+        ios: bool,
+        #[serde(default)]
+        web: bool,
+    },
+}
+
+impl From<BoolOrPlatforms> for AgeVerificationPlatforms {
+    fn from(value: BoolOrPlatforms) -> Self {
+        match value {
+            BoolOrPlatforms::Bool(v) => Self {
+                android: v,
+                ios: v,
+                web: v,
+            },
+            BoolOrPlatforms::Platforms { android, ios, web } => Self { android, ios, web },
+        }
+    }
+}
+
+impl From<BoolOrPlatforms> for AccountVerificationPlatforms {
+    fn from(value: BoolOrPlatforms) -> Self {
+        match value {
+            BoolOrPlatforms::Bool(v) => Self {
+                android: v,
+                ios: v,
+                web: v,
+            },
+            BoolOrPlatforms::Platforms { android, ios, web } => Self { android, ios, web },
+        }
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for AgeVerificationPlatforms {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        Ok(BoolOrPlatforms::deserialize(deserializer)?.into())
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for AccountVerificationPlatforms {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        Ok(BoolOrPlatforms::deserialize(deserializer)?.into())
+    }
+}
+
+#[derive(Debug, Clone, Default, Serialize, ToSchema)]
 pub struct AgeVerificationPlatforms {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
@@ -363,7 +418,7 @@ pub struct AgeVerificationMethodsConfig {
     pub eudi: AgeVerificationPlatforms,
 }
 
-#[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
+#[derive(Debug, Clone, Default, Serialize, ToSchema)]
 pub struct AccountVerificationPlatforms {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
