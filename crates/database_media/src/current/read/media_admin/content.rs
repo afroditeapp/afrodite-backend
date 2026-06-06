@@ -36,11 +36,12 @@ impl CurrentReadMediaAdminContent<'_> {
             MediaContentModerationQueueType::WaitingAdmin => {
                 [ContentModerationState::WaitingAdmin].as_slice()
             }
-            MediaContentModerationQueueType::ProcessedByAdminBot => [
-                ContentModerationState::AcceptedByAdminBot,
-                ContentModerationState::RejectedByAdminBot,
-            ]
-            .as_slice(),
+            MediaContentModerationQueueType::AcceptedByAdminBot => {
+                [ContentModerationState::AcceptedByAdminBot].as_slice()
+            }
+            MediaContentModerationQueueType::RejectedByAdminBot => {
+                [ContentModerationState::RejectedByAdminBot].as_slice()
+            }
         };
 
         let values = media_content::table

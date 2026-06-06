@@ -151,7 +151,8 @@ pub struct ReportIteratorQueryInternal {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub enum ReportQueueType {
     Waiting,
-    ProcessedByAdminBot,
+    AcceptedByAdminBot,
+    RejectedByAdminBot,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]

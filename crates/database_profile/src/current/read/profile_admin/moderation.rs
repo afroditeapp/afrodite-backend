@@ -25,11 +25,12 @@ impl CurrentReadProfileModeration<'_> {
             ProfileStringModerationQueueType::WaitingAdmin => {
                 [ProfileStringModerationState::WaitingAdmin].as_slice()
             }
-            ProfileStringModerationQueueType::ProcessedByAdminBot => [
-                ProfileStringModerationState::AcceptedByAdminBot,
-                ProfileStringModerationState::RejectedByAdminBot,
-            ]
-            .as_slice(),
+            ProfileStringModerationQueueType::AcceptedByAdminBot => {
+                [ProfileStringModerationState::AcceptedByAdminBot].as_slice()
+            }
+            ProfileStringModerationQueueType::RejectedByAdminBot => {
+                [ProfileStringModerationState::RejectedByAdminBot].as_slice()
+            }
         };
 
         if states.is_empty() {

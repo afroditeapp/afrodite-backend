@@ -18,7 +18,8 @@ pub struct ProfileStringModerationQueuePage {
 pub enum ProfileStringModerationQueueType {
     WaitingAdminBot,
     WaitingAdmin,
-    ProcessedByAdminBot,
+    AcceptedByAdminBot,
+    RejectedByAdminBot,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, IntoParams)]

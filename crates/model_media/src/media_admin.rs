@@ -18,7 +18,8 @@ pub enum MediaContentModerationType {
 pub enum MediaContentModerationQueueType {
     WaitingAdminBot,
     WaitingAdmin,
-    ProcessedByAdminBot,
+    AcceptedByAdminBot,
+    RejectedByAdminBot,
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]

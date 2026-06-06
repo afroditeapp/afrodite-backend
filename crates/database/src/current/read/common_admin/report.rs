@@ -56,11 +56,12 @@ impl CurrentReadCommonAdminReport<'_> {
 
         let states = match queue_type {
             ReportQueueType::Waiting => [ReportProcessingState::Waiting].as_slice(),
-            ReportQueueType::ProcessedByAdminBot => [
-                ReportProcessingState::AcceptedByAdminBot,
-                ReportProcessingState::RejectedByAdminBot,
-            ]
-            .as_slice(),
+            ReportQueueType::AcceptedByAdminBot => {
+                [ReportProcessingState::AcceptedByAdminBot].as_slice()
+            }
+            ReportQueueType::RejectedByAdminBot => {
+                [ReportProcessingState::RejectedByAdminBot].as_slice()
+            }
         };
 
         #[allow(clippy::type_complexity)]
