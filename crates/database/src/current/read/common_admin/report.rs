@@ -57,8 +57,8 @@ impl CurrentReadCommonAdminReport<'_> {
         let states = match queue_type {
             ReportQueueType::Waiting => [ReportProcessingState::Waiting].as_slice(),
             ReportQueueType::ProcessedByAdminBot => [
-                ReportProcessingState::ValidByAdminBot,
-                ReportProcessingState::InvalidByAdminBot,
+                ReportProcessingState::AcceptedByAdminBot,
+                ReportProcessingState::RejectedByAdminBot,
             ]
             .as_slice(),
         };
@@ -356,21 +356,21 @@ impl CurrentReadCommonAdminReport<'_> {
         Ok(values)
     }
 
-    /// Get the count of invalid reports for a single creator, excluding invalid
-    /// reports against targets where the creator also has at least one valid report.
-    pub fn get_invalid_report_count_for_report_spammer_detection(
+    /// Get the count of rejected reports for a single creator, excluding rejected
+    /// reports against targets where the creator also has at least one accepted report.
+    pub fn get_rejected_report_count_for_report_spammer_detection(
         &mut self,
         creator: AccountIdDb,
     ) -> Result<i64, DieselDatabaseError> {
         use crate::schema::common_report::dsl::*;
 
-        // Get all reports (valid and invalid) for this creator, grouped by target
+        // Get all reports (accepted and rejected) for this creator, grouped by target
         let results: Vec<(AccountIdDb, ReportProcessingState, i64)> = common_report
             .filter(creator_account_id.eq(creator))
             .filter(
                 processing_state
-                    .eq_any(ReportProcessingState::invalid_states())
-                    .or(processing_state.eq_any(ReportProcessingState::valid_states())),
+                    .eq_any(ReportProcessingState::rejected_states())
+                    .or(processing_state.eq_any(ReportProcessingState::accepted_states())),
             )
             .select((
                 target_account_id,
@@ -381,26 +381,26 @@ impl CurrentReadCommonAdminReport<'_> {
             .load::<(AccountIdDb, ReportProcessingState, i64)>(self.conn())
             .into_db_error(())?;
 
-        // Collect targets that have at least one valid report
-        let mut targets_with_valid_report = std::collections::HashSet::new();
-        // Sum invalid reports per target
-        let mut invalid_counts: HashMap<AccountIdDb, i64> = HashMap::new();
+        // Collect targets that have at least one accepted report
+        let mut targets_with_accepted_report = std::collections::HashSet::new();
+        // Sum rejected reports per target
+        let mut rejected_counts: HashMap<AccountIdDb, i64> = HashMap::new();
 
         for (target, state, count) in results {
-            if ReportProcessingState::valid_states().contains(&state) {
-                targets_with_valid_report.insert(target);
+            if ReportProcessingState::accepted_states().contains(&state) {
+                targets_with_accepted_report.insert(target);
             } else {
-                *invalid_counts.entry(target).or_insert(0) += count;
+                *rejected_counts.entry(target).or_insert(0) += count;
             }
         }
 
-        // Remove invalid reports for targets that also have valid reports
-        for target in &targets_with_valid_report {
-            invalid_counts.remove(target);
+        // Remove rejected reports for targets that also have accepted reports
+        for target in &targets_with_accepted_report {
+            rejected_counts.remove(target);
         }
 
-        // Return sum of remaining invalid reports
-        let total = invalid_counts.into_values().sum();
+        // Return sum of remaining rejected reports
+        let total = rejected_counts.into_values().sum();
         Ok(total)
     }
 }

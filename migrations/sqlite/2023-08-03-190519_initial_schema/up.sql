@@ -162,10 +162,10 @@ CREATE TABLE IF NOT EXISTS common_report(
     creation_unix_time      BIGINT              NOT NULL,
     processed_by_account_id BIGINT,
     -- 0 = Waiting
-    -- 1 = ValidByAdminBot
-    -- 2 = ValidByAdmin
-    -- 3 = InvalidByAdminBot
-    -- 4 = InvalidByAdmin
+    -- 1 = AcceptedByAdminBot
+    -- 2 = AcceptedByAdmin
+    -- 3 = RejectedByAdminBot
+    -- 4 = RejectedByAdmin
     processing_state        SMALLINT            NOT NULL    DEFAULT 0,
     processing_state_change_unix_time BIGINT    NOT NULL,
     FOREIGN KEY (creator_account_id)

@@ -252,7 +252,7 @@ impl DataAllUtils for DataAllUtilsImpl {
                                     reason_category: Some(AccountBanReasonCategory::REPORT_SPAM),
                                     reason_details: Some(AccountBanReasonDetails::new(
                                         NonEmptyString::from_string(
-                                            "Too many reports were marked as spam by bot or human admin. If you think the reports were valid, contact app support.".to_string()
+                                            "Too many reports were marked as spam by bot or human admin. If you think the reports weren't spam, contact app support.".to_string()
                                         ).unwrap(),
                                     )),
                                 },

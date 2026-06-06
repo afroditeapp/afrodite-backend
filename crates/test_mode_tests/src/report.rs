@@ -15,7 +15,7 @@ use test_mode_test_utils::{Account, prelude::*};
 fn set_spam_report_threshold_1(config: ServerConfigEditor) {
     config.server.limits = Some(config::file::LimitsConfig {
         common: Some(config::file::CommonLimitsConfig {
-            auto_ban_spam_reporters_invalid_report_threshold: 1,
+            auto_ban_spam_reporters_rejected_report_threshold: 1,
             auto_ban_spam_reporters_ban_duration:
                 simple_backend_utils::time::DurationValue::from_days(1),
             ..Default::default()
@@ -40,7 +40,7 @@ async fn get_first_content_id(account: &Account) -> TestResult<ContentId> {
     Ok(*content.cid)
 }
 
-async fn process_all_reports_as(context: &mut TestContext, valid: bool) -> TestResult {
+async fn process_all_reports_as(context: &mut TestContext, accepted: bool) -> TestResult {
     let admin = context.new_admin_and_moderate_initial_content().await?;
 
     let waiting_reports = post_get_report_queue_page(
@@ -59,7 +59,7 @@ async fn process_all_reports_as(context: &mut TestContext, valid: bool) -> TestR
                 *report.info.creator.clone(),
                 ReportType::new(report.info.report_type.n),
                 *report.info.target.clone(),
-                valid,
+                accepted,
             )
         })
         .collect();
@@ -71,7 +71,7 @@ async fn process_all_reports_as(context: &mut TestContext, valid: bool) -> TestR
 
 async fn simple_auto_ban_spam_reporters_test(
     mut context: TestContext,
-    valid: bool,
+    accepted: bool,
     wanted_banned: bool,
 ) -> TestResult {
     let reporter = context.new_account().await?;
@@ -86,7 +86,7 @@ async fn simple_auto_ban_spam_reporters_test(
     .await?;
     assert(!report_result.error.unwrap_or(false))?;
 
-    process_all_reports_as(&mut context, valid).await?;
+    process_all_reports_as(&mut context, accepted).await?;
 
     let banned = get_account_state(&reporter.api())
         .await?
@@ -99,21 +99,21 @@ async fn simple_auto_ban_spam_reporters_test(
 }
 
 #[server_test(modify_server_config_with = "set_spam_report_threshold_1")]
-async fn auto_ban_spam_reporters_threshold_1_invalid_report_bans_reporter(
+async fn auto_ban_spam_reporters_threshold_1_rejected_report_bans_reporter(
     context: TestContext,
 ) -> TestResult {
     simple_auto_ban_spam_reporters_test(context, false, true).await
 }
 
 #[server_test(modify_server_config_with = "set_spam_report_threshold_1")]
-async fn auto_ban_spam_reporters_threshold_1_valid_report_does_not_ban_reporter(
+async fn auto_ban_spam_reporters_threshold_1_accepted_report_does_not_ban_reporter(
     context: TestContext,
 ) -> TestResult {
     simple_auto_ban_spam_reporters_test(context, true, false).await
 }
 
 #[server_test(modify_server_config_with = "set_spam_report_threshold_1")]
-async fn auto_ban_spam_reporters_threshold_1_valid_and_invalid_reports_do_not_ban(
+async fn auto_ban_spam_reporters_threshold_1_accepted_and_rejected_reports_do_not_ban(
     mut context: TestContext,
 ) -> TestResult {
     let reporter = context.new_account().await?;
@@ -149,7 +149,7 @@ async fn auto_ban_spam_reporters_threshold_1_valid_and_invalid_reports_do_not_ba
 
     let mut process_reports: Vec<ProcessReport> = Vec::new();
     for report in &waiting_reports.values {
-        let is_valid = if report.info.creator.aid == reporter.account_id().aid
+        let is_accepted = if report.info.creator.aid == reporter.account_id().aid
             && report.info.target.aid == target.account_id().aid
         {
             if report.info.report_type.n == 2 {
@@ -170,7 +170,7 @@ async fn auto_ban_spam_reporters_threshold_1_valid_and_invalid_reports_do_not_ba
             *report.info.creator.clone(),
             ReportType::new(report.info.report_type.n),
             *report.info.target.clone(),
-            is_valid,
+            is_accepted,
         ));
     }
 

@@ -22,7 +22,7 @@ impl WriteCommandsCommonAdminReport<'_> {
         target: AccountIdInternal,
         report_type: ReportType,
         content: ReportContent,
-        valid: bool,
+        accepted: bool,
     ) -> Result<(), DataError> {
         let report_type = TryInto::<ReportTypeInternal>::try_into(Into::<i16>::into(report_type.n))
             .into_error_string(DataError::NotAllowed)?;
@@ -41,7 +41,7 @@ impl WriteCommandsCommonAdminReport<'_> {
             db_transaction!(self, move |mut cmds| {
                 cmds.common_admin()
                     .report()
-                    .mark_report_processed(moderator_id, id, valid)?;
+                    .mark_report_processed(moderator_id, id, accepted)?;
                 Ok(())
             })?;
             Ok(())
@@ -67,7 +67,7 @@ impl WriteCommandsCommonAdminReport<'_> {
                 target,
                 report.report_type,
                 report.content.clone(),
-                report.valid,
+                report.accepted,
             )
             .await?;
         }
@@ -75,7 +75,7 @@ impl WriteCommandsCommonAdminReport<'_> {
         let threshold = self
             .config()
             .limits_common()
-            .auto_ban_spam_reporters_invalid_report_threshold;
+            .auto_ban_spam_reporters_rejected_report_threshold;
 
         let mut reporters_to_ban = Vec::new();
         for creator in &creators_set {
@@ -84,7 +84,7 @@ impl WriteCommandsCommonAdminReport<'_> {
                 .db_read(move |mut cmds| {
                     cmds.common_admin()
                         .report()
-                        .get_invalid_report_count_for_report_spammer_detection(creator_db_id)
+                        .get_rejected_report_count_for_report_spammer_detection(creator_db_id)
                 })
                 .await
                 .into_error()?;
