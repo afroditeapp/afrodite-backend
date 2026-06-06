@@ -392,6 +392,8 @@ bitflags::bitflags! {
         const MODERATE_PROFILE_NAMES_BOT = 1 << 3;
         const VERIFY_MEDIA_CONTENT_FACE_BOT = 1 << 4;
         const VERIFY_ACCOUNT_BOT = 1 << 5;
+        // TODO(quality): Don't send this when custom report is saved
+        const PROCESS_REPORTS = 1 << 6;
     }
 }
 
@@ -417,6 +419,9 @@ impl TryFrom<AdminNotificationTypes> for AdminBotNotificationTypes {
             }
             AdminNotificationTypes::ModerateProfileNamesBot => {
                 Ok(AdminBotNotificationTypes::MODERATE_PROFILE_NAMES_BOT)
+            }
+            AdminNotificationTypes::ProcessReports => {
+                Ok(AdminBotNotificationTypes::PROCESS_REPORTS)
             }
             _ => Err(()),
         }

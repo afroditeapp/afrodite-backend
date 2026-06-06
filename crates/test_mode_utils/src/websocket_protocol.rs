@@ -48,6 +48,7 @@ pub struct AdminBotNotificationTypes {
     pub moderate_profile_texts_bot: Option<bool>,
     pub verify_media_content_face_bot: Option<bool>,
     pub verify_account_bot: Option<bool>,
+    pub process_reports: Option<bool>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -119,6 +120,9 @@ fn convert_server_event_to_client_for_test_mode(
                 ),
                 verify_account_bot: Some(
                     notification.contains(InternalAdminBotNotificationTypes::VERIFY_ACCOUNT_BOT),
+                ),
+                process_reports: Some(
+                    notification.contains(InternalAdminBotNotificationTypes::PROCESS_REPORTS),
                 ),
             };
             event.admin_bot_notification = Some(value);
