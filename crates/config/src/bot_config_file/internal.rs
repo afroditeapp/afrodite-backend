@@ -1,14 +1,14 @@
 use std::path::PathBuf;
 
+pub use model::common_admin::{AcceptOrReject, ModerationAction};
 use model::common_admin::{
     AdminAccountVerificationConfig, AdminBotConfig, AdminContentModerationConfig,
     AdminFaceVerificationConfig, AdminNsfwDetectionConfig, AdminProfileStringModerationConfig,
-    LlmContentModerationConfig as AdminLlmContentModerationConfig,
+    AdminReportProcessingConfig, LlmContentModerationConfig as AdminLlmContentModerationConfig,
     LlmFaceVerificationConfig as AdminLlmFaceVerificationConfig,
     LlmSecurityContentVerificationConfig as AdminLlmSecurityContentVerificationConfig,
     LlmStringModerationConfig as AdminLlmStringModerationConfig,
 };
-pub use model::common_admin::{ModerationAction, VerificationAction};
 use serde::{Deserialize, Serialize};
 pub use simple_backend_model::NsfwDetectionThresholds;
 use url::Url;
@@ -106,7 +106,7 @@ pub struct ContentModerationConfig {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct FaceVerificationConfig {
     pub llm: Option<LlmFaceVerificationConfig>,
-    pub default_action: VerificationAction,
+    pub default_action: AcceptOrReject,
     pub concurrency: u8,
 }
 
@@ -145,7 +145,7 @@ impl AccountVerificationConfig {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct SecurityContentVerificationConfig {
     pub llm: Option<LlmSecurityContentVerificationConfig>,
-    pub default_action: VerificationAction,
+    pub default_action: AcceptOrReject,
     pub concurrency: u8,
 }
 
@@ -396,6 +396,213 @@ impl LlmContentModerationConfig {
     }
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct LlmReportProcessingConfig {
+    pub openai_api_url: Url,
+    pub model: String,
+    pub temperature: Option<f32>,
+    pub seed: Option<i64>,
+    pub system_text: String,
+    pub user_text_template: Option<String>,
+    pub report_creator_message_template: Option<String>,
+    pub report_target_message_template: Option<String>,
+    pub expected_response: String,
+    pub debug_log_results: bool,
+    pub max_tokens: u32,
+    pub retry_wait_times_in_seconds: Vec<u16>,
+}
+
+impl LlmReportProcessingConfig {
+    pub const TEMPLATE_PLACEHOLDER_TEXT: &'static str = "{text}";
+
+    pub fn from_db_profile_string(
+        db: model::common_admin::AdminReportProcessingProfileStringLlmConfig,
+        file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
+        common_llm: Option<crate::bot_config_file::LlmConfig>,
+    ) -> Option<Self> {
+        let file = file?;
+        let llm = file.llm.or(common_llm)?;
+
+        Some(Self {
+            openai_api_url: llm.openai_api_url,
+            model: llm.model,
+            temperature: llm.temperature,
+            seed: llm.seed,
+            system_text: db.system_text,
+            user_text_template: Some(db.user_text_template),
+            report_creator_message_template: None,
+            report_target_message_template: None,
+            expected_response: db.expected_response,
+            debug_log_results: file.debug_log_results,
+            max_tokens: db.max_tokens,
+            retry_wait_times_in_seconds: file.retry_wait_times_in_seconds,
+        })
+    }
+
+    pub fn from_db_profile_content(
+        db: model::common_admin::AdminReportProcessingProfileContentLlmConfig,
+        file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
+        common_llm: Option<crate::bot_config_file::LlmConfig>,
+    ) -> Option<Self> {
+        let file = file?;
+        let llm = file.llm.or(common_llm)?;
+
+        Some(Self {
+            openai_api_url: llm.openai_api_url,
+            model: llm.model,
+            temperature: llm.temperature,
+            seed: llm.seed,
+            system_text: db.system_text,
+            user_text_template: None,
+            report_creator_message_template: None,
+            report_target_message_template: None,
+            expected_response: db.expected_response,
+            debug_log_results: file.debug_log_results,
+            max_tokens: db.max_tokens,
+            retry_wait_times_in_seconds: file.retry_wait_times_in_seconds,
+        })
+    }
+
+    pub fn from_db_messages(
+        db: model::common_admin::AdminReportProcessingMessagesLlmConfig,
+        file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
+        common_llm: Option<crate::bot_config_file::LlmConfig>,
+    ) -> Option<Self> {
+        let file = file?;
+        let llm = file.llm.or(common_llm)?;
+
+        Some(Self {
+            openai_api_url: llm.openai_api_url,
+            model: llm.model,
+            temperature: llm.temperature,
+            seed: llm.seed,
+            system_text: db.system_text,
+            user_text_template: Some(db.user_text_template),
+            report_creator_message_template: Some(db.report_creator_message_template),
+            report_target_message_template: Some(db.report_target_message_template),
+            expected_response: db.expected_response,
+            debug_log_results: file.debug_log_results,
+            max_tokens: db.max_tokens,
+            retry_wait_times_in_seconds: file.retry_wait_times_in_seconds,
+        })
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ReportProcessingTypeConfig {
+    pub llm: Option<LlmReportProcessingConfig>,
+    pub default_action: AcceptOrReject,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ReportProcessingConfig {
+    pub profile_name: Option<ReportProcessingTypeConfig>,
+    pub profile_text: Option<ReportProcessingTypeConfig>,
+    pub profile_content: Option<ReportProcessingTypeConfig>,
+    pub messages: Option<ReportProcessingTypeConfig>,
+    pub concurrency: u8,
+}
+
+impl ReportProcessingConfig {
+    fn new_per_type_profile_string(
+        db_llm: model::common_admin::AdminReportProcessingProfileStringLlmConfig,
+        db_enabled: bool,
+        default_action: AcceptOrReject,
+        file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
+        common_llm: Option<crate::bot_config_file::LlmConfig>,
+    ) -> Option<ReportProcessingTypeConfig> {
+        if !db_enabled {
+            return None;
+        }
+        let file = file?;
+
+        Some(ReportProcessingTypeConfig {
+            llm: LlmReportProcessingConfig::from_db_profile_string(db_llm, Some(file), common_llm),
+            default_action,
+        })
+    }
+
+    fn new_per_type_profile_content(
+        db_llm: model::common_admin::AdminReportProcessingProfileContentLlmConfig,
+        db_enabled: bool,
+        default_action: AcceptOrReject,
+        file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
+        common_llm: Option<crate::bot_config_file::LlmConfig>,
+    ) -> Option<ReportProcessingTypeConfig> {
+        if !db_enabled {
+            return None;
+        }
+        let file = file?;
+
+        Some(ReportProcessingTypeConfig {
+            llm: LlmReportProcessingConfig::from_db_profile_content(db_llm, Some(file), common_llm),
+            default_action,
+        })
+    }
+
+    fn new_per_type_messages(
+        db_llm: model::common_admin::AdminReportProcessingMessagesLlmConfig,
+        db_enabled: bool,
+        default_action: AcceptOrReject,
+        file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
+        common_llm: Option<crate::bot_config_file::LlmConfig>,
+    ) -> Option<ReportProcessingTypeConfig> {
+        if !db_enabled {
+            return None;
+        }
+        let file = file?;
+
+        Some(ReportProcessingTypeConfig {
+            llm: LlmReportProcessingConfig::from_db_messages(db_llm, Some(file), common_llm),
+            default_action,
+        })
+    }
+
+    pub fn new(
+        db: AdminReportProcessingConfig,
+        db_enabled: bool,
+        file: Option<crate::bot_config_file::ReportProcessingFileConfig>,
+        common_llm: Option<crate::bot_config_file::LlmConfig>,
+    ) -> Option<Self> {
+        if !db_enabled {
+            return None;
+        }
+        let file = file?;
+
+        Some(Self {
+            profile_name: Self::new_per_type_profile_string(
+                db.profile_name,
+                db.profile_name_enabled,
+                db.profile_name_default_action,
+                file.profile_name,
+                common_llm.clone(),
+            ),
+            profile_text: Self::new_per_type_profile_string(
+                db.profile_text,
+                db.profile_text_enabled,
+                db.profile_text_default_action,
+                file.profile_text,
+                common_llm.clone(),
+            ),
+            profile_content: Self::new_per_type_profile_content(
+                db.profile_content,
+                db.profile_content_enabled,
+                db.profile_content_default_action,
+                file.profile_content,
+                common_llm.clone(),
+            ),
+            messages: Self::new_per_type_messages(
+                db.messages,
+                db.messages_enabled,
+                db.messages_default_action,
+                file.messages,
+                common_llm,
+            ),
+            concurrency: file.concurrency,
+        })
+    }
+}
+
 #[allow(clippy::type_complexity)]
 pub fn merge(
     db: AdminBotConfig,
@@ -406,6 +613,7 @@ pub fn merge(
     Option<ContentModerationConfig>,
     Option<FaceVerificationConfig>,
     Option<AccountVerificationConfig>,
+    Option<ReportProcessingConfig>,
 ) {
     let name = ProfileStringModerationConfig::new(
         db.profile_name_moderation,
@@ -435,7 +643,20 @@ pub fn merge(
         db.account_verification,
         db.account_verification_enabled,
         file.account_verification,
+        file.llm.clone(),
+    );
+    let report_processing = ReportProcessingConfig::new(
+        db.report_processing,
+        db.report_processing_enabled,
+        file.report_processing,
         file.llm,
     );
-    (name, text, content, face_verification, account_verification)
+    (
+        name,
+        text,
+        content,
+        face_verification,
+        account_verification,
+        report_processing,
+    )
 }

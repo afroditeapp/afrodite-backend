@@ -15,7 +15,7 @@ use async_openai::{
 };
 use base64::display::Base64Display;
 use config::bot_config_file::internal::{
-    FaceVerificationConfig, LlmFaceVerificationConfig, VerificationAction,
+    AcceptOrReject, FaceVerificationConfig, LlmFaceVerificationConfig,
 };
 use error_stack::{Result, ResultExt};
 use futures::{StreamExt, stream};
@@ -130,8 +130,8 @@ impl AdminBotFaceVerificationLogic {
                 result
                     .map(|r| Some(r.accept))
                     .unwrap_or_else(|| match config.default_action {
-                        VerificationAction::Accept => Some(true),
-                        VerificationAction::Reject => Some(false),
+                        AcceptOrReject::Accept => Some(true),
+                        AcceptOrReject::Reject => Some(false),
                     });
 
             if value.is_some() {

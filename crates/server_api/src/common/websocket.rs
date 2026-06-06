@@ -168,11 +168,12 @@ pub fn parse_client_binary_message(
 fn parse_bot_config_warnings(
     payload: &[u8],
 ) -> crate::result::Result<AdminBotConfigWarningFlags, WebSocketError> {
-    let [flags] = payload else {
+    let [flags_lo, flags_hi] = payload else {
         return Err(WebSocketError::ProtocolError.report());
     };
 
-    Ok(AdminBotConfigWarningFlags::from_bits_truncate(*flags))
+    let flags = u16::from_le_bytes([*flags_lo, *flags_hi]);
+    Ok(AdminBotConfigWarningFlags::from_bits_truncate(flags))
 }
 
 fn parse_account_id(payload: &[u8]) -> crate::result::Result<AccountId, WebSocketError> {

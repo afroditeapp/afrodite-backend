@@ -12,13 +12,18 @@ use utoipa::ToSchema;
 /// - `ClearMaintenanceStatusIfPossible` (1): payload is empty.
 /// - `ResponseAdminBotConfigWarnings` (2): payload format:
 ///   - request id byte (u8)
-///   - warnings flags byte (u8). Bits in the byte:
+///   - warnings flags as u16 (or larger) little-endian. Bits in the flags:
 ///     - bit 0: profile name moderation file config missing
 ///     - bit 1: profile text moderation file config missing
 ///     - bit 2: content moderation file config missing
 ///     - bit 3: face verification file config missing
 ///     - bit 4: account verification file config missing
 ///     - bit 5: account verification security content file config missing
+///     - bit 6: report processing file config missing
+///     - bit 7: report processing profile name file config missing
+///     - bit 8: report processing profile text file config missing
+///     - bit 9: report processing profile content file config missing
+///     - bit 10: report processing messages file config missing
 /// - `RequestResetProfilePaging` (60): payload format:
 ///   - request id byte (u8)
 /// - `RequestGetNextProfilePage` (61): payload format:
@@ -70,12 +75,17 @@ pub enum ClientMessageForDataAllCrate<'a> {
 
 bitflags::bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq)]
-    pub struct AdminBotConfigWarningFlags: u8 {
-        const PROFILE_NAME_MODERATION_FILE_CONFIG_MISSING = 0b0000_0001;
-        const PROFILE_TEXT_MODERATION_FILE_CONFIG_MISSING = 0b0000_0010;
-        const CONTENT_MODERATION_FILE_CONFIG_MISSING = 0b0000_0100;
-        const FACE_VERIFICATION_FILE_CONFIG_MISSING = 0b0000_1000;
-        const ACCOUNT_VERIFICATION_FILE_CONFIG_MISSING = 0b0001_0000;
-        const ACCOUNT_VERIFICATION_SECURITY_CONTENT_FILE_CONFIG_MISSING = 0b0010_0000;
+    pub struct AdminBotConfigWarningFlags: u16 {
+        const PROFILE_NAME_MODERATION_FILE_CONFIG_MISSING = 0x0001;
+        const PROFILE_TEXT_MODERATION_FILE_CONFIG_MISSING = 0x0002;
+        const CONTENT_MODERATION_FILE_CONFIG_MISSING = 0x0004;
+        const FACE_VERIFICATION_FILE_CONFIG_MISSING = 0x0008;
+        const ACCOUNT_VERIFICATION_FILE_CONFIG_MISSING = 0x0010;
+        const ACCOUNT_VERIFICATION_SECURITY_CONTENT_FILE_CONFIG_MISSING = 0x0020;
+        const REPORT_PROCESSING_FILE_CONFIG_MISSING = 0x0040;
+        const REPORT_PROCESSING_PROFILE_NAME_FILE_CONFIG_MISSING = 0x0080;
+        const REPORT_PROCESSING_PROFILE_TEXT_FILE_CONFIG_MISSING = 0x0100;
+        const REPORT_PROCESSING_PROFILE_CONTENT_FILE_CONFIG_MISSING = 0x0200;
+        const REPORT_PROCESSING_MESSAGES_FILE_CONFIG_MISSING = 0x0400;
     }
 }

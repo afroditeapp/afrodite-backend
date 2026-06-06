@@ -215,6 +215,33 @@ pub async fn get_bot_config_warnings(
                 && warning_flags.contains(
                     AdminBotConfigWarningFlags::ACCOUNT_VERIFICATION_SECURITY_CONTENT_FILE_CONFIG_MISSING,
                 ),
+            report_processing_file_config_missing: config.report_processing_enabled
+                && warning_flags
+                    .contains(AdminBotConfigWarningFlags::REPORT_PROCESSING_FILE_CONFIG_MISSING),
+            report_processing_profile_name_file_config_missing: config
+                .report_processing_enabled
+                && config.report_processing.profile_name_enabled
+                && warning_flags.contains(
+                    AdminBotConfigWarningFlags::REPORT_PROCESSING_PROFILE_NAME_FILE_CONFIG_MISSING,
+                ),
+            report_processing_profile_text_file_config_missing: config
+                .report_processing_enabled
+                && config.report_processing.profile_text_enabled
+                && warning_flags.contains(
+                    AdminBotConfigWarningFlags::REPORT_PROCESSING_PROFILE_TEXT_FILE_CONFIG_MISSING,
+                ),
+            report_processing_profile_content_file_config_missing: config
+                .report_processing_enabled
+                && config.report_processing.profile_content_enabled
+                && warning_flags.contains(
+                    AdminBotConfigWarningFlags::REPORT_PROCESSING_PROFILE_CONTENT_FILE_CONFIG_MISSING,
+                ),
+            report_processing_messages_file_config_missing: config
+                .report_processing_enabled
+                && config.report_processing.messages_enabled
+                && warning_flags.contains(
+                    AdminBotConfigWarningFlags::REPORT_PROCESSING_MESSAGES_FILE_CONFIG_MISSING,
+                ),
         };
 
         return Ok(Json(warnings));
@@ -242,6 +269,36 @@ pub async fn get_bot_config_warnings(
                 .account_verification
                 .as_ref()
                 .and_then(|v| v.security_content.as_ref())
+                .is_none(),
+        report_processing_file_config_missing: config.report_processing_enabled
+            && bot_config_file.report_processing.is_none(),
+        report_processing_profile_name_file_config_missing: config.report_processing_enabled
+            && config.report_processing.profile_name_enabled
+            && bot_config_file
+                .report_processing
+                .as_ref()
+                .and_then(|v| v.profile_name.as_ref())
+                .is_none(),
+        report_processing_profile_text_file_config_missing: config.report_processing_enabled
+            && config.report_processing.profile_text_enabled
+            && bot_config_file
+                .report_processing
+                .as_ref()
+                .and_then(|v| v.profile_text.as_ref())
+                .is_none(),
+        report_processing_profile_content_file_config_missing: config.report_processing_enabled
+            && config.report_processing.profile_content_enabled
+            && bot_config_file
+                .report_processing
+                .as_ref()
+                .and_then(|v| v.profile_content.as_ref())
+                .is_none(),
+        report_processing_messages_file_config_missing: config.report_processing_enabled
+            && config.report_processing.messages_enabled
+            && bot_config_file
+                .report_processing
+                .as_ref()
+                .and_then(|v| v.messages.as_ref())
                 .is_none(),
     };
 

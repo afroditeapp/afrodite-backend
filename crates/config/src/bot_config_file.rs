@@ -53,6 +53,8 @@ pub struct BotConfigFile {
     pub content_moderation: Option<ContentModerationFileConfig>,
     pub face_verification: Option<FaceVerificationFileConfig>,
     pub account_verification: Option<AccountVerificationFileConfig>,
+    /// Admin bot report processing config for all 4 built-in report types.
+    pub report_processing: Option<ReportProcessingFileConfig>,
     /// Common LLM config used as fallback when content-specific LLM config
     /// does not provide its own connection settings.
     pub llm: Option<LlmConfig>,
@@ -469,6 +471,50 @@ impl Default for SecurityContentVerificationFileConfig {
     fn default() -> Self {
         Self {
             llm: None,
+            concurrency: 4,
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, Deserialize)]
+#[serde(default)]
+pub struct ReportProcessingTypeFileConfig {
+    /// LLM connection config. Falls back to the common [LlmConfig].
+    #[serde(flatten)]
+    pub llm: Option<LlmConfig>,
+    /// Log LLM request/response details for debugging.
+    #[serde(default)]
+    pub debug_log_results: bool,
+    /// Wait times in seconds between retry attempts. The length of this vector
+    /// determines the number of retries. For example, [1, 5, 10] means 3 retries
+    /// with 1, 5, and 10 seconds wait time respectively.
+    #[serde(default)]
+    pub retry_wait_times_in_seconds: Vec<u16>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(default)]
+pub struct ReportProcessingFileConfig {
+    /// LLM config for profile name reports.
+    pub profile_name: Option<ReportProcessingTypeFileConfig>,
+    /// LLM config for profile text reports.
+    pub profile_text: Option<ReportProcessingTypeFileConfig>,
+    /// LLM config for profile content (image) reports.
+    pub profile_content: Option<ReportProcessingTypeFileConfig>,
+    /// LLM config for chat message reports.
+    pub messages: Option<ReportProcessingTypeFileConfig>,
+    /// How many report processing tasks to run concurrently.
+    /// Default value is 4.
+    pub concurrency: u8,
+}
+
+impl Default for ReportProcessingFileConfig {
+    fn default() -> Self {
+        Self {
+            profile_name: None,
+            profile_text: None,
+            profile_content: None,
+            messages: None,
             concurrency: 4,
         }
     }

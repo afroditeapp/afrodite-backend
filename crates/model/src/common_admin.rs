@@ -65,6 +65,21 @@ pub struct BotConfigWarnings {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub account_verification_security_content_file_config_missing: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub report_processing_file_config_missing: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub report_processing_profile_name_file_config_missing: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub report_processing_profile_text_file_config_missing: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub report_processing_profile_content_file_config_missing: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub report_processing_messages_file_config_missing: bool,
 }
 
 impl BotConfigWarnings {

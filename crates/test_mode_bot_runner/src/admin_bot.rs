@@ -184,7 +184,11 @@ impl AdminBot {
             content_config,
             face_verification_config,
             account_verification_config,
+            report_processing_config,
         ) = config::bot_config_file::internal::merge(admin_bot_config, file_config.clone());
+
+        // Suppress unused warning for report_processing_config
+        let _ = report_processing_config;
 
         // Create separate notification pipelines for each content type
         let (content_sender, mut content_receiver) = ContentModerationHandler::new(
@@ -365,6 +369,51 @@ fn create_response_admin_bot_config_warnings_message(
             AdminBotConfigWarningFlags::ACCOUNT_VERIFICATION_SECURITY_CONTENT_FILE_CONFIG_MISSING,
         );
     }
+    if file_config.report_processing.is_none() {
+        flags.insert(AdminBotConfigWarningFlags::REPORT_PROCESSING_FILE_CONFIG_MISSING);
+    }
+    if file_config
+        .report_processing
+        .as_ref()
+        .and_then(|v| v.profile_name.as_ref())
+        .is_none()
+    {
+        flags
+            .insert(AdminBotConfigWarningFlags::REPORT_PROCESSING_PROFILE_NAME_FILE_CONFIG_MISSING);
+    }
+    if file_config
+        .report_processing
+        .as_ref()
+        .and_then(|v| v.profile_text.as_ref())
+        .is_none()
+    {
+        flags
+            .insert(AdminBotConfigWarningFlags::REPORT_PROCESSING_PROFILE_TEXT_FILE_CONFIG_MISSING);
+    }
+    if file_config
+        .report_processing
+        .as_ref()
+        .and_then(|v| v.profile_content.as_ref())
+        .is_none()
+    {
+        flags.insert(
+            AdminBotConfigWarningFlags::REPORT_PROCESSING_PROFILE_CONTENT_FILE_CONFIG_MISSING,
+        );
+    }
+    if file_config
+        .report_processing
+        .as_ref()
+        .and_then(|v| v.messages.as_ref())
+        .is_none()
+    {
+        flags.insert(AdminBotConfigWarningFlags::REPORT_PROCESSING_MESSAGES_FILE_CONFIG_MISSING);
+    }
 
-    vec![RESPONSE_ADMIN_BOT_CONFIG_WARNINGS, request_id, flags.bits()]
+    let bits = flags.bits().to_le_bytes();
+    vec![
+        RESPONSE_ADMIN_BOT_CONFIG_WARNINGS,
+        request_id,
+        bits[0],
+        bits[1],
+    ]
 }

@@ -9,7 +9,7 @@ use async_openai::types::{
 };
 use base64::display::Base64Display;
 use config::bot_config_file::internal::{
-    AccountVerificationConfig, SecurityContentVerificationConfig, VerificationAction,
+    AcceptOrReject, AccountVerificationConfig, SecurityContentVerificationConfig,
 };
 use error_stack::{Result, ResultExt};
 use test_mode_utils::{
@@ -119,8 +119,8 @@ async fn handle_check_image_method(
     Ok(result
         .map(|r| r.accept)
         .unwrap_or_else(|| match config.default_action {
-            VerificationAction::Accept => true,
-            VerificationAction::Reject => false,
+            AcceptOrReject::Accept => true,
+            AcceptOrReject::Reject => false,
         }))
 }
 

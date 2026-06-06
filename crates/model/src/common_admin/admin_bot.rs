@@ -12,7 +12,7 @@ pub enum ModerationAction {
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, Default)]
-pub enum VerificationAction {
+pub enum AcceptOrReject {
     Accept,
     #[default]
     Reject,
@@ -40,6 +40,10 @@ pub struct AdminBotConfig {
     #[schema(default = false)]
     pub account_verification_enabled: bool,
     pub account_verification: AdminAccountVerificationConfig,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub report_processing_enabled: bool,
+    pub report_processing: AdminReportProcessingConfig,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
@@ -50,7 +54,7 @@ pub struct AdminFaceVerificationConfig {
     #[schema(default = false)]
     pub llm_enabled: bool,
     pub llm: LlmFaceVerificationConfig,
-    pub default_action: VerificationAction,
+    pub default_action: AcceptOrReject,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -95,7 +99,7 @@ pub struct AdminSecurityContentVerificationConfig {
     #[schema(default = false)]
     pub llm_enabled: bool,
     pub llm: LlmSecurityContentVerificationConfig,
-    pub default_action: VerificationAction,
+    pub default_action: AcceptOrReject,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -116,6 +120,105 @@ impl Default for LlmSecurityContentVerificationConfig {
             max_tokens: MAX_TOKENS_DEFAULT,
         }
     }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct AdminReportProcessingProfileStringLlmConfig {
+    pub system_text: String,
+    /// Placeholder "{text}" is replaced with the reported content.
+    pub user_text_template: String,
+    /// If LLM response starts with this text or the first
+    /// line of the response contains this text, the report
+    /// is processed as accepted. The comparisons are case insensitive.
+    pub expected_response: String,
+    pub max_tokens: u32,
+}
+
+impl Default for AdminReportProcessingProfileStringLlmConfig {
+    fn default() -> Self {
+        Self {
+            system_text: "You are a dating app text content moderator. Output 'accepted' when the reported text violates terms. Output 'rejected' when it does not.".to_string(),
+            user_text_template: "Reported content:\n\n{text}".to_string(),
+            expected_response: "accepted".to_string(),
+            max_tokens: MAX_TOKENS_DEFAULT,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct AdminReportProcessingProfileContentLlmConfig {
+    pub system_text: String,
+    /// If LLM response starts with this text or the first
+    /// line of the response contains this text, the report
+    /// is processed as accepted. The comparisons are case insensitive.
+    pub expected_response: String,
+    pub max_tokens: u32,
+}
+
+impl Default for AdminReportProcessingProfileContentLlmConfig {
+    fn default() -> Self {
+        Self {
+            system_text: "You are a dating app image report moderator. Output 'accepted' when the reported image violates terms. Output 'rejected' when it does not.".to_string(),
+            expected_response: "accepted".to_string(),
+            max_tokens: MAX_TOKENS_DEFAULT,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct AdminReportProcessingMessagesLlmConfig {
+    pub system_text: String,
+    /// Placeholder "{text}" is replaced with the reported content.
+    pub user_text_template: String,
+    /// Placeholder "{text}" is replaced with the report creator's message.
+    pub report_creator_message_template: String,
+    /// Placeholder "{text}" is replaced with the report target's message.
+    pub report_target_message_template: String,
+    /// If LLM response starts with this text or the first
+    /// line of the response contains this text, the report
+    /// is processed as accepted. The comparisons are case insensitive.
+    pub expected_response: String,
+    pub max_tokens: u32,
+}
+
+impl Default for AdminReportProcessingMessagesLlmConfig {
+    fn default() -> Self {
+        Self {
+            system_text: "You are a dating app chat message report moderator. Output 'accepted' when the reported messages violate terms. Output 'rejected' when they do not.".to_string(),
+            user_text_template: "Reported messages:\n\n{text}".to_string(),
+            report_creator_message_template: "Report creator's message:\n\n{text}".to_string(),
+            report_target_message_template: "Report target's message:\n\n{text}".to_string(),
+            expected_response: "accepted".to_string(),
+            max_tokens: MAX_TOKENS_DEFAULT,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
+pub struct AdminReportProcessingConfig {
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub profile_name_enabled: bool,
+    pub profile_name: AdminReportProcessingProfileStringLlmConfig,
+    pub profile_name_default_action: AcceptOrReject,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub profile_text_enabled: bool,
+    pub profile_text: AdminReportProcessingProfileStringLlmConfig,
+    pub profile_text_default_action: AcceptOrReject,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub profile_content_enabled: bool,
+    pub profile_content: AdminReportProcessingProfileContentLlmConfig,
+    pub profile_content_default_action: AcceptOrReject,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub messages_enabled: bool,
+    pub messages: AdminReportProcessingMessagesLlmConfig,
+    pub messages_default_action: AcceptOrReject,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
@@ -150,10 +253,6 @@ pub struct LlmStringModerationConfig {
     #[schema(default = false)]
     pub add_llm_output_to_user_visible_rejection_details: bool,
     pub max_tokens: u32,
-}
-
-impl LlmStringModerationConfig {
-    pub const TEMPLATE_PLACEHOLDER_TEXT: &'static str = "{text}";
 }
 
 impl Default for LlmStringModerationConfig {
