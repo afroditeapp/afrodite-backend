@@ -21,42 +21,42 @@ pub struct AdminBotConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub profile_name_moderation_enabled: bool,
-    pub profile_name_moderation: AdminProfileStringModerationConfig,
+    pub profile_name_moderation: AdminBotProfileStringModerationConfig,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub profile_text_moderation_enabled: bool,
-    pub profile_text_moderation: AdminProfileStringModerationConfig,
+    pub profile_text_moderation: AdminBotProfileStringModerationConfig,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub content_moderation_enabled: bool,
-    pub content_moderation: AdminContentModerationConfig,
+    pub content_moderation: AdminBotContentModerationConfig,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub face_verification_enabled: bool,
-    pub face_verification: AdminFaceVerificationConfig,
+    pub face_verification: AdminBotFaceVerificationConfig,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub account_verification_enabled: bool,
-    pub account_verification: AdminAccountVerificationConfig,
+    pub account_verification: AdminBotAccountVerificationConfig,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub report_processing_enabled: bool,
-    pub report_processing: AdminReportProcessingConfig,
+    pub report_processing: AdminBotReportProcessingConfig,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
-pub struct AdminFaceVerificationConfig {
+pub struct AdminBotFaceVerificationConfig {
     /// Large language model based face verification.
     /// Actions: reject and accept.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub llm_enabled: bool,
-    pub llm: LlmFaceVerificationConfig,
+    pub llm: AdminBotFaceVerificationLlmConfig,
     pub default_action: AcceptOrReject,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct LlmFaceVerificationConfig {
+pub struct AdminBotFaceVerificationLlmConfig {
     pub system_text: String,
     /// If LLM response starts with this text or the first
     /// line of the response contains this text, the face pair
@@ -64,7 +64,7 @@ pub struct LlmFaceVerificationConfig {
     pub expected_response: String,
 }
 
-impl Default for LlmFaceVerificationConfig {
+impl Default for AdminBotFaceVerificationLlmConfig {
     fn default() -> Self {
         Self {
             system_text: "You are verifying whether two dating app profile images contain the same person. Output 'accepted' only when they clearly show the same person. Otherwise output 'rejected'.".to_string(),
@@ -74,7 +74,7 @@ impl Default for LlmFaceVerificationConfig {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
-pub struct AdminAccountVerificationConfig {
+pub struct AdminBotAccountVerificationConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub profile_age_range_enabled: bool,
@@ -84,22 +84,22 @@ pub struct AdminAccountVerificationConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub security_content_enabled: bool,
-    pub security_content: AdminSecurityContentVerificationConfig,
+    pub security_content: AdminBotSecurityContentVerificationConfig,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
-pub struct AdminSecurityContentVerificationConfig {
+pub struct AdminBotSecurityContentVerificationConfig {
     /// Large language model based security content verification.
     /// Actions: reject and accept.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub llm_enabled: bool,
-    pub llm: LlmSecurityContentVerificationConfig,
+    pub llm: AdminBotSecurityContentVerificationLlmConfig,
     pub default_action: AcceptOrReject,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct LlmSecurityContentVerificationConfig {
+pub struct AdminBotSecurityContentVerificationLlmConfig {
     pub system_text: String,
     /// If LLM response starts with this text or the first
     /// line of the response contains this text, the verification
@@ -107,7 +107,7 @@ pub struct LlmSecurityContentVerificationConfig {
     pub expected_response: String,
 }
 
-impl Default for LlmSecurityContentVerificationConfig {
+impl Default for AdminBotSecurityContentVerificationLlmConfig {
     fn default() -> Self {
         Self {
             system_text: "You are verifying whether a dating app profile security selfie and a user-provided verification image show the same person. Output 'accepted' only when they clearly show the same person. Otherwise output 'rejected'.".to_string(),
@@ -117,7 +117,7 @@ impl Default for LlmSecurityContentVerificationConfig {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct AdminReportProcessingProfileStringLlmConfig {
+pub struct AdminBotReportProcessingProfileStringLlmConfig {
     pub system_text: String,
     /// Placeholder "{text}" is replaced with the reported content.
     pub user_text_template: String,
@@ -127,7 +127,7 @@ pub struct AdminReportProcessingProfileStringLlmConfig {
     pub expected_response: String,
 }
 
-impl Default for AdminReportProcessingProfileStringLlmConfig {
+impl Default for AdminBotReportProcessingProfileStringLlmConfig {
     fn default() -> Self {
         Self {
             system_text: "You are a dating app text content moderator. Output 'accepted' when the reported text violates terms. Output 'rejected' when it does not.".to_string(),
@@ -138,7 +138,7 @@ impl Default for AdminReportProcessingProfileStringLlmConfig {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct AdminReportProcessingProfileContentLlmConfig {
+pub struct AdminBotReportProcessingProfileContentLlmConfig {
     pub system_text: String,
     /// If LLM response starts with this text or the first
     /// line of the response contains this text, the report
@@ -146,7 +146,7 @@ pub struct AdminReportProcessingProfileContentLlmConfig {
     pub expected_response: String,
 }
 
-impl Default for AdminReportProcessingProfileContentLlmConfig {
+impl Default for AdminBotReportProcessingProfileContentLlmConfig {
     fn default() -> Self {
         Self {
             system_text: "You are a dating app image report moderator. Output 'accepted' when the reported image violates terms. Output 'rejected' when it does not.".to_string(),
@@ -156,7 +156,7 @@ impl Default for AdminReportProcessingProfileContentLlmConfig {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct AdminReportProcessingMessagesLlmConfig {
+pub struct AdminBotReportProcessingMessagesLlmConfig {
     pub system_text: String,
     /// Placeholder "{text}" is replaced with the reported content.
     pub user_text_template: String,
@@ -170,7 +170,7 @@ pub struct AdminReportProcessingMessagesLlmConfig {
     pub expected_response: String,
 }
 
-impl Default for AdminReportProcessingMessagesLlmConfig {
+impl Default for AdminBotReportProcessingMessagesLlmConfig {
     fn default() -> Self {
         Self {
             system_text: "You are a dating app chat message report moderator. Output 'accepted' when the reported messages violate terms. Output 'rejected' when they do not.".to_string(),
@@ -183,34 +183,34 @@ impl Default for AdminReportProcessingMessagesLlmConfig {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
-pub struct AdminReportProcessingConfig {
+pub struct AdminBotReportProcessingConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub profile_name_enabled: bool,
-    pub profile_name: AdminReportProcessingProfileStringLlmConfig,
+    pub profile_name: AdminBotReportProcessingProfileStringLlmConfig,
     pub profile_name_default_action: AcceptOrReject,
 
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub profile_text_enabled: bool,
-    pub profile_text: AdminReportProcessingProfileStringLlmConfig,
+    pub profile_text: AdminBotReportProcessingProfileStringLlmConfig,
     pub profile_text_default_action: AcceptOrReject,
 
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub profile_content_enabled: bool,
-    pub profile_content: AdminReportProcessingProfileContentLlmConfig,
+    pub profile_content: AdminBotReportProcessingProfileContentLlmConfig,
     pub profile_content_default_action: AcceptOrReject,
 
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub messages_enabled: bool,
-    pub messages: AdminReportProcessingMessagesLlmConfig,
+    pub messages: AdminBotReportProcessingMessagesLlmConfig,
     pub messages_default_action: AcceptOrReject,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
-pub struct AdminProfileStringModerationConfig {
+pub struct AdminBotProfileStringModerationConfig {
     /// Accept all texts which only have single visible character.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
@@ -220,12 +220,12 @@ pub struct AdminProfileStringModerationConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub llm_enabled: bool,
-    pub llm: LlmStringModerationConfig,
+    pub llm: AdminBotStringModerationLlmConfig,
     pub default_action: ModerationAction,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct LlmStringModerationConfig {
+pub struct AdminBotStringModerationLlmConfig {
     pub system_text: String,
     /// Placeholder "{text}" is replaced with text which will be
     /// moderated.
@@ -242,7 +242,7 @@ pub struct LlmStringModerationConfig {
     pub add_llm_output_to_user_visible_rejection_details: bool,
 }
 
-impl Default for LlmStringModerationConfig {
+impl Default for AdminBotStringModerationLlmConfig {
     fn default() -> Self {
         Self {
             system_text: "You are a dating app text moderator. Output 'accepted' when the text is safe for a dating app. Output 'rejected' when it's not.".to_string(),
@@ -255,7 +255,7 @@ impl Default for LlmStringModerationConfig {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
-pub struct AdminContentModerationConfig {
+pub struct AdminBotContentModerationConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub initial_content: bool,
@@ -267,25 +267,25 @@ pub struct AdminContentModerationConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub nsfw_detection_enabled: bool,
-    pub nsfw_detection: AdminNsfwDetectionConfig,
+    pub nsfw_detection: AdminBotNsfwDetectionConfig,
     /// Large language model based moderation.
     /// Actions: reject (can be replaced with move_to_human or ignore) and
     ///          accept (can be replaced with move_to_human or delete).
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub llm_primary_enabled: bool,
-    pub llm_primary: LlmContentModerationConfig,
+    pub llm_primary: AdminBotContentModerationLlmConfig,
     /// The secondary LLM moderation will run if primary results with ignore
     /// action.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub llm_secondary_enabled: bool,
-    pub llm_secondary: LlmContentModerationConfig,
+    pub llm_secondary: AdminBotContentModerationLlmConfig,
     pub default_action: ModerationAction,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
-pub struct AdminNsfwDetectionConfig {
+pub struct AdminBotNsfwDetectionConfig {
     /// Thresholds for image rejection.
     pub reject: simple_backend_model::NsfwDetectionThresholds,
     /// Thresholds for moving image to human moderation.
@@ -297,7 +297,7 @@ pub struct AdminNsfwDetectionConfig {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
-pub struct LlmContentModerationConfig {
+pub struct AdminBotContentModerationLlmConfig {
     pub system_text: String,
     /// If LLM response starts with this text or the first
     /// line of the response contains this text, the content
@@ -322,7 +322,7 @@ pub struct LlmContentModerationConfig {
     pub add_llm_output_to_user_visible_rejection_details: bool,
 }
 
-impl Default for LlmContentModerationConfig {
+impl Default for AdminBotContentModerationLlmConfig {
     fn default() -> Self {
         Self {
             system_text: "You are a dating app image moderator. Output 'accepted' when the image is safe for a dating app. Output 'rejected' when it's not.".to_string(),

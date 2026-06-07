@@ -2,12 +2,11 @@ use std::path::PathBuf;
 
 pub use model::common_admin::{AcceptOrReject, ModerationAction};
 use model::common_admin::{
-    AdminAccountVerificationConfig, AdminBotConfig, AdminContentModerationConfig,
-    AdminFaceVerificationConfig, AdminNsfwDetectionConfig, AdminProfileStringModerationConfig,
-    AdminReportProcessingConfig, LlmContentModerationConfig as AdminLlmContentModerationConfig,
-    LlmFaceVerificationConfig as AdminLlmFaceVerificationConfig,
-    LlmSecurityContentVerificationConfig as AdminLlmSecurityContentVerificationConfig,
-    LlmStringModerationConfig as AdminLlmStringModerationConfig,
+    AdminBotAccountVerificationConfig, AdminBotConfig, AdminBotContentModerationConfig,
+    AdminBotContentModerationLlmConfig, AdminBotFaceVerificationConfig,
+    AdminBotFaceVerificationLlmConfig, AdminBotNsfwDetectionConfig,
+    AdminBotProfileStringModerationConfig, AdminBotReportProcessingConfig,
+    AdminBotSecurityContentVerificationLlmConfig, AdminBotStringModerationLlmConfig,
 };
 pub use simple_backend_model::NsfwDetectionThresholds;
 
@@ -23,7 +22,7 @@ pub struct ProfileStringModerationConfigInternal {
 
 impl ProfileStringModerationConfigInternal {
     pub fn new(
-        db: AdminProfileStringModerationConfig,
+        db: AdminBotProfileStringModerationConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::ProfileStringModerationFileConfig>,
         base_llm: crate::bot_config_file::BaseLlmConfig,
@@ -56,7 +55,7 @@ impl LlmStringModerationConfigInternal {
     pub const TEMPLATE_PLACEHOLDER_TEXT: &'static str = "{text}";
 
     pub fn new(
-        db: AdminLlmStringModerationConfig,
+        db: AdminBotStringModerationLlmConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::LlmStringModerationFileConfig>,
         base_llm: crate::bot_config_file::BaseLlmConfig,
@@ -107,7 +106,7 @@ pub struct AccountVerificationConfigInternal {
 
 impl AccountVerificationConfigInternal {
     pub fn new(
-        db: AdminAccountVerificationConfig,
+        db: AdminBotAccountVerificationConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::AccountVerificationFileConfig>,
         base_llm: crate::bot_config_file::BaseLlmConfig,
@@ -139,7 +138,7 @@ pub struct SecurityContentVerificationConfigInternal {
 
 impl SecurityContentVerificationConfigInternal {
     pub fn new(
-        db: model::common_admin::AdminSecurityContentVerificationConfig,
+        db: model::common_admin::AdminBotSecurityContentVerificationConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::SecurityContentVerificationFileConfig>,
         base_llm: crate::bot_config_file::BaseLlmConfig,
@@ -171,7 +170,7 @@ pub struct LlmSecurityContentVerificationConfigInternal {
 
 impl LlmSecurityContentVerificationConfigInternal {
     pub fn new(
-        db: AdminLlmSecurityContentVerificationConfig,
+        db: AdminBotSecurityContentVerificationLlmConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::LlmContentModerationFileConfig>,
         base_llm: crate::bot_config_file::BaseLlmConfig,
@@ -192,7 +191,7 @@ impl LlmSecurityContentVerificationConfigInternal {
 
 impl FaceVerificationConfigInternal {
     pub fn new(
-        db: AdminFaceVerificationConfig,
+        db: AdminBotFaceVerificationConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::FaceVerificationFileConfig>,
         base_llm: crate::bot_config_file::BaseLlmConfig,
@@ -212,7 +211,7 @@ impl FaceVerificationConfigInternal {
 
 impl ContentModerationConfigInternal {
     pub fn new(
-        db: AdminContentModerationConfig,
+        db: AdminBotContentModerationConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::ContentModerationFileConfig>,
         base_llm: crate::bot_config_file::BaseLlmConfig,
@@ -261,7 +260,7 @@ pub struct NsfwDetectionConfigInternal {
 
 impl NsfwDetectionConfigInternal {
     pub fn new(
-        db: AdminNsfwDetectionConfig,
+        db: AdminBotNsfwDetectionConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::NsfwDetectionFileConfig>,
     ) -> Option<Self> {
@@ -302,7 +301,7 @@ pub struct LlmFaceVerificationConfigInternal {
 
 impl LlmFaceVerificationConfigInternal {
     pub fn new(
-        db: AdminLlmFaceVerificationConfig,
+        db: AdminBotFaceVerificationLlmConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::LlmContentModerationFileConfig>,
         base_llm: crate::bot_config_file::BaseLlmConfig,
@@ -323,7 +322,7 @@ impl LlmFaceVerificationConfigInternal {
 
 impl LlmContentModerationConfigInternal {
     pub fn new(
-        db: AdminLlmContentModerationConfig,
+        db: AdminBotContentModerationLlmConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::LlmContentModerationFileConfig>,
         base_llm: crate::bot_config_file::BaseLlmConfig,
@@ -362,7 +361,7 @@ impl LlmReportProcessingConfigInternal {
     pub const TEMPLATE_PLACEHOLDER_TEXT: &'static str = "{text}";
 
     pub fn from_db_profile_string(
-        db: model::common_admin::AdminReportProcessingProfileStringLlmConfig,
+        db: model::common_admin::AdminBotReportProcessingProfileStringLlmConfig,
         file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
         base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<Self> {
@@ -380,7 +379,7 @@ impl LlmReportProcessingConfigInternal {
     }
 
     pub fn from_db_profile_content(
-        db: model::common_admin::AdminReportProcessingProfileContentLlmConfig,
+        db: model::common_admin::AdminBotReportProcessingProfileContentLlmConfig,
         file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
         base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<Self> {
@@ -398,7 +397,7 @@ impl LlmReportProcessingConfigInternal {
     }
 
     pub fn from_db_messages(
-        db: model::common_admin::AdminReportProcessingMessagesLlmConfig,
+        db: model::common_admin::AdminBotReportProcessingMessagesLlmConfig,
         file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
         base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<Self> {
@@ -433,7 +432,7 @@ pub struct ReportProcessingConfigInternal {
 
 impl ReportProcessingConfigInternal {
     fn new_per_type_profile_string(
-        db_llm: model::common_admin::AdminReportProcessingProfileStringLlmConfig,
+        db_llm: model::common_admin::AdminBotReportProcessingProfileStringLlmConfig,
         db_enabled: bool,
         default_action: AcceptOrReject,
         file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
@@ -455,7 +454,7 @@ impl ReportProcessingConfigInternal {
     }
 
     fn new_per_type_profile_content(
-        db_llm: model::common_admin::AdminReportProcessingProfileContentLlmConfig,
+        db_llm: model::common_admin::AdminBotReportProcessingProfileContentLlmConfig,
         db_enabled: bool,
         default_action: AcceptOrReject,
         file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
@@ -477,7 +476,7 @@ impl ReportProcessingConfigInternal {
     }
 
     fn new_per_type_messages(
-        db_llm: model::common_admin::AdminReportProcessingMessagesLlmConfig,
+        db_llm: model::common_admin::AdminBotReportProcessingMessagesLlmConfig,
         db_enabled: bool,
         default_action: AcceptOrReject,
         file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
@@ -495,7 +494,7 @@ impl ReportProcessingConfigInternal {
     }
 
     pub fn new(
-        db: AdminReportProcessingConfig,
+        db: AdminBotReportProcessingConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::ReportProcessingFileConfig>,
         base_llm: crate::bot_config_file::BaseLlmConfig,
