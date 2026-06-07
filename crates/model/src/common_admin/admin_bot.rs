@@ -1,8 +1,6 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-const MAX_TOKENS_DEFAULT: u32 = 10_000;
-
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, Default)]
 pub enum ModerationAction {
     Accept,
@@ -64,7 +62,6 @@ pub struct LlmFaceVerificationConfig {
     /// line of the response contains this text, the face pair
     /// is moderated as accepted. The comparisons are case insensitive.
     pub expected_response: String,
-    pub max_tokens: u32,
 }
 
 impl Default for LlmFaceVerificationConfig {
@@ -72,7 +69,6 @@ impl Default for LlmFaceVerificationConfig {
         Self {
             system_text: "You are verifying whether two dating app profile images contain the same person. Output 'accepted' only when they clearly show the same person. Otherwise output 'rejected'.".to_string(),
             expected_response: "accepted".to_string(),
-            max_tokens: MAX_TOKENS_DEFAULT,
         }
     }
 }
@@ -109,7 +105,6 @@ pub struct LlmSecurityContentVerificationConfig {
     /// line of the response contains this text, the verification
     /// is moderated as accepted. The comparisons are case insensitive.
     pub expected_response: String,
-    pub max_tokens: u32,
 }
 
 impl Default for LlmSecurityContentVerificationConfig {
@@ -117,7 +112,6 @@ impl Default for LlmSecurityContentVerificationConfig {
         Self {
             system_text: "You are verifying whether a dating app profile security selfie and a user-provided verification image show the same person. Output 'accepted' only when they clearly show the same person. Otherwise output 'rejected'.".to_string(),
             expected_response: "accepted".to_string(),
-            max_tokens: MAX_TOKENS_DEFAULT,
         }
     }
 }
@@ -131,7 +125,6 @@ pub struct AdminReportProcessingProfileStringLlmConfig {
     /// line of the response contains this text, the report
     /// is processed as accepted. The comparisons are case insensitive.
     pub expected_response: String,
-    pub max_tokens: u32,
 }
 
 impl Default for AdminReportProcessingProfileStringLlmConfig {
@@ -140,7 +133,6 @@ impl Default for AdminReportProcessingProfileStringLlmConfig {
             system_text: "You are a dating app text content moderator. Output 'accepted' when the reported text violates terms. Output 'rejected' when it does not.".to_string(),
             user_text_template: "Reported content:\n\n{text}".to_string(),
             expected_response: "accepted".to_string(),
-            max_tokens: MAX_TOKENS_DEFAULT,
         }
     }
 }
@@ -152,7 +144,6 @@ pub struct AdminReportProcessingProfileContentLlmConfig {
     /// line of the response contains this text, the report
     /// is processed as accepted. The comparisons are case insensitive.
     pub expected_response: String,
-    pub max_tokens: u32,
 }
 
 impl Default for AdminReportProcessingProfileContentLlmConfig {
@@ -160,7 +151,6 @@ impl Default for AdminReportProcessingProfileContentLlmConfig {
         Self {
             system_text: "You are a dating app image report moderator. Output 'accepted' when the reported image violates terms. Output 'rejected' when it does not.".to_string(),
             expected_response: "accepted".to_string(),
-            max_tokens: MAX_TOKENS_DEFAULT,
         }
     }
 }
@@ -178,7 +168,6 @@ pub struct AdminReportProcessingMessagesLlmConfig {
     /// line of the response contains this text, the report
     /// is processed as accepted. The comparisons are case insensitive.
     pub expected_response: String,
-    pub max_tokens: u32,
 }
 
 impl Default for AdminReportProcessingMessagesLlmConfig {
@@ -189,7 +178,6 @@ impl Default for AdminReportProcessingMessagesLlmConfig {
             report_creator_message_template: "Report creator's message:\n\n{text}".to_string(),
             report_target_message_template: "Report target's message:\n\n{text}".to_string(),
             expected_response: "accepted".to_string(),
-            max_tokens: MAX_TOKENS_DEFAULT,
         }
     }
 }
@@ -252,7 +240,6 @@ pub struct LlmStringModerationConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub add_llm_output_to_user_visible_rejection_details: bool,
-    pub max_tokens: u32,
 }
 
 impl Default for LlmStringModerationConfig {
@@ -263,7 +250,6 @@ impl Default for LlmStringModerationConfig {
             expected_response: "accepted".to_string(),
             move_rejected_to_human_moderation: false,
             add_llm_output_to_user_visible_rejection_details: false,
-            max_tokens: MAX_TOKENS_DEFAULT,
         }
     }
 }
@@ -334,13 +320,6 @@ pub struct LlmContentModerationConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub add_llm_output_to_user_visible_rejection_details: bool,
-    pub max_tokens: u32,
-}
-
-impl LlmContentModerationConfig {
-    pub fn max_tokens(&self) -> u32 {
-        self.max_tokens
-    }
 }
 
 impl Default for LlmContentModerationConfig {
@@ -353,7 +332,6 @@ impl Default for LlmContentModerationConfig {
             move_accepted_to_human_moderation: false,
             move_rejected_to_human_moderation: false,
             add_llm_output_to_user_visible_rejection_details: false,
-            max_tokens: MAX_TOKENS_DEFAULT,
         }
     }
 }

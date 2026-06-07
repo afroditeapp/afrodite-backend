@@ -391,6 +391,13 @@ pub struct LlmConfig {
     pub model: String,
     pub temperature: Option<f32>,
     pub seed: Option<i64>,
+    /// Default value is 10 000.
+    #[serde(default = "default_llm_max_tokens")]
+    pub max_tokens: u32,
+}
+
+fn default_llm_max_tokens() -> u32 {
+    10_000
 }
 
 #[derive(Debug, Clone, Deserialize)]

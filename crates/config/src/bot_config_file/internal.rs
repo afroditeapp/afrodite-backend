@@ -85,7 +85,7 @@ impl LlmStringModerationConfig {
             add_llm_output_to_user_visible_rejection_details: db
                 .add_llm_output_to_user_visible_rejection_details,
             debug_log_results: file.debug_log_results,
-            max_tokens: db.max_tokens,
+            max_tokens: llm.max_tokens,
             retry_wait_times_in_seconds: file.retry_wait_times_in_seconds,
         })
     }
@@ -208,7 +208,7 @@ impl LlmSecurityContentVerificationConfig {
             system_text: db.system_text,
             expected_response: db.expected_response,
             debug_log_results: file.debug_log_results,
-            max_tokens: db.max_tokens,
+            max_tokens: llm.max_tokens,
             retry_wait_times_in_seconds: file.retry_wait_times_in_seconds,
         })
     }
@@ -357,7 +357,7 @@ impl LlmFaceVerificationConfig {
             system_text: db.system_text,
             expected_response: db.expected_response,
             debug_log_results: file.debug_log_results,
-            max_tokens: db.max_tokens,
+            max_tokens: llm.max_tokens,
             retry_wait_times_in_seconds: file.retry_wait_times_in_seconds,
         })
     }
@@ -390,7 +390,7 @@ impl LlmContentModerationConfig {
             add_llm_output_to_user_visible_rejection_details: db
                 .add_llm_output_to_user_visible_rejection_details,
             debug_log_results: file.debug_log_results,
-            max_tokens: db.max_tokens,
+            max_tokens: llm.max_tokens,
             retry_wait_times_in_seconds: file.retry_wait_times_in_seconds,
         })
     }
@@ -434,7 +434,7 @@ impl LlmReportProcessingConfig {
             report_target_message_template: None,
             expected_response: db.expected_response,
             debug_log_results: file.debug_log_results,
-            max_tokens: db.max_tokens,
+            max_tokens: llm.max_tokens,
             retry_wait_times_in_seconds: file.retry_wait_times_in_seconds,
         })
     }
@@ -458,7 +458,7 @@ impl LlmReportProcessingConfig {
             report_target_message_template: None,
             expected_response: db.expected_response,
             debug_log_results: file.debug_log_results,
-            max_tokens: db.max_tokens,
+            max_tokens: llm.max_tokens,
             retry_wait_times_in_seconds: file.retry_wait_times_in_seconds,
         })
     }
@@ -482,7 +482,7 @@ impl LlmReportProcessingConfig {
             report_target_message_template: Some(db.report_target_message_template),
             expected_response: db.expected_response,
             debug_log_results: file.debug_log_results,
-            max_tokens: db.max_tokens,
+            max_tokens: llm.max_tokens,
             retry_wait_times_in_seconds: file.retry_wait_times_in_seconds,
         })
     }
