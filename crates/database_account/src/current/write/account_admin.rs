@@ -1,6 +1,7 @@
 use database::define_current_write_commands;
 
 mod ban;
+mod custom_email;
 mod login;
 mod news;
 
@@ -17,5 +18,9 @@ impl<'a> CurrentWriteAccountAdmin<'a> {
 
     pub fn news(self) -> news::CurrentWriteAccountNewsAdmin<'a> {
         news::CurrentWriteAccountNewsAdmin::new(self.cmds)
+    }
+
+    pub fn custom_email(self) -> custom_email::CurrentWriteAccountCustomEmailAdmin<'a> {
+        custom_email::CurrentWriteAccountCustomEmailAdmin::new(self.cmds)
     }
 }

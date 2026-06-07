@@ -250,6 +250,7 @@ define_permissions!(
     /// Additionally required when modifying user-visible content:
     /// attribute/value `name`, `icon`, and `translations`.
     admin_edit_profile_attributes_schema_visible_content,
+    admin_custom_email,
 );
 
 impl Permissions {

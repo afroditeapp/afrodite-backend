@@ -111,6 +111,7 @@ CREATE TABLE IF NOT EXISTS account_permissions(
     admin_subscribe_admin_notifications          BOOLEAN NOT NULL DEFAULT FALSE,
     admin_edit_profile_attributes_schema         BOOLEAN NOT NULL DEFAULT FALSE,
     admin_edit_profile_attributes_schema_visible_content BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_custom_email                           BOOLEAN NOT NULL DEFAULT FALSE,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -534,6 +535,30 @@ CREATE TABLE IF NOT EXISTS account_global_state(
     admin_access_granted_count BIGINT              NOT NULL DEFAULT 0,
     -- Publication ID for news which always increments.
     next_news_publication_id   BIGINT              NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS custom_email(
+    id                          INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    account_id_creator          BIGINT,
+    sending_initiated           BOOLEAN               NOT NULL DEFAULT FALSE,
+    sending_initiated_unix_time BIGINT,
+    sending_completed_unix_time BIGINT,
+    FOREIGN KEY (account_id_creator)
+        REFERENCES account_id (id)
+            ON DELETE SET NULL
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS custom_email_translations(
+    locale                TEXT    NOT NULL,
+    email_id              BIGINT  NOT NULL,
+    message_subject       TEXT    NOT NULL,
+    message_body          TEXT    NOT NULL,
+    PRIMARY KEY (locale, email_id),
+    FOREIGN KEY (email_id)
+        REFERENCES custom_email (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
 );
 
 -- Store custom reports file hash, so that changes to it can be detected

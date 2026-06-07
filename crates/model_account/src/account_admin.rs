@@ -4,6 +4,7 @@ use utoipa::ToSchema;
 
 mod client_features;
 mod client_version;
+mod custom_email;
 mod email;
 mod news;
 mod permissions;
@@ -12,6 +13,7 @@ mod verification;
 
 pub use client_features::*;
 pub use client_version::*;
+pub use custom_email::*;
 pub use email::*;
 pub use news::*;
 pub use permissions::*;

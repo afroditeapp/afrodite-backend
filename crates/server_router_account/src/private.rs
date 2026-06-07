@@ -68,6 +68,9 @@ impl PrivateRoutes {
             .merge(api::account_admin::router_admin_logout(self.state.clone()))
             .merge(api::account_admin::router_admin_verification(
                 self.state.clone(),
+            ))
+            .merge(api::account_admin::router_admin_custom_email(
+                self.state.clone(),
             ));
 
         private.route_layer({

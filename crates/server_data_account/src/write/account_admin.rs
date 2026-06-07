@@ -2,6 +2,7 @@ use server_data::define_cmd_wrapper_write;
 
 pub mod ban;
 mod client_features;
+mod custom_email;
 mod login;
 mod news;
 mod permissions;
@@ -20,6 +21,10 @@ impl<'a> WriteCommandsAccountAdmin<'a> {
 
     pub fn client_features(self) -> client_features::WriteCommandsAccountClientFeaturesAdmin<'a> {
         client_features::WriteCommandsAccountClientFeaturesAdmin::new(self.0)
+    }
+
+    pub fn custom_email(self) -> custom_email::WriteCommandsAccountCustomEmailAdmin<'a> {
+        custom_email::WriteCommandsAccountCustomEmailAdmin::new(self.0)
     }
 
     pub fn news(self) -> news::WriteCommandsAccountNewsAdmin<'a> {

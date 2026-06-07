@@ -158,6 +158,7 @@ diesel::table! {
         admin_subscribe_admin_notifications -> Bool,
         admin_edit_profile_attributes_schema -> Bool,
         admin_edit_profile_attributes_schema_visible_content -> Bool,
+        admin_custom_email -> Bool,
     }
 }
 
@@ -348,6 +349,25 @@ diesel::table! {
         grid_crop_size -> Float4,
         grid_crop_x -> Float4,
         grid_crop_y -> Float4,
+    }
+}
+
+diesel::table! {
+    custom_email (id) {
+        id -> Int8,
+        account_id_creator -> Nullable<Int8>,
+        sending_initiated -> Bool,
+        sending_initiated_unix_time -> Nullable<Int8>,
+        sending_completed_unix_time -> Nullable<Int8>,
+    }
+}
+
+diesel::table! {
+    custom_email_translations (locale, email_id) {
+        locale -> Text,
+        email_id -> Int8,
+        message_subject -> Text,
+        message_body -> Text,
     }
 }
 
@@ -948,6 +968,8 @@ diesel::joinable!(chat_report_chat_message -> common_report (report_id));
 diesel::joinable!(chat_state -> account_id (account_id));
 diesel::joinable!(common_state -> account_id (account_id));
 diesel::joinable!(current_account_media -> account_id (account_id));
+diesel::joinable!(custom_email -> account_id (account_id_creator));
+diesel::joinable!(custom_email_translations -> custom_email (email_id));
 diesel::joinable!(daily_likes_left -> account_id (account_id));
 diesel::joinable!(demo_account_owned_accounts -> account_id (account_id));
 diesel::joinable!(history_client_version_statistics -> history_client_version_statistics_version_number (version_id));
@@ -1022,6 +1044,8 @@ diesel::allow_tables_to_appear_in_same_query!(
     common_state,
     conversation_id,
     current_account_media,
+    custom_email,
+    custom_email_translations,
     custom_reports_file_hash,
     daily_likes_left,
     demo_account_owned_accounts,

@@ -1,6 +1,7 @@
 pub mod ban;
 pub mod client_features;
 pub mod client_version;
+pub mod custom_email;
 pub mod delete;
 pub mod email;
 pub mod login;
@@ -14,6 +15,7 @@ pub mod verification;
 pub use ban::*;
 pub use client_features::*;
 pub use client_version::*;
+pub use custom_email::*;
 pub use delete::*;
 pub use email::*;
 pub use login::*;
