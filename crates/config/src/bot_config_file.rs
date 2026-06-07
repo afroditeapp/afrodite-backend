@@ -394,6 +394,14 @@ pub struct LlmConfig {
     /// Default value is 10 000.
     #[serde(default = "default_llm_max_tokens")]
     pub max_tokens: u32,
+    /// Log LLM request/response details for debugging.
+    #[serde(default)]
+    pub debug_log_results: bool,
+    /// Wait times in seconds between retry attempts. The length of this vector
+    /// determines the number of retries. For example, [1, 5, 10] means 3 retries
+    /// with 1, 5, and 10 seconds wait time respectively.
+    #[serde(default)]
+    pub retry_wait_times_in_seconds: Vec<u16>,
 }
 
 fn default_llm_max_tokens() -> u32 {
@@ -408,6 +416,8 @@ pub struct LlmConfigOptional {
     pub temperature: Option<f32>,
     pub seed: Option<i64>,
     pub max_tokens: Option<u32>,
+    pub debug_log_results: Option<bool>,
+    pub retry_wait_times_in_seconds: Option<Vec<u16>>,
 }
 
 impl LlmConfigOptional {
@@ -418,6 +428,10 @@ impl LlmConfigOptional {
             temperature: self.temperature.or(base.temperature),
             seed: self.seed.or(base.seed),
             max_tokens: self.max_tokens.unwrap_or(base.max_tokens),
+            debug_log_results: self.debug_log_results.unwrap_or(base.debug_log_results),
+            retry_wait_times_in_seconds: self
+                .retry_wait_times_in_seconds
+                .unwrap_or(base.retry_wait_times_in_seconds),
         }
     }
 }
@@ -426,13 +440,6 @@ impl LlmConfigOptional {
 pub struct LlmStringModerationFileConfig {
     #[serde(flatten)]
     pub llm: Option<LlmConfigOptional>,
-    #[serde(default)]
-    pub debug_log_results: bool,
-    /// Wait times in seconds between retry attempts. The length of this vector
-    /// determines the number of retries. For example, [1, 5, 10] means 3 retries
-    /// with 1, 5, and 10 seconds wait time respectively.
-    #[serde(default)]
-    pub retry_wait_times_in_seconds: Vec<u16>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -511,14 +518,6 @@ pub struct ReportProcessingTypeFileConfig {
     /// LLM connection config. Falls back to the common [LlmConfig].
     #[serde(flatten)]
     pub llm: Option<LlmConfigOptional>,
-    /// Log LLM request/response details for debugging.
-    #[serde(default)]
-    pub debug_log_results: bool,
-    /// Wait times in seconds between retry attempts. The length of this vector
-    /// determines the number of retries. For example, [1, 5, 10] means 3 retries
-    /// with 1, 5, and 10 seconds wait time respectively.
-    #[serde(default)]
-    pub retry_wait_times_in_seconds: Vec<u16>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -560,13 +559,6 @@ pub struct NsfwDetectionFileConfig {
 pub struct LlmContentModerationFileConfig {
     #[serde(flatten)]
     pub llm: Option<LlmConfigOptional>,
-    #[serde(default)]
-    pub debug_log_results: bool,
-    /// Wait times in seconds between retry attempts. The length of this vector
-    /// determines the number of retries. For example, [1, 5, 10] means 3 retries
-    /// with 1, 5, and 10 seconds wait time respectively.
-    #[serde(default)]
-    pub retry_wait_times_in_seconds: Vec<u16>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

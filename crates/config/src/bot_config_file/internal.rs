@@ -87,9 +87,9 @@ impl LlmStringModerationConfig {
             move_rejected_to_human_moderation: db.move_rejected_to_human_moderation,
             add_llm_output_to_user_visible_rejection_details: db
                 .add_llm_output_to_user_visible_rejection_details,
-            debug_log_results: file.debug_log_results,
+            debug_log_results: llm.debug_log_results,
             max_tokens: llm.max_tokens,
-            retry_wait_times_in_seconds: file.retry_wait_times_in_seconds,
+            retry_wait_times_in_seconds: llm.retry_wait_times_in_seconds,
         })
     }
 }
@@ -213,9 +213,9 @@ impl LlmSecurityContentVerificationConfig {
             seed: llm.seed,
             system_text: db.system_text,
             expected_response: db.expected_response,
-            debug_log_results: file.debug_log_results,
+            debug_log_results: llm.debug_log_results,
             max_tokens: llm.max_tokens,
-            retry_wait_times_in_seconds: file.retry_wait_times_in_seconds,
+            retry_wait_times_in_seconds: llm.retry_wait_times_in_seconds,
         })
     }
 }
@@ -365,9 +365,9 @@ impl LlmFaceVerificationConfig {
             seed: llm.seed,
             system_text: db.system_text,
             expected_response: db.expected_response,
-            debug_log_results: file.debug_log_results,
+            debug_log_results: llm.debug_log_results,
             max_tokens: llm.max_tokens,
-            retry_wait_times_in_seconds: file.retry_wait_times_in_seconds,
+            retry_wait_times_in_seconds: llm.retry_wait_times_in_seconds,
         })
     }
 }
@@ -401,9 +401,9 @@ impl LlmContentModerationConfig {
             move_rejected_to_human_moderation: db.move_rejected_to_human_moderation,
             add_llm_output_to_user_visible_rejection_details: db
                 .add_llm_output_to_user_visible_rejection_details,
-            debug_log_results: file.debug_log_results,
+            debug_log_results: llm.debug_log_results,
             max_tokens: llm.max_tokens,
-            retry_wait_times_in_seconds: file.retry_wait_times_in_seconds,
+            retry_wait_times_in_seconds: llm.retry_wait_times_in_seconds,
         })
     }
 }
@@ -448,9 +448,9 @@ impl LlmReportProcessingConfig {
             report_creator_message_template: None,
             report_target_message_template: None,
             expected_response: db.expected_response,
-            debug_log_results: file.debug_log_results,
+            debug_log_results: llm.debug_log_results,
             max_tokens: llm.max_tokens,
-            retry_wait_times_in_seconds: file.retry_wait_times_in_seconds,
+            retry_wait_times_in_seconds: llm.retry_wait_times_in_seconds,
         })
     }
 
@@ -475,9 +475,9 @@ impl LlmReportProcessingConfig {
             report_creator_message_template: None,
             report_target_message_template: None,
             expected_response: db.expected_response,
-            debug_log_results: file.debug_log_results,
+            debug_log_results: llm.debug_log_results,
             max_tokens: llm.max_tokens,
-            retry_wait_times_in_seconds: file.retry_wait_times_in_seconds,
+            retry_wait_times_in_seconds: llm.retry_wait_times_in_seconds,
         })
     }
 
@@ -502,9 +502,9 @@ impl LlmReportProcessingConfig {
             report_creator_message_template: Some(db.report_creator_message_template),
             report_target_message_template: Some(db.report_target_message_template),
             expected_response: db.expected_response,
-            debug_log_results: file.debug_log_results,
+            debug_log_results: llm.debug_log_results,
             max_tokens: llm.max_tokens,
-            retry_wait_times_in_seconds: file.retry_wait_times_in_seconds,
+            retry_wait_times_in_seconds: llm.retry_wait_times_in_seconds,
         })
     }
 }
