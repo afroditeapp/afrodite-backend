@@ -74,10 +74,11 @@ impl ProfileStringModerationLlmConfigInternal {
         Some(Self {
             llm,
             user_text_template: db.user_text_template,
-            system_text: db.system_text,
-            expected_response: db.expected_response,
-            move_rejected_to_human_moderation: db.move_rejected_to_human_moderation,
+            system_text: db.base.system_text,
+            expected_response: db.base.expected_response,
+            move_rejected_to_human_moderation: db.base.move_rejected_to_human_moderation,
             add_llm_output_to_user_visible_rejection_details: db
+                .base
                 .add_llm_output_to_user_visible_rejection_details,
         })
     }
@@ -188,8 +189,8 @@ impl SecurityContentVerificationLlmConfigInternal {
 
         Some(Self {
             llm,
-            system_text: db.system_text,
-            expected_response: db.expected_response,
+            system_text: db.base.system_text,
+            expected_response: db.base.expected_response,
         })
     }
 }
@@ -319,8 +320,8 @@ impl FaceVerificationLlmConfigInternal {
 
         Some(Self {
             llm,
-            system_text: db.system_text,
-            expected_response: db.expected_response,
+            system_text: db.base.system_text,
+            expected_response: db.base.expected_response,
         })
     }
 }
@@ -340,8 +341,8 @@ impl ContentModerationLlmConfigInternal {
 
         Some(Self {
             llm,
-            system_text: db.system_text,
-            expected_response: db.expected_response,
+            system_text: db.base.system_text,
+            expected_response: db.base.expected_response,
             ignore_rejected: db.ignore_rejected,
             delete_accepted: db.delete_accepted,
             move_accepted_to_human_moderation: db.move_accepted_to_human_moderation,
@@ -375,11 +376,11 @@ impl ReportProcessingLlmConfigInternal {
 
         Some(Self {
             llm,
-            system_text: db.system_text,
-            user_text_template: Some(db.user_text_template),
+            system_text: db.base.system_text,
+            user_text_template: Some(db.base.user_text_template),
             report_creator_message_template: None,
             report_target_message_template: None,
-            expected_response: db.expected_response,
+            expected_response: db.base.expected_response,
         })
     }
 
@@ -393,11 +394,11 @@ impl ReportProcessingLlmConfigInternal {
 
         Some(Self {
             llm,
-            system_text: db.system_text,
+            system_text: db.base.system_text,
             user_text_template: None,
             report_creator_message_template: None,
             report_target_message_template: None,
-            expected_response: db.expected_response,
+            expected_response: db.base.expected_response,
         })
     }
 
@@ -411,11 +412,11 @@ impl ReportProcessingLlmConfigInternal {
 
         Some(Self {
             llm,
-            system_text: db.system_text,
-            user_text_template: Some(db.user_text_template),
+            system_text: db.base.system_text,
+            user_text_template: Some(db.base.user_text_template),
             report_creator_message_template: Some(db.report_creator_message_template),
             report_target_message_template: Some(db.report_target_message_template),
-            expected_response: db.expected_response,
+            expected_response: db.base.expected_response,
         })
     }
 }
