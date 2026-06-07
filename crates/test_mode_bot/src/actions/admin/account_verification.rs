@@ -37,7 +37,7 @@ impl AccountVerificationState {
             .map(|config| LlmConfigAndClient {
                 client: Client::with_config(
                     OpenAIConfig::new()
-                        .with_api_base(config.openai_api_url.to_string())
+                        .with_api_base(config.llm.openai_api_url.to_string())
                         .with_api_key(""),
                 )
                 .with_http_client(reqwest_client.clone()),

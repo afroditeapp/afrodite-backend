@@ -129,7 +129,7 @@ async fn llm_security_content_verification_and_retry(
     verification_image_data: &[u8],
     llm: LlmConfigAndClient,
 ) -> Result<Option<ModerationResult>, TestError> {
-    let retry_wait_times = &llm.config.retry_wait_times_in_seconds;
+    let retry_wait_times = &llm.config.llm.retry_wait_times_in_seconds;
     let mut attempt = 0;
 
     loop {
@@ -212,11 +212,11 @@ async fn llm_security_content_verification(
                 ChatCompletionRequestMessage::System(config.system_text.clone().into()),
                 ChatCompletionRequestMessage::User(user_message),
             ],
-            model: config.model.clone(),
-            temperature: config.temperature,
-            seed: config.seed,
-            max_completion_tokens: Some(config.max_tokens),
-            max_tokens: Some(config.max_tokens),
+            model: config.llm.model.clone(),
+            temperature: config.llm.temperature,
+            seed: config.llm.seed,
+            max_completion_tokens: Some(config.llm.max_tokens),
+            max_tokens: Some(config.llm.max_tokens),
             ..Default::default()
         })
         .await;
@@ -243,7 +243,7 @@ async fn llm_security_content_verification(
     let response_first_line = response_lowercase.lines().next().unwrap_or_default();
     let accepted = response_lowercase.starts_with(&expected_response_lowercase)
         || response_first_line.contains(&expected_response_lowercase);
-    if config.debug_log_results {
+    if config.llm.debug_log_results {
         info!("LLM security content verification result: '{}'", response);
     }
 

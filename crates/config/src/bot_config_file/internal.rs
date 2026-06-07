@@ -9,11 +9,11 @@ use model::common_admin::{
     LlmSecurityContentVerificationConfig as AdminLlmSecurityContentVerificationConfig,
     LlmStringModerationConfig as AdminLlmStringModerationConfig,
 };
-use serde::{Deserialize, Serialize};
 pub use simple_backend_model::NsfwDetectionThresholds;
-use url::Url;
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+use crate::bot_config_file::LlmConfig;
+
+#[derive(Debug, Clone)]
 pub struct ProfileStringModerationConfig {
     pub accept_single_visible_character: bool,
     pub llm: Option<LlmStringModerationConfig>,
@@ -42,20 +42,14 @@ impl ProfileStringModerationConfig {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone)]
 pub struct LlmStringModerationConfig {
-    pub openai_api_url: Url,
-    pub model: String,
-    pub temperature: Option<f32>,
-    pub seed: Option<i64>,
-    pub system_text: String,
+    pub llm: LlmConfig,
     pub user_text_template: String,
+    pub system_text: String,
     pub expected_response: String,
     pub move_rejected_to_human_moderation: bool,
     pub add_llm_output_to_user_visible_rejection_details: bool,
-    pub debug_log_results: bool,
-    pub max_tokens: u32,
-    pub retry_wait_times_in_seconds: Vec<u16>,
 }
 
 impl LlmStringModerationConfig {
@@ -74,24 +68,18 @@ impl LlmStringModerationConfig {
         let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
 
         Some(Self {
-            openai_api_url: llm.openai_api_url,
-            model: llm.model,
-            temperature: llm.temperature,
-            seed: llm.seed,
-            system_text: db.system_text,
+            llm,
             user_text_template: db.user_text_template,
+            system_text: db.system_text,
             expected_response: db.expected_response,
             move_rejected_to_human_moderation: db.move_rejected_to_human_moderation,
             add_llm_output_to_user_visible_rejection_details: db
                 .add_llm_output_to_user_visible_rejection_details,
-            debug_log_results: llm.debug_log_results,
-            max_tokens: llm.max_tokens,
-            retry_wait_times_in_seconds: llm.retry_wait_times_in_seconds,
         })
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone)]
 pub struct ContentModerationConfig {
     pub initial_content: bool,
     pub added_content: bool,
@@ -103,14 +91,14 @@ pub struct ContentModerationConfig {
     pub concurrency: u8,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone)]
 pub struct FaceVerificationConfig {
     pub llm: Option<LlmFaceVerificationConfig>,
     pub default_action: AcceptOrReject,
     pub concurrency: u8,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone)]
 pub struct AccountVerificationConfig {
     pub profile_age_range: bool,
     pub profile_name: bool,
@@ -142,7 +130,7 @@ impl AccountVerificationConfig {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone)]
 pub struct SecurityContentVerificationConfig {
     pub llm: Option<LlmSecurityContentVerificationConfig>,
     pub default_action: AcceptOrReject,
@@ -174,17 +162,11 @@ impl SecurityContentVerificationConfig {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone)]
 pub struct LlmSecurityContentVerificationConfig {
-    pub openai_api_url: Url,
-    pub model: String,
-    pub temperature: Option<f32>,
-    pub seed: Option<i64>,
+    pub llm: LlmConfig,
     pub system_text: String,
     pub expected_response: String,
-    pub debug_log_results: bool,
-    pub max_tokens: u32,
-    pub retry_wait_times_in_seconds: Vec<u16>,
 }
 
 impl LlmSecurityContentVerificationConfig {
@@ -201,15 +183,9 @@ impl LlmSecurityContentVerificationConfig {
         let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
 
         Some(Self {
-            openai_api_url: llm.openai_api_url,
-            model: llm.model,
-            temperature: llm.temperature,
-            seed: llm.seed,
+            llm,
             system_text: db.system_text,
             expected_response: db.expected_response,
-            debug_log_results: llm.debug_log_results,
-            max_tokens: llm.max_tokens,
-            retry_wait_times_in_seconds: llm.retry_wait_times_in_seconds,
         })
     }
 }
@@ -273,7 +249,7 @@ impl ContentModerationConfig {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone)]
 pub struct NsfwDetectionConfig {
     pub model_file: PathBuf,
     pub reject: NsfwDetectionThresholds,
@@ -305,12 +281,9 @@ impl NsfwDetectionConfig {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone)]
 pub struct LlmContentModerationConfig {
-    pub openai_api_url: Url,
-    pub model: String,
-    pub temperature: Option<f32>,
-    pub seed: Option<i64>,
+    pub llm: LlmConfig,
     pub system_text: String,
     pub expected_response: String,
     pub ignore_rejected: bool,
@@ -318,22 +291,13 @@ pub struct LlmContentModerationConfig {
     pub move_accepted_to_human_moderation: bool,
     pub move_rejected_to_human_moderation: bool,
     pub add_llm_output_to_user_visible_rejection_details: bool,
-    pub debug_log_results: bool,
-    pub max_tokens: u32,
-    pub retry_wait_times_in_seconds: Vec<u16>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone)]
 pub struct LlmFaceVerificationConfig {
-    pub openai_api_url: Url,
-    pub model: String,
-    pub temperature: Option<f32>,
-    pub seed: Option<i64>,
+    pub llm: LlmConfig,
     pub system_text: String,
     pub expected_response: String,
-    pub debug_log_results: bool,
-    pub max_tokens: u32,
-    pub retry_wait_times_in_seconds: Vec<u16>,
 }
 
 impl LlmFaceVerificationConfig {
@@ -350,15 +314,9 @@ impl LlmFaceVerificationConfig {
         let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
 
         Some(Self {
-            openai_api_url: llm.openai_api_url,
-            model: llm.model,
-            temperature: llm.temperature,
-            seed: llm.seed,
+            llm,
             system_text: db.system_text,
             expected_response: db.expected_response,
-            debug_log_results: llm.debug_log_results,
-            max_tokens: llm.max_tokens,
-            retry_wait_times_in_seconds: llm.retry_wait_times_in_seconds,
         })
     }
 }
@@ -377,10 +335,7 @@ impl LlmContentModerationConfig {
         let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
 
         Some(Self {
-            openai_api_url: llm.openai_api_url,
-            model: llm.model,
-            temperature: llm.temperature,
-            seed: llm.seed,
+            llm,
             system_text: db.system_text,
             expected_response: db.expected_response,
             ignore_rejected: db.ignore_rejected,
@@ -389,27 +344,18 @@ impl LlmContentModerationConfig {
             move_rejected_to_human_moderation: db.move_rejected_to_human_moderation,
             add_llm_output_to_user_visible_rejection_details: db
                 .add_llm_output_to_user_visible_rejection_details,
-            debug_log_results: llm.debug_log_results,
-            max_tokens: llm.max_tokens,
-            retry_wait_times_in_seconds: llm.retry_wait_times_in_seconds,
         })
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone)]
 pub struct LlmReportProcessingConfig {
-    pub openai_api_url: Url,
-    pub model: String,
-    pub temperature: Option<f32>,
-    pub seed: Option<i64>,
+    pub llm: LlmConfig,
     pub system_text: String,
     pub user_text_template: Option<String>,
     pub report_creator_message_template: Option<String>,
     pub report_target_message_template: Option<String>,
     pub expected_response: String,
-    pub debug_log_results: bool,
-    pub max_tokens: u32,
-    pub retry_wait_times_in_seconds: Vec<u16>,
 }
 
 impl LlmReportProcessingConfig {
@@ -424,18 +370,12 @@ impl LlmReportProcessingConfig {
         let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
 
         Some(Self {
-            openai_api_url: llm.openai_api_url,
-            model: llm.model,
-            temperature: llm.temperature,
-            seed: llm.seed,
+            llm,
             system_text: db.system_text,
             user_text_template: Some(db.user_text_template),
             report_creator_message_template: None,
             report_target_message_template: None,
             expected_response: db.expected_response,
-            debug_log_results: llm.debug_log_results,
-            max_tokens: llm.max_tokens,
-            retry_wait_times_in_seconds: llm.retry_wait_times_in_seconds,
         })
     }
 
@@ -448,18 +388,12 @@ impl LlmReportProcessingConfig {
         let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
 
         Some(Self {
-            openai_api_url: llm.openai_api_url,
-            model: llm.model,
-            temperature: llm.temperature,
-            seed: llm.seed,
+            llm,
             system_text: db.system_text,
             user_text_template: None,
             report_creator_message_template: None,
             report_target_message_template: None,
             expected_response: db.expected_response,
-            debug_log_results: llm.debug_log_results,
-            max_tokens: llm.max_tokens,
-            retry_wait_times_in_seconds: llm.retry_wait_times_in_seconds,
         })
     }
 
@@ -472,29 +406,23 @@ impl LlmReportProcessingConfig {
         let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
 
         Some(Self {
-            openai_api_url: llm.openai_api_url,
-            model: llm.model,
-            temperature: llm.temperature,
-            seed: llm.seed,
+            llm,
             system_text: db.system_text,
             user_text_template: Some(db.user_text_template),
             report_creator_message_template: Some(db.report_creator_message_template),
             report_target_message_template: Some(db.report_target_message_template),
             expected_response: db.expected_response,
-            debug_log_results: llm.debug_log_results,
-            max_tokens: llm.max_tokens,
-            retry_wait_times_in_seconds: llm.retry_wait_times_in_seconds,
         })
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone)]
 pub struct ReportProcessingTypeConfig {
     pub llm: Option<LlmReportProcessingConfig>,
     pub default_action: AcceptOrReject,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone)]
 pub struct ReportProcessingConfig {
     pub profile_name: Option<ReportProcessingTypeConfig>,
     pub profile_text: Option<ReportProcessingTypeConfig>,

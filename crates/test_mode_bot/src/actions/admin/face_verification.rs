@@ -40,7 +40,7 @@ impl FaceVerificationState {
         let llm = config.llm.as_ref().map(|config| LlmConfigAndClient {
             client: Client::with_config(
                 OpenAIConfig::new()
-                    .with_api_base(config.openai_api_url.to_string())
+                    .with_api_base(config.llm.openai_api_url.to_string())
                     .with_api_key(""),
             )
             .with_http_client(reqwest_client.clone()),
@@ -211,11 +211,11 @@ impl AdminBotFaceVerificationLogic {
                     ChatCompletionRequestMessage::System(config.system_text.clone().into()),
                     ChatCompletionRequestMessage::User(user_message),
                 ],
-                model: config.model.clone(),
-                temperature: config.temperature,
-                seed: config.seed,
-                max_completion_tokens: Some(config.max_tokens),
-                max_tokens: Some(config.max_tokens),
+                model: config.llm.model.clone(),
+                temperature: config.llm.temperature,
+                seed: config.llm.seed,
+                max_completion_tokens: Some(config.llm.max_tokens),
+                max_tokens: Some(config.llm.max_tokens),
                 ..Default::default()
             })
             .await;
@@ -241,7 +241,7 @@ impl AdminBotFaceVerificationLogic {
         let response_first_line = response_lowercase.lines().next().unwrap_or_default();
         let accepted = response_lowercase.starts_with(&expected_response_lowercase)
             || response_first_line.contains(&expected_response_lowercase);
-        if config.debug_log_results {
+        if config.llm.debug_log_results {
             info!("LLM face verification result: '{}'", response);
         }
 
@@ -258,7 +258,7 @@ impl AdminBotFaceVerificationLogic {
         content_image_data: &[u8],
         llm: LlmConfigAndClient,
     ) -> Result<Option<ModerationResult>, TestError> {
-        let retry_wait_times = &llm.config.retry_wait_times_in_seconds;
+        let retry_wait_times = &llm.config.llm.retry_wait_times_in_seconds;
         let mut attempt = 0;
 
         loop {
