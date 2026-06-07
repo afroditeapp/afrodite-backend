@@ -71,7 +71,10 @@ impl LlmStringModerationConfig {
             return None;
         }
         let file = file?;
-        let llm = file.llm.or(common_llm)?;
+        let llm = match file.llm {
+            Some(opt) => Some(opt.merge_with(common_llm?)),
+            None => common_llm,
+        }?;
 
         Some(Self {
             openai_api_url: llm.openai_api_url,
@@ -198,7 +201,10 @@ impl LlmSecurityContentVerificationConfig {
             return None;
         }
         let file = file?;
-        let llm = file.llm.or(common_llm)?;
+        let llm = match file.llm {
+            Some(opt) => Some(opt.merge_with(common_llm?)),
+            None => common_llm,
+        }?;
 
         Some(Self {
             openai_api_url: llm.openai_api_url,
@@ -347,7 +353,10 @@ impl LlmFaceVerificationConfig {
             return None;
         }
         let file = file?;
-        let llm = file.llm.or(common_llm)?;
+        let llm = match file.llm {
+            Some(opt) => Some(opt.merge_with(common_llm?)),
+            None => common_llm,
+        }?;
 
         Some(Self {
             openai_api_url: llm.openai_api_url,
@@ -374,7 +383,10 @@ impl LlmContentModerationConfig {
             return None;
         }
         let file = file?;
-        let llm = file.llm.or(common_llm)?;
+        let llm = match file.llm {
+            Some(opt) => Some(opt.merge_with(common_llm?)),
+            None => common_llm,
+        }?;
 
         Some(Self {
             openai_api_url: llm.openai_api_url,
@@ -421,7 +433,10 @@ impl LlmReportProcessingConfig {
         common_llm: Option<crate::bot_config_file::LlmConfig>,
     ) -> Option<Self> {
         let file = file?;
-        let llm = file.llm.or(common_llm)?;
+        let llm = match file.llm {
+            Some(opt) => Some(opt.merge_with(common_llm?)),
+            None => common_llm,
+        }?;
 
         Some(Self {
             openai_api_url: llm.openai_api_url,
@@ -445,7 +460,10 @@ impl LlmReportProcessingConfig {
         common_llm: Option<crate::bot_config_file::LlmConfig>,
     ) -> Option<Self> {
         let file = file?;
-        let llm = file.llm.or(common_llm)?;
+        let llm = match file.llm {
+            Some(opt) => Some(opt.merge_with(common_llm?)),
+            None => common_llm,
+        }?;
 
         Some(Self {
             openai_api_url: llm.openai_api_url,
@@ -469,7 +487,10 @@ impl LlmReportProcessingConfig {
         common_llm: Option<crate::bot_config_file::LlmConfig>,
     ) -> Option<Self> {
         let file = file?;
-        let llm = file.llm.or(common_llm)?;
+        let llm = match file.llm {
+            Some(opt) => Some(opt.merge_with(common_llm?)),
+            None => common_llm,
+        }?;
 
         Some(Self {
             openai_api_url: llm.openai_api_url,

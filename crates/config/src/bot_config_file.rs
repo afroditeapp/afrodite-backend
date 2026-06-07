@@ -400,10 +400,32 @@ fn default_llm_max_tokens() -> u32 {
     10_000
 }
 
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+pub struct LlmConfigOptional {
+    pub openai_api_url: Option<Url>,
+    pub model: Option<String>,
+    pub temperature: Option<f32>,
+    pub seed: Option<i64>,
+    pub max_tokens: Option<u32>,
+}
+
+impl LlmConfigOptional {
+    pub fn merge_with(self, base: LlmConfig) -> LlmConfig {
+        LlmConfig {
+            openai_api_url: self.openai_api_url.unwrap_or(base.openai_api_url),
+            model: self.model.unwrap_or(base.model),
+            temperature: self.temperature.or(base.temperature),
+            seed: self.seed.or(base.seed),
+            max_tokens: self.max_tokens.unwrap_or(base.max_tokens),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct LlmStringModerationFileConfig {
     #[serde(flatten)]
-    pub llm: Option<LlmConfig>,
+    pub llm: Option<LlmConfigOptional>,
     #[serde(default)]
     pub debug_log_results: bool,
     /// Wait times in seconds between retry attempts. The length of this vector
@@ -488,7 +510,7 @@ impl Default for SecurityContentVerificationFileConfig {
 pub struct ReportProcessingTypeFileConfig {
     /// LLM connection config. Falls back to the common [LlmConfig].
     #[serde(flatten)]
-    pub llm: Option<LlmConfig>,
+    pub llm: Option<LlmConfigOptional>,
     /// Log LLM request/response details for debugging.
     #[serde(default)]
     pub debug_log_results: bool,
@@ -537,7 +559,7 @@ pub struct NsfwDetectionFileConfig {
 #[derive(Debug, Clone, Deserialize)]
 pub struct LlmContentModerationFileConfig {
     #[serde(flatten)]
-    pub llm: Option<LlmConfig>,
+    pub llm: Option<LlmConfigOptional>,
     #[serde(default)]
     pub debug_log_results: bool,
     /// Wait times in seconds between retry attempts. The length of this vector
