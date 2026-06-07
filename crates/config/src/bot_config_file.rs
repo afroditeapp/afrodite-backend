@@ -55,9 +55,7 @@ pub struct BotConfigFile {
     pub account_verification: Option<AccountVerificationFileConfig>,
     /// Admin bot report processing config for all 4 built-in report types.
     pub report_processing: Option<ReportProcessingFileConfig>,
-    /// Common LLM config used as fallback when content-specific LLM config
-    /// does not provide its own connection settings.
-    pub llm: Option<LlmConfig>,
+    pub llm: Option<BaseLlmConfig>,
     /// Config required for starting backend in remote bot mode.
     pub remote_bot_mode: Option<RemoteBotModeConfig>,
     /// If None, reading location from server config file next
@@ -383,63 +381,60 @@ impl Default for ProfileStringModerationFileConfig {
     }
 }
 
-/// Common LLM configuration fields shared across moderation configs.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct LlmConfig {
-    /// For example "http://localhost:11434/v1"
     pub openai_api_url: Url,
     pub model: String,
     pub temperature: Option<f32>,
     pub seed: Option<i64>,
-    /// Default value is 10 000.
-    #[serde(default = "default_llm_max_tokens")]
     pub max_tokens: u32,
-    /// Log LLM request/response details for debugging.
-    #[serde(default)]
     pub debug_log_results: bool,
-    /// Wait times in seconds between retry attempts. The length of this vector
-    /// determines the number of retries. For example, [1, 5, 10] means 3 retries
-    /// with 1, 5, and 10 seconds wait time respectively.
-    #[serde(default)]
     pub retry_wait_times_in_seconds: Vec<u16>,
-}
-
-fn default_llm_max_tokens() -> u32 {
-    10_000
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
-pub struct LlmConfigOptional {
-    pub openai_api_url: Option<Url>,
-    pub model: Option<String>,
-    pub temperature: Option<f32>,
-    pub seed: Option<i64>,
-    pub max_tokens: Option<u32>,
-    pub debug_log_results: Option<bool>,
-    pub retry_wait_times_in_seconds: Option<Vec<u16>>,
+pub struct BaseLlmConfig {
+    /// Required. For example "http://localhost:11434/v1".
+    openai_api_url: Option<Url>,
+    /// Required.
+    model: Option<String>,
+    temperature: Option<f32>,
+    seed: Option<i64>,
+    /// Default value is 10 000.
+    max_tokens: Option<u32>,
+    /// Log LLM request/response details for debugging.
+    debug_log_results: Option<bool>,
+    /// Wait times in seconds between retry attempts. The length of this vector
+    /// determines the number of retries. For example, [1, 5, 10] means 3 retries
+    /// with 1, 5, and 10 seconds wait time respectively.
+    retry_wait_times_in_seconds: Option<Vec<u16>>,
 }
 
-impl LlmConfigOptional {
-    pub fn merge_with(self, base: LlmConfig) -> LlmConfig {
-        LlmConfig {
-            openai_api_url: self.openai_api_url.unwrap_or(base.openai_api_url),
-            model: self.model.unwrap_or(base.model),
+impl BaseLlmConfig {
+    pub fn merge_with(self, base: BaseLlmConfig) -> Option<LlmConfig> {
+        Some(LlmConfig {
+            openai_api_url: self.openai_api_url.unwrap_or(base.openai_api_url?),
+            model: self.model.unwrap_or(base.model?),
             temperature: self.temperature.or(base.temperature),
             seed: self.seed.or(base.seed),
-            max_tokens: self.max_tokens.unwrap_or(base.max_tokens),
-            debug_log_results: self.debug_log_results.unwrap_or(base.debug_log_results),
+            max_tokens: self.max_tokens.or(base.max_tokens).unwrap_or(10_000),
+            debug_log_results: self
+                .debug_log_results
+                .or(base.debug_log_results)
+                .unwrap_or_default(),
             retry_wait_times_in_seconds: self
                 .retry_wait_times_in_seconds
-                .unwrap_or(base.retry_wait_times_in_seconds),
-        }
+                .or(base.retry_wait_times_in_seconds)
+                .unwrap_or_default(),
+        })
     }
 }
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct LlmStringModerationFileConfig {
     #[serde(flatten)]
-    pub llm: Option<LlmConfigOptional>,
+    pub llm: Option<BaseLlmConfig>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -517,7 +512,7 @@ impl Default for SecurityContentVerificationFileConfig {
 pub struct ReportProcessingTypeFileConfig {
     /// LLM connection config. Falls back to the common [LlmConfig].
     #[serde(flatten)]
-    pub llm: Option<LlmConfigOptional>,
+    pub llm: Option<BaseLlmConfig>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -558,7 +553,7 @@ pub struct NsfwDetectionFileConfig {
 #[derive(Debug, Clone, Deserialize)]
 pub struct LlmContentModerationFileConfig {
     #[serde(flatten)]
-    pub llm: Option<LlmConfigOptional>,
+    pub llm: Option<BaseLlmConfig>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

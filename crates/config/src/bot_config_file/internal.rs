@@ -26,7 +26,7 @@ impl ProfileStringModerationConfig {
         db: AdminProfileStringModerationConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::ProfileStringModerationFileConfig>,
-        common_llm: Option<crate::bot_config_file::LlmConfig>,
+        base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<Self> {
         if !db_enabled {
             return None;
@@ -35,7 +35,7 @@ impl ProfileStringModerationConfig {
 
         Some(Self {
             accept_single_visible_character: db.accept_single_visible_character,
-            llm: LlmStringModerationConfig::new(db.llm, db.llm_enabled, file.llm, common_llm),
+            llm: LlmStringModerationConfig::new(db.llm, db.llm_enabled, file.llm, base_llm),
             default_action: db.default_action,
             concurrency: file.concurrency,
         })
@@ -65,16 +65,13 @@ impl LlmStringModerationConfig {
         db: AdminLlmStringModerationConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::LlmStringModerationFileConfig>,
-        common_llm: Option<crate::bot_config_file::LlmConfig>,
+        base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<Self> {
         if !db_enabled {
             return None;
         }
         let file = file?;
-        let llm = match file.llm {
-            Some(opt) => Some(opt.merge_with(common_llm?)),
-            None => common_llm,
-        }?;
+        let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
 
         Some(Self {
             openai_api_url: llm.openai_api_url,
@@ -125,7 +122,7 @@ impl AccountVerificationConfig {
         db: AdminAccountVerificationConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::AccountVerificationFileConfig>,
-        common_llm: Option<crate::bot_config_file::LlmConfig>,
+        base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<Self> {
         if !db_enabled {
             return None;
@@ -139,7 +136,7 @@ impl AccountVerificationConfig {
                 db.security_content,
                 db.security_content_enabled,
                 file.security_content,
-                common_llm,
+                base_llm,
             ),
         })
     }
@@ -157,7 +154,7 @@ impl SecurityContentVerificationConfig {
         db: model::common_admin::AdminSecurityContentVerificationConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::SecurityContentVerificationFileConfig>,
-        common_llm: Option<crate::bot_config_file::LlmConfig>,
+        base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<Self> {
         if !db_enabled {
             return None;
@@ -169,7 +166,7 @@ impl SecurityContentVerificationConfig {
                 db.llm,
                 db.llm_enabled,
                 file.llm,
-                common_llm,
+                base_llm,
             ),
             default_action: db.default_action,
             concurrency: file.concurrency,
@@ -195,16 +192,13 @@ impl LlmSecurityContentVerificationConfig {
         db: AdminLlmSecurityContentVerificationConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::LlmContentModerationFileConfig>,
-        common_llm: Option<crate::bot_config_file::LlmConfig>,
+        base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<Self> {
         if !db_enabled {
             return None;
         }
         let file = file?;
-        let llm = match file.llm {
-            Some(opt) => Some(opt.merge_with(common_llm?)),
-            None => common_llm,
-        }?;
+        let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
 
         Some(Self {
             openai_api_url: llm.openai_api_url,
@@ -225,7 +219,7 @@ impl FaceVerificationConfig {
         db: AdminFaceVerificationConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::FaceVerificationFileConfig>,
-        common_llm: Option<crate::bot_config_file::LlmConfig>,
+        base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<Self> {
         if !db_enabled {
             return None;
@@ -233,7 +227,7 @@ impl FaceVerificationConfig {
         let file = file.unwrap_or_default();
 
         Some(Self {
-            llm: LlmFaceVerificationConfig::new(db.llm, db.llm_enabled, file.llm, common_llm),
+            llm: LlmFaceVerificationConfig::new(db.llm, db.llm_enabled, file.llm, base_llm),
             default_action: db.default_action,
             concurrency: file.concurrency,
         })
@@ -245,7 +239,7 @@ impl ContentModerationConfig {
         db: AdminContentModerationConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::ContentModerationFileConfig>,
-        common_llm: Option<crate::bot_config_file::LlmConfig>,
+        base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<Self> {
         if !db_enabled {
             return None;
@@ -264,13 +258,13 @@ impl ContentModerationConfig {
                 db.llm_primary,
                 db.llm_primary_enabled,
                 file.llm_primary,
-                common_llm.clone(),
+                base_llm.clone(),
             ),
             llm_secondary: LlmContentModerationConfig::new(
                 db.llm_secondary,
                 db.llm_secondary_enabled,
                 file.llm_secondary,
-                common_llm,
+                base_llm,
             ),
             default_action: db.default_action,
             debug_log_delete: file.debug_log_delete,
@@ -347,16 +341,13 @@ impl LlmFaceVerificationConfig {
         db: AdminLlmFaceVerificationConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::LlmContentModerationFileConfig>,
-        common_llm: Option<crate::bot_config_file::LlmConfig>,
+        base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<Self> {
         if !db_enabled {
             return None;
         }
         let file = file?;
-        let llm = match file.llm {
-            Some(opt) => Some(opt.merge_with(common_llm?)),
-            None => common_llm,
-        }?;
+        let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
 
         Some(Self {
             openai_api_url: llm.openai_api_url,
@@ -377,16 +368,13 @@ impl LlmContentModerationConfig {
         db: AdminLlmContentModerationConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::LlmContentModerationFileConfig>,
-        common_llm: Option<crate::bot_config_file::LlmConfig>,
+        base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<Self> {
         if !db_enabled {
             return None;
         }
         let file = file?;
-        let llm = match file.llm {
-            Some(opt) => Some(opt.merge_with(common_llm?)),
-            None => common_llm,
-        }?;
+        let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
 
         Some(Self {
             openai_api_url: llm.openai_api_url,
@@ -430,13 +418,10 @@ impl LlmReportProcessingConfig {
     pub fn from_db_profile_string(
         db: model::common_admin::AdminReportProcessingProfileStringLlmConfig,
         file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
-        common_llm: Option<crate::bot_config_file::LlmConfig>,
+        base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<Self> {
         let file = file?;
-        let llm = match file.llm {
-            Some(opt) => Some(opt.merge_with(common_llm?)),
-            None => common_llm,
-        }?;
+        let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
 
         Some(Self {
             openai_api_url: llm.openai_api_url,
@@ -457,13 +442,10 @@ impl LlmReportProcessingConfig {
     pub fn from_db_profile_content(
         db: model::common_admin::AdminReportProcessingProfileContentLlmConfig,
         file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
-        common_llm: Option<crate::bot_config_file::LlmConfig>,
+        base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<Self> {
         let file = file?;
-        let llm = match file.llm {
-            Some(opt) => Some(opt.merge_with(common_llm?)),
-            None => common_llm,
-        }?;
+        let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
 
         Some(Self {
             openai_api_url: llm.openai_api_url,
@@ -484,13 +466,10 @@ impl LlmReportProcessingConfig {
     pub fn from_db_messages(
         db: model::common_admin::AdminReportProcessingMessagesLlmConfig,
         file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
-        common_llm: Option<crate::bot_config_file::LlmConfig>,
+        base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<Self> {
         let file = file?;
-        let llm = match file.llm {
-            Some(opt) => Some(opt.merge_with(common_llm?)),
-            None => common_llm,
-        }?;
+        let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
 
         Some(Self {
             openai_api_url: llm.openai_api_url,
@@ -530,7 +509,7 @@ impl ReportProcessingConfig {
         db_enabled: bool,
         default_action: AcceptOrReject,
         file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
-        common_llm: Option<crate::bot_config_file::LlmConfig>,
+        base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<ReportProcessingTypeConfig> {
         if !db_enabled {
             return None;
@@ -538,7 +517,7 @@ impl ReportProcessingConfig {
         let file = file?;
 
         Some(ReportProcessingTypeConfig {
-            llm: LlmReportProcessingConfig::from_db_profile_string(db_llm, Some(file), common_llm),
+            llm: LlmReportProcessingConfig::from_db_profile_string(db_llm, Some(file), base_llm),
             default_action,
         })
     }
@@ -548,7 +527,7 @@ impl ReportProcessingConfig {
         db_enabled: bool,
         default_action: AcceptOrReject,
         file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
-        common_llm: Option<crate::bot_config_file::LlmConfig>,
+        base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<ReportProcessingTypeConfig> {
         if !db_enabled {
             return None;
@@ -556,7 +535,7 @@ impl ReportProcessingConfig {
         let file = file?;
 
         Some(ReportProcessingTypeConfig {
-            llm: LlmReportProcessingConfig::from_db_profile_content(db_llm, Some(file), common_llm),
+            llm: LlmReportProcessingConfig::from_db_profile_content(db_llm, Some(file), base_llm),
             default_action,
         })
     }
@@ -566,7 +545,7 @@ impl ReportProcessingConfig {
         db_enabled: bool,
         default_action: AcceptOrReject,
         file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
-        common_llm: Option<crate::bot_config_file::LlmConfig>,
+        base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<ReportProcessingTypeConfig> {
         if !db_enabled {
             return None;
@@ -574,7 +553,7 @@ impl ReportProcessingConfig {
         let file = file?;
 
         Some(ReportProcessingTypeConfig {
-            llm: LlmReportProcessingConfig::from_db_messages(db_llm, Some(file), common_llm),
+            llm: LlmReportProcessingConfig::from_db_messages(db_llm, Some(file), base_llm),
             default_action,
         })
     }
@@ -583,7 +562,7 @@ impl ReportProcessingConfig {
         db: AdminReportProcessingConfig,
         db_enabled: bool,
         file: Option<crate::bot_config_file::ReportProcessingFileConfig>,
-        common_llm: Option<crate::bot_config_file::LlmConfig>,
+        base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<Self> {
         if !db_enabled {
             return None;
@@ -596,28 +575,28 @@ impl ReportProcessingConfig {
                 db.profile_name_enabled,
                 db.profile_name_default_action,
                 file.profile_name,
-                common_llm.clone(),
+                base_llm.clone(),
             ),
             profile_text: Self::new_per_type_profile_string(
                 db.profile_text,
                 db.profile_text_enabled,
                 db.profile_text_default_action,
                 file.profile_text,
-                common_llm.clone(),
+                base_llm.clone(),
             ),
             profile_content: Self::new_per_type_profile_content(
                 db.profile_content,
                 db.profile_content_enabled,
                 db.profile_content_default_action,
                 file.profile_content,
-                common_llm.clone(),
+                base_llm.clone(),
             ),
             messages: Self::new_per_type_messages(
                 db.messages,
                 db.messages_enabled,
                 db.messages_default_action,
                 file.messages,
-                common_llm,
+                base_llm,
             ),
             concurrency: file.concurrency,
         })
@@ -636,41 +615,43 @@ pub fn merge(
     Option<AccountVerificationConfig>,
     Option<ReportProcessingConfig>,
 ) {
+    let base_llm = file.llm.unwrap_or_default();
+
     let name = ProfileStringModerationConfig::new(
         db.profile_name_moderation,
         db.profile_name_moderation_enabled,
         file.profile_name_moderation,
-        file.llm.clone(),
+        base_llm.clone(),
     );
     let text = ProfileStringModerationConfig::new(
         db.profile_text_moderation,
         db.profile_text_moderation_enabled,
         file.profile_text_moderation,
-        file.llm.clone(),
+        base_llm.clone(),
     );
     let content = ContentModerationConfig::new(
         db.content_moderation,
         db.content_moderation_enabled,
         file.content_moderation,
-        file.llm.clone(),
+        base_llm.clone(),
     );
     let face_verification = FaceVerificationConfig::new(
         db.face_verification,
         db.face_verification_enabled,
         file.face_verification,
-        file.llm.clone(),
+        base_llm.clone(),
     );
     let account_verification = AccountVerificationConfig::new(
         db.account_verification,
         db.account_verification_enabled,
         file.account_verification,
-        file.llm.clone(),
+        base_llm.clone(),
     );
     let report_processing = ReportProcessingConfig::new(
         db.report_processing,
         db.report_processing_enabled,
         file.report_processing,
-        file.llm,
+        base_llm,
     );
     (
         name,
