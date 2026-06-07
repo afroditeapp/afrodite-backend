@@ -106,3 +106,9 @@ pub struct UpdateCustomEmail {
     /// Translation with "default" locale must exist.
     pub translations: Vec<CustomEmailTranslation>,
 }
+
+#[derive(Debug, Clone, Serialize, ToSchema)]
+pub struct GetCustomEmailConfig {
+    #[serde(default)]
+    pub email_body_is_html: bool,
+}

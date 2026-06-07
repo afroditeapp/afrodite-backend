@@ -230,6 +230,10 @@ impl EmailContentFile {
         Ok(config)
     }
 
+    pub fn email_body_content_type_is_html(&self) -> bool {
+        self.email_body_content_type_is_html
+    }
+
     pub fn get<'a, T: AsRef<str>>(&'a self, language: Option<&'a T>) -> EmailStringGetter<'a> {
         EmailStringGetter {
             config: self,

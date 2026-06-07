@@ -3,14 +3,45 @@ use axum::{
     extract::{Query, State},
 };
 use model_account::{
-    AccountIdInternal, CustomEmailId, GetCustomEmailListParams, Permissions, UpdateCustomEmail,
+    AccountIdInternal, CustomEmailId, GetCustomEmailConfig, GetCustomEmailListParams, Permissions,
+    UpdateCustomEmail,
 };
-use server_api::{S, create_open_api_router, db_write};
+use server_api::{S, app::GetConfig, create_open_api_router, db_write};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
 
 use super::super::utils::{Json, StatusCode};
 use crate::app::{ReadData, WriteData};
+
+const PATH_GET_CUSTOM_EMAIL_CONFIG: &str = "/account_api/custom_email_config";
+
+#[utoipa::path(
+    get,
+    path = PATH_GET_CUSTOM_EMAIL_CONFIG,
+    responses(
+        (status = 200, description = "Success.", body = GetCustomEmailConfig),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_custom_email_config(
+    State(state): State<S>,
+    Extension(permissions): Extension<Permissions>,
+) -> Result<Json<GetCustomEmailConfig>, StatusCode> {
+    ACCOUNT.get_custom_email_config.incr();
+
+    if !permissions.admin_custom_email {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    Ok(Json(GetCustomEmailConfig {
+        email_body_is_html: state
+            .config()
+            .email_content()
+            .email_body_content_type_is_html(),
+    }))
+}
 
 const PATH_GET_CUSTOM_EMAIL_LIST: &str = "/account_api/custom_email_list";
 
@@ -122,6 +153,7 @@ pub async fn post_update_custom_email(
 
 create_open_api_router!(
     fn router_admin_custom_email,
+    get_custom_email_config,
     get_custom_email_list,
     post_create_custom_email,
     post_update_custom_email,
@@ -131,6 +163,7 @@ create_counters!(
     AccountAdminCounterCustomEmail,
     ACCOUNT,
     ACCOUNT_ADMIN_CUSTOM_EMAIL_COUNTERS_LIST,
+    get_custom_email_config,
     get_custom_email_list,
     post_create_custom_email,
     post_update_custom_email,

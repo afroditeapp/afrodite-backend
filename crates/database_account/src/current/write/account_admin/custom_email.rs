@@ -46,7 +46,7 @@ impl CurrentWriteAccountCustomEmailAdmin<'_> {
 
         // Delete all existing translations before re-inserting
         diesel::delete(custom_email_translations.filter(email_id.eq(data.id)))
-            .execute_my_conn(self.conn())
+            .execute(self.conn())
             .into_db_error(())?;
 
         for translation in &data.translations {
