@@ -1,4 +1,4 @@
-use config::bot_config_file::internal::ContentModerationConfig;
+use config::bot_config_file::internal::ContentModerationConfigInternal;
 use error_stack::Result;
 use test_mode_bot::actions::admin::content::{
     AdminBotContentModerationLogic, ContentModerationState,
@@ -10,7 +10,7 @@ use super::notification::ModerationHandler;
 /// Content moderation handler for images/media
 pub struct ContentModerationHandler {
     api_client: ApiClient,
-    config: Option<ContentModerationConfig>,
+    config: Option<ContentModerationConfigInternal>,
     reqwest_client: reqwest::Client,
     state: Option<ContentModerationState>,
 }
@@ -18,7 +18,7 @@ pub struct ContentModerationHandler {
 impl ContentModerationHandler {
     pub fn new(
         api_client: ApiClient,
-        config: Option<ContentModerationConfig>,
+        config: Option<ContentModerationConfigInternal>,
         reqwest_client: reqwest::Client,
     ) -> Self {
         Self {

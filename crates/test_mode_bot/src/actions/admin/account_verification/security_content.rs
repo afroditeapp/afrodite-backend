@@ -9,7 +9,7 @@ use async_openai::types::{
 };
 use base64::display::Base64Display;
 use config::bot_config_file::internal::{
-    AcceptOrReject, AccountVerificationConfig, SecurityContentVerificationConfig,
+    AcceptOrReject, AccountVerificationConfigInternal, SecurityContentVerificationConfigInternal,
 };
 use error_stack::{Result, ResultExt};
 use test_mode_utils::{
@@ -23,7 +23,7 @@ use crate::actions::admin::account_verification::{AccountVerificationState, LlmC
 
 pub async fn handle_security_content_verification(
     api: &ApiClient,
-    config: &AccountVerificationConfig,
+    config: &AccountVerificationConfigInternal,
     state: &AccountVerificationState,
     account_id: &AccountId,
     method_action: &VerificationMethodAction,
@@ -95,7 +95,7 @@ pub async fn handle_security_content_verification(
 
 async fn handle_check_image_method(
     api: &ApiClient,
-    config: &SecurityContentVerificationConfig,
+    config: &SecurityContentVerificationConfigInternal,
     state: &AccountVerificationState,
     aid: &AccountId,
     cid: &ContentId,

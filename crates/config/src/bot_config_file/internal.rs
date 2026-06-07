@@ -14,14 +14,14 @@ pub use simple_backend_model::NsfwDetectionThresholds;
 use crate::bot_config_file::LlmConfig;
 
 #[derive(Debug, Clone)]
-pub struct ProfileStringModerationConfig {
+pub struct ProfileStringModerationConfigInternal {
     pub accept_single_visible_character: bool,
-    pub llm: Option<LlmStringModerationConfig>,
+    pub llm: Option<LlmStringModerationConfigInternal>,
     pub default_action: ModerationAction,
     pub concurrency: u8,
 }
 
-impl ProfileStringModerationConfig {
+impl ProfileStringModerationConfigInternal {
     pub fn new(
         db: AdminProfileStringModerationConfig,
         db_enabled: bool,
@@ -35,7 +35,7 @@ impl ProfileStringModerationConfig {
 
         Some(Self {
             accept_single_visible_character: db.accept_single_visible_character,
-            llm: LlmStringModerationConfig::new(db.llm, db.llm_enabled, file.llm, base_llm),
+            llm: LlmStringModerationConfigInternal::new(db.llm, db.llm_enabled, file.llm, base_llm),
             default_action: db.default_action,
             concurrency: file.concurrency,
         })
@@ -43,7 +43,7 @@ impl ProfileStringModerationConfig {
 }
 
 #[derive(Debug, Clone)]
-pub struct LlmStringModerationConfig {
+pub struct LlmStringModerationConfigInternal {
     pub llm: LlmConfig,
     pub user_text_template: String,
     pub system_text: String,
@@ -52,7 +52,7 @@ pub struct LlmStringModerationConfig {
     pub add_llm_output_to_user_visible_rejection_details: bool,
 }
 
-impl LlmStringModerationConfig {
+impl LlmStringModerationConfigInternal {
     pub const TEMPLATE_PLACEHOLDER_TEXT: &'static str = "{text}";
 
     pub fn new(
@@ -80,32 +80,32 @@ impl LlmStringModerationConfig {
 }
 
 #[derive(Debug, Clone)]
-pub struct ContentModerationConfig {
+pub struct ContentModerationConfigInternal {
     pub initial_content: bool,
     pub added_content: bool,
-    pub nsfw_detection: Option<NsfwDetectionConfig>,
-    pub llm_primary: Option<LlmContentModerationConfig>,
-    pub llm_secondary: Option<LlmContentModerationConfig>,
+    pub nsfw_detection: Option<NsfwDetectionConfigInternal>,
+    pub llm_primary: Option<LlmContentModerationConfigInternal>,
+    pub llm_secondary: Option<LlmContentModerationConfigInternal>,
     pub default_action: ModerationAction,
     pub debug_log_delete: bool,
     pub concurrency: u8,
 }
 
 #[derive(Debug, Clone)]
-pub struct FaceVerificationConfig {
-    pub llm: Option<LlmFaceVerificationConfig>,
+pub struct FaceVerificationConfigInternal {
+    pub llm: Option<LlmFaceVerificationConfigInternal>,
     pub default_action: AcceptOrReject,
     pub concurrency: u8,
 }
 
 #[derive(Debug, Clone)]
-pub struct AccountVerificationConfig {
+pub struct AccountVerificationConfigInternal {
     pub profile_age_range: bool,
     pub profile_name: bool,
-    pub security_content: Option<SecurityContentVerificationConfig>,
+    pub security_content: Option<SecurityContentVerificationConfigInternal>,
 }
 
-impl AccountVerificationConfig {
+impl AccountVerificationConfigInternal {
     pub fn new(
         db: AdminAccountVerificationConfig,
         db_enabled: bool,
@@ -120,7 +120,7 @@ impl AccountVerificationConfig {
         Some(Self {
             profile_age_range: db.profile_age_range_enabled,
             profile_name: db.profile_name_enabled,
-            security_content: SecurityContentVerificationConfig::new(
+            security_content: SecurityContentVerificationConfigInternal::new(
                 db.security_content,
                 db.security_content_enabled,
                 file.security_content,
@@ -131,13 +131,13 @@ impl AccountVerificationConfig {
 }
 
 #[derive(Debug, Clone)]
-pub struct SecurityContentVerificationConfig {
-    pub llm: Option<LlmSecurityContentVerificationConfig>,
+pub struct SecurityContentVerificationConfigInternal {
+    pub llm: Option<LlmSecurityContentVerificationConfigInternal>,
     pub default_action: AcceptOrReject,
     pub concurrency: u8,
 }
 
-impl SecurityContentVerificationConfig {
+impl SecurityContentVerificationConfigInternal {
     pub fn new(
         db: model::common_admin::AdminSecurityContentVerificationConfig,
         db_enabled: bool,
@@ -150,7 +150,7 @@ impl SecurityContentVerificationConfig {
         let file = file.unwrap_or_default();
 
         Some(Self {
-            llm: LlmSecurityContentVerificationConfig::new(
+            llm: LlmSecurityContentVerificationConfigInternal::new(
                 db.llm,
                 db.llm_enabled,
                 file.llm,
@@ -163,13 +163,13 @@ impl SecurityContentVerificationConfig {
 }
 
 #[derive(Debug, Clone)]
-pub struct LlmSecurityContentVerificationConfig {
+pub struct LlmSecurityContentVerificationConfigInternal {
     pub llm: LlmConfig,
     pub system_text: String,
     pub expected_response: String,
 }
 
-impl LlmSecurityContentVerificationConfig {
+impl LlmSecurityContentVerificationConfigInternal {
     pub fn new(
         db: AdminLlmSecurityContentVerificationConfig,
         db_enabled: bool,
@@ -190,7 +190,7 @@ impl LlmSecurityContentVerificationConfig {
     }
 }
 
-impl FaceVerificationConfig {
+impl FaceVerificationConfigInternal {
     pub fn new(
         db: AdminFaceVerificationConfig,
         db_enabled: bool,
@@ -203,14 +203,14 @@ impl FaceVerificationConfig {
         let file = file.unwrap_or_default();
 
         Some(Self {
-            llm: LlmFaceVerificationConfig::new(db.llm, db.llm_enabled, file.llm, base_llm),
+            llm: LlmFaceVerificationConfigInternal::new(db.llm, db.llm_enabled, file.llm, base_llm),
             default_action: db.default_action,
             concurrency: file.concurrency,
         })
     }
 }
 
-impl ContentModerationConfig {
+impl ContentModerationConfigInternal {
     pub fn new(
         db: AdminContentModerationConfig,
         db_enabled: bool,
@@ -225,18 +225,18 @@ impl ContentModerationConfig {
         Some(Self {
             initial_content: db.initial_content,
             added_content: db.added_content,
-            nsfw_detection: NsfwDetectionConfig::new(
+            nsfw_detection: NsfwDetectionConfigInternal::new(
                 db.nsfw_detection,
                 db.nsfw_detection_enabled,
                 file.nsfw_detection,
             ),
-            llm_primary: LlmContentModerationConfig::new(
+            llm_primary: LlmContentModerationConfigInternal::new(
                 db.llm_primary,
                 db.llm_primary_enabled,
                 file.llm_primary,
                 base_llm.clone(),
             ),
-            llm_secondary: LlmContentModerationConfig::new(
+            llm_secondary: LlmContentModerationConfigInternal::new(
                 db.llm_secondary,
                 db.llm_secondary_enabled,
                 file.llm_secondary,
@@ -250,7 +250,7 @@ impl ContentModerationConfig {
 }
 
 #[derive(Debug, Clone)]
-pub struct NsfwDetectionConfig {
+pub struct NsfwDetectionConfigInternal {
     pub model_file: PathBuf,
     pub reject: NsfwDetectionThresholds,
     pub move_to_human: NsfwDetectionThresholds,
@@ -259,7 +259,7 @@ pub struct NsfwDetectionConfig {
     pub debug_log_results: bool,
 }
 
-impl NsfwDetectionConfig {
+impl NsfwDetectionConfigInternal {
     pub fn new(
         db: AdminNsfwDetectionConfig,
         db_enabled: bool,
@@ -282,7 +282,7 @@ impl NsfwDetectionConfig {
 }
 
 #[derive(Debug, Clone)]
-pub struct LlmContentModerationConfig {
+pub struct LlmContentModerationConfigInternal {
     pub llm: LlmConfig,
     pub system_text: String,
     pub expected_response: String,
@@ -294,13 +294,13 @@ pub struct LlmContentModerationConfig {
 }
 
 #[derive(Debug, Clone)]
-pub struct LlmFaceVerificationConfig {
+pub struct LlmFaceVerificationConfigInternal {
     pub llm: LlmConfig,
     pub system_text: String,
     pub expected_response: String,
 }
 
-impl LlmFaceVerificationConfig {
+impl LlmFaceVerificationConfigInternal {
     pub fn new(
         db: AdminLlmFaceVerificationConfig,
         db_enabled: bool,
@@ -321,7 +321,7 @@ impl LlmFaceVerificationConfig {
     }
 }
 
-impl LlmContentModerationConfig {
+impl LlmContentModerationConfigInternal {
     pub fn new(
         db: AdminLlmContentModerationConfig,
         db_enabled: bool,
@@ -349,7 +349,7 @@ impl LlmContentModerationConfig {
 }
 
 #[derive(Debug, Clone)]
-pub struct LlmReportProcessingConfig {
+pub struct LlmReportProcessingConfigInternal {
     pub llm: LlmConfig,
     pub system_text: String,
     pub user_text_template: Option<String>,
@@ -358,7 +358,7 @@ pub struct LlmReportProcessingConfig {
     pub expected_response: String,
 }
 
-impl LlmReportProcessingConfig {
+impl LlmReportProcessingConfigInternal {
     pub const TEMPLATE_PLACEHOLDER_TEXT: &'static str = "{text}";
 
     pub fn from_db_profile_string(
@@ -417,35 +417,39 @@ impl LlmReportProcessingConfig {
 }
 
 #[derive(Debug, Clone)]
-pub struct ReportProcessingTypeConfig {
-    pub llm: Option<LlmReportProcessingConfig>,
+pub struct ReportProcessingTypeConfigInternal {
+    pub llm: Option<LlmReportProcessingConfigInternal>,
     pub default_action: AcceptOrReject,
 }
 
 #[derive(Debug, Clone)]
-pub struct ReportProcessingConfig {
-    pub profile_name: Option<ReportProcessingTypeConfig>,
-    pub profile_text: Option<ReportProcessingTypeConfig>,
-    pub profile_content: Option<ReportProcessingTypeConfig>,
-    pub messages: Option<ReportProcessingTypeConfig>,
+pub struct ReportProcessingConfigInternal {
+    pub profile_name: Option<ReportProcessingTypeConfigInternal>,
+    pub profile_text: Option<ReportProcessingTypeConfigInternal>,
+    pub profile_content: Option<ReportProcessingTypeConfigInternal>,
+    pub messages: Option<ReportProcessingTypeConfigInternal>,
     pub concurrency: u8,
 }
 
-impl ReportProcessingConfig {
+impl ReportProcessingConfigInternal {
     fn new_per_type_profile_string(
         db_llm: model::common_admin::AdminReportProcessingProfileStringLlmConfig,
         db_enabled: bool,
         default_action: AcceptOrReject,
         file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
         base_llm: crate::bot_config_file::BaseLlmConfig,
-    ) -> Option<ReportProcessingTypeConfig> {
+    ) -> Option<ReportProcessingTypeConfigInternal> {
         if !db_enabled {
             return None;
         }
         let file = file?;
 
-        Some(ReportProcessingTypeConfig {
-            llm: LlmReportProcessingConfig::from_db_profile_string(db_llm, Some(file), base_llm),
+        Some(ReportProcessingTypeConfigInternal {
+            llm: LlmReportProcessingConfigInternal::from_db_profile_string(
+                db_llm,
+                Some(file),
+                base_llm,
+            ),
             default_action,
         })
     }
@@ -456,14 +460,18 @@ impl ReportProcessingConfig {
         default_action: AcceptOrReject,
         file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
         base_llm: crate::bot_config_file::BaseLlmConfig,
-    ) -> Option<ReportProcessingTypeConfig> {
+    ) -> Option<ReportProcessingTypeConfigInternal> {
         if !db_enabled {
             return None;
         }
         let file = file?;
 
-        Some(ReportProcessingTypeConfig {
-            llm: LlmReportProcessingConfig::from_db_profile_content(db_llm, Some(file), base_llm),
+        Some(ReportProcessingTypeConfigInternal {
+            llm: LlmReportProcessingConfigInternal::from_db_profile_content(
+                db_llm,
+                Some(file),
+                base_llm,
+            ),
             default_action,
         })
     }
@@ -474,14 +482,14 @@ impl ReportProcessingConfig {
         default_action: AcceptOrReject,
         file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
         base_llm: crate::bot_config_file::BaseLlmConfig,
-    ) -> Option<ReportProcessingTypeConfig> {
+    ) -> Option<ReportProcessingTypeConfigInternal> {
         if !db_enabled {
             return None;
         }
         let file = file?;
 
-        Some(ReportProcessingTypeConfig {
-            llm: LlmReportProcessingConfig::from_db_messages(db_llm, Some(file), base_llm),
+        Some(ReportProcessingTypeConfigInternal {
+            llm: LlmReportProcessingConfigInternal::from_db_messages(db_llm, Some(file), base_llm),
             default_action,
         })
     }
@@ -536,46 +544,46 @@ pub fn merge(
     db: AdminBotConfig,
     file: crate::bot_config_file::BotConfigFile,
 ) -> (
-    Option<ProfileStringModerationConfig>,
-    Option<ProfileStringModerationConfig>,
-    Option<ContentModerationConfig>,
-    Option<FaceVerificationConfig>,
-    Option<AccountVerificationConfig>,
-    Option<ReportProcessingConfig>,
+    Option<ProfileStringModerationConfigInternal>,
+    Option<ProfileStringModerationConfigInternal>,
+    Option<ContentModerationConfigInternal>,
+    Option<FaceVerificationConfigInternal>,
+    Option<AccountVerificationConfigInternal>,
+    Option<ReportProcessingConfigInternal>,
 ) {
     let base_llm = file.llm.unwrap_or_default();
 
-    let name = ProfileStringModerationConfig::new(
+    let name = ProfileStringModerationConfigInternal::new(
         db.profile_name_moderation,
         db.profile_name_moderation_enabled,
         file.profile_name_moderation,
         base_llm.clone(),
     );
-    let text = ProfileStringModerationConfig::new(
+    let text = ProfileStringModerationConfigInternal::new(
         db.profile_text_moderation,
         db.profile_text_moderation_enabled,
         file.profile_text_moderation,
         base_llm.clone(),
     );
-    let content = ContentModerationConfig::new(
+    let content = ContentModerationConfigInternal::new(
         db.content_moderation,
         db.content_moderation_enabled,
         file.content_moderation,
         base_llm.clone(),
     );
-    let face_verification = FaceVerificationConfig::new(
+    let face_verification = FaceVerificationConfigInternal::new(
         db.face_verification,
         db.face_verification_enabled,
         file.face_verification,
         base_llm.clone(),
     );
-    let account_verification = AccountVerificationConfig::new(
+    let account_verification = AccountVerificationConfigInternal::new(
         db.account_verification,
         db.account_verification_enabled,
         file.account_verification,
         base_llm.clone(),
     );
-    let report_processing = ReportProcessingConfig::new(
+    let report_processing = ReportProcessingConfigInternal::new(
         db.report_processing,
         db.report_processing_enabled,
         file.report_processing,

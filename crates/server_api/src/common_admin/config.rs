@@ -4,7 +4,7 @@ use std::sync::{
 };
 
 use axum::{Extension, extract::State};
-use config::bot_config_file::internal::LlmStringModerationConfig;
+use config::bot_config_file::internal::LlmStringModerationConfigInternal;
 use model::{
     AccountIdInternal, AdminBotConfigWarningFlags, BotConfig, BotConfigWarnings,
     DynamicServerConfig, EventToClientInternal, Permissions,
@@ -105,7 +105,7 @@ pub async fn post_bot_config(
     for config in profile_string_moderation_configs.iter().map(|v| &v.llm) {
         let count = config
             .user_text_template
-            .split(LlmStringModerationConfig::TEMPLATE_PLACEHOLDER_TEXT)
+            .split(LlmStringModerationConfigInternal::TEMPLATE_PLACEHOLDER_TEXT)
             .count();
 
         if count != 2 {

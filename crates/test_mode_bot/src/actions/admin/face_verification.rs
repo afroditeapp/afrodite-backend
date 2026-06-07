@@ -15,7 +15,7 @@ use async_openai::{
 };
 use base64::display::Base64Display;
 use config::bot_config_file::internal::{
-    AcceptOrReject, FaceVerificationConfig, LlmFaceVerificationConfig,
+    AcceptOrReject, FaceVerificationConfigInternal, LlmFaceVerificationConfigInternal,
 };
 use error_stack::{Result, ResultExt};
 use futures::{StreamExt, stream};
@@ -26,7 +26,7 @@ use super::{EmptyPage, ModerationResult};
 
 #[derive(Debug, Clone)]
 struct LlmConfigAndClient {
-    config: Arc<LlmFaceVerificationConfig>,
+    config: Arc<LlmFaceVerificationConfigInternal>,
     client: Client<OpenAIConfig>,
 }
 
@@ -36,7 +36,7 @@ pub struct FaceVerificationState {
 }
 
 impl FaceVerificationState {
-    pub fn new(config: &FaceVerificationConfig, reqwest_client: reqwest::Client) -> Self {
+    pub fn new(config: &FaceVerificationConfigInternal, reqwest_client: reqwest::Client) -> Self {
         let llm = config.llm.as_ref().map(|config| LlmConfigAndClient {
             client: Client::with_config(
                 OpenAIConfig::new()
@@ -57,7 +57,7 @@ pub struct AdminBotFaceVerificationLogic;
 impl AdminBotFaceVerificationLogic {
     async fn verify_one_page(
         api: &ApiClient,
-        config: &FaceVerificationConfig,
+        config: &FaceVerificationConfigInternal,
         state: &mut FaceVerificationState,
     ) -> Result<Option<EmptyPage>, TestError> {
         let list = media_admin_api::get_media_content_face_verified_null_list(&api.api())
@@ -87,7 +87,7 @@ impl AdminBotFaceVerificationLogic {
 
     async fn verify_for_account(
         api: &ApiClient,
-        config: &FaceVerificationConfig,
+        config: &FaceVerificationConfigInternal,
         llm: Option<LlmConfigAndClient>,
         values_by_account: api_client::models::MediaContentFaceVerifiedNullByAccount,
     ) -> Result<(), TestError> {
@@ -287,7 +287,7 @@ impl AdminBotFaceVerificationLogic {
 
     pub async fn run_face_verification(
         api: &ApiClient,
-        config: &FaceVerificationConfig,
+        config: &FaceVerificationConfigInternal,
         state: &mut FaceVerificationState,
     ) -> Result<(), TestError> {
         loop {

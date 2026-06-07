@@ -1,5 +1,5 @@
 use api_client::models::ProfileStringModerationContentType;
-use config::bot_config_file::internal::ProfileStringModerationConfig;
+use config::bot_config_file::internal::ProfileStringModerationConfigInternal;
 use error_stack::Result;
 use test_mode_bot::actions::admin::profile_string::{
     AdminBotProfileStringModerationLogic, ProfileStringModerationState,
@@ -11,7 +11,7 @@ use super::notification::ModerationHandler;
 /// Profile text moderation handler
 pub struct ProfileTextModerationHandler {
     api_client: ApiClient,
-    config: Option<ProfileStringModerationConfig>,
+    config: Option<ProfileStringModerationConfigInternal>,
     reqwest_client: reqwest::Client,
     state: Option<ProfileStringModerationState>,
 }
@@ -19,7 +19,7 @@ pub struct ProfileTextModerationHandler {
 impl ProfileTextModerationHandler {
     pub fn new(
         api_client: ApiClient,
-        config: Option<ProfileStringModerationConfig>,
+        config: Option<ProfileStringModerationConfigInternal>,
         reqwest_client: reqwest::Client,
     ) -> Self {
         Self {

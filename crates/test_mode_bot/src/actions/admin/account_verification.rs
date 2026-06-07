@@ -9,7 +9,7 @@ use api_client::{
 };
 use async_openai::{Client, config::OpenAIConfig};
 use config::bot_config_file::internal::{
-    AccountVerificationConfig, LlmSecurityContentVerificationConfig,
+    AccountVerificationConfigInternal, LlmSecurityContentVerificationConfigInternal,
 };
 use error_stack::{Result, ResultExt};
 use test_mode_utils::{
@@ -29,7 +29,10 @@ pub struct AccountVerificationState {
 }
 
 impl AccountVerificationState {
-    pub fn new(config: &AccountVerificationConfig, reqwest_client: reqwest::Client) -> Self {
+    pub fn new(
+        config: &AccountVerificationConfigInternal,
+        reqwest_client: reqwest::Client,
+    ) -> Self {
         let llm = config
             .security_content
             .as_ref()
@@ -50,7 +53,7 @@ impl AccountVerificationState {
 
 #[derive(Debug, Clone)]
 struct LlmConfigAndClient {
-    config: Arc<LlmSecurityContentVerificationConfig>,
+    config: Arc<LlmSecurityContentVerificationConfigInternal>,
     client: Client<OpenAIConfig>,
 }
 
@@ -105,7 +108,7 @@ enum VerificationMethodAction {
 impl AdminBotAccountVerificationLogic {
     async fn verify_one_page(
         api: &ApiClient,
-        config: &AccountVerificationConfig,
+        config: &AccountVerificationConfigInternal,
         state: &AccountVerificationState,
     ) -> Result<Option<EmptyPage>, TestError> {
         let item = match Self::get_next_queue_item(api).await? {
@@ -251,7 +254,7 @@ impl AdminBotAccountVerificationLogic {
 
     pub async fn run_account_verification(
         api: &ApiClient,
-        config: &AccountVerificationConfig,
+        config: &AccountVerificationConfigInternal,
         state: &AccountVerificationState,
     ) -> Result<(), TestError> {
         loop {

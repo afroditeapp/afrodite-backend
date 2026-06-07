@@ -19,7 +19,8 @@ use async_openai::{
 use async_trait::async_trait;
 use base64::display::Base64Display;
 use config::bot_config_file::internal::{
-    ContentModerationConfig, LlmContentModerationConfig, ModerationAction, NsfwDetectionConfig,
+    ContentModerationConfigInternal, LlmContentModerationConfigInternal, ModerationAction,
+    NsfwDetectionConfigInternal,
 };
 use error_stack::{Result, ResultExt};
 use futures::stream::{self, StreamExt};
@@ -33,13 +34,13 @@ use super::{BotAction, BotState, EmptyPage, ModerationResult};
 
 #[derive(Debug, Clone)]
 struct NsfwConfigAndModel {
-    config: Arc<NsfwDetectionConfig>,
+    config: Arc<NsfwDetectionConfigInternal>,
     model: Arc<nsfw::Model>,
 }
 
 #[derive(Debug, Clone)]
 struct LlmConfigAndClient {
-    config: Arc<LlmContentModerationConfig>,
+    config: Arc<LlmContentModerationConfigInternal>,
     client: Client<OpenAIConfig>,
 }
 
@@ -52,7 +53,7 @@ pub struct ContentModerationState {
 
 impl ContentModerationState {
     pub async fn new(
-        config: &ContentModerationConfig,
+        config: &ContentModerationConfigInternal,
         reqwest_client: reqwest::Client,
     ) -> Result<Self, TestError> {
         let model = if let Some(config) = config.nsfw_detection.clone() {
@@ -204,7 +205,7 @@ impl AdminBotContentModerationLogic {
     async fn moderate_one_page(
         api: &ApiClient,
         moderation_type: MediaContentModerationType,
-        config: &ContentModerationConfig,
+        config: &ContentModerationConfigInternal,
         state: &mut ContentModerationState,
     ) -> Result<Option<EmptyPage>, TestError> {
         let list = media_admin_api::get_media_content_moderation_queue_page(
@@ -251,7 +252,7 @@ impl AdminBotContentModerationLogic {
 
     async fn handle_pending_moderation(
         api: &ApiClient,
-        config: &ContentModerationConfig,
+        config: &ContentModerationConfigInternal,
         nsfw: Option<NsfwConfigAndModel>,
         llm_primary: Option<LlmConfigAndClient>,
         llm_secondary: Option<LlmConfigAndClient>,
@@ -573,7 +574,7 @@ impl AdminBotContentModerationLogic {
 impl AdminBotContentModerationLogic {
     pub async fn run_content_moderation(
         api: &ApiClient,
-        config: &ContentModerationConfig,
+        config: &ContentModerationConfigInternal,
         moderation_state: &mut ContentModerationState,
     ) -> Result<(), TestError> {
         if config.initial_content {

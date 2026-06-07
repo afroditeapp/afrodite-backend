@@ -1,4 +1,4 @@
-use config::bot_config_file::internal::FaceVerificationConfig;
+use config::bot_config_file::internal::FaceVerificationConfigInternal;
 use error_stack::Result;
 use test_mode_bot::actions::admin::face_verification::{
     AdminBotFaceVerificationLogic, FaceVerificationState,
@@ -10,7 +10,7 @@ use super::notification::ModerationHandler;
 /// Face verification handler
 pub struct FaceVerificationHandler {
     api_client: ApiClient,
-    config: Option<FaceVerificationConfig>,
+    config: Option<FaceVerificationConfigInternal>,
     reqwest_client: reqwest::Client,
     state: Option<FaceVerificationState>,
 }
@@ -18,7 +18,7 @@ pub struct FaceVerificationHandler {
 impl FaceVerificationHandler {
     pub fn new(
         api_client: ApiClient,
-        config: Option<FaceVerificationConfig>,
+        config: Option<FaceVerificationConfigInternal>,
         reqwest_client: reqwest::Client,
     ) -> Self {
         Self {

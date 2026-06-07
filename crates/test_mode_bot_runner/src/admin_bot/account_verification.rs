@@ -1,4 +1,4 @@
-use config::bot_config_file::internal::AccountVerificationConfig;
+use config::bot_config_file::internal::AccountVerificationConfigInternal;
 use error_stack::Result;
 use test_mode_bot::actions::admin::account_verification::{
     AccountVerificationState, AdminBotAccountVerificationLogic,
@@ -9,7 +9,7 @@ use super::notification::ModerationHandler;
 
 pub struct AccountVerificationHandler {
     api_client: ApiClient,
-    config: Option<AccountVerificationConfig>,
+    config: Option<AccountVerificationConfigInternal>,
     reqwest_client: reqwest::Client,
     state: Option<AccountVerificationState>,
 }
@@ -17,7 +17,7 @@ pub struct AccountVerificationHandler {
 impl AccountVerificationHandler {
     pub fn new(
         api_client: ApiClient,
-        config: Option<AccountVerificationConfig>,
+        config: Option<AccountVerificationConfigInternal>,
         reqwest_client: reqwest::Client,
     ) -> Self {
         Self {

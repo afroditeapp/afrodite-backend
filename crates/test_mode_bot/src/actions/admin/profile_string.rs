@@ -13,7 +13,7 @@ use async_openai::{
     types::{ChatCompletionRequestMessage, CreateChatCompletionRequest},
 };
 use config::bot_config_file::internal::{
-    LlmStringModerationConfig, ModerationAction, ProfileStringModerationConfig,
+    LlmStringModerationConfigInternal, ModerationAction, ProfileStringModerationConfigInternal,
 };
 use error_stack::{Result, ResultExt};
 use futures::{StreamExt, stream};
@@ -25,7 +25,7 @@ use super::{EmptyPage, ModerationResult};
 
 #[derive(Debug, Clone)]
 struct LlmConfigAndClient {
-    config: Arc<LlmStringModerationConfig>,
+    config: Arc<LlmStringModerationConfigInternal>,
     client: Client<OpenAIConfig>,
 }
 
@@ -35,7 +35,10 @@ pub struct ProfileStringModerationState {
 }
 
 impl ProfileStringModerationState {
-    pub fn new(config: &ProfileStringModerationConfig, reqwest_client: reqwest::Client) -> Self {
+    pub fn new(
+        config: &ProfileStringModerationConfigInternal,
+        reqwest_client: reqwest::Client,
+    ) -> Self {
         let llm = config.llm.as_ref().map(|config| LlmConfigAndClient {
             client: Client::with_config(
                 OpenAIConfig::new()
@@ -59,7 +62,7 @@ impl AdminBotProfileStringModerationLogic {
     async fn moderate_one_page(
         &self,
         api: &ApiClient,
-        config: &ProfileStringModerationConfig,
+        config: &ProfileStringModerationConfigInternal,
         state: &mut ProfileStringModerationState,
     ) -> Result<Option<EmptyPage>, TestError> {
         let list = profile_admin_api::get_profile_string_moderation_queue_page(
@@ -102,7 +105,7 @@ impl AdminBotProfileStringModerationLogic {
 
     async fn handle_pending_moderation(
         api: &ApiClient,
-        config: &ProfileStringModerationConfig,
+        config: &ProfileStringModerationConfigInternal,
         llm: Option<LlmConfigAndClient>,
         content_type: ProfileStringModerationContentType,
         moderation: ProfileStringPendingModeration,
@@ -181,7 +184,7 @@ impl AdminBotProfileStringModerationLogic {
         let expected_response_lowercase = config.expected_response.to_lowercase();
         let profile_text_paragraph = profile_string.lines().collect::<Vec<&str>>().join(" ");
         let user_text = config.user_text_template.replace(
-            LlmStringModerationConfig::TEMPLATE_PLACEHOLDER_TEXT,
+            LlmStringModerationConfigInternal::TEMPLATE_PLACEHOLDER_TEXT,
             &profile_text_paragraph,
         );
 
@@ -287,7 +290,7 @@ impl AdminBotProfileStringModerationLogic {
     pub async fn run_profile_string_moderation(
         content_type: ProfileStringModerationContentType,
         api: &ApiClient,
-        config: &ProfileStringModerationConfig,
+        config: &ProfileStringModerationConfigInternal,
         moderation_state: &mut ProfileStringModerationState,
     ) -> Result<(), TestError> {
         let logic = Self { content_type };

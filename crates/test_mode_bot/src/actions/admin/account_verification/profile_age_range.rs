@@ -1,12 +1,12 @@
 use api_client::models::EditVerificationProfileAgeRange;
-use config::bot_config_file::internal::AccountVerificationConfig;
+use config::bot_config_file::internal::AccountVerificationConfigInternal;
 use error_stack::Result;
 use test_mode_utils::{AccountVerificationErrorFlags, client::TestError};
 
 use super::{LazyProfileAgeAndName, VerificationMethodAction};
 
 pub async fn handle_profile_age_range_verification(
-    config: &AccountVerificationConfig,
+    config: &AccountVerificationConfigInternal,
     method_action: &VerificationMethodAction,
     age_and_name: &mut LazyProfileAgeAndName<'_>,
 ) -> Result<
