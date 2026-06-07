@@ -15,7 +15,7 @@ use async_openai::{
 };
 use base64::display::Base64Display;
 use config::bot_config_file::internal::{
-    AcceptOrReject, FaceVerificationConfigInternal, LlmFaceVerificationConfigInternal,
+    AcceptOrReject, FaceVerificationConfigInternal, FaceVerificationLlmConfigInternal,
 };
 use error_stack::{Result, ResultExt};
 use futures::{StreamExt, stream};
@@ -26,7 +26,7 @@ use super::{EmptyPage, ModerationResult};
 
 #[derive(Debug, Clone)]
 struct LlmConfigAndClient {
-    config: Arc<LlmFaceVerificationConfigInternal>,
+    config: Arc<FaceVerificationLlmConfigInternal>,
     client: Client<OpenAIConfig>,
 }
 

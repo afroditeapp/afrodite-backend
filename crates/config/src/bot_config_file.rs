@@ -367,7 +367,7 @@ impl<'de> Deserialize<'de> for Gender {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default)]
 pub struct ProfileStringModerationFileConfig {
-    pub llm: Option<LlmStringModerationFileConfig>,
+    pub llm: Option<ProfileStringModerationLlmFileConfig>,
     /// Default value is 4.
     pub concurrency: u8,
 }
@@ -432,7 +432,7 @@ impl BaseLlmConfig {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct LlmStringModerationFileConfig {
+pub struct ProfileStringModerationLlmFileConfig {
     #[serde(flatten)]
     pub llm: Option<BaseLlmConfig>,
 }
@@ -446,10 +446,10 @@ pub struct ContentModerationFileConfig {
     /// Large language model based moderation.
     /// Actions: reject (can be replaced with move_to_human or ignore) and
     ///          accept (can be replaced with move_to_human or delete).
-    pub llm_primary: Option<LlmContentModerationFileConfig>,
+    pub llm_primary: Option<ContentModerationLlmFileConfig>,
     /// The secondary LLM moderation will run if primary results with ignore
     /// action.
-    pub llm_secondary: Option<LlmContentModerationFileConfig>,
+    pub llm_secondary: Option<ContentModerationLlmFileConfig>,
     pub debug_log_delete: bool,
     /// Default value is 4.
     pub concurrency: u8,
@@ -471,7 +471,7 @@ impl Default for ContentModerationFileConfig {
 #[serde(default)]
 pub struct FaceVerificationFileConfig {
     /// Large language model based face verification.
-    pub llm: Option<LlmContentModerationFileConfig>,
+    pub llm: Option<ContentModerationLlmFileConfig>,
     /// Default value is 4.
     pub concurrency: u8,
 }
@@ -493,7 +493,7 @@ pub struct AccountVerificationFileConfig {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default)]
 pub struct SecurityContentVerificationFileConfig {
-    pub llm: Option<LlmContentModerationFileConfig>,
+    pub llm: Option<ContentModerationLlmFileConfig>,
     /// Default value is 4.
     pub concurrency: u8,
 }
@@ -551,7 +551,7 @@ pub struct NsfwDetectionFileConfig {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct LlmContentModerationFileConfig {
+pub struct ContentModerationLlmFileConfig {
     #[serde(flatten)]
     pub llm: Option<BaseLlmConfig>,
 }

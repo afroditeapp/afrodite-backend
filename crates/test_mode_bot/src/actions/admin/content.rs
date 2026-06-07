@@ -19,7 +19,7 @@ use async_openai::{
 use async_trait::async_trait;
 use base64::display::Base64Display;
 use config::bot_config_file::internal::{
-    ContentModerationConfigInternal, LlmContentModerationConfigInternal, ModerationAction,
+    ContentModerationConfigInternal, ContentModerationLlmConfigInternal, ModerationAction,
     NsfwDetectionConfigInternal,
 };
 use error_stack::{Result, ResultExt};
@@ -40,7 +40,7 @@ struct NsfwConfigAndModel {
 
 #[derive(Debug, Clone)]
 struct LlmConfigAndClient {
-    config: Arc<LlmContentModerationConfigInternal>,
+    config: Arc<ContentModerationLlmConfigInternal>,
     client: Client<OpenAIConfig>,
 }
 

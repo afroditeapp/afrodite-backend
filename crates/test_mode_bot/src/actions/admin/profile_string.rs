@@ -13,7 +13,8 @@ use async_openai::{
     types::{ChatCompletionRequestMessage, CreateChatCompletionRequest},
 };
 use config::bot_config_file::internal::{
-    LlmStringModerationConfigInternal, ModerationAction, ProfileStringModerationConfigInternal,
+    ModerationAction, ProfileStringModerationConfigInternal,
+    ProfileStringModerationLlmConfigInternal,
 };
 use error_stack::{Result, ResultExt};
 use futures::{StreamExt, stream};
@@ -25,7 +26,7 @@ use super::{EmptyPage, ModerationResult};
 
 #[derive(Debug, Clone)]
 struct LlmConfigAndClient {
-    config: Arc<LlmStringModerationConfigInternal>,
+    config: Arc<ProfileStringModerationLlmConfigInternal>,
     client: Client<OpenAIConfig>,
 }
 
@@ -184,7 +185,7 @@ impl AdminBotProfileStringModerationLogic {
         let expected_response_lowercase = config.expected_response.to_lowercase();
         let profile_text_paragraph = profile_string.lines().collect::<Vec<&str>>().join(" ");
         let user_text = config.user_text_template.replace(
-            LlmStringModerationConfigInternal::TEMPLATE_PLACEHOLDER_TEXT,
+            ProfileStringModerationLlmConfigInternal::TEMPLATE_PLACEHOLDER_TEXT,
             &profile_text_paragraph,
         );
 

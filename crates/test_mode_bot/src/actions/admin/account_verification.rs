@@ -9,7 +9,7 @@ use api_client::{
 };
 use async_openai::{Client, config::OpenAIConfig};
 use config::bot_config_file::internal::{
-    AccountVerificationConfigInternal, LlmSecurityContentVerificationConfigInternal,
+    AccountVerificationConfigInternal, SecurityContentVerificationLlmConfigInternal,
 };
 use error_stack::{Result, ResultExt};
 use test_mode_utils::{
@@ -53,7 +53,7 @@ impl AccountVerificationState {
 
 #[derive(Debug, Clone)]
 struct LlmConfigAndClient {
-    config: Arc<LlmSecurityContentVerificationConfigInternal>,
+    config: Arc<SecurityContentVerificationLlmConfigInternal>,
     client: Client<OpenAIConfig>,
 }
 
