@@ -23,19 +23,6 @@ const DEFAULT_BOT_CONFIG: &str = r#"
 
 # Local admin bot config
 
-[content_moderation]
-initial_content = true
-added_content = true
-default_action = "move_to_human"
-
-[profile_name_moderation]
-accept_single_visible_character = true
-default_action = "move_to_human"
-
-[profile_text_moderation]
-accept_single_visible_character = true
-default_action = "move_to_human"
-
 "#;
 
 #[derive(Debug, Clone, Default, Deserialize)]
