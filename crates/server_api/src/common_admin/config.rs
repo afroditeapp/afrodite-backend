@@ -67,8 +67,14 @@ const PATH_POST_BOT_CONFIG: &str = "/common_api/bot_config";
 /// Save bot config.
 ///
 /// # Validation
-/// * `profile_name_moderation.llm.user_text_template` must contain exactly one `{text}` placeholder.
-/// * `profile_text_moderation.llm.user_text_template` must contain exactly one `{text}` placeholder.
+/// The following fields must contain exactly one `{text}` placeholder:
+/// * `profile_name_moderation.llm.user_text_template`
+/// * `profile_text_moderation.llm.user_text_template`
+/// * `report_processing.profile_name.llm.user_text_template`
+/// * `report_processing.profile_text.llm.user_text_template`
+/// * `report_processing.messages.llm.user_text_template`
+/// * `report_processing.messages.llm.report_creator_message_template`
+/// * `report_processing.messages.llm.report_target_message_template`
 ///
 /// # Access
 /// * [Permissions::admin_server_edit_bot_config]
@@ -97,14 +103,43 @@ pub async fn post_bot_config(
     }
 
     let admin_bot_config = &bot_config.admin_bot_config;
-    let profile_string_moderation_configs = [
-        &admin_bot_config.profile_name_moderation,
-        &admin_bot_config.profile_text_moderation,
+
+    let template_strings: [&str; 7] = [
+        &admin_bot_config
+            .profile_name_moderation
+            .llm
+            .user_text_template,
+        &admin_bot_config
+            .profile_text_moderation
+            .llm
+            .user_text_template,
+        &admin_bot_config
+            .report_processing
+            .profile_name
+            .base
+            .user_text_template,
+        &admin_bot_config
+            .report_processing
+            .profile_text
+            .base
+            .user_text_template,
+        &admin_bot_config
+            .report_processing
+            .messages
+            .base
+            .user_text_template,
+        &admin_bot_config
+            .report_processing
+            .messages
+            .report_creator_message_template,
+        &admin_bot_config
+            .report_processing
+            .messages
+            .report_target_message_template,
     ];
 
-    for config in profile_string_moderation_configs.iter().map(|v| &v.llm) {
-        let count = config
-            .user_text_template
+    for template in &template_strings {
+        let count = template
             .split(ProfileStringModerationLlmConfigInternal::TEMPLATE_PLACEHOLDER_TEXT)
             .count();
 
