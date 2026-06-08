@@ -6,11 +6,15 @@ use model::common_admin::{
     AdminBotContentModerationLlmConfig, AdminBotFaceVerificationConfig,
     AdminBotFaceVerificationLlmConfig, AdminBotNsfwDetectionConfig,
     AdminBotProfileStringModerationConfig, AdminBotReportProcessingConfig,
-    AdminBotSecurityContentVerificationLlmConfig, AdminBotStringModerationLlmConfig,
+    AdminBotReportProcessingMessagesLlmConfig, AdminBotReportProcessingProfileContentLlmConfig,
+    AdminBotReportProcessingProfileStringLlmConfig, AdminBotSecurityContentVerificationLlmConfig,
+    AdminBotStringModerationLlmConfig,
 };
 pub use simple_backend_model::NsfwDetectionThresholds;
 
 use crate::bot_config_file::LlmConfig;
+
+const TEMPLATE_PLACEHOLDER_TEXT: &str = "{text}";
 
 #[derive(Debug, Clone)]
 pub struct ProfileStringModerationConfigInternal {
@@ -48,16 +52,12 @@ impl ProfileStringModerationConfigInternal {
 
 #[derive(Debug, Clone)]
 pub struct ProfileStringModerationLlmConfigInternal {
+    pub db: AdminBotStringModerationLlmConfig,
     pub llm: LlmConfig,
-    pub user_text_template: String,
-    pub system_text: String,
-    pub expected_response: String,
-    pub move_rejected_to_human_moderation: bool,
-    pub add_llm_output_to_user_visible_rejection_details: bool,
 }
 
 impl ProfileStringModerationLlmConfigInternal {
-    pub const TEMPLATE_PLACEHOLDER_TEXT: &'static str = "{text}";
+    pub const TEMPLATE_PLACEHOLDER_TEXT: &str = TEMPLATE_PLACEHOLDER_TEXT;
 
     pub fn new(
         db: AdminBotStringModerationLlmConfig,
@@ -71,16 +71,7 @@ impl ProfileStringModerationLlmConfigInternal {
         let file = file?;
         let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
 
-        Some(Self {
-            llm,
-            user_text_template: db.user_text_template,
-            system_text: db.base.system_text,
-            expected_response: db.base.expected_response,
-            move_rejected_to_human_moderation: db.base.move_rejected_to_human_moderation,
-            add_llm_output_to_user_visible_rejection_details: db
-                .base
-                .add_llm_output_to_user_visible_rejection_details,
-        })
+        Some(Self { db, llm })
     }
 }
 
@@ -169,9 +160,8 @@ impl SecurityContentVerificationConfigInternal {
 
 #[derive(Debug, Clone)]
 pub struct SecurityContentVerificationLlmConfigInternal {
+    pub db: AdminBotSecurityContentVerificationLlmConfig,
     pub llm: LlmConfig,
-    pub system_text: String,
-    pub expected_response: String,
 }
 
 impl SecurityContentVerificationLlmConfigInternal {
@@ -187,11 +177,7 @@ impl SecurityContentVerificationLlmConfigInternal {
         let file = file?;
         let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
 
-        Some(Self {
-            llm,
-            system_text: db.base.system_text,
-            expected_response: db.base.expected_response,
-        })
+        Some(Self { db, llm })
     }
 }
 
@@ -288,21 +274,14 @@ impl NsfwDetectionConfigInternal {
 
 #[derive(Debug, Clone)]
 pub struct ContentModerationLlmConfigInternal {
+    pub db: AdminBotContentModerationLlmConfig,
     pub llm: LlmConfig,
-    pub system_text: String,
-    pub expected_response: String,
-    pub ignore_rejected: bool,
-    pub delete_accepted: bool,
-    pub move_accepted_to_human_moderation: bool,
-    pub move_rejected_to_human_moderation: bool,
-    pub add_llm_output_to_user_visible_rejection_details: bool,
 }
 
 #[derive(Debug, Clone)]
 pub struct FaceVerificationLlmConfigInternal {
+    pub db: AdminBotFaceVerificationLlmConfig,
     pub llm: LlmConfig,
-    pub system_text: String,
-    pub expected_response: String,
 }
 
 impl FaceVerificationLlmConfigInternal {
@@ -318,11 +297,7 @@ impl FaceVerificationLlmConfigInternal {
         let file = file?;
         let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
 
-        Some(Self {
-            llm,
-            system_text: db.base.system_text,
-            expected_response: db.base.expected_response,
-        })
+        Some(Self { db, llm })
     }
 }
 
@@ -339,164 +314,149 @@ impl ContentModerationLlmConfigInternal {
         let file = file?;
         let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
 
-        Some(Self {
-            llm,
-            system_text: db.base.system_text,
-            expected_response: db.base.expected_response,
-            ignore_rejected: db.ignore_rejected,
-            delete_accepted: db.delete_accepted,
-            move_accepted_to_human_moderation: db.move_accepted_to_human_moderation,
-            move_rejected_to_human_moderation: db.move_rejected_to_human_moderation,
-            add_llm_output_to_user_visible_rejection_details: db
-                .add_llm_output_to_user_visible_rejection_details,
-        })
+        Some(Self { db, llm })
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct ReportProcessingLlmConfigInternal {
+pub struct ReportProcessingProfileStringConfigInternal {
+    pub db: AdminBotReportProcessingProfileStringLlmConfig,
     pub llm: LlmConfig,
-    pub system_text: String,
-    pub user_text_template: Option<String>,
-    pub report_creator_message_template: Option<String>,
-    pub report_target_message_template: Option<String>,
-    pub expected_response: String,
+    pub default_action: AcceptOrReject,
 }
 
-impl ReportProcessingLlmConfigInternal {
-    pub const TEMPLATE_PLACEHOLDER_TEXT: &'static str = "{text}";
+impl ReportProcessingProfileStringConfigInternal {
+    pub const TEMPLATE_PLACEHOLDER_TEXT: &str = TEMPLATE_PLACEHOLDER_TEXT;
 
-    pub fn from_db_profile_string(
-        db: model::common_admin::AdminBotReportProcessingProfileStringLlmConfig,
+    pub fn new(
+        db: AdminBotReportProcessingProfileStringLlmConfig,
         file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
         base_llm: crate::bot_config_file::BaseLlmConfig,
+        default_action: AcceptOrReject,
     ) -> Option<Self> {
         let file = file?;
         let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
-
         Some(Self {
+            db,
             llm,
-            system_text: db.base.system_text,
-            user_text_template: Some(db.base.user_text_template),
-            report_creator_message_template: None,
-            report_target_message_template: None,
-            expected_response: db.base.expected_response,
-        })
-    }
-
-    pub fn from_db_profile_content(
-        db: model::common_admin::AdminBotReportProcessingProfileContentLlmConfig,
-        file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
-        base_llm: crate::bot_config_file::BaseLlmConfig,
-    ) -> Option<Self> {
-        let file = file?;
-        let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
-
-        Some(Self {
-            llm,
-            system_text: db.base.system_text,
-            user_text_template: None,
-            report_creator_message_template: None,
-            report_target_message_template: None,
-            expected_response: db.base.expected_response,
-        })
-    }
-
-    pub fn from_db_messages(
-        db: model::common_admin::AdminBotReportProcessingMessagesLlmConfig,
-        file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
-        base_llm: crate::bot_config_file::BaseLlmConfig,
-    ) -> Option<Self> {
-        let file = file?;
-        let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
-
-        Some(Self {
-            llm,
-            system_text: db.base.system_text,
-            user_text_template: Some(db.base.user_text_template),
-            report_creator_message_template: Some(db.report_creator_message_template),
-            report_target_message_template: Some(db.report_target_message_template),
-            expected_response: db.base.expected_response,
+            default_action,
         })
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct ReportProcessingTypeConfigInternal {
-    pub llm: Option<ReportProcessingLlmConfigInternal>,
+pub struct ReportProcessingProfileContentConfigInternal {
+    pub db: AdminBotReportProcessingProfileContentLlmConfig,
+    pub llm: LlmConfig,
     pub default_action: AcceptOrReject,
+}
+
+impl ReportProcessingProfileContentConfigInternal {
+    pub fn new(
+        db: AdminBotReportProcessingProfileContentLlmConfig,
+        file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
+        base_llm: crate::bot_config_file::BaseLlmConfig,
+        default_action: AcceptOrReject,
+    ) -> Option<Self> {
+        let file = file?;
+        let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
+        Some(Self {
+            db,
+            llm,
+            default_action,
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ReportProcessingMessagesConfigInternal {
+    pub db: AdminBotReportProcessingMessagesLlmConfig,
+    pub llm: LlmConfig,
+    pub default_action: AcceptOrReject,
+}
+
+impl ReportProcessingMessagesConfigInternal {
+    pub const TEMPLATE_PLACEHOLDER_TEXT: &str = TEMPLATE_PLACEHOLDER_TEXT;
+
+    pub fn new(
+        db: AdminBotReportProcessingMessagesLlmConfig,
+        file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
+        base_llm: crate::bot_config_file::BaseLlmConfig,
+        default_action: AcceptOrReject,
+    ) -> Option<Self> {
+        let file = file?;
+        let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
+        Some(Self {
+            db,
+            llm,
+            default_action,
+        })
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct ReportProcessingConfigInternal {
-    pub profile_name: Option<ReportProcessingTypeConfigInternal>,
-    pub profile_text: Option<ReportProcessingTypeConfigInternal>,
-    pub profile_content: Option<ReportProcessingTypeConfigInternal>,
-    pub messages: Option<ReportProcessingTypeConfigInternal>,
+    pub profile_name: Option<ReportProcessingProfileStringConfigInternal>,
+    pub profile_text: Option<ReportProcessingProfileStringConfigInternal>,
+    pub profile_content: Option<ReportProcessingProfileContentConfigInternal>,
+    pub messages: Option<ReportProcessingMessagesConfigInternal>,
     pub concurrency: u8,
 }
 
 impl ReportProcessingConfigInternal {
     fn new_per_type_profile_string(
-        db_llm: model::common_admin::AdminBotReportProcessingProfileStringLlmConfig,
+        db_llm: AdminBotReportProcessingProfileStringLlmConfig,
         db_enabled: bool,
         default_action: AcceptOrReject,
         file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
         base_llm: crate::bot_config_file::BaseLlmConfig,
-    ) -> Option<ReportProcessingTypeConfigInternal> {
+    ) -> Option<ReportProcessingProfileStringConfigInternal> {
         if !db_enabled {
             return None;
         }
         let file = file?;
 
-        Some(ReportProcessingTypeConfigInternal {
-            llm: ReportProcessingLlmConfigInternal::from_db_profile_string(
-                db_llm,
-                Some(file),
-                base_llm,
-            ),
+        ReportProcessingProfileStringConfigInternal::new(
+            db_llm,
+            Some(file),
+            base_llm,
             default_action,
-        })
+        )
     }
 
     fn new_per_type_profile_content(
-        db_llm: model::common_admin::AdminBotReportProcessingProfileContentLlmConfig,
+        db_llm: AdminBotReportProcessingProfileContentLlmConfig,
         db_enabled: bool,
         default_action: AcceptOrReject,
         file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
         base_llm: crate::bot_config_file::BaseLlmConfig,
-    ) -> Option<ReportProcessingTypeConfigInternal> {
+    ) -> Option<ReportProcessingProfileContentConfigInternal> {
         if !db_enabled {
             return None;
         }
         let file = file?;
 
-        Some(ReportProcessingTypeConfigInternal {
-            llm: ReportProcessingLlmConfigInternal::from_db_profile_content(
-                db_llm,
-                Some(file),
-                base_llm,
-            ),
+        ReportProcessingProfileContentConfigInternal::new(
+            db_llm,
+            Some(file),
+            base_llm,
             default_action,
-        })
+        )
     }
 
     fn new_per_type_messages(
-        db_llm: model::common_admin::AdminBotReportProcessingMessagesLlmConfig,
+        db_llm: AdminBotReportProcessingMessagesLlmConfig,
         db_enabled: bool,
         default_action: AcceptOrReject,
         file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
         base_llm: crate::bot_config_file::BaseLlmConfig,
-    ) -> Option<ReportProcessingTypeConfigInternal> {
+    ) -> Option<ReportProcessingMessagesConfigInternal> {
         if !db_enabled {
             return None;
         }
         let file = file?;
 
-        Some(ReportProcessingTypeConfigInternal {
-            llm: ReportProcessingLlmConfigInternal::from_db_messages(db_llm, Some(file), base_llm),
-            default_action,
-        })
+        ReportProcessingMessagesConfigInternal::new(db_llm, Some(file), base_llm, default_action)
     }
 
     pub fn new(

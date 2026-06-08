@@ -8,9 +8,7 @@ use api_client::{
     },
 };
 use async_openai::{Client, config::OpenAIConfig};
-use config::bot_config_file::internal::{
-    AccountVerificationConfigInternal, SecurityContentVerificationLlmConfigInternal,
-};
+use config::bot_config_file::internal::AccountVerificationConfigInternal;
 use error_stack::{Result, ResultExt};
 use test_mode_utils::{
     AccountVerificationErrorFlags,
@@ -53,12 +51,9 @@ impl AccountVerificationState {
 
 #[derive(Debug, Clone)]
 struct LlmConfigAndClient {
-    config: Arc<SecurityContentVerificationLlmConfigInternal>,
+    config: Arc<config::bot_config_file::internal::SecurityContentVerificationLlmConfigInternal>,
     client: Client<OpenAIConfig>,
 }
-
-#[derive(Debug)]
-pub struct AdminBotAccountVerificationLogic;
 
 struct LazyProfileAgeAndName<'a> {
     api: &'a ApiClient,
@@ -104,6 +99,9 @@ enum VerificationMethodAction {
         names: Vec<String>,
     },
 }
+
+#[derive(Debug)]
+pub struct AdminBotAccountVerificationLogic;
 
 impl AdminBotAccountVerificationLogic {
     async fn verify_one_page(

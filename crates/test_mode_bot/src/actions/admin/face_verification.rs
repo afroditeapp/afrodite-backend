@@ -164,7 +164,7 @@ impl AdminBotFaceVerificationLogic {
         llm: LlmConfigAndClient,
     ) -> Result<Option<ModerationResult>, TestError> {
         let config = &llm.config;
-        let expected_response_lowercase = config.expected_response.to_lowercase();
+        let expected_response_lowercase = config.db.base.expected_response.to_lowercase();
 
         let security_image = ChatCompletionRequestMessageContentPartImage {
             image_url: ImageUrl {
@@ -208,7 +208,7 @@ impl AdminBotFaceVerificationLogic {
             .chat()
             .create(CreateChatCompletionRequest {
                 messages: vec![
-                    ChatCompletionRequestMessage::System(config.system_text.clone().into()),
+                    ChatCompletionRequestMessage::System(config.db.base.system_text.clone().into()),
                     ChatCompletionRequestMessage::User(user_message),
                 ],
                 model: config.llm.model.clone(),

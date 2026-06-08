@@ -450,7 +450,7 @@ impl AdminBotContentModerationLogic {
         llm: &LlmConfigAndClient,
     ) -> Result<Option<ModerationResult>, TestError> {
         let config = &llm.config;
-        let expected_response_lowercase = llm.config.expected_response.to_lowercase();
+        let expected_response_lowercase = llm.config.db.base.expected_response.to_lowercase();
 
         let image = ChatCompletionRequestMessageContentPartImage {
             image_url: ImageUrl {
@@ -475,7 +475,7 @@ impl AdminBotContentModerationLogic {
             .chat()
             .create(CreateChatCompletionRequest {
                 messages: vec![
-                    ChatCompletionRequestMessage::System(config.system_text.clone().into()),
+                    ChatCompletionRequestMessage::System(config.db.base.system_text.clone().into()),
                     ChatCompletionRequestMessage::User(message),
                 ],
                 model: config.llm.model.clone(),
@@ -513,19 +513,19 @@ impl AdminBotContentModerationLogic {
             info!("LLM image moderation result: '{}'", response);
         }
 
-        if config.delete_accepted && accepted {
+        if config.db.delete_accepted && accepted {
             return Ok(Some(ModerationResult::delete()));
         }
 
-        if config.ignore_rejected && !accepted {
+        if config.db.ignore_rejected && !accepted {
             return Ok(None);
         }
 
-        let move_to_human = (accepted && config.move_accepted_to_human_moderation)
-            || (!accepted && config.move_rejected_to_human_moderation);
+        let move_to_human = (accepted && config.db.move_accepted_to_human_moderation)
+            || (!accepted && config.db.move_rejected_to_human_moderation);
 
         let rejected_details = if (!accepted
-            && config.add_llm_output_to_user_visible_rejection_details)
+            && config.db.add_llm_output_to_user_visible_rejection_details)
             || move_to_human
         {
             Some(response)

@@ -182,9 +182,9 @@ impl AdminBotProfileStringModerationLogic {
         content_type: ProfileStringModerationContentType,
     ) -> Result<Option<ModerationResult>, TestError> {
         let config = &llm.config;
-        let expected_response_lowercase = config.expected_response.to_lowercase();
+        let expected_response_lowercase = config.db.base.expected_response.to_lowercase();
         let profile_text_paragraph = profile_string.lines().collect::<Vec<&str>>().join(" ");
-        let user_text = config.user_text_template.replace(
+        let user_text = config.db.user_text_template.replace(
             ProfileStringModerationLlmConfigInternal::TEMPLATE_PLACEHOLDER_TEXT,
             &profile_text_paragraph,
         );
@@ -197,7 +197,7 @@ impl AdminBotProfileStringModerationLogic {
             .chat()
             .create(CreateChatCompletionRequest {
                 messages: vec![
-                    ChatCompletionRequestMessage::System(config.system_text.clone().into()),
+                    ChatCompletionRequestMessage::System(config.db.base.system_text.clone().into()),
                     ChatCompletionRequestMessage::User(user_text.into()),
                 ],
                 model: config.llm.model.clone(),
@@ -235,10 +235,13 @@ impl AdminBotProfileStringModerationLogic {
             info!("LLM {content_type} moderation result: '{}'", response);
         }
 
-        let move_to_human = !accepted && config.move_rejected_to_human_moderation;
+        let move_to_human = !accepted && config.db.base.move_rejected_to_human_moderation;
 
         let rejected_details = if (!accepted
-            && config.add_llm_output_to_user_visible_rejection_details)
+            && config
+                .db
+                .base
+                .add_llm_output_to_user_visible_rejection_details)
             || move_to_human
         {
             Some(response)
