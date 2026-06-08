@@ -35,14 +35,20 @@ pub struct BotConfigFile {
     /// Override config for specific user bots.
     #[serde(default)]
     pub bots: Vec<BotInstanceConfig>,
-    pub profile_name_moderation: Option<ProfileStringModerationFileConfig>,
-    pub profile_text_moderation: Option<ProfileStringModerationFileConfig>,
-    pub content_moderation: Option<ContentModerationFileConfig>,
-    pub face_verification: Option<FaceVerificationFileConfig>,
-    pub account_verification: Option<AccountVerificationFileConfig>,
-    /// Admin bot report processing config for all 4 built-in report types.
-    pub report_processing: Option<ReportProcessingFileConfig>,
-    pub llm: Option<BaseLlmConfig>,
+    #[serde(default)]
+    pub profile_name_moderation: ProfileStringModerationFileConfig,
+    #[serde(default)]
+    pub profile_text_moderation: ProfileStringModerationFileConfig,
+    #[serde(default)]
+    pub content_moderation: ContentModerationFileConfig,
+    #[serde(default)]
+    pub face_verification: FaceVerificationFileConfig,
+    #[serde(default)]
+    pub account_verification: AccountVerificationFileConfig,
+    #[serde(default)]
+    pub report_processing: ReportProcessingFileConfig,
+    #[serde(default)]
+    pub llm: BaseLlmConfig,
     /// Config required for starting backend in remote bot mode.
     pub remote_bot_mode: Option<RemoteBotModeConfig>,
     /// If None, reading location from server config file next
@@ -164,8 +170,7 @@ impl BotConfigFile {
             check_imgs_exist(&config, img_dir, Gender::Woman)?
         }
 
-        if let Some(config) = &config.content_moderation
-            && let Some(config) = &config.nsfw_detection
+        if let Some(config) = &config.content_moderation.nsfw_detection
             && !config.model_file.exists()
         {
             return Err(ConfigFileError::InvalidConfig).attach_printable(format!(
@@ -354,7 +359,7 @@ impl<'de> Deserialize<'de> for Gender {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default)]
 pub struct ProfileStringModerationFileConfig {
-    pub llm: Option<ProfileStringModerationLlmFileConfig>,
+    pub llm: BaseLlmConfig,
     /// Default value is 4.
     pub concurrency: u8,
 }
@@ -362,7 +367,7 @@ pub struct ProfileStringModerationFileConfig {
 impl Default for ProfileStringModerationFileConfig {
     fn default() -> Self {
         Self {
-            llm: None,
+            llm: BaseLlmConfig::default(),
             concurrency: 4,
         }
     }
@@ -419,12 +424,6 @@ impl BaseLlmConfig {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct ProfileStringModerationLlmFileConfig {
-    #[serde(flatten)]
-    pub llm: Option<BaseLlmConfig>,
-}
-
-#[derive(Debug, Clone, Deserialize)]
 #[serde(default)]
 pub struct ContentModerationFileConfig {
     /// Neural network based detection.
@@ -433,10 +432,10 @@ pub struct ContentModerationFileConfig {
     /// Large language model based moderation.
     /// Actions: reject (can be replaced with move_to_human or ignore) and
     ///          accept (can be replaced with move_to_human or delete).
-    pub llm_primary: Option<ContentModerationLlmFileConfig>,
+    pub llm_primary: Option<BaseLlmConfig>,
     /// The secondary LLM moderation will run if primary results with ignore
     /// action.
-    pub llm_secondary: Option<ContentModerationLlmFileConfig>,
+    pub llm_secondary: Option<BaseLlmConfig>,
     pub debug_log_delete: bool,
     /// Default value is 4.
     pub concurrency: u8,
@@ -458,7 +457,7 @@ impl Default for ContentModerationFileConfig {
 #[serde(default)]
 pub struct FaceVerificationFileConfig {
     /// Large language model based face verification.
-    pub llm: Option<ContentModerationLlmFileConfig>,
+    pub llm: BaseLlmConfig,
     /// Default value is 4.
     pub concurrency: u8,
 }
@@ -466,7 +465,7 @@ pub struct FaceVerificationFileConfig {
 impl Default for FaceVerificationFileConfig {
     fn default() -> Self {
         Self {
-            llm: None,
+            llm: BaseLlmConfig::default(),
             concurrency: 4,
         }
     }
@@ -480,7 +479,7 @@ pub struct AccountVerificationFileConfig {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default)]
 pub struct SecurityContentVerificationFileConfig {
-    pub llm: Option<ContentModerationLlmFileConfig>,
+    pub llm: BaseLlmConfig,
     /// Default value is 4.
     pub concurrency: u8,
 }
@@ -488,7 +487,7 @@ pub struct SecurityContentVerificationFileConfig {
 impl Default for SecurityContentVerificationFileConfig {
     fn default() -> Self {
         Self {
-            llm: None,
+            llm: BaseLlmConfig::default(),
             concurrency: 4,
         }
     }
@@ -497,23 +496,16 @@ impl Default for SecurityContentVerificationFileConfig {
 #[derive(Debug, Default, Clone, Deserialize)]
 #[serde(default)]
 pub struct ReportProcessingTypeFileConfig {
-    /// LLM connection config. Falls back to the common [LlmConfig].
-    #[serde(flatten)]
-    pub llm: Option<BaseLlmConfig>,
+    pub llm: BaseLlmConfig,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default)]
 pub struct ReportProcessingFileConfig {
-    /// LLM config for profile name reports.
-    pub profile_name: Option<ReportProcessingTypeFileConfig>,
-    /// LLM config for profile text reports.
-    pub profile_text: Option<ReportProcessingTypeFileConfig>,
-    /// LLM config for profile content (image) reports.
-    pub profile_content: Option<ReportProcessingTypeFileConfig>,
-    /// LLM config for chat message reports.
-    pub messages: Option<ReportProcessingTypeFileConfig>,
-    /// How many report processing tasks to run concurrently.
+    pub profile_name: ReportProcessingTypeFileConfig,
+    pub profile_text: ReportProcessingTypeFileConfig,
+    pub profile_content: ReportProcessingTypeFileConfig,
+    pub messages: ReportProcessingTypeFileConfig,
     /// Default value is 4.
     pub concurrency: u8,
 }
@@ -521,10 +513,10 @@ pub struct ReportProcessingFileConfig {
 impl Default for ReportProcessingFileConfig {
     fn default() -> Self {
         Self {
-            profile_name: None,
-            profile_text: None,
-            profile_content: None,
-            messages: None,
+            profile_name: ReportProcessingTypeFileConfig::default(),
+            profile_text: ReportProcessingTypeFileConfig::default(),
+            profile_content: ReportProcessingTypeFileConfig::default(),
+            messages: ReportProcessingTypeFileConfig::default(),
             concurrency: 4,
         }
     }
@@ -535,12 +527,6 @@ pub struct NsfwDetectionFileConfig {
     pub model_file: PathBuf,
     #[serde(default)]
     pub debug_log_results: bool,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct ContentModerationLlmFileConfig {
-    #[serde(flatten)]
-    pub llm: Option<BaseLlmConfig>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

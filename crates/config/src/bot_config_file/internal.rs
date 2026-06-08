@@ -28,13 +28,12 @@ impl ProfileStringModerationConfigInternal {
     pub fn new(
         db: AdminBotProfileStringModerationConfig,
         db_enabled: bool,
-        file: Option<crate::bot_config_file::ProfileStringModerationFileConfig>,
+        file: crate::bot_config_file::ProfileStringModerationFileConfig,
         base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<Self> {
         if !db_enabled {
             return None;
         }
-        let file = file.unwrap_or_default();
 
         Some(Self {
             accept_single_visible_character: db.accept_single_visible_character,
@@ -62,14 +61,13 @@ impl ProfileStringModerationLlmConfigInternal {
     pub fn new(
         db: AdminBotStringModerationLlmConfig,
         db_enabled: bool,
-        file: Option<crate::bot_config_file::ProfileStringModerationLlmFileConfig>,
+        file: crate::bot_config_file::BaseLlmConfig,
         base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<Self> {
         if !db_enabled {
             return None;
         }
-        let file = file?;
-        let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
+        let llm = file.merge_with(base_llm)?;
 
         Some(Self { db, llm })
     }
@@ -105,13 +103,12 @@ impl AccountVerificationConfigInternal {
     pub fn new(
         db: AdminBotAccountVerificationConfig,
         db_enabled: bool,
-        file: Option<crate::bot_config_file::AccountVerificationFileConfig>,
+        file: crate::bot_config_file::AccountVerificationFileConfig,
         base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<Self> {
         if !db_enabled {
             return None;
         }
-        let file = file.unwrap_or_default();
 
         Some(Self {
             profile_age_range: db.profile_age_range_enabled,
@@ -168,14 +165,13 @@ impl SecurityContentVerificationLlmConfigInternal {
     pub fn new(
         db: AdminBotSecurityContentVerificationLlmConfig,
         db_enabled: bool,
-        file: Option<crate::bot_config_file::ContentModerationLlmFileConfig>,
+        file: crate::bot_config_file::BaseLlmConfig,
         base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<Self> {
         if !db_enabled {
             return None;
         }
-        let file = file?;
-        let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
+        let llm = file.merge_with(base_llm)?;
 
         Some(Self { db, llm })
     }
@@ -185,13 +181,12 @@ impl FaceVerificationConfigInternal {
     pub fn new(
         db: AdminBotFaceVerificationConfig,
         db_enabled: bool,
-        file: Option<crate::bot_config_file::FaceVerificationFileConfig>,
+        file: crate::bot_config_file::FaceVerificationFileConfig,
         base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<Self> {
         if !db_enabled {
             return None;
         }
-        let file = file.unwrap_or_default();
 
         Some(Self {
             llm: FaceVerificationLlmConfigInternal::new(db.llm, db.llm_enabled, file.llm, base_llm),
@@ -205,13 +200,12 @@ impl ContentModerationConfigInternal {
     pub fn new(
         db: AdminBotContentModerationConfig,
         db_enabled: bool,
-        file: Option<crate::bot_config_file::ContentModerationFileConfig>,
+        file: crate::bot_config_file::ContentModerationFileConfig,
         base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<Self> {
         if !db_enabled {
             return None;
         }
-        let file = file.unwrap_or_default();
 
         Some(Self {
             initial_content: db.initial_content,
@@ -288,14 +282,13 @@ impl FaceVerificationLlmConfigInternal {
     pub fn new(
         db: AdminBotFaceVerificationLlmConfig,
         db_enabled: bool,
-        file: Option<crate::bot_config_file::ContentModerationLlmFileConfig>,
+        file: crate::bot_config_file::BaseLlmConfig,
         base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<Self> {
         if !db_enabled {
             return None;
         }
-        let file = file?;
-        let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
+        let llm = file.merge_with(base_llm)?;
 
         Some(Self { db, llm })
     }
@@ -305,14 +298,13 @@ impl ContentModerationLlmConfigInternal {
     pub fn new(
         db: AdminBotContentModerationLlmConfig,
         db_enabled: bool,
-        file: Option<crate::bot_config_file::ContentModerationLlmFileConfig>,
+        file: Option<crate::bot_config_file::BaseLlmConfig>,
         base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<Self> {
         if !db_enabled {
             return None;
         }
-        let file = file?;
-        let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
+        let llm = file.unwrap_or_default().merge_with(base_llm)?;
 
         Some(Self { db, llm })
     }
@@ -330,12 +322,11 @@ impl ReportProcessingProfileStringConfigInternal {
 
     pub fn new(
         db: AdminBotReportProcessingProfileStringLlmConfig,
-        file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
+        file: crate::bot_config_file::ReportProcessingTypeFileConfig,
         base_llm: crate::bot_config_file::BaseLlmConfig,
         default_action: AcceptOrReject,
     ) -> Option<Self> {
-        let file = file?;
-        let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
+        let llm = file.llm.merge_with(base_llm)?;
         Some(Self {
             db,
             llm,
@@ -354,12 +345,11 @@ pub struct ReportProcessingProfileContentConfigInternal {
 impl ReportProcessingProfileContentConfigInternal {
     pub fn new(
         db: AdminBotReportProcessingProfileContentLlmConfig,
-        file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
+        file: crate::bot_config_file::ReportProcessingTypeFileConfig,
         base_llm: crate::bot_config_file::BaseLlmConfig,
         default_action: AcceptOrReject,
     ) -> Option<Self> {
-        let file = file?;
-        let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
+        let llm = file.llm.merge_with(base_llm)?;
         Some(Self {
             db,
             llm,
@@ -380,12 +370,11 @@ impl ReportProcessingMessagesConfigInternal {
 
     pub fn new(
         db: AdminBotReportProcessingMessagesLlmConfig,
-        file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
+        file: crate::bot_config_file::ReportProcessingTypeFileConfig,
         base_llm: crate::bot_config_file::BaseLlmConfig,
         default_action: AcceptOrReject,
     ) -> Option<Self> {
-        let file = file?;
-        let llm = file.llm.unwrap_or_default().merge_with(base_llm)?;
+        let llm = file.llm.merge_with(base_llm)?;
         Some(Self {
             db,
             llm,
@@ -408,67 +397,53 @@ impl ReportProcessingConfigInternal {
         db_llm: AdminBotReportProcessingProfileStringLlmConfig,
         db_enabled: bool,
         default_action: AcceptOrReject,
-        file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
+        file: crate::bot_config_file::ReportProcessingTypeFileConfig,
         base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<ReportProcessingProfileStringConfigInternal> {
         if !db_enabled {
             return None;
         }
-        let file = file?;
 
-        ReportProcessingProfileStringConfigInternal::new(
-            db_llm,
-            Some(file),
-            base_llm,
-            default_action,
-        )
+        ReportProcessingProfileStringConfigInternal::new(db_llm, file, base_llm, default_action)
     }
 
     fn new_per_type_profile_content(
         db_llm: AdminBotReportProcessingProfileContentLlmConfig,
         db_enabled: bool,
         default_action: AcceptOrReject,
-        file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
+        file: crate::bot_config_file::ReportProcessingTypeFileConfig,
         base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<ReportProcessingProfileContentConfigInternal> {
         if !db_enabled {
             return None;
         }
-        let file = file?;
 
-        ReportProcessingProfileContentConfigInternal::new(
-            db_llm,
-            Some(file),
-            base_llm,
-            default_action,
-        )
+        ReportProcessingProfileContentConfigInternal::new(db_llm, file, base_llm, default_action)
     }
 
     fn new_per_type_messages(
         db_llm: AdminBotReportProcessingMessagesLlmConfig,
         db_enabled: bool,
         default_action: AcceptOrReject,
-        file: Option<crate::bot_config_file::ReportProcessingTypeFileConfig>,
+        file: crate::bot_config_file::ReportProcessingTypeFileConfig,
         base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<ReportProcessingMessagesConfigInternal> {
         if !db_enabled {
             return None;
         }
-        let file = file?;
 
-        ReportProcessingMessagesConfigInternal::new(db_llm, Some(file), base_llm, default_action)
+        ReportProcessingMessagesConfigInternal::new(db_llm, file, base_llm, default_action)
     }
 
     pub fn new(
         db: AdminBotReportProcessingConfig,
         db_enabled: bool,
-        file: Option<crate::bot_config_file::ReportProcessingFileConfig>,
+        file: crate::bot_config_file::ReportProcessingFileConfig,
         base_llm: crate::bot_config_file::BaseLlmConfig,
     ) -> Option<Self> {
         if !db_enabled {
             return None;
         }
-        let file = file?;
 
         Some(Self {
             profile_name: Self::new_per_type_profile_string(
@@ -516,7 +491,7 @@ pub fn merge(
     Option<AccountVerificationConfigInternal>,
     Option<ReportProcessingConfigInternal>,
 ) {
-    let base_llm = file.llm.unwrap_or_default();
+    let base_llm = file.llm;
 
     let name = ProfileStringModerationConfigInternal::new(
         db.profile_name_moderation,

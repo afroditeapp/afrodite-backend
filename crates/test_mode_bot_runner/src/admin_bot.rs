@@ -152,30 +152,31 @@ impl AdminBot {
         let admin_bot_config = bot_config.admin_bot_config;
         let file_config = (*state.bot_config_file).clone();
 
+        // All file configs are always present now (defaulted via serde).
         Self::warn_missing_file_config(
             "profile_name_moderation",
             admin_bot_config.profile_name_moderation_enabled,
-            file_config.profile_name_moderation.is_some(),
+            true,
         );
         Self::warn_missing_file_config(
             "profile_text_moderation",
             admin_bot_config.profile_text_moderation_enabled,
-            file_config.profile_text_moderation.is_some(),
+            true,
         );
         Self::warn_missing_file_config(
             "content_moderation",
             admin_bot_config.content_moderation_enabled,
-            file_config.content_moderation.is_some(),
+            true,
         );
         Self::warn_missing_file_config(
             "face_verification",
             admin_bot_config.face_verification_enabled,
-            file_config.face_verification.is_some(),
+            true,
         );
         Self::warn_missing_file_config(
             "account_verification",
             admin_bot_config.account_verification_enabled,
-            file_config.account_verification.is_some(),
+            true,
         );
 
         let (
@@ -344,38 +345,14 @@ fn create_response_admin_bot_config_warnings_message(
     const RESPONSE_ADMIN_BOT_CONFIG_WARNINGS: u8 = 2;
 
     let mut flags = AdminBotConfigWarningFlags::empty();
-    if file_config.profile_name_moderation.is_none() {
-        flags.insert(AdminBotConfigWarningFlags::PROFILE_NAME_MODERATION_FILE_CONFIG_MISSING);
-    }
-    if file_config.profile_text_moderation.is_none() {
-        flags.insert(AdminBotConfigWarningFlags::PROFILE_TEXT_MODERATION_FILE_CONFIG_MISSING);
-    }
-    if file_config.content_moderation.is_none() {
-        flags.insert(AdminBotConfigWarningFlags::CONTENT_MODERATION_FILE_CONFIG_MISSING);
-    }
-    if file_config.face_verification.is_none() {
-        flags.insert(AdminBotConfigWarningFlags::FACE_VERIFICATION_FILE_CONFIG_MISSING);
-    }
-    if file_config.account_verification.is_none() {
-        flags.insert(AdminBotConfigWarningFlags::ACCOUNT_VERIFICATION_FILE_CONFIG_MISSING);
-    }
-    if file_config
-        .account_verification
-        .as_ref()
-        .and_then(|v| v.security_content.as_ref())
-        .is_none()
-    {
-        flags.insert(
-            AdminBotConfigWarningFlags::ACCOUNT_VERIFICATION_SECURITY_CONTENT_FILE_CONFIG_MISSING,
-        );
-    }
-    if file_config.report_processing.is_none() {
-        flags.insert(AdminBotConfigWarningFlags::REPORT_PROCESSING_FILE_CONFIG_MISSING);
-    }
+    // Top-level file configs are always present now (defaulted via serde).
+    // For report processing, check if the LLM resolves to a valid config.
     if file_config
         .report_processing
-        .as_ref()
-        .and_then(|v| v.profile_name.as_ref())
+        .profile_name
+        .llm
+        .clone()
+        .merge_with(file_config.llm.clone())
         .is_none()
     {
         flags
@@ -383,8 +360,10 @@ fn create_response_admin_bot_config_warnings_message(
     }
     if file_config
         .report_processing
-        .as_ref()
-        .and_then(|v| v.profile_text.as_ref())
+        .profile_text
+        .llm
+        .clone()
+        .merge_with(file_config.llm.clone())
         .is_none()
     {
         flags
@@ -392,8 +371,10 @@ fn create_response_admin_bot_config_warnings_message(
     }
     if file_config
         .report_processing
-        .as_ref()
-        .and_then(|v| v.profile_content.as_ref())
+        .profile_content
+        .llm
+        .clone()
+        .merge_with(file_config.llm.clone())
         .is_none()
     {
         flags.insert(
@@ -402,8 +383,10 @@ fn create_response_admin_bot_config_warnings_message(
     }
     if file_config
         .report_processing
-        .as_ref()
-        .and_then(|v| v.messages.as_ref())
+        .messages
+        .llm
+        .clone()
+        .merge_with(file_config.llm.clone())
         .is_none()
     {
         flags.insert(AdminBotConfigWarningFlags::REPORT_PROCESSING_MESSAGES_FILE_CONFIG_MISSING);

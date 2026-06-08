@@ -287,53 +287,54 @@ pub async fn get_bot_config_warnings(
     let warnings = BotConfigWarnings {
         error: false,
         error_admin_bot_offline: false,
-        profile_name_moderation_file_config_missing: config.profile_name_moderation_enabled
-            && bot_config_file.profile_name_moderation.is_none(),
-        profile_text_moderation_file_config_missing: config.profile_text_moderation_enabled
-            && bot_config_file.profile_text_moderation.is_none(),
-        content_moderation_file_config_missing: config.content_moderation_enabled
-            && bot_config_file.content_moderation.is_none(),
-        face_verification_file_config_missing: config.face_verification_enabled
-            && bot_config_file.face_verification.is_none(),
-        account_verification_file_config_missing: config.account_verification_enabled
-            && bot_config_file.account_verification.is_none(),
+        profile_name_moderation_file_config_missing: false,
+        profile_text_moderation_file_config_missing: false,
+        content_moderation_file_config_missing: false,
+        face_verification_file_config_missing: false,
+        account_verification_file_config_missing: false,
         account_verification_security_content_file_config_missing: config
             .account_verification_enabled
             && config.account_verification.security_content_enabled
             && bot_config_file
                 .account_verification
-                .as_ref()
-                .and_then(|v| v.security_content.as_ref())
+                .security_content
                 .is_none(),
-        report_processing_file_config_missing: config.report_processing_enabled
-            && bot_config_file.report_processing.is_none(),
+        report_processing_file_config_missing: false,
         report_processing_profile_name_file_config_missing: config.report_processing_enabled
             && config.report_processing.profile_name_enabled
             && bot_config_file
                 .report_processing
-                .as_ref()
-                .and_then(|v| v.profile_name.as_ref())
+                .profile_name
+                .llm
+                .clone()
+                .merge_with(bot_config_file.llm.clone())
                 .is_none(),
         report_processing_profile_text_file_config_missing: config.report_processing_enabled
             && config.report_processing.profile_text_enabled
             && bot_config_file
                 .report_processing
-                .as_ref()
-                .and_then(|v| v.profile_text.as_ref())
+                .profile_text
+                .llm
+                .clone()
+                .merge_with(bot_config_file.llm.clone())
                 .is_none(),
         report_processing_profile_content_file_config_missing: config.report_processing_enabled
             && config.report_processing.profile_content_enabled
             && bot_config_file
                 .report_processing
-                .as_ref()
-                .and_then(|v| v.profile_content.as_ref())
+                .profile_content
+                .llm
+                .clone()
+                .merge_with(bot_config_file.llm.clone())
                 .is_none(),
         report_processing_messages_file_config_missing: config.report_processing_enabled
             && config.report_processing.messages_enabled
             && bot_config_file
                 .report_processing
-                .as_ref()
-                .and_then(|v| v.messages.as_ref())
+                .messages
+                .llm
+                .clone()
+                .merge_with(bot_config_file.llm.clone())
                 .is_none(),
     };
 
