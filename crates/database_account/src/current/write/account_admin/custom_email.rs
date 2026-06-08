@@ -1,7 +1,7 @@
 use database::{DieselDatabaseError, define_current_write_commands};
-use diesel::{insert_into, prelude::*, upsert::excluded};
+use diesel::{insert_into, prelude::*, update, upsert::excluded};
 use error_stack::Result;
-use model::AccountIdInternal;
+use model::{AccountIdInternal, UnixTime};
 use model_account::{CustomEmailId, UpdateCustomEmail};
 use simple_backend_utils::db::MyRunQueryDsl;
 
@@ -66,6 +66,79 @@ impl CurrentWriteAccountCustomEmailAdmin<'_> {
                 .execute_my_conn(self.conn())
                 .into_db_error(())?;
         }
+
+        Ok(())
+    }
+
+    pub fn init_custom_email_sending(
+        &mut self,
+        email_id_value: CustomEmailId,
+        account_ids: &[AccountIdInternal],
+    ) -> Result<(), DieselDatabaseError> {
+        {
+            use crate::schema::custom_email_sending_state::dsl::*;
+
+            let rows: Vec<_> = account_ids
+                .iter()
+                .map(|id| {
+                    (
+                        email_id.eq(email_id_value),
+                        account_id.eq(id.as_db_id()),
+                        email_sent.eq(false),
+                    )
+                })
+                .collect();
+
+            insert_into(custom_email_sending_state)
+                .values(&rows)
+                .execute_my_conn(self.conn())
+                .into_db_error(())?;
+        }
+
+        {
+            use crate::schema::custom_email::dsl::*;
+
+            update(custom_email)
+                .filter(id.eq(email_id_value))
+                .set((
+                    sending_initiated.eq(true),
+                    sending_initiated_unix_time.eq(UnixTime::current_time()),
+                ))
+                .execute(self.conn())
+                .into_db_error(())?;
+        }
+
+        Ok(())
+    }
+
+    pub fn mark_custom_email_sent(
+        &mut self,
+        email_id_value: CustomEmailId,
+        account_id_value: &AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        use crate::schema::custom_email_sending_state::dsl::*;
+
+        update(custom_email_sending_state)
+            .filter(email_id.eq(email_id_value))
+            .filter(account_id.eq(account_id_value.as_db_id()))
+            .set(email_sent.eq(true))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
+
+    pub fn set_custom_email_sending_completed(
+        &mut self,
+        email_id_value: CustomEmailId,
+    ) -> Result<(), DieselDatabaseError> {
+        use crate::schema::custom_email::dsl::*;
+
+        update(custom_email)
+            .filter(id.eq(email_id_value))
+            .set(sending_completed_unix_time.eq(UnixTime::current_time()))
+            .execute(self.conn())
+            .into_db_error(())?;
 
         Ok(())
     }

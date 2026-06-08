@@ -7,10 +7,7 @@ use database::{
     DbWriterWithHistory, DieselDatabaseError, HistoryReadHandle, HistoryWriteHandle,
     TransactionError, current::write::TransactionConnection,
 };
-use server_common::{
-    app::EmailSenderImpl, data::WithInfo, push_notifications::PushNotificationSender,
-    result::Result,
-};
+use server_common::{data::WithInfo, push_notifications::PushNotificationSender, result::Result};
 pub use server_common::{
     data::{DataError, IntoDataError},
     result,
@@ -21,6 +18,7 @@ use crate::{
     cache::DatabaseCache,
     dynamic_client_features::{DynamicClientFeaturesManager, load_dynamic_client_features_from_db},
     dynamic_server_config::{DynamicServerConfigManager, load_dynamic_server_config_from_db},
+    email::EmailChannelSender,
     event::EventManagerWithCacheReference,
     file::utils::FileDir,
     index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle},
@@ -35,7 +33,9 @@ pub mod handle_types {
     pub use database::{
         CurrentReadHandle, CurrentWriteHandle, HistoryReadHandle, HistoryWriteHandle,
     };
-    pub use server_common::{app::EmailSenderImpl, push_notifications::PushNotificationSender};
+    pub use server_common::push_notifications::PushNotificationSender;
+
+    pub use crate::email::EmailChannelSender;
 
     pub type ReadHandleType = super::RouterDatabaseReadHandle;
     pub type WriteHandleType = super::RouterDatabaseWriteHandle;
@@ -54,7 +54,7 @@ impl DatabaseManager {
     pub async fn new(
         config: Arc<Config>,
         push_notification_sender: PushNotificationSender,
-        email_sender: EmailSenderImpl,
+        email_sender: EmailChannelSender,
     ) -> Result<(Self, RouterDatabaseReadHandle, RouterDatabaseWriteHandle), DataError> {
         info!("Creating DatabaseManager");
 
@@ -192,7 +192,7 @@ pub struct RouterDatabaseWriteHandle {
     dynamic_client_features: DynamicClientFeaturesManager,
     dynamic_server_config: DynamicServerConfigManager,
     push_notification_sender: PushNotificationSender,
-    email_sender: EmailSenderImpl,
+    email_sender: EmailChannelSender,
 }
 
 impl RouterDatabaseWriteHandle {
@@ -233,7 +233,7 @@ pub trait InternalWriting {
     fn cache(&self) -> &DatabaseCache;
     fn location(&self) -> &LocationIndexManager;
     fn push_notification_sender(&self) -> &PushNotificationSender;
-    fn email_sender(&self) -> &EmailSenderImpl;
+    fn email_sender(&self) -> &EmailChannelSender;
     fn events(&self) -> EventManagerWithCacheReference<'_>;
     fn profile_attributes(&self) -> &crate::profile_attributes::ProfileAttributesSchemaManager;
     fn dynamic_client_features(&self) -> &DynamicClientFeaturesManager;
@@ -356,7 +356,7 @@ impl InternalWriting for RouterDatabaseWriteHandle {
         &self.push_notification_sender
     }
 
-    fn email_sender(&self) -> &EmailSenderImpl {
+    fn email_sender(&self) -> &EmailChannelSender {
         &self.email_sender
     }
 
@@ -406,7 +406,7 @@ impl InternalWriting for Cmds {
         InternalWriting::push_notification_sender(self.write_handle())
     }
 
-    fn email_sender(&self) -> &EmailSenderImpl {
+    fn email_sender(&self) -> &EmailChannelSender {
         InternalWriting::email_sender(self.write_handle())
     }
 

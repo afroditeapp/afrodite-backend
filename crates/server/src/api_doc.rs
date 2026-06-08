@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use config::Config;
-use model::{AccountIdInternal, EmailMessages};
 use server_data::{
     content_processing::ContentProcessingManagerData, data_export::DataExportManagerData,
     db_manager::DatabaseManager, write_commands::WriteCommandRunnerHandle,
@@ -250,8 +249,7 @@ impl ApiDoc {
         let config = Arc::new(Config::minimal_config_for_api_doc_json(config.clone()));
 
         let (push_notification_sender, _) = server_common::push_notifications::channel();
-        let (email_sender, _) =
-            simple_backend::email::channel::<AccountIdInternal, EmailMessages>();
+        let (email_sender, _, _, _) = server_data::email::email_channel();
         let (_, router_database_handle, router_database_write_handle) = DatabaseManager::new(
             config.clone(),
             push_notification_sender.clone(),

@@ -117,7 +117,7 @@ macro_rules! define_cmd_wrapper_write {
                 $crate::db_manager::InternalWriting::push_notification_sender(self.0)
             }
 
-            fn email_sender(&self) -> &$crate::db_manager::handle_types::EmailSenderImpl {
+            fn email_sender(&self) -> &$crate::db_manager::handle_types::EmailChannelSender {
                 $crate::db_manager::InternalWriting::email_sender(self.0)
             }
 

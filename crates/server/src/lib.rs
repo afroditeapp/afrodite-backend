@@ -29,9 +29,9 @@ use api_doc::ApiDoc;
 use axum::Router;
 use config::Config;
 use content_processing::{ContentProcessingManager, ContentProcessingManagerQuitHandle};
-use email::ServerEmailDataProvider;
+use email::{EmailManager, EmailManagerQuitHandle};
 use hourly_tasks::{HourlyTaskManager, HourlyTaskManagerQuitHandle};
-use model::{AccountIdInternal, EmailMessages, UnixTime};
+use model::UnixTime;
 use perf::ALL_COUNTERS;
 use profile_search::{ProfileSearchManager, ProfileSearchManagerQuitHandle};
 use push_notifications::ServerPushNotificationStateProvider;
@@ -63,11 +63,8 @@ use server_state::{
 };
 use shutdown_tasks::ShutdownTasks;
 use simple_backend::{
-    BusinessLogic, ServerQuitWatcher,
-    app::SimpleBackendAppState,
-    email::{EmailManager, EmailManagerQuitHandle},
-    perf::counters::AllCounters,
-    web_socket::WebSocketManager,
+    BusinessLogic, ServerQuitWatcher, app::SimpleBackendAppState, email::SmtpClient,
+    perf::counters::AllCounters, web_socket::WebSocketManager,
 };
 use startup_tasks::StartupTasks;
 use tracing::{error, warn};
@@ -332,13 +329,17 @@ impl BusinessLogic for DatingAppBusinessLogic {
 
         let (push_notification_sender, push_notification_receiver) =
             server_common::push_notifications::channel();
-        let (email_sender, email_receiver) =
-            simple_backend::email::channel::<AccountIdInternal, EmailMessages>();
+        let (
+            email_channel_sender,
+            email_channel_receiver,
+            email_high_priority_receiver,
+            email_custom_receiver,
+        ) = server_data::email::email_channel();
         let (database_manager, router_database_handle, router_database_write_handle) =
             DatabaseManager::new(
                 self.config.clone(),
                 push_notification_sender.clone(),
-                email_sender.clone(),
+                email_channel_sender.clone(),
             )
             .await
             .expect("Database init failed");
@@ -440,16 +441,20 @@ impl BusinessLogic for DatingAppBusinessLogic {
         )
         .await;
 
+        let smtp_client = SmtpClient::new(self.config.simple_backend()).await;
+
         let email_manager_quit_handle = EmailManager::new_manager(
-            self.config.simple_backend(),
+            app_state.clone(),
+            smtp_client,
+            self.config.simple_backend_arc(),
             server_quit_watcher.resubscribe(),
-            ServerEmailDataProvider::new(app_state.clone()),
-            email_receiver,
-        )
-        .await;
+            email_channel_receiver,
+            email_high_priority_receiver,
+            email_custom_receiver,
+        );
 
         StartupTasks::new(app_state.clone())
-            .run_and_wait_completion(email_sender)
+            .run_and_wait_completion(email_channel_sender)
             .await
             .expect("Startup tasks failed");
 

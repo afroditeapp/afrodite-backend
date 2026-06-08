@@ -363,6 +363,14 @@ diesel::table! {
 }
 
 diesel::table! {
+    custom_email_sending_state (email_id, account_id) {
+        email_id -> Int8,
+        account_id -> Int8,
+        email_sent -> Bool,
+    }
+}
+
+diesel::table! {
     custom_email_translations (locale, email_id) {
         locale -> Text,
         email_id -> Int8,
@@ -969,6 +977,8 @@ diesel::joinable!(chat_state -> account_id (account_id));
 diesel::joinable!(common_state -> account_id (account_id));
 diesel::joinable!(current_account_media -> account_id (account_id));
 diesel::joinable!(custom_email -> account_id (account_id_creator));
+diesel::joinable!(custom_email_sending_state -> account_id (account_id));
+diesel::joinable!(custom_email_sending_state -> custom_email (email_id));
 diesel::joinable!(custom_email_translations -> custom_email (email_id));
 diesel::joinable!(daily_likes_left -> account_id (account_id));
 diesel::joinable!(demo_account_owned_accounts -> account_id (account_id));
@@ -1045,6 +1055,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     conversation_id,
     current_account_media,
     custom_email,
+    custom_email_sending_state,
     custom_email_translations,
     custom_reports_file_hash,
     daily_likes_left,

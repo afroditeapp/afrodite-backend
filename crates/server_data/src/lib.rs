@@ -20,6 +20,7 @@ pub mod db_manager;
 pub mod demo;
 pub mod dynamic_client_features;
 pub mod dynamic_server_config;
+pub mod email;
 pub mod event;
 pub mod file;
 pub mod id;

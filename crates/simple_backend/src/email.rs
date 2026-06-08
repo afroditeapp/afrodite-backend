@@ -1,4 +1,4 @@
-use std::{future::Future, num::NonZeroU32, str::FromStr, time::Duration};
+use std::{num::NonZeroU32, str::FromStr, time::Duration};
 
 use data::EmailLimitStateStorage;
 use error_stack::{Result, ResultExt};
@@ -9,22 +9,13 @@ use lettre::{
 };
 use simple_backend_config::{SimpleBackendConfig, file::EmailSendingConfig};
 use simple_backend_model::UnixTime;
-use simple_backend_utils::{ContextExt, consts::MIB_IN_BYTES};
-use tokio::{
-    sync::{
-        mpsc::{Receiver, Sender, error::TrySendError},
-        oneshot,
-    },
-    task::JoinHandle,
-};
-use tracing::{error, info, warn};
+use simple_backend_utils::ContextExt;
+use tokio::sync::Mutex;
+use tracing::{error, info};
 
-use crate::{ServerQuitWatcher, email::data::Counter};
+use crate::email::data::Counter;
 
 mod data;
-
-const EMAIL_SENDING_CHANNEL_BUFFER_SIZE: usize = MIB_IN_BYTES;
-const EMAIL_SENDING_HIGH_PRIORITY_CHANNEL_BUFFER_SIZE: usize = MIB_IN_BYTES;
 
 #[derive(thiserror::Error, Debug)]
 pub enum EmailError {
@@ -50,153 +41,14 @@ pub enum EmailError {
     SavingStateFailed,
 }
 
-pub struct EmailManagerQuitHandle {
-    task: JoinHandle<()>,
+pub struct SmtpClient {
+    sending_logic: Option<Mutex<EmailSendingLogic>>,
 }
 
-impl EmailManagerQuitHandle {
-    pub async fn wait_quit(self) {
-        match self.task.await {
-            Ok(()) => (),
-            Err(e) => {
-                warn!("EmailManagerQuitHandle quit failed. Error: {:?}", e);
-            }
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct SendEmail<R, M> {
-    pub recipient: R,
-    pub message: M,
-    pub result_sender: Option<oneshot::Sender<Result<(), EmailError>>>,
-}
-
-#[derive(Debug, Clone)]
-pub struct EmailSender<R, M> {
-    sender: Sender<SendEmail<R, M>>,
-    high_priority_sender: Sender<SendEmail<R, M>>,
-}
-
-impl<R, M> EmailSender<R, M> {
-    pub fn send(&self, recipient: R, message: M) {
-        let email_send_cmd = SendEmail {
-            recipient,
-            message,
-            result_sender: None,
-        };
-        match self.sender.try_send(email_send_cmd) {
-            Ok(()) => (),
-            Err(TrySendError::Closed(_)) => {
-                error!("Sending email to internal channel failed: channel is broken");
-            }
-            Err(TrySendError::Full(_)) => {
-                error!("Sending email to internal channel failed: channel is full");
-            }
-        }
-    }
-
-    pub async fn send_high_priority(&self, recipient: R, message: M) -> Result<(), EmailError> {
-        let (result_sender, result_receiver) = oneshot::channel();
-        let email_send_cmd = SendEmail {
-            recipient,
-            message,
-            result_sender: Some(result_sender),
-        };
-        match self.high_priority_sender.try_send(email_send_cmd) {
-            Ok(()) => (),
-            Err(TrySendError::Closed(_)) => {
-                return Err(EmailError::SendingFailed
-                    .report()
-                    .attach_printable("High priority email channel is broken"));
-            }
-            Err(TrySendError::Full(_)) => {
-                return Err(EmailError::SendingFailed
-                    .report()
-                    .attach_printable("High priority email channel is full"));
-            }
-        }
-
-        match result_receiver.await {
-            Ok(result) => result,
-            Err(_) => Err(EmailError::SendingFailed
-                .report()
-                .attach_printable("High priority email result channel closed")),
-        }
-    }
-}
-
-pub struct EmailData {
-    pub email_address: String,
-    pub subject: String,
-    pub body: String,
-    pub body_is_html: bool,
-}
-
-pub trait EmailDataProvider<R, M> {
-    /// If `Ok(None)` is returned the email sending is disabled for the
-    /// provided `recipient`.
-    fn get_email_data(
-        &self,
-        recipient: R,
-        message: M,
-    ) -> impl Future<Output = Result<Option<EmailData>, EmailError>> + Send;
-
-    fn mark_as_sent(
-        &self,
-        recipient: R,
-        message: M,
-    ) -> impl Future<Output = Result<(), EmailError>> + Send;
-}
-
-pub fn channel<R, M>() -> (EmailSender<R, M>, EmailReceiver<R, M>) {
-    let (sender, receiver) = tokio::sync::mpsc::channel(EMAIL_SENDING_CHANNEL_BUFFER_SIZE);
-    let (high_priority_sender, high_priority_receiver) =
-        tokio::sync::mpsc::channel(EMAIL_SENDING_HIGH_PRIORITY_CHANNEL_BUFFER_SIZE);
-    let sender = EmailSender {
-        sender,
-        high_priority_sender,
-    };
-    let receiver = EmailReceiver {
-        receiver,
-        high_priority_receiver,
-    };
-    (sender, receiver)
-}
-
-#[derive(Debug)]
-pub struct EmailReceiver<R, M> {
-    receiver: Receiver<SendEmail<R, M>>,
-    high_priority_receiver: Receiver<SendEmail<R, M>>,
-}
-
-struct EmailSenderData {
-    sender: AsyncSmtpTransport<Tokio1Executor>,
-    config: EmailSendingConfig,
-    simple_backend_config: SimpleBackendConfig,
-    previous_state: EmailLimitStateStorage,
-}
-
-pub struct EmailManager<T, R, M> {
-    email_sender: Option<EmailSenderData>,
-    receiver: EmailReceiver<R, M>,
-    state: T,
-}
-
-impl<
-    T: EmailDataProvider<R, M> + Send + Sync + 'static,
-    R: Clone + Send + 'static,
-    M: Clone + Send + 'static,
-> EmailManager<T, R, M>
-{
-    pub async fn new_manager(
-        simple_backend_config: &SimpleBackendConfig,
-        quit_notification: ServerQuitWatcher,
-        state: T,
-        receiver: EmailReceiver<R, M>,
-    ) -> EmailManagerQuitHandle {
-        let email_sender = if let Some(config) = simple_backend_config.email_sending() {
-            let email_sender = if config.use_starttls_instead_of_smtps {
+impl SmtpClient {
+    pub async fn new(simple_backend_config: &SimpleBackendConfig) -> Self {
+        let data = if let Some(config) = simple_backend_config.email_sending() {
+            let transport = if config.use_starttls_instead_of_smtps {
                 AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(&config.smtp_server_address)
             } else {
                 AsyncSmtpTransport::<Tokio1Executor>::relay(&config.smtp_server_address)
@@ -211,22 +63,8 @@ impl<
                     .build()
             });
 
-            let previous_state =
-                match EmailLimitStateStorage::load_and_remove(simple_backend_config).await {
-                    Ok(state) => state,
-                    Err(e) => {
-                        error!("Loading previous state failed, error: {:?}", e);
-                        EmailLimitStateStorage::default()
-                    }
-                };
-
-            match email_sender {
-                Ok(email_sender) => Some(EmailSenderData {
-                    sender: email_sender,
-                    config: config.clone(),
-                    simple_backend_config: simple_backend_config.clone(),
-                    previous_state,
-                }),
+            match transport {
+                Ok(sender) => Some((sender, config.clone())),
                 Err(e) => {
                     error!("Email sender creating failed: {}", e);
                     None
@@ -236,196 +74,135 @@ impl<
             None
         };
 
-        let manager = EmailManager {
-            email_sender,
-            receiver,
-            state,
+        let client = Self {
+            sending_logic: data
+                .map(|(sender, config)| Mutex::new(EmailSendingLogic::new(sender, config))),
         };
 
-        EmailManagerQuitHandle {
-            task: tokio::spawn(manager.run(quit_notification)),
-        }
+        client.load_state(simple_backend_config).await;
+
+        client
     }
 
-    pub async fn run(mut self, mut quit_notification: ServerQuitWatcher) {
-        let mut sending_logic = EmailSendingLogic::new();
-        if let Some(sender_data) = &self.email_sender {
-            sending_logic
-                .send_count_per_minute
-                .load(sender_data.previous_state.emails_sent_per_minute);
-            sending_logic
-                .send_count_per_day
-                .load(sender_data.previous_state.emails_sent_per_day);
-        }
-
-        tokio::select! {
-            _ = quit_notification.recv() => (),
-            _ = self.logic(&mut sending_logic) => (),
-        }
-
-        // Make sure that quit started (closed channel also
-        // breaks the logic loop, but that should not happen)
-        let _ = quit_notification.recv().await;
-
-        self.before_quit(&sending_logic).await;
-    }
-
-    async fn before_quit(&self, sending_logic: &EmailSendingLogic) {
-        let current_state = EmailLimitStateStorage {
-            emails_sent_per_minute: sending_logic.send_count_per_minute.to_count(),
-            emails_sent_per_day: sending_logic.send_count_per_day.to_count(),
+    async fn load_state(&self, config: &SimpleBackendConfig) {
+        let state = match EmailLimitStateStorage::load_and_remove(config).await {
+            Ok(state) => state,
+            Err(e) => {
+                error!("Loading email state failed, error: {:?}", e);
+                EmailLimitStateStorage::default()
+            }
         };
-        if let Some(sender_data) = &self.email_sender {
-            match current_state.save(&sender_data.simple_backend_config).await {
-                Ok(()) => (),
-                Err(e) => {
-                    error!("Email sender state saving failed, error: {:?}", e);
-                }
+
+        let mut logic = match &self.sending_logic {
+            Some(l) => l.lock().await,
+            None => return,
+        };
+        logic
+            .send_count_per_minute
+            .load(state.emails_sent_per_minute);
+        logic.send_count_per_day.load(state.emails_sent_per_day);
+    }
+
+    pub async fn save_state(&self, config: &SimpleBackendConfig) {
+        let logic = match &self.sending_logic {
+            Some(l) => l.lock().await,
+            None => return,
+        };
+        let state = EmailLimitStateStorage {
+            emails_sent_per_minute: logic.send_count_per_minute.to_count(),
+            emails_sent_per_day: logic.send_count_per_day.to_count(),
+        };
+        drop(logic);
+
+        match state.save(config).await {
+            Ok(()) => (),
+            Err(e) => {
+                error!("Email sender state saving failed, error: {:?}", e);
             }
         }
     }
 
-    pub async fn logic(&mut self, sending_logic: &mut EmailSendingLogic) {
-        loop {
-            tokio::select! {
-                send_cmd = self.receiver.high_priority_receiver.recv() => {
-                    match send_cmd {
-                        Some(mut send_cmd) => {
-                            let result_sender = send_cmd.result_sender.take();
-                            let result = self.send_email(send_cmd, sending_logic).await;
-
-                            match &result {
-                                Ok(()) => (),
-                                Err(e) => {
-                                    error!("Email sending failed: {:?}", e);
-                                }
-                            }
-
-                            if let Some(result_sender) = result_sender {
-                                let send_result = match &result {
-                                    Ok(()) => Ok(()),
-                                    Err(_) => Err(EmailError::SendingFailed.report()),
-                                };
-                                let _ = result_sender.send(send_result);
-                            }
-                        }
-                        None => {
-                            warn!("High priority email channel is broken");
-                            break;
-                        }
-                    }
-                }
-                send_cmd = self.receiver.receiver.recv() => {
-                    match send_cmd {
-                        Some(send_cmd) => {
-                            let result = self.send_email(send_cmd, sending_logic).await;
-                            match result {
-                                Ok(()) => (),
-                                Err(e) => {
-                                    error!("Email sending failed: {:?}", e);
-                                }
-                            }
-                        }
-                        None => {
-                            warn!("Email channel is broken");
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    pub async fn send_email(
-        &mut self,
-        send_cmd: SendEmail<R, M>,
-        sending_logic: &mut EmailSendingLogic,
+    /// Might block until email sending is possible
+    pub async fn send(
+        &self,
+        to: &str,
+        subject: &str,
+        body: &str,
+        body_is_html: bool,
     ) -> Result<(), EmailError> {
-        let email_sender = if let Some(email_sender) = &self.email_sender {
-            email_sender
-        } else {
-            return Ok(());
+        let mut sender = match &self.sending_logic {
+            Some(s) => s.lock().await,
+            None => return Ok(()),
         };
-
-        let info = self
-            .state
-            .get_email_data(send_cmd.recipient.clone(), send_cmd.message.clone())
-            .await
-            .change_context(EmailError::GettingEmailDataFailed)?;
-
-        let info = if let Some(info) = info {
-            info
-        } else {
-            // Email disabled for the email recipient
-            return Ok(());
-        };
-
-        let address = Address::from_str(&info.email_address)
-            .change_context(EmailError::AccountEmailAddressParsingFailed)?;
-
-        let content_type = if info.body_is_html {
-            ContentType::TEXT_HTML
-        } else {
-            ContentType::TEXT_PLAIN
-        };
-
-        if email_sender.config.debug_logging {
-            info!(
-                "Sending email:\nTo: {}\nSubject: {}\nBody: {}",
-                address, info.subject, info.body
-            );
-        }
-
-        let message = Message::builder()
-            .from(email_sender.config.email_from_header.0.clone())
-            .to(Mailbox::new(None, address))
-            .subject(info.subject)
-            .header(content_type)
-            .body(info.body)
-            .change_context(EmailError::MessageBuildingFailed)?;
-
-        match sending_logic.send_email(message, email_sender).await {
-            Ok(()) => {
-                self.state
-                    .mark_as_sent(send_cmd.recipient, send_cmd.message)
-                    .await
-            }
-            e => e,
-        }
+        sender.send(to, subject, body, body_is_html).await
     }
 }
 
-pub struct EmailSendingLogic {
+struct EmailSendingLogic {
+    sender: AsyncSmtpTransport<Tokio1Executor>,
+    config: EmailSendingConfig,
     send_count_per_minute: SendCounter,
     send_count_per_day: SendCounter,
 }
 
 impl EmailSendingLogic {
-    pub fn new() -> Self {
+    fn new(sender: AsyncSmtpTransport<Tokio1Executor>, config: EmailSendingConfig) -> Self {
         Self {
+            sender,
+            config,
             send_count_per_day: SendCounter::new(Duration::from_secs(60 * 60 * 24)),
             send_count_per_minute: SendCounter::new(Duration::from_secs(60)),
         }
     }
 
-    async fn send_email(
+    pub async fn send(
         &mut self,
-        message: Message,
-        sender: &EmailSenderData,
+        to: &str,
+        subject: &str,
+        body: &str,
+        body_is_html: bool,
     ) -> Result<(), EmailError> {
+        let address =
+            Address::from_str(to).change_context(EmailError::AccountEmailAddressParsingFailed)?;
+
+        let content_type = if body_is_html {
+            ContentType::TEXT_HTML
+        } else {
+            ContentType::TEXT_PLAIN
+        };
+
+        if self.config.debug_logging {
+            info!(
+                "Sending email:\nTo: {}\nSubject: {}\nBody: {}",
+                address, subject, body
+            );
+        }
+
+        let message = Message::builder()
+            .from(self.config.email_from_header.0.clone())
+            .to(Mailbox::new(None, address))
+            .subject(subject.to_string())
+            .header(content_type)
+            .body(body.to_string())
+            .change_context(EmailError::MessageBuildingFailed)?;
+
+        self.send_raw(message).await
+    }
+
+    async fn send_raw(&mut self, message: Message) -> Result<(), EmailError> {
         self.send_count_per_minute
-            .wait_until_allowed(sender.config.send_limit_per_minute)
+            .wait_until_allowed(self.config.send_limit_per_minute)
             .await;
         self.send_count_per_day
-            .wait_until_allowed(sender.config.send_limit_per_day)
+            .wait_until_allowed(self.config.send_limit_per_day)
             .await;
 
         self.send_count_per_minute
-            .increment(sender.config.send_limit_per_minute);
+            .increment(self.config.send_limit_per_minute);
         self.send_count_per_day
-            .increment(sender.config.send_limit_per_day);
+            .increment(self.config.send_limit_per_day);
 
-        let response = sender
+        let response = self
             .sender
             .send(message)
             .await
@@ -447,20 +224,14 @@ impl EmailSendingLogic {
     }
 }
 
-impl Default for EmailSendingLogic {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-pub struct SendCounter {
+struct SendCounter {
     value: u32,
     previous_reset: UnixTime,
     counter_duration: Duration,
 }
 
 impl SendCounter {
-    pub fn new(counter_duration: Duration) -> Self {
+    fn new(counter_duration: Duration) -> Self {
         Self {
             value: 0,
             previous_reset: UnixTime::current_time(),
@@ -468,19 +239,19 @@ impl SendCounter {
         }
     }
 
-    pub fn load(&mut self, counter: Counter) {
+    fn load(&mut self, counter: Counter) {
         self.value = counter.value;
         self.previous_reset = counter.previous_reset;
     }
 
-    pub fn to_count(&self) -> Counter {
+    fn to_count(&self) -> Counter {
         Counter {
             value: self.value,
             previous_reset: self.previous_reset,
         }
     }
 
-    pub async fn wait_until_allowed(&mut self, limit: Option<NonZeroU32>) {
+    async fn wait_until_allowed(&mut self, limit: Option<NonZeroU32>) {
         if let Some(limit) = limit
             && self.value >= limit.get()
         {
@@ -491,7 +262,7 @@ impl SendCounter {
         }
     }
 
-    pub fn increment(&mut self, limit: Option<NonZeroU32>) {
+    fn increment(&mut self, limit: Option<NonZeroU32>) {
         if limit.is_some() {
             self.value += 1;
         }

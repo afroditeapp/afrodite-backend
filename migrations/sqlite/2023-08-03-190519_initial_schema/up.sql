@@ -561,6 +561,21 @@ CREATE TABLE IF NOT EXISTS custom_email_translations(
             ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS custom_email_sending_state(
+    email_id    BIGINT  NOT NULL,
+    account_id  BIGINT  NOT NULL,
+    email_sent  BOOLEAN NOT NULL DEFAULT FALSE,
+    PRIMARY KEY (email_id, account_id),
+    FOREIGN KEY (email_id)
+        REFERENCES custom_email (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 -- Store custom reports file hash, so that changes to it can be detected
 -- when server starts.
 CREATE TABLE IF NOT EXISTS custom_reports_file_hash(

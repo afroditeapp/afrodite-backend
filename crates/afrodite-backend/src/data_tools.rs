@@ -10,10 +10,7 @@ use database::{
 };
 use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia};
 use error_stack::{Result, report};
-use model::{
-    AccountId, AccountIdInternal, BotConfig, DynamicServerConfig, EmailMessages,
-    ImageProcessingDynamicConfig,
-};
+use model::{AccountId, BotConfig, DynamicServerConfig, ImageProcessingDynamicConfig};
 use model_server_data::ProfileAttributesSchemaExport;
 use server_data::{
     db_manager::{DatabaseManager, InternalWriting, RouterDatabaseWriteHandle},
@@ -96,8 +93,7 @@ pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
     runtime.block_on(async {
         let (push_notification_sender, _push_notification_receiver) =
             server_common::push_notifications::channel();
-        let (email_sender, _email_receiver) =
-            simple_backend::email::channel::<AccountIdInternal, EmailMessages>();
+        let (email_sender, _, _, _) = server_data::email::email_channel();
 
         let (db_manager, read_handle, write_handle) =
             DatabaseManager::new(config.clone(), push_notification_sender, email_sender)

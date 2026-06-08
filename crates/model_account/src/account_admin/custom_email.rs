@@ -112,3 +112,8 @@ pub struct GetCustomEmailConfig {
     #[serde(default)]
     pub email_body_is_html: bool,
 }
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct SendCustomEmail {
+    pub email_id: CustomEmailId,
+}

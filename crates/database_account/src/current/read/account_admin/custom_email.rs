@@ -1,8 +1,10 @@
 use database::{DieselDatabaseError, define_current_read_commands};
-use diesel::prelude::*;
+use diesel::{ExpressionMethods, prelude::*};
 use error_stack::Result;
+use model::AccountIdInternal;
 use model_account::{
-    CustomEmail, CustomEmailInternal, CustomEmailTranslation, CustomEmailTranslationInternal,
+    CustomEmail, CustomEmailId, CustomEmailInternal, CustomEmailTranslation,
+    CustomEmailTranslationInternal,
 };
 
 use crate::IntoDatabaseError;
@@ -55,6 +57,62 @@ impl CurrentReadAccountCustomEmailAdmin<'_> {
                 translations,
             });
         }
+
+        Ok(result)
+    }
+
+    pub fn custom_emails_pending_sending(
+        &mut self,
+    ) -> Result<Vec<CustomEmailId>, DieselDatabaseError> {
+        use crate::schema::custom_email::dsl::*;
+
+        let ids: Vec<CustomEmailId> = custom_email
+            .filter(sending_initiated.eq(true))
+            .filter(sending_completed_unix_time.is_null())
+            .select(id)
+            .load(self.conn())
+            .into_db_error(())?;
+
+        Ok(ids)
+    }
+
+    pub fn custom_email_unsent_accounts(
+        &mut self,
+        email_id_value: CustomEmailId,
+    ) -> Result<Vec<AccountIdInternal>, DieselDatabaseError> {
+        use crate::schema::custom_email_sending_state::dsl::*;
+
+        let accounts: Vec<AccountIdInternal> = custom_email_sending_state
+            .filter(email_id.eq(email_id_value))
+            .filter(email_sent.eq(false))
+            .inner_join(crate::schema::account_id::table)
+            .select(AccountIdInternal::as_select())
+            .load(self.conn())
+            .into_db_error(())?;
+
+        Ok(accounts)
+    }
+
+    pub fn custom_email_translations(
+        &mut self,
+        email_id_value: CustomEmailId,
+    ) -> Result<Vec<CustomEmailTranslation>, DieselDatabaseError> {
+        use crate::schema::custom_email_translations::dsl::*;
+
+        let rows: Vec<CustomEmailTranslationInternal> = custom_email_translations
+            .filter(email_id.eq(email_id_value))
+            .select(CustomEmailTranslationInternal::as_select())
+            .load(self.conn())
+            .into_db_error(())?;
+
+        let result = rows
+            .into_iter()
+            .map(|r| CustomEmailTranslation {
+                subject: r.message_subject,
+                body: r.message_body,
+                locale: r.locale,
+            })
+            .collect();
 
         Ok(result)
     }

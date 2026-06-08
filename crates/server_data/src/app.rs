@@ -16,6 +16,7 @@ use crate::{
     DataError,
     data_export::{DataExportCmd, DataExportManagerData},
     db_manager::{InternalWriting, RouterDatabaseReadHandle},
+    email::EmailChannelSender,
     event::EventManagerWithCacheReference,
     statistics::ProfileStatisticsCache,
     write_commands::{WriteCmds, WriteCommandRunnerHandle},
@@ -109,11 +110,11 @@ pub trait GetDynamicServerConfig {
 }
 
 pub trait GetEmailSender {
-    fn email_sender(&self) -> &EmailSenderImpl;
+    fn email_sender(&self) -> &EmailChannelSender;
 }
 
 impl<I: InternalWriting> GetEmailSender for I {
-    fn email_sender(&self) -> &EmailSenderImpl {
+    fn email_sender(&self) -> &EmailChannelSender {
         InternalWriting::email_sender(self)
     }
 }

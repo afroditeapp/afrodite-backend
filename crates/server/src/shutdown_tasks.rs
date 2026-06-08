@@ -19,7 +19,7 @@ impl ShutdownTasks {
     }
 
     /// Other quit tasks not located here:
-    /// - [simple_backend::email::EmailManager::before_quit]
+    /// - [simple_backend::email::SmtpClient::save_state]
     /// - [server_common::push_notifications::PushNotificationManager::quit_logic]
     pub async fn run_and_wait_completion(self) -> Result<(), DataError> {
         Self::handle_account_specific_tasks(&self.state).await?;

@@ -1,3 +1,7 @@
+pub mod custom;
+
+use std::sync::Arc;
+
 use error_stack::ResultExt;
 use model::{
     AccessToken, AccountIdInternal, EmailLoginToken, EmailMessages, EventToClientInternal, UnixTime,
@@ -6,27 +10,142 @@ use server_api::{
     app::{GetConfig, ReadData, WriteData},
     db_write_raw,
 };
-use server_data::read::GetReadCommandsCommon;
+use server_data::{
+    DataError,
+    email::{CustomEmailMsg, EmailData, EmailError, HighPriorityEmailMsg, NormalEmailMsg},
+    read::GetReadCommandsCommon,
+};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use server_state::S;
-use simple_backend::email::{EmailData, EmailDataProvider, EmailError};
+use simple_backend::email::SmtpClient;
+use simple_backend_config::SimpleBackendConfig;
+use tokio::sync::mpsc::Receiver;
+use tracing::{error, warn};
 
-pub struct ServerEmailDataProvider {
-    state: S,
+use self::custom::CustomEmailHandler;
+use crate::ServerQuitWatcher;
+
+pub struct EmailManagerQuitHandle {
+    task: tokio::task::JoinHandle<()>,
 }
 
-impl ServerEmailDataProvider {
-    pub fn new(state: S) -> Self {
-        Self { state }
+impl EmailManagerQuitHandle {
+    pub async fn wait_quit(self) {
+        match self.task.await {
+            Ok(()) => (),
+            Err(e) => {
+                warn!("EmailManagerQuitHandle quit failed. Error: {:?}", e);
+            }
+        }
     }
 }
 
-impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProvider {
+pub struct EmailManager {
+    state: S,
+    smtp_client: Arc<SmtpClient>,
+    config: Arc<SimpleBackendConfig>,
+    normal_receiver: Receiver<NormalEmailMsg>,
+    high_priority_receiver: Receiver<HighPriorityEmailMsg>,
+    custom_handler: CustomEmailHandler,
+}
+
+impl EmailManager {
+    pub fn new_manager(
+        state: S,
+        smtp_client: SmtpClient,
+        config: Arc<SimpleBackendConfig>,
+        mut quit_notification: ServerQuitWatcher,
+        normal_receiver: Receiver<NormalEmailMsg>,
+        high_priority_receiver: Receiver<HighPriorityEmailMsg>,
+        custom_receiver: Receiver<CustomEmailMsg>,
+    ) -> EmailManagerQuitHandle {
+        let smtp_client = Arc::new(smtp_client);
+        let custom_handler =
+            CustomEmailHandler::new(state.clone(), smtp_client.clone(), custom_receiver);
+
+        EmailManagerQuitHandle {
+            task: tokio::spawn(async move {
+                let mut manager = EmailManager {
+                    state,
+                    smtp_client,
+                    config,
+                    normal_receiver,
+                    high_priority_receiver,
+                    custom_handler,
+                };
+
+                tokio::select! {
+                    _ = quit_notification.recv() => (),
+                    _ = manager.run() => (),
+                }
+
+                // Save email limit state on quit
+                manager.smtp_client.save_state(&manager.config).await;
+            }),
+        }
+    }
+
+    async fn run(&mut self) {
+        loop {
+            tokio::select! {
+                Some(cmd) = self.high_priority_receiver.recv() => {
+                    let result = self.handle_send(cmd.recipient, cmd.message).await;
+
+                    if let Err(e) = &result {
+                        error!("High priority email send failed: {:?}", e);
+                    }
+
+                    let _ = cmd.result_sender.send(result.map_err(|_| DataError::EmailSendingFailed));
+                }
+                Some(cmd) = self.normal_receiver.recv() => {
+                    if let Err(e) = self.handle_send(cmd.recipient, cmd.message).await {
+                        error!("Email send failed: {:?}", e);
+                    }
+                }
+                Some(cmd) = self.custom_handler.custom_receiver.recv() => {
+                    let email_id = model_account::CustomEmailId::new(cmd.email_id);
+                    if let Err(e) = self.custom_handler.send_unsent_custom_emails(email_id).await {
+                        error!("Custom email sending failed: {:?}", e);
+                    }
+                }
+                else => {
+                    warn!("Email channel closed");
+                    break;
+                }
+            }
+        }
+    }
+
+    async fn handle_send(
+        &self,
+        recipient: AccountIdInternal,
+        message: EmailMessages,
+    ) -> error_stack::Result<(), EmailError> {
+        let Some(info) = self.get_email_data(recipient, message).await? else {
+            // Email disabled for the email recipient
+            return Ok(());
+        };
+
+        self.smtp_client
+            .send(
+                &info.email_address,
+                &info.subject,
+                &info.body,
+                info.body_is_html,
+            )
+            .await
+            .change_context(EmailError::SendingFailed)?;
+
+        self.mark_as_sent(recipient, message).await
+    }
+
+    /// If `Ok(None)` is returned the email sending is disabled for the
+    /// provided `recipient`.
     async fn get_email_data(
         &self,
         recipient: AccountIdInternal,
         message: EmailMessages,
-    ) -> error_stack::Result<Option<EmailData>, simple_backend::email::EmailError> {
+    ) -> error_stack::Result<Option<EmailData>, EmailError> {
         let data = self
             .state
             .read()
@@ -143,7 +262,7 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
         &self,
         recipient: AccountIdInternal,
         message: EmailMessages,
-    ) -> error_stack::Result<(), simple_backend::email::EmailError> {
+    ) -> error_stack::Result<(), EmailError> {
         db_write_raw!(self.state, move |cmds| {
             cmds.account()
                 .email()
@@ -152,15 +271,15 @@ impl EmailDataProvider<AccountIdInternal, EmailMessages> for ServerEmailDataProv
         })
         .await
         .map_err(|e| e.into_report())
-        .change_context(EmailError::MarkAsSentFailed)
-    }
-}
+        .change_context(EmailError::MarkAsSentFailed)?;
 
-impl ServerEmailDataProvider {
+        Ok(())
+    }
+
     async fn generate_token_for_email_verification(
         &self,
         recipient: AccountIdInternal,
-    ) -> error_stack::Result<String, simple_backend::email::EmailError> {
+    ) -> error_stack::Result<String, EmailError> {
         let token_and_time = self
             .state
             .read()
@@ -209,7 +328,7 @@ impl ServerEmailDataProvider {
     async fn get_token_for_email_change_verification(
         &self,
         recipient: AccountIdInternal,
-    ) -> error_stack::Result<String, simple_backend::email::EmailError> {
+    ) -> error_stack::Result<String, EmailError> {
         let internal = self
             .state
             .read()
@@ -231,7 +350,7 @@ impl ServerEmailDataProvider {
     async fn get_token_for_email_login(
         &self,
         recipient: AccountIdInternal,
-    ) -> error_stack::Result<String, simple_backend::email::EmailError> {
+    ) -> error_stack::Result<String, EmailError> {
         let tokens = self
             .state
             .read()

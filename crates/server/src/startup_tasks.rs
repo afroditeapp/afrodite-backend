@@ -2,11 +2,14 @@ use futures::stream::{self, StreamExt};
 use model::{AccountIdInternal, PushNotificationStateInfoWithFlags};
 use model_account::{EmailMessages, EmailSendingState};
 use server_api::{
-    app::{EmailSenderImpl, EventManagerProvider, GetConfig, ReadData, WriteData},
+    app::{EventManagerProvider, GetConfig, ReadData, WriteData},
     db_write_raw,
 };
 use server_common::{data::DataError, result::Result};
-use server_data::{IntoDataError, read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
+use server_data::{
+    IntoDataError, email::EmailChannelSender, read::GetReadCommandsCommon,
+    write::GetWriteCommandsCommon,
+};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use server_data_chat::{read::GetReadChatCommands, write::GetWriteCommandsChat};
 use server_state::S;
@@ -23,12 +26,31 @@ impl StartupTasks {
 
     pub async fn run_and_wait_completion(
         self,
-        email_sender: EmailSenderImpl,
+        email_sender: EmailChannelSender,
     ) -> Result<(), DataError> {
         Self::handle_custom_report_file_changes(&self.state).await?;
         Self::handle_client_features_file_changes(&self.state).await?;
         Self::handle_vapid_public_key_changes(&self.state).await?;
+        Self::handle_custom_email_resume(&self.state, &email_sender).await?;
         Self::handle_account_specific_tasks(&self.state, &email_sender).await
+    }
+
+    async fn handle_custom_email_resume(
+        state: &S,
+        email_sender: &EmailChannelSender,
+    ) -> Result<(), DataError> {
+        let pending = state
+            .read()
+            .account_admin()
+            .custom_email()
+            .custom_emails_pending_sending()
+            .await?;
+
+        for email_id in pending {
+            email_sender.trigger_custom_email_sending(email_id.eid);
+        }
+
+        Ok(())
     }
 
     async fn handle_custom_report_file_changes(state: &S) -> Result<(), DataError> {
@@ -75,7 +97,7 @@ impl StartupTasks {
 
     async fn handle_account_specific_tasks(
         state: &S,
-        email_sender: &EmailSenderImpl,
+        email_sender: &EmailChannelSender,
     ) -> Result<(), DataError> {
         let ids = state.read().common().account_ids_internal_vec().await?;
 
@@ -94,7 +116,7 @@ impl StartupTasks {
 
     async fn handle_account(
         state: &S,
-        email_sender: &EmailSenderImpl,
+        email_sender: &EmailChannelSender,
         id: AccountIdInternal,
     ) -> Result<(), DataError> {
         // Email

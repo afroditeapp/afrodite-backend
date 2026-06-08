@@ -93,7 +93,6 @@ dependencies = [
  "server",
  "server_common",
  "server_data",
- "simple_backend",
  "simple_backend_config",
  "simple_backend_image_process",
  "simple_backend_utils",

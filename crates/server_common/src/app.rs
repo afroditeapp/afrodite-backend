@@ -1,6 +1,5 @@
 use error_stack::Result;
-use model::{AccountId, AccountIdInternal, EmailMessages, ServerVersion};
-use simple_backend::email::EmailSender;
+use model::{AccountId, AccountIdInternal, ServerVersion};
 
 use crate::data::DataError;
 
@@ -20,15 +19,3 @@ pub trait GetAccounts {
         id: AccountId,
     ) -> impl std::future::Future<Output = Option<AccountIdInternal>> + Send;
 }
-
-// pub trait FileAccessProvider {
-//     fn file_access(&self) -> &FileDir;
-// }
-
-// impl FileAccessProvider for S {
-//     fn file_access(&self) -> &FileDir {
-//         &self.business_logic_state().
-//     }
-// }
-
-pub type EmailSenderImpl = EmailSender<AccountIdInternal, EmailMessages>;
