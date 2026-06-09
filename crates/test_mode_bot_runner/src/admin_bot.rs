@@ -37,6 +37,7 @@ mod face_verification;
 mod notification;
 mod profile_name;
 mod profile_text;
+mod warnings;
 
 pub struct AdminBot {
     state: BotState,
@@ -153,8 +154,14 @@ impl AdminBot {
             (*state.bot_config_file).clone(),
         );
 
-        // Suppress unused warning for report_processing_config
-        let _ = report_processing_config;
+        warnings::log_warnings(
+            &profile_name_config,
+            &profile_text_config,
+            &content_config,
+            &face_verification_config,
+            &account_verification_config,
+            &report_processing_config,
+        );
 
         // Create separate notification pipelines for each content type
         let (content_sender, mut content_receiver) = ContentModerationHandler::new(
