@@ -11,7 +11,7 @@ use test_mode_bot::{
 use test_mode_utils::{
     client::{ApiClient, TestError},
     state::{BotPersistentState, StateData},
-    websocket_protocol::{AdminBotConfigWarningFlags, EventType},
+    websocket_protocol::EventType,
 };
 use tokio::{
     select,
@@ -89,16 +89,6 @@ impl AdminBot {
         info!("Admin bot stopped");
     }
 
-    fn warn_missing_file_config(config_name: &str, db_enabled: bool, file_config_present: bool) {
-        use tracing::warn;
-        if db_enabled && !file_config_present {
-            warn!(
-                "Feature '{}' is enabled in DB config but file config is missing",
-                config_name
-            );
-        }
-    }
-
     pub async fn run(mut self, mut bot_quit_receiver: watch::Receiver<()>) {
         info!("Admin bot started - Task {}", self.state.task_id,);
 
@@ -150,34 +140,6 @@ impl AdminBot {
             serde_json::from_str(&bot_config_json).change_context(TestError::Reqwest)?;
 
         let admin_bot_config = bot_config.admin_bot_config;
-        let file_config = (*state.bot_config_file).clone();
-
-        // All file configs are always present now (defaulted via serde).
-        Self::warn_missing_file_config(
-            "profile_name_moderation",
-            admin_bot_config.profile_name_moderation_enabled,
-            true,
-        );
-        Self::warn_missing_file_config(
-            "profile_text_moderation",
-            admin_bot_config.profile_text_moderation_enabled,
-            true,
-        );
-        Self::warn_missing_file_config(
-            "content_moderation",
-            admin_bot_config.content_moderation_enabled,
-            true,
-        );
-        Self::warn_missing_file_config(
-            "face_verification",
-            admin_bot_config.face_verification_enabled,
-            true,
-        );
-        Self::warn_missing_file_config(
-            "account_verification",
-            admin_bot_config.account_verification_enabled,
-            true,
-        );
 
         let (
             profile_name_config,
@@ -186,7 +148,10 @@ impl AdminBot {
             face_verification_config,
             account_verification_config,
             report_processing_config,
-        ) = config::bot_config_file::internal::merge(admin_bot_config, file_config.clone());
+        ) = config::bot_config_file::internal::merge(
+            admin_bot_config,
+            (*state.bot_config_file).clone(),
+        );
 
         // Suppress unused warning for report_processing_config
         let _ = report_processing_config;
@@ -237,7 +202,6 @@ impl AdminBot {
                 profile_text_sender,
                 face_verification_sender,
                 account_verification_sender,
-                file_config,
             ) => {
                 if let Err(e) = result {
                     error!("Admin bot logic error: {:?}", e);
@@ -280,7 +244,6 @@ impl AdminBot {
         profile_text_sender: NotificationSender,
         face_verification_sender: NotificationSender,
         account_verification_sender: NotificationSender,
-        file_config: BotConfigFile,
     ) -> Result<(), TestError> {
         // Hourly fallback timer in case there is some event related bug or
         // error for example. The timer ticks right away after creation as
@@ -315,14 +278,6 @@ impl AdminBot {
                             if notification.verify_account_bot.unwrap_or(false) {
                                 account_verification_sender.notify().await;
                             }
-                        } else if event.event == EventType::RequestAdminBotConfigWarnings
-                            && let Some(request) = event.request_admin_bot_config_warnings
-                        {
-                            let response = create_response_admin_bot_config_warnings_message(
-                                request.request_id,
-                                &file_config,
-                            );
-                            connections.send_client_message(response)?;
                         }
                 }
                 // Forced moderation every hour as fallback - notify all pipelines
@@ -336,67 +291,4 @@ impl AdminBot {
             }
         }
     }
-}
-
-fn create_response_admin_bot_config_warnings_message(
-    request_id: u8,
-    file_config: &BotConfigFile,
-) -> Vec<u8> {
-    const RESPONSE_ADMIN_BOT_CONFIG_WARNINGS: u8 = 2;
-
-    let mut flags = AdminBotConfigWarningFlags::empty();
-    // Top-level file configs are always present now (defaulted via serde).
-    // For report processing, check if the LLM resolves to a valid config.
-    if file_config
-        .report_processing
-        .profile_name
-        .llm
-        .clone()
-        .merge_with(file_config.llm.clone())
-        .is_none()
-    {
-        flags
-            .insert(AdminBotConfigWarningFlags::REPORT_PROCESSING_PROFILE_NAME_FILE_CONFIG_MISSING);
-    }
-    if file_config
-        .report_processing
-        .profile_text
-        .llm
-        .clone()
-        .merge_with(file_config.llm.clone())
-        .is_none()
-    {
-        flags
-            .insert(AdminBotConfigWarningFlags::REPORT_PROCESSING_PROFILE_TEXT_FILE_CONFIG_MISSING);
-    }
-    if file_config
-        .report_processing
-        .profile_content
-        .llm
-        .clone()
-        .merge_with(file_config.llm.clone())
-        .is_none()
-    {
-        flags.insert(
-            AdminBotConfigWarningFlags::REPORT_PROCESSING_PROFILE_CONTENT_FILE_CONFIG_MISSING,
-        );
-    }
-    if file_config
-        .report_processing
-        .messages
-        .llm
-        .clone()
-        .merge_with(file_config.llm.clone())
-        .is_none()
-    {
-        flags.insert(AdminBotConfigWarningFlags::REPORT_PROCESSING_MESSAGES_FILE_CONFIG_MISSING);
-    }
-
-    let bits = flags.bits().to_le_bytes();
-    vec![
-        RESPONSE_ADMIN_BOT_CONFIG_WARNINGS,
-        request_id,
-        bits[0],
-        bits[1],
-    ]
 }

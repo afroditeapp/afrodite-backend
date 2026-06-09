@@ -27,11 +27,9 @@ pub use parser::parse_server_binary_message;
 ///   little-endian byte order for `AdminBotNotificationTypes` bitflags.
 ///   (1 byte = u8, 2 bytes = u16 etc.)
 /// - `PushNotificationInfoChanged` (5): payload is empty.
-/// - `RequestAdminBotConfigWarnings` (6): payload format:
-///   - request id byte (u8)
-/// - `WebSocketConnectionAttemptsRemaining` (7): payload format:
+/// - `WebSocketConnectionAttemptsRemaining` (6): payload format:
 ///   - remaining daily websocket connection attempts as u8
-/// - `AppUpdateAvailable` (8): payload is currently empty.
+/// - `AppUpdateAvailable` (7): payload is currently empty.
 ///   - Client must accept both empty and non-empty payload to support
 ///     forward-compatible protocol changes.
 /// - `AccountStateChanged` (30): payload is empty.
@@ -125,9 +123,8 @@ pub enum ServerMessageType {
     ScheduledMaintenanceStatus = 3,
     AdminBotNotification = 4,
     PushNotificationInfoChanged = 5,
-    RequestAdminBotConfigWarnings = 6,
-    WebSocketConnectionAttemptsRemaining = 7,
-    AppUpdateAvailable = 8,
+    WebSocketConnectionAttemptsRemaining = 6,
+    AppUpdateAvailable = 7,
     // - account: 30..=59
     /// Account state, profile visibility or permissions changed
     AccountStateChanged = 30,
@@ -191,9 +188,6 @@ pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
             ServerMessageType::ScheduledMaintenanceStatus
         }
         EventToClientInternal::AdminBotNotification(_) => ServerMessageType::AdminBotNotification,
-        EventToClientInternal::RequestAdminBotConfigWarnings { .. } => {
-            ServerMessageType::RequestAdminBotConfigWarnings
-        }
         EventToClientInternal::WebSocketConnectionAttemptsRemaining { .. } => {
             ServerMessageType::WebSocketConnectionAttemptsRemaining
         }
@@ -228,9 +222,6 @@ pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
         }
         EventToClientInternal::AdminBotNotification(value) => {
             message.push(value.bits());
-        }
-        EventToClientInternal::RequestAdminBotConfigWarnings { request_id } => {
-            message.push(*request_id);
         }
         EventToClientInternal::WebSocketConnectionAttemptsRemaining { remaining } => {
             message.push(*remaining);

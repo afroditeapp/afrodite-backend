@@ -1,24 +1,18 @@
 use axum::extract::ws::{Message, WebSocket};
 use model::{
-    AccountId, AccountIdInternal, AdminBotConfigWarningFlags, ClientMessageForDataAllCrate,
-    ClientMessageType, EventToClientInternal, ScheduledMaintenanceStatus,
-    create_server_binary_message,
+    AccountId, AccountIdInternal, ClientMessageForDataAllCrate, ClientMessageType,
+    EventToClientInternal, ScheduledMaintenanceStatus, create_server_binary_message,
 };
 use model_server_data::{AutomaticProfileSearchIteratorSessionId, ProfileIteratorSessionId};
 use server_common::websocket::WebSocketError;
-use server_data::{
-    app::ReadData, db_manager::InternalReading, read::GetReadCommandsCommon,
-    result::WrappedResultExt,
-};
+use server_data::{app::ReadData, db_manager::InternalReading, result::WrappedResultExt};
 use server_state::S;
 use simple_backend::app::GetManagerApi;
 use simple_backend_utils::UuidBase64Url;
 use utils::minimal_i64;
 
 use super::COMMON;
-use crate::{
-    common_admin::config::complete_remote_bot_config_warnings_waiter, result::WrappedContextExt,
-};
+use crate::result::WrappedContextExt;
 
 pub mod chat;
 pub mod profile;
@@ -48,10 +42,6 @@ pub enum ClientMessageForServerApiCrate {
     CheckOnlineStatus {
         check_account: AccountId,
         is_online: bool,
-    },
-    ResponseAdminBotConfigWarnings {
-        request_id: u8,
-        warning_flags: AdminBotConfigWarningFlags,
     },
 }
 
@@ -151,29 +141,7 @@ pub fn parse_client_binary_message(
                 },
             ))
         }
-        ClientMessageType::ResponseAdminBotConfigWarnings => {
-            let (request_id, warnings_payload) = split_request_id_payload(payload)?;
-            let warning_flags = parse_bot_config_warnings(warnings_payload)?;
-
-            Ok(ClientMessageParsed::ForServerApi(
-                ClientMessageForServerApiCrate::ResponseAdminBotConfigWarnings {
-                    request_id,
-                    warning_flags,
-                },
-            ))
-        }
     }
-}
-
-fn parse_bot_config_warnings(
-    payload: &[u8],
-) -> crate::result::Result<AdminBotConfigWarningFlags, WebSocketError> {
-    let [flags_lo, flags_hi] = payload else {
-        return Err(WebSocketError::ProtocolError.report());
-    };
-
-    let flags = u16::from_le_bytes([*flags_lo, *flags_hi]);
-    Ok(AdminBotConfigWarningFlags::from_bits_truncate(flags))
 }
 
 fn parse_account_id(payload: &[u8]) -> crate::result::Result<AccountId, WebSocketError> {
@@ -324,24 +292,6 @@ pub async fn handle_message_from_client(
                 return Ok(());
             };
             chat::handle_check_online_status(state, id, check_account, is_online).await
-        }
-        ClientMessageForServerApiCrate::ResponseAdminBotConfigWarnings {
-            request_id,
-            warning_flags,
-        } => {
-            let info = state
-                .read()
-                .common()
-                .bot_and_gender_info(id)
-                .await
-                .change_context(WebSocketError::DatabaseBotAndGenderInfoQuery)?;
-
-            if !info.is_admin_bot() {
-                return Ok(());
-            }
-
-            complete_remote_bot_config_warnings_waiter(request_id, warning_flags).await;
-            Ok(())
         }
     }
 }
