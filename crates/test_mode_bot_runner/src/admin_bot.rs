@@ -28,6 +28,7 @@ use crate::{
         notification::{ModerationHandler, NotificationSender},
         profile_name::ProfileNameModerationHandler,
         profile_text::ProfileTextModerationHandler,
+        report_processing::ReportProcessingHandler,
     },
 };
 
@@ -37,6 +38,7 @@ mod face_verification;
 mod notification;
 mod profile_name;
 mod profile_text;
+mod report_processing;
 mod warnings;
 
 pub struct AdminBot {
@@ -201,6 +203,14 @@ impl AdminBot {
             )
             .create_notification_channel();
 
+        let (report_processing_sender, mut report_processing_receiver) =
+            ReportProcessingHandler::new(
+                state.api.clone(),
+                report_processing_config,
+                state.reqwest_client.clone(),
+            )
+            .create_notification_channel();
+
         select! {
             result = Self::run_admin_main_logic(
                 state.connections,
@@ -209,6 +219,7 @@ impl AdminBot {
                 profile_text_sender,
                 face_verification_sender,
                 account_verification_sender,
+                report_processing_sender,
             ) => {
                 if let Err(e) = result {
                     error!("Admin bot logic error: {:?}", e);
@@ -239,6 +250,11 @@ impl AdminBot {
                     error!("Account verification pipeline error: {:?}", e);
                 }
             },
+            result = report_processing_receiver.process_notifications_loop() => {
+                if let Err(e) = result {
+                    error!("Report processing pipeline error: {:?}", e);
+                }
+            },
         };
 
         Ok(())
@@ -251,6 +267,7 @@ impl AdminBot {
         profile_text_sender: NotificationSender,
         face_verification_sender: NotificationSender,
         account_verification_sender: NotificationSender,
+        report_processing_sender: NotificationSender,
     ) -> Result<(), TestError> {
         // Hourly fallback timer in case there is some event related bug or
         // error for example. The timer ticks right away after creation as
@@ -285,6 +302,10 @@ impl AdminBot {
                             if notification.verify_account_bot.unwrap_or(false) {
                                 account_verification_sender.notify().await;
                             }
+
+                            if notification.process_reports.unwrap_or(false) {
+                                report_processing_sender.notify().await;
+                            }
                         }
                 }
                 // Forced moderation every hour as fallback - notify all pipelines
@@ -294,6 +315,7 @@ impl AdminBot {
                     profile_text_sender.notify().await;
                     face_verification_sender.notify().await;
                     account_verification_sender.notify().await;
+                    report_processing_sender.notify().await;
                 }
             }
         }
