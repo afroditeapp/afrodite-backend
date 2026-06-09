@@ -218,30 +218,38 @@ impl Default for AdminBotReportProcessingMessagesLlmConfig {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
+pub struct AdminBotReportProcessingProfileStringConfig {
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub llm_enabled: bool,
+    pub llm: AdminBotReportProcessingProfileStringLlmConfig,
+    pub default_action: AcceptOrReject,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
+pub struct AdminBotReportProcessingProfileContentConfig {
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub llm_enabled: bool,
+    pub llm: AdminBotReportProcessingProfileContentLlmConfig,
+    pub default_action: AcceptOrReject,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
+pub struct AdminBotReportProcessingMessagesConfig {
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub llm_enabled: bool,
+    pub llm: AdminBotReportProcessingMessagesLlmConfig,
+    pub default_action: AcceptOrReject,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
 pub struct AdminBotReportProcessingConfig {
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub profile_name_enabled: bool,
-    pub profile_name: AdminBotReportProcessingProfileStringLlmConfig,
-    pub profile_name_default_action: AcceptOrReject,
-
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub profile_text_enabled: bool,
-    pub profile_text: AdminBotReportProcessingProfileStringLlmConfig,
-    pub profile_text_default_action: AcceptOrReject,
-
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub profile_content_enabled: bool,
-    pub profile_content: AdminBotReportProcessingProfileContentLlmConfig,
-    pub profile_content_default_action: AcceptOrReject,
-
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    pub messages_enabled: bool,
-    pub messages: AdminBotReportProcessingMessagesLlmConfig,
-    pub messages_default_action: AcceptOrReject,
+    pub profile_name: AdminBotReportProcessingProfileStringConfig,
+    pub profile_text: AdminBotReportProcessingProfileStringConfig,
+    pub profile_content: AdminBotReportProcessingProfileContentConfig,
+    pub messages: AdminBotReportProcessingMessagesConfig,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]

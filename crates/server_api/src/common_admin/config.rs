@@ -102,25 +102,30 @@ pub async fn post_bot_config(
         &admin_bot_config
             .report_processing
             .profile_name
+            .llm
             .base
             .user_text_template,
         &admin_bot_config
             .report_processing
             .profile_text
+            .llm
             .base
             .user_text_template,
         &admin_bot_config
             .report_processing
             .messages
+            .llm
             .base
             .user_text_template,
         &admin_bot_config
             .report_processing
             .messages
+            .llm
             .report_creator_message_template,
         &admin_bot_config
             .report_processing
             .messages
+            .llm
             .report_target_message_template,
     ];
 
