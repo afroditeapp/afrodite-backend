@@ -360,7 +360,7 @@ impl<'de> Deserialize<'de> for Gender {
 #[serde(default)]
 pub struct ProfileStringModerationFileConfig {
     pub llm: BaseLlmConfig,
-    /// Default value is 4.
+    /// Default value is 2.
     pub concurrency: u8,
 }
 
@@ -368,7 +368,7 @@ impl Default for ProfileStringModerationFileConfig {
     fn default() -> Self {
         Self {
             llm: BaseLlmConfig::default(),
-            concurrency: 4,
+            concurrency: 2,
         }
     }
 }
@@ -437,7 +437,7 @@ pub struct ContentModerationFileConfig {
     /// action.
     pub llm_secondary: Option<BaseLlmConfig>,
     pub debug_log_delete: bool,
-    /// Default value is 4.
+    /// Default value is 2.
     pub concurrency: u8,
 }
 
@@ -448,7 +448,7 @@ impl Default for ContentModerationFileConfig {
             llm_primary: None,
             llm_secondary: None,
             debug_log_delete: false,
-            concurrency: 4,
+            concurrency: 2,
         }
     }
 }
@@ -458,7 +458,7 @@ impl Default for ContentModerationFileConfig {
 pub struct FaceVerificationFileConfig {
     /// Large language model based face verification.
     pub llm: BaseLlmConfig,
-    /// Default value is 4.
+    /// Default value is 2.
     pub concurrency: u8,
 }
 
@@ -466,7 +466,7 @@ impl Default for FaceVerificationFileConfig {
     fn default() -> Self {
         Self {
             llm: BaseLlmConfig::default(),
-            concurrency: 4,
+            concurrency: 2,
         }
     }
 }
@@ -480,7 +480,7 @@ pub struct AccountVerificationFileConfig {
 #[serde(default)]
 pub struct SecurityContentVerificationFileConfig {
     pub llm: BaseLlmConfig,
-    /// Default value is 4.
+    /// Default value is 2.
     pub concurrency: u8,
 }
 
@@ -488,7 +488,7 @@ impl Default for SecurityContentVerificationFileConfig {
     fn default() -> Self {
         Self {
             llm: BaseLlmConfig::default(),
-            concurrency: 4,
+            concurrency: 2,
         }
     }
 }
@@ -506,7 +506,7 @@ pub struct ReportProcessingFileConfig {
     pub profile_text: ReportProcessingTypeFileConfig,
     pub profile_content: ReportProcessingTypeFileConfig,
     pub messages: ReportProcessingTypeFileConfig,
-    /// Default value is 4.
+    /// Default value is 2.
     pub concurrency: u8,
 }
 
@@ -517,7 +517,7 @@ impl Default for ReportProcessingFileConfig {
             profile_text: ReportProcessingTypeFileConfig::default(),
             profile_content: ReportProcessingTypeFileConfig::default(),
             messages: ReportProcessingTypeFileConfig::default(),
-            concurrency: 4,
+            concurrency: 2,
         }
     }
 }
