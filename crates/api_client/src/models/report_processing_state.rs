@@ -16,14 +16,14 @@ use serde::{Deserialize, Serialize};
 pub enum ReportProcessingState {
     #[serde(rename = "Waiting")]
     Waiting,
-    #[serde(rename = "ValidByAdminBot")]
-    ValidByAdminBot,
-    #[serde(rename = "ValidByAdmin")]
-    ValidByAdmin,
-    #[serde(rename = "InvalidByAdminBot")]
-    InvalidByAdminBot,
-    #[serde(rename = "InvalidByAdmin")]
-    InvalidByAdmin,
+    #[serde(rename = "AcceptedByAdminBot")]
+    AcceptedByAdminBot,
+    #[serde(rename = "AcceptedByAdmin")]
+    AcceptedByAdmin,
+    #[serde(rename = "RejectedByAdminBot")]
+    RejectedByAdminBot,
+    #[serde(rename = "RejectedByAdmin")]
+    RejectedByAdmin,
 
 }
 
@@ -31,10 +31,10 @@ impl std::fmt::Display for ReportProcessingState {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::Waiting => write!(f, "Waiting"),
-            Self::ValidByAdminBot => write!(f, "ValidByAdminBot"),
-            Self::ValidByAdmin => write!(f, "ValidByAdmin"),
-            Self::InvalidByAdminBot => write!(f, "InvalidByAdminBot"),
-            Self::InvalidByAdmin => write!(f, "InvalidByAdmin"),
+            Self::AcceptedByAdminBot => write!(f, "AcceptedByAdminBot"),
+            Self::AcceptedByAdmin => write!(f, "AcceptedByAdmin"),
+            Self::RejectedByAdminBot => write!(f, "RejectedByAdminBot"),
+            Self::RejectedByAdmin => write!(f, "RejectedByAdmin"),
         }
     }
 }

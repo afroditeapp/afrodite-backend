@@ -55,11 +55,11 @@ async fn process_all_reports_as(context: &mut TestContext, accepted: bool) -> Te
         .iter()
         .map(|report| {
             ProcessReport::new(
+                accepted,
                 (*report.content).clone(),
                 *report.info.creator.clone(),
                 ReportType::new(report.info.report_type.n),
                 *report.info.target.clone(),
-                accepted,
             )
         })
         .collect();
@@ -166,11 +166,11 @@ async fn auto_ban_spam_reporters_threshold_1_accepted_and_rejected_reports_do_no
         };
 
         process_reports.push(ProcessReport::new(
+            is_accepted,
             (*report.content).clone(),
             *report.info.creator.clone(),
             ReportType::new(report.info.report_type.n),
             *report.info.target.clone(),
-            is_accepted,
         ));
     }
 

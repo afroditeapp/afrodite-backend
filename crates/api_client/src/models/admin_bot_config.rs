@@ -14,29 +14,33 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AdminBotConfig {
     #[serde(rename = "account_verification")]
-    pub account_verification: Box<models::AdminAccountVerificationConfig>,
+    pub account_verification: Box<models::AdminBotAccountVerificationConfig>,
     #[serde(rename = "account_verification_enabled", skip_serializing_if = "Option::is_none")]
     pub account_verification_enabled: Option<bool>,
     #[serde(rename = "content_moderation")]
-    pub content_moderation: Box<models::AdminContentModerationConfig>,
+    pub content_moderation: Box<models::AdminBotContentModerationConfig>,
     #[serde(rename = "content_moderation_enabled", skip_serializing_if = "Option::is_none")]
     pub content_moderation_enabled: Option<bool>,
     #[serde(rename = "face_verification")]
-    pub face_verification: Box<models::AdminFaceVerificationConfig>,
+    pub face_verification: Box<models::AdminBotFaceVerificationConfig>,
     #[serde(rename = "face_verification_enabled", skip_serializing_if = "Option::is_none")]
     pub face_verification_enabled: Option<bool>,
     #[serde(rename = "profile_name_moderation")]
-    pub profile_name_moderation: Box<models::AdminProfileStringModerationConfig>,
+    pub profile_name_moderation: Box<models::AdminBotProfileStringModerationConfig>,
     #[serde(rename = "profile_name_moderation_enabled", skip_serializing_if = "Option::is_none")]
     pub profile_name_moderation_enabled: Option<bool>,
     #[serde(rename = "profile_text_moderation")]
-    pub profile_text_moderation: Box<models::AdminProfileStringModerationConfig>,
+    pub profile_text_moderation: Box<models::AdminBotProfileStringModerationConfig>,
     #[serde(rename = "profile_text_moderation_enabled", skip_serializing_if = "Option::is_none")]
     pub profile_text_moderation_enabled: Option<bool>,
+    #[serde(rename = "report_processing")]
+    pub report_processing: Box<models::AdminBotReportProcessingConfig>,
+    #[serde(rename = "report_processing_enabled", skip_serializing_if = "Option::is_none")]
+    pub report_processing_enabled: Option<bool>,
 }
 
 impl AdminBotConfig {
-    pub fn new(account_verification: models::AdminAccountVerificationConfig, content_moderation: models::AdminContentModerationConfig, face_verification: models::AdminFaceVerificationConfig, profile_name_moderation: models::AdminProfileStringModerationConfig, profile_text_moderation: models::AdminProfileStringModerationConfig) -> AdminBotConfig {
+    pub fn new(account_verification: models::AdminBotAccountVerificationConfig, content_moderation: models::AdminBotContentModerationConfig, face_verification: models::AdminBotFaceVerificationConfig, profile_name_moderation: models::AdminBotProfileStringModerationConfig, profile_text_moderation: models::AdminBotProfileStringModerationConfig, report_processing: models::AdminBotReportProcessingConfig) -> AdminBotConfig {
         AdminBotConfig {
             account_verification: Box::new(account_verification),
             account_verification_enabled: None,
@@ -48,6 +52,8 @@ impl AdminBotConfig {
             profile_name_moderation_enabled: None,
             profile_text_moderation: Box::new(profile_text_moderation),
             profile_text_moderation_enabled: None,
+            report_processing: Box::new(report_processing),
+            report_processing_enabled: None,
         }
     }
 }

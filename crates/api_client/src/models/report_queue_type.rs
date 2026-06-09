@@ -16,8 +16,10 @@ use serde::{Deserialize, Serialize};
 pub enum ReportQueueType {
     #[serde(rename = "Waiting")]
     Waiting,
-    #[serde(rename = "ProcessedByAdminBot")]
-    ProcessedByAdminBot,
+    #[serde(rename = "AcceptedByAdminBot")]
+    AcceptedByAdminBot,
+    #[serde(rename = "RejectedByAdminBot")]
+    RejectedByAdminBot,
 
 }
 
@@ -25,7 +27,8 @@ impl std::fmt::Display for ReportQueueType {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::Waiting => write!(f, "Waiting"),
-            Self::ProcessedByAdminBot => write!(f, "ProcessedByAdminBot"),
+            Self::AcceptedByAdminBot => write!(f, "AcceptedByAdminBot"),
+            Self::RejectedByAdminBot => write!(f, "RejectedByAdminBot"),
         }
     }
 }

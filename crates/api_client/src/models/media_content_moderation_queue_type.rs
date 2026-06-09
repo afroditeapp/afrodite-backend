@@ -18,8 +18,10 @@ pub enum MediaContentModerationQueueType {
     WaitingAdminBot,
     #[serde(rename = "WaitingAdmin")]
     WaitingAdmin,
-    #[serde(rename = "ProcessedByAdminBot")]
-    ProcessedByAdminBot,
+    #[serde(rename = "AcceptedByAdminBot")]
+    AcceptedByAdminBot,
+    #[serde(rename = "RejectedByAdminBot")]
+    RejectedByAdminBot,
 
 }
 
@@ -28,7 +30,8 @@ impl std::fmt::Display for MediaContentModerationQueueType {
         match self {
             Self::WaitingAdminBot => write!(f, "WaitingAdminBot"),
             Self::WaitingAdmin => write!(f, "WaitingAdmin"),
-            Self::ProcessedByAdminBot => write!(f, "ProcessedByAdminBot"),
+            Self::AcceptedByAdminBot => write!(f, "AcceptedByAdminBot"),
+            Self::RejectedByAdminBot => write!(f, "RejectedByAdminBot"),
         }
     }
 }

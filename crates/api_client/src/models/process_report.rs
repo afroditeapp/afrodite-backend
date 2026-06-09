@@ -13,6 +13,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ProcessReport {
+    /// True marks the report as Accepted, false marks it as Rejected.
+    #[serde(rename = "accepted")]
+    pub accepted: bool,
     #[serde(rename = "content")]
     pub content: Box<models::ReportContent>,
     #[serde(rename = "creator")]
@@ -21,19 +24,16 @@ pub struct ProcessReport {
     pub report_type: Box<models::ReportType>,
     #[serde(rename = "target")]
     pub target: Box<models::AccountId>,
-    /// True marks the report as Valid, false marks it as Invalid.
-    #[serde(rename = "valid")]
-    pub valid: bool,
 }
 
 impl ProcessReport {
-    pub fn new(content: models::ReportContent, creator: models::AccountId, report_type: models::ReportType, target: models::AccountId, valid: bool) -> ProcessReport {
+    pub fn new(accepted: bool, content: models::ReportContent, creator: models::AccountId, report_type: models::ReportType, target: models::AccountId) -> ProcessReport {
         ProcessReport {
+            accepted,
             content: Box::new(content),
             creator: Box::new(creator),
             report_type: Box::new(report_type),
             target: Box::new(target),
-            valid,
         }
     }
 }
