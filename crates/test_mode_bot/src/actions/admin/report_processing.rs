@@ -510,8 +510,7 @@ impl AdminBotReportProcessingLogic {
 
         let response_lowercase = response.trim().to_lowercase();
         let response_first_line = response_lowercase.lines().next().unwrap_or_default();
-        let accepted = response_lowercase.starts_with(&expected_response_lowercase)
-            || response_first_line.contains(&expected_response_lowercase);
+        let accepted = response_first_line.contains(&expected_response_lowercase);
 
         if debug_log_results {
             info!("LLM {log_label} result: '{}'", response);
