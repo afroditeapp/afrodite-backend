@@ -441,10 +441,15 @@ impl AdminBotReportProcessingLogic {
                 &config.db.report_target_message_template
             };
             let message_paragraph = msg.decoded_text.lines().collect::<Vec<&str>>().join(" ");
-            let line = template.replace(
-                ReportProcessingMessagesConfigInternal::TEMPLATE_PLACEHOLDER_TEXT,
-                &message_paragraph,
-            );
+            let line = template
+                .replace(
+                    ReportProcessingMessagesConfigInternal::TEMPLATE_PLACEHOLDER_TEXT,
+                    &message_paragraph,
+                )
+                .replace(
+                    ReportProcessingMessagesConfigInternal::TEMPLATE_PLACEHOLDER_MESSAGE_NUMBER,
+                    &msg.chat_message.message_number.mn.to_string(),
+                );
             combined.push_str(&line);
             combined.push('\n');
         }

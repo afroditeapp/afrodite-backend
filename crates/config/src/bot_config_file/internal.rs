@@ -15,6 +15,7 @@ pub use simple_backend_model::NsfwDetectionThresholds;
 use crate::bot_config_file::LlmConfig;
 
 const TEMPLATE_PLACEHOLDER_TEXT: &str = "{text}";
+const TEMPLATE_PLACEHOLDER_MESSAGE_NUMBER: &str = "{message_number}";
 
 #[derive(Debug, Clone)]
 pub struct ProfileStringModerationConfigInternal {
@@ -367,6 +368,7 @@ pub struct ReportProcessingMessagesConfigInternal {
 
 impl ReportProcessingMessagesConfigInternal {
     pub const TEMPLATE_PLACEHOLDER_TEXT: &str = TEMPLATE_PLACEHOLDER_TEXT;
+    pub const TEMPLATE_PLACEHOLDER_MESSAGE_NUMBER: &str = TEMPLATE_PLACEHOLDER_MESSAGE_NUMBER;
 
     pub fn new(
         db: AdminBotReportProcessingMessagesLlmConfig,

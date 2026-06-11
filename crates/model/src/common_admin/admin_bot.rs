@@ -197,9 +197,13 @@ impl Default for AdminBotReportProcessingProfileContentLlmConfig {
 pub struct AdminBotReportProcessingMessagesLlmConfig {
     #[serde(flatten)]
     pub base: AdminBotStringReportBaseLlmConfig,
-    /// Placeholder "{text}" is replaced with the report creator's message.
+    /// Required placeholder "{text}" is replaced with the report creator's
+    /// message. Optional placeholder "{message_number}" is replaced with the
+    /// message number.
     pub report_creator_message_template: String,
-    /// Placeholder "{text}" is replaced with the report target's message.
+    /// Required placeholder "{text}" is replaced with the report target's
+    /// message. Optional placeholder "{message_number}" is replaced with the
+    /// message number.
     pub report_target_message_template: String,
 }
 
@@ -211,8 +215,8 @@ impl Default for AdminBotReportProcessingMessagesLlmConfig {
                 expected_response: "accepted".to_string(),
                 user_text_template: "Reported messages:\n\n{text}".to_string(),
             },
-            report_creator_message_template: "Report creator's message:\n\n{text}".to_string(),
-            report_target_message_template: "Report target's message:\n\n{text}".to_string(),
+            report_creator_message_template: "Report creator's message ({message_number}): {text}".to_string(),
+            report_target_message_template: "Report target's message ({message_number}): {text}".to_string(),
         }
     }
 }
