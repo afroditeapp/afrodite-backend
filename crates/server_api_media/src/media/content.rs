@@ -57,6 +57,7 @@ const PATH_GET_CONTENT: &str = "/media_api/content/{aid}/{cid}";
 /// - [Permissions::admin_moderate_media_content]
 /// - [Permissions::admin_edit_media_content_face_verified_value]
 /// - [Permissions::admin_edit_security_content_verified_value]
+/// - [Permissions::admin_process_reports]
 ///
 #[utoipa::path(
     get,
@@ -154,6 +155,7 @@ pub async fn get_content(
         || permissions.admin_moderate_media_content
         || permissions.admin_edit_media_content_face_verified_value
         || permissions.admin_edit_security_content_verified_value
+        || permissions.admin_process_reports
         || (params.is_match
             && requested_content_is_profile_content
             && content_accepted
