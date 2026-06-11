@@ -1,7 +1,14 @@
 use std::sync::Arc;
 
-use api_client::models::{
-    GetReportQueuePage, ProcessReport, ProcessReports, ReportQueueType, ReportType,
+use api_client::{
+    apis::{
+        account_admin_api::post_set_ban_state, account_api::get_account_ban_time,
+        common_admin_api::post_get_report_queue_page,
+    },
+    models::{
+        AccountId, GetReportQueuePage, ProcessReport, ProcessReports, ReportQueueType, ReportType,
+        SetAccountBanState, UnixTime,
+    },
 };
 use async_openai::{
     Client,
@@ -14,7 +21,8 @@ use async_openai::{
 };
 use base64::display::Base64Display;
 use config::bot_config_file::internal::{
-    AcceptOrReject, ReportProcessingConfigInternal, ReportProcessingMessagesConfigInternal,
+    AcceptOrReject, AutomaticBanningDayCountConfig, AutomaticBanningExpectedLlmResponsesConfig,
+    ReportProcessingConfigInternal, ReportProcessingMessagesConfigInternal,
     ReportProcessingProfileContentConfigInternal, ReportProcessingProfileStringConfigInternal,
 };
 use error_stack::{Result, ResultExt};
@@ -27,6 +35,78 @@ use super::EmptyPage;
 
 pub mod internal;
 pub mod message;
+
+#[derive(Clone, Copy)]
+enum ReportSeverity {
+    Low,
+    Medium,
+    High,
+}
+
+impl ReportSeverity {
+    fn from_llm_response(
+        response_first_line: &str,
+        expected_responses: &AutomaticBanningExpectedLlmResponsesConfig,
+    ) -> Option<Self> {
+        let line = response_first_line.trim();
+        if line.contains(&expected_responses.high.to_lowercase()) {
+            Some(Self::High)
+        } else if line.contains(&expected_responses.medium.to_lowercase()) {
+            Some(Self::Medium)
+        } else if line.contains(&expected_responses.low.to_lowercase()) {
+            Some(Self::Low)
+        } else {
+            None
+        }
+    }
+
+    fn ban_days(&self, day_counts: &AutomaticBanningDayCountConfig) -> u32 {
+        match self {
+            Self::Low => day_counts.low,
+            Self::Medium => day_counts.medium,
+            Self::High => day_counts.high,
+        }
+    }
+}
+
+struct BanAction {
+    target: AccountId,
+    ban_until: UnixTime,
+    reason_category: i32,
+}
+
+struct BanConfig {
+    enabled: bool,
+    day_counts: AutomaticBanningDayCountConfig,
+}
+
+impl BanConfig {
+    fn from_profile_string(c: &ReportProcessingProfileStringConfigInternal) -> Self {
+        Self {
+            enabled: c.automatic_banning_enabled,
+            day_counts: c.automatic_banning_day_counts.clone(),
+        }
+    }
+
+    fn from_profile_content(c: &ReportProcessingProfileContentConfigInternal) -> Self {
+        Self {
+            enabled: c.automatic_banning_enabled,
+            day_counts: c.automatic_banning_day_counts.clone(),
+        }
+    }
+
+    fn from_messages(c: &ReportProcessingMessagesConfigInternal) -> Self {
+        Self {
+            enabled: c.automatic_banning_enabled,
+            day_counts: c.automatic_banning_day_counts.clone(),
+        }
+    }
+}
+
+struct ProcessedReportWithBans {
+    processed: Vec<ProcessReport>,
+    ban: Option<BanAction>,
+}
 
 #[derive(Clone)]
 struct ProfileStringLlmConfigAndClient {
@@ -158,10 +238,9 @@ impl AdminBotReportProcessingLogic {
 
         let queue = GetReportQueuePage::new(ReportQueueType::Waiting, wanted_report_types);
 
-        let list =
-            api_client::apis::common_admin_api::post_get_report_queue_page(&api.api(), queue)
-                .await
-                .map_err(|_| TestError::ApiRequest)?;
+        let list = post_get_report_queue_page(&api.api(), queue)
+            .await
+            .map_err(|_| TestError::ApiRequest)?;
 
         if list.values.is_empty() {
             return Ok(Some(EmptyPage));
@@ -196,13 +275,16 @@ impl AdminBotReportProcessingLogic {
             .buffer_unordered(config.concurrency.into());
 
         let mut processed: Vec<ProcessReport> = Vec::new();
+        let mut bans: Vec<BanAction> = Vec::new();
 
         loop {
             match stream.next().await {
-                Some(Ok(Some(reports))) => {
-                    processed.extend(reports);
+                Some(Ok(result)) => {
+                    processed.extend(result.processed);
+                    if let Some(ban) = result.ban {
+                        bans.push(ban);
+                    }
                 }
-                Some(Ok(None)) => (),
                 Some(Err(e)) => return Err(e),
                 None => break,
             }
@@ -217,6 +299,8 @@ impl AdminBotReportProcessingLogic {
             .map_err(|_| TestError::ApiRequest)?;
         }
 
+        Self::execute_bans(api, bans).await?;
+
         Ok(None)
     }
 
@@ -228,46 +312,70 @@ impl AdminBotReportProcessingLogic {
         profile_text_llm: &Option<ProfileStringLlmConfigAndClient>,
         profile_content_llm: &Option<ProfileContentLlmConfigAndClient>,
         messages_llm: &Option<MessagesLlmConfigAndClient>,
-    ) -> Result<Option<Vec<ProcessReport>>, TestError> {
-        let accepted = match report {
-            ReportInternal::ProfileName(r) => {
-                if let Some(text) = r.content.profile_name.as_ref()
-                    && let Some(llm) = profile_name_llm
-                {
-                    Self::llm_profile_string_decision(text, llm).await?
-                } else {
-                    Self::default_decision(report, config)
-                }
-            }
-            ReportInternal::ProfileText(r) => {
-                if let Some(text) = r.content.profile_text.as_ref()
-                    && let Some(llm) = profile_text_llm
-                {
-                    Self::llm_profile_string_decision(text, llm).await?
-                } else {
-                    Self::default_decision(report, config)
-                }
-            }
-            ReportInternal::ProfileContent(r) => {
-                if let Some(content_id) =
-                    r.content.profile_content.as_ref().and_then(|v| v.as_ref())
-                    && let Some(llm) = profile_content_llm
-                {
-                    Self::llm_profile_content_decision(api, content_id, &r.info.target, llm).await?
-                } else {
-                    Self::default_decision(report, config)
-                }
-            }
+    ) -> Result<ProcessedReportWithBans, TestError> {
+        let report_target = match report {
+            ReportInternal::ProfileName(r)
+            | ReportInternal::ProfileText(r)
+            | ReportInternal::ProfileContent(r) => Some(*r.info.target.clone()),
             ReportInternal::Conversation { messages } => {
-                if !messages.is_empty()
-                    && let Some(llm) = messages_llm
-                {
-                    Self::llm_conversation_decision(messages, llm).await?
-                } else {
-                    Self::default_decision(report, config)
-                }
+                messages.first().map(|m| *m.report.info.target.clone())
             }
         };
+
+        let (accepted, severity, per_type_cfg): (bool, Option<ReportSeverity>, Option<BanConfig>) =
+            match report {
+                ReportInternal::ProfileName(r) => {
+                    let cfg = config.profile_name.as_ref();
+                    if let Some(text) = r.content.profile_name.as_ref()
+                        && let Some(llm) = profile_name_llm
+                    {
+                        let (a, s) = Self::llm_profile_string_decision(text, llm).await?;
+                        (a, s, cfg.map(BanConfig::from_profile_string))
+                    } else {
+                        Self::default_decision_from_opt(cfg.map(|v| v.default_action))
+                    }
+                }
+                ReportInternal::ProfileText(r) => {
+                    let cfg = config.profile_text.as_ref();
+                    if let Some(text) = r.content.profile_text.as_ref()
+                        && let Some(llm) = profile_text_llm
+                    {
+                        let (a, s) = Self::llm_profile_string_decision(text, llm).await?;
+                        (a, s, cfg.map(BanConfig::from_profile_string))
+                    } else {
+                        Self::default_decision_from_opt(cfg.map(|v| v.default_action))
+                    }
+                }
+                ReportInternal::ProfileContent(r) => {
+                    let cfg = config.profile_content.as_ref();
+                    if let Some(content_id) =
+                        r.content.profile_content.as_ref().and_then(|v| v.as_ref())
+                        && let Some(llm) = profile_content_llm
+                    {
+                        let (a, s) = Self::llm_profile_content_decision(
+                            api,
+                            content_id,
+                            &r.info.target,
+                            llm,
+                        )
+                        .await?;
+                        (a, s, cfg.map(BanConfig::from_profile_content))
+                    } else {
+                        Self::default_decision_from_opt(cfg.map(|v| v.default_action))
+                    }
+                }
+                ReportInternal::Conversation { messages } => {
+                    let cfg = config.messages.as_ref();
+                    if !messages.is_empty()
+                        && let Some(llm) = messages_llm
+                    {
+                        let (a, s) = Self::llm_conversation_decision(messages, llm).await?;
+                        (a, s, cfg.map(BanConfig::from_messages))
+                    } else {
+                        Self::default_decision_from_opt(cfg.map(|v| v.default_action))
+                    }
+                }
+            };
 
         // Build ProcessReports from originals without consuming
         let processed: Vec<ProcessReport> = match report {
@@ -296,35 +404,95 @@ impl AdminBotReportProcessingLogic {
                 .collect(),
         };
 
-        Ok(Some(processed))
-    }
+        let ban = if accepted
+            && let Some(severity) = severity
+            && let Some(cfg) = per_type_cfg
+            && cfg.enabled
+            && let Some(target) = report_target
+        {
+            let reason_category = match report {
+                ReportInternal::ProfileName(_) => 0,
+                ReportInternal::ProfileText(_) => 1,
+                ReportInternal::ProfileContent(_) => 2,
+                ReportInternal::Conversation { .. } => 3,
+            };
 
-    fn default_decision(report: &ReportInternal, config: &ReportProcessingConfigInternal) -> bool {
-        let reject_or_accept = match report {
-            ReportInternal::ProfileName(_) => {
-                config.profile_name.as_ref().map(|v| v.default_action)
-            }
-            ReportInternal::ProfileText(_) => {
-                config.profile_text.as_ref().map(|v| v.default_action)
-            }
-            ReportInternal::ProfileContent(_) => {
-                config.profile_content.as_ref().map(|v| v.default_action)
-            }
-            ReportInternal::Conversation { .. } => {
-                config.messages.as_ref().map(|v| v.default_action)
-            }
+            let now = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs() as i64;
+            let ban_until =
+                UnixTime::new(now + (severity.ban_days(&cfg.day_counts) as i64) * 86400);
+            Some(BanAction {
+                target,
+                ban_until,
+                reason_category,
+            })
+        } else {
+            None
         };
 
-        match reject_or_accept {
+        Ok(ProcessedReportWithBans { processed, ban })
+    }
+
+    async fn execute_bans(api: &ApiClient, bans: Vec<BanAction>) -> Result<(), TestError> {
+        let mut longest_bans: std::collections::HashMap<String, BanAction> =
+            std::collections::HashMap::new();
+        for ban in bans {
+            let key = ban.target.aid.clone();
+            if let Some(existing) = longest_bans.get(&key) {
+                if ban.ban_until.ut > existing.ban_until.ut {
+                    longest_bans.insert(key, ban);
+                }
+            } else {
+                longest_bans.insert(key, ban);
+            }
+        }
+
+        for ban in longest_bans.into_values() {
+            let current_ban = get_account_ban_time(&api.api(), &ban.target.aid)
+                .await
+                .map_err(|_| TestError::ApiRequest)?;
+
+            let should_ban = current_ban
+                .banned_until
+                .flatten()
+                .is_none_or(|existing| ban.ban_until.ut > existing.ut);
+
+            if should_ban {
+                post_set_ban_state(
+                    &api.api(),
+                    SetAccountBanState {
+                        account: Box::new(ban.target.clone()),
+                        ban_until: Some(Some(Box::new(ban.ban_until.clone()))),
+                        reason_category: Some(Some(Box::new(
+                            api_client::models::AccountBanReasonCategory::new(ban.reason_category),
+                        ))),
+                        reason_details: Some(None),
+                    },
+                )
+                .await
+                .map_err(|_| TestError::ApiRequest)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn default_decision_from_opt(
+        default_action: Option<AcceptOrReject>,
+    ) -> (bool, Option<ReportSeverity>, Option<BanConfig>) {
+        let accepted = match default_action {
             None | Some(AcceptOrReject::Reject) => false,
             Some(AcceptOrReject::Accept) => true,
-        }
+        };
+        (accepted, None, None)
     }
 
     async fn llm_profile_string_decision(
         text: &str,
         llm: &ProfileStringLlmConfigAndClient,
-    ) -> Result<bool, TestError> {
+    ) -> Result<(bool, Option<ReportSeverity>), TestError> {
         let config = &llm.config;
         let expected_response_lowercase = config.db.base.expected_response.to_lowercase();
         let user_text = config.db.base.user_text_template.replace(
@@ -353,6 +521,7 @@ impl AdminBotReportProcessingLogic {
         Self::parse_llm_response(
             r,
             expected_response_lowercase,
+            &config.db.automatic_banning_expected_responses,
             config.llm.debug_log_results,
             "report processing (profile string)",
         )
@@ -364,7 +533,7 @@ impl AdminBotReportProcessingLogic {
         content_id: &api_client::models::ContentId,
         target: &api_client::models::AccountId,
         llm: &ProfileContentLlmConfigAndClient,
-    ) -> Result<bool, TestError> {
+    ) -> Result<(bool, Option<ReportSeverity>), TestError> {
         let image_data = api_client::apis::media_api::get_content(
             &api.api(),
             &target.aid,
@@ -417,6 +586,7 @@ impl AdminBotReportProcessingLogic {
         Self::parse_llm_response(
             r,
             expected_response_lowercase,
+            &config.db.automatic_banning_expected_responses,
             config.llm.debug_log_results,
             "report processing (profile content)",
         )
@@ -426,7 +596,7 @@ impl AdminBotReportProcessingLogic {
     async fn llm_conversation_decision(
         messages: &[MessageInternal],
         llm: &MessagesLlmConfigAndClient,
-    ) -> Result<bool, TestError> {
+    ) -> Result<(bool, Option<ReportSeverity>), TestError> {
         let config = &llm.config;
         let expected_response_lowercase = config.db.base.expected_response.to_lowercase();
 
@@ -475,6 +645,7 @@ impl AdminBotReportProcessingLogic {
         Self::parse_llm_response(
             r,
             expected_response_lowercase,
+            &config.db.automatic_banning_expected_responses,
             config.llm.debug_log_results,
             "report processing (messages)",
         )
@@ -487,9 +658,10 @@ impl AdminBotReportProcessingLogic {
             async_openai::error::OpenAIError,
         >,
         expected_response_lowercase: String,
+        expected_responses: &AutomaticBanningExpectedLlmResponsesConfig,
         debug_log_results: bool,
         log_label: &'static str,
-    ) -> Result<bool, TestError> {
+    ) -> Result<(bool, Option<ReportSeverity>), TestError> {
         let response = match r.map(|r| r.choices.into_iter().next()) {
             Ok(Some(r)) => match r.message.content {
                 Some(response) => response,
@@ -512,10 +684,16 @@ impl AdminBotReportProcessingLogic {
         let response_first_line = response_lowercase.lines().next().unwrap_or_default();
         let accepted = response_first_line.contains(&expected_response_lowercase);
 
+        let severity = if accepted {
+            ReportSeverity::from_llm_response(response_first_line, expected_responses)
+        } else {
+            None
+        };
+
         if debug_log_results {
             info!("LLM {log_label} result: '{}'", response);
         }
 
-        Ok(accepted)
+        Ok((accepted, severity))
     }
 }

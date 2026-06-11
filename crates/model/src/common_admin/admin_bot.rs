@@ -159,19 +159,38 @@ impl Default for AdminBotSecurityContentVerificationLlmConfig {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct AutomaticBanningExpectedLlmResponsesConfig {
+    pub low: String,
+    pub medium: String,
+    pub high: String,
+}
+
+impl Default for AutomaticBanningExpectedLlmResponsesConfig {
+    fn default() -> Self {
+        Self {
+            low: "low".to_string(),
+            medium: "medium".to_string(),
+            high: "high".to_string(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct AdminBotReportProcessingProfileStringLlmConfig {
     #[serde(flatten)]
     pub base: AdminBotStringReportBaseLlmConfig,
+    pub automatic_banning_expected_responses: AutomaticBanningExpectedLlmResponsesConfig,
 }
 
 impl Default for AdminBotReportProcessingProfileStringLlmConfig {
     fn default() -> Self {
         Self {
             base: AdminBotStringReportBaseLlmConfig {
-                system_text: "You are a dating app text content moderator. Output 'accepted' when the reported text violates terms. Output 'rejected' when it does not.".to_string(),
+                system_text: "You are a dating app text report moderator. Output 'accepted, severity' where severity is low/medium/high, or 'rejected'.".to_string(),
                 expected_response: "accepted".to_string(),
                 user_text_template: "Reported content:\n\n{text}".to_string(),
             },
+            automatic_banning_expected_responses: AutomaticBanningExpectedLlmResponsesConfig::default(),
         }
     }
 }
@@ -180,15 +199,17 @@ impl Default for AdminBotReportProcessingProfileStringLlmConfig {
 pub struct AdminBotReportProcessingProfileContentLlmConfig {
     #[serde(flatten)]
     pub base: AdminBotBaseLlmConfig,
+    pub automatic_banning_expected_responses: AutomaticBanningExpectedLlmResponsesConfig,
 }
 
 impl Default for AdminBotReportProcessingProfileContentLlmConfig {
     fn default() -> Self {
         Self {
             base: AdminBotBaseLlmConfig::new(
-                "You are a dating app image report moderator. Output 'accepted' when the reported image violates terms. Output 'rejected' when it does not.".to_string(),
+                "You are a dating app image report moderator. Output 'accepted, severity' where severity is low/medium/high, or 'rejected'.".to_string(),
                 "accepted".to_string(),
             ),
+            automatic_banning_expected_responses: AutomaticBanningExpectedLlmResponsesConfig::default(),
         }
     }
 }
@@ -205,18 +226,37 @@ pub struct AdminBotReportProcessingMessagesLlmConfig {
     /// message. Optional placeholder "{message_number}" is replaced with the
     /// message number.
     pub report_target_message_template: String,
+    pub automatic_banning_expected_responses: AutomaticBanningExpectedLlmResponsesConfig,
 }
 
 impl Default for AdminBotReportProcessingMessagesLlmConfig {
     fn default() -> Self {
         Self {
             base: AdminBotStringReportBaseLlmConfig {
-                system_text: "You are a dating app chat message report moderator. Output 'accepted' when the reported messages violate terms. Output 'rejected' when they do not.".to_string(),
+                system_text: "You are a dating app chat message report moderator. Output 'accepted, severity' where severity is low/medium/high, or 'rejected'.".to_string(),
                 expected_response: "accepted".to_string(),
                 user_text_template: "Reported messages:\n\n{text}".to_string(),
             },
             report_creator_message_template: "Report creator's message ({message_number}): {text}".to_string(),
             report_target_message_template: "Report target's message ({message_number}): {text}".to_string(),
+            automatic_banning_expected_responses: AutomaticBanningExpectedLlmResponsesConfig::default(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct AutomaticBanningDayCountConfig {
+    pub low: u32,
+    pub medium: u32,
+    pub high: u32,
+}
+
+impl Default for AutomaticBanningDayCountConfig {
+    fn default() -> Self {
+        Self {
+            low: 7,
+            medium: 30,
+            high: 90,
         }
     }
 }
@@ -228,6 +268,10 @@ pub struct AdminBotReportProcessingProfileStringConfig {
     pub llm_enabled: bool,
     pub llm: AdminBotReportProcessingProfileStringLlmConfig,
     pub default_action: AcceptOrReject,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub automatic_banning_enabled: bool,
+    pub automatic_banning_day_counts: AutomaticBanningDayCountConfig,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
@@ -237,6 +281,10 @@ pub struct AdminBotReportProcessingProfileContentConfig {
     pub llm_enabled: bool,
     pub llm: AdminBotReportProcessingProfileContentLlmConfig,
     pub default_action: AcceptOrReject,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub automatic_banning_enabled: bool,
+    pub automatic_banning_day_counts: AutomaticBanningDayCountConfig,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
@@ -246,6 +294,10 @@ pub struct AdminBotReportProcessingMessagesConfig {
     pub llm_enabled: bool,
     pub llm: AdminBotReportProcessingMessagesLlmConfig,
     pub default_action: AcceptOrReject,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub automatic_banning_enabled: bool,
+    pub automatic_banning_day_counts: AutomaticBanningDayCountConfig,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
