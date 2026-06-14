@@ -46,7 +46,6 @@ pub struct EmailManager {
     config: Arc<SimpleBackendConfig>,
     normal_receiver: Receiver<NormalEmailMsg>,
     high_priority_receiver: Receiver<HighPriorityEmailMsg>,
-    custom_handler: CustomEmailHandler,
 }
 
 impl EmailManager {
@@ -71,12 +70,11 @@ impl EmailManager {
                     config,
                     normal_receiver,
                     high_priority_receiver,
-                    custom_handler,
                 };
 
                 tokio::select! {
                     _ = quit_notification.recv() => (),
-                    _ = manager.run() => (),
+                    _ = manager.run(custom_handler) => (),
                 }
 
                 // Save email limit state on quit
@@ -85,7 +83,10 @@ impl EmailManager {
         }
     }
 
-    async fn run(&mut self) {
+    async fn run(&mut self, custom_handler: CustomEmailHandler) {
+        let custom_email_handling = custom_handler.run();
+        tokio::pin!(custom_email_handling);
+
         loop {
             tokio::select! {
                 Some(cmd) = self.high_priority_receiver.recv() => {
@@ -102,11 +103,8 @@ impl EmailManager {
                         error!("Email send failed: {:?}", e);
                     }
                 }
-                Some(cmd) = self.custom_handler.custom_receiver.recv() => {
-                    let email_id = model_account::CustomEmailId::new(cmd.email_id);
-                    if let Err(e) = self.custom_handler.send_unsent_custom_emails(email_id).await {
-                        error!("Custom email sending failed: {:?}", e);
-                    }
+                _ = &mut custom_email_handling => {
+                    break;
                 }
                 else => {
                     warn!("Email channel closed");

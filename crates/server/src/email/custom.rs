@@ -16,11 +16,12 @@ use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsA
 use server_state::S;
 use simple_backend::email::SmtpClient;
 use tokio::sync::mpsc::Receiver;
+use tracing::{error, warn};
 
 pub struct CustomEmailHandler {
     state: S,
     smtp_client: Arc<SmtpClient>,
-    pub custom_receiver: Receiver<CustomEmailMsg>,
+    custom_receiver: Receiver<CustomEmailMsg>,
 }
 
 impl CustomEmailHandler {
@@ -36,7 +37,20 @@ impl CustomEmailHandler {
         }
     }
 
-    pub async fn send_unsent_custom_emails(
+    pub async fn run(mut self) {
+        loop {
+            let Some(next) = self.custom_receiver.recv().await else {
+                warn!("Custom email channel closed");
+                return;
+            };
+            let email_id = model_account::CustomEmailId::new(next.email_id);
+            if let Err(e) = self.send_unsent_custom_emails(email_id).await {
+                error!("Custom email sending failed: {:?}", e);
+            }
+        }
+    }
+
+    async fn send_unsent_custom_emails(
         &self,
         email_id: CustomEmailId,
     ) -> error_stack::Result<(), EmailError> {
