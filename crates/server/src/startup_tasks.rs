@@ -47,7 +47,7 @@ impl StartupTasks {
             .await?;
 
         for email_id in pending {
-            email_sender.trigger_custom_email_sending(email_id.eid);
+            email_sender.trigger_custom_email_sending(email_id.eid, None);
         }
 
         Ok(())

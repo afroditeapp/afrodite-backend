@@ -43,9 +43,21 @@ impl CustomEmailHandler {
                 warn!("Custom email channel closed");
                 return;
             };
-            let email_id = model_account::CustomEmailId::new(next.email_id);
-            if let Err(e) = self.send_unsent_custom_emails(email_id).await {
-                error!("Custom email sending failed: {:?}", e);
+            match next {
+                CustomEmailMsg::SendToAll { email_id } => {
+                    let email_id = model_account::CustomEmailId::new(email_id);
+                    if let Err(e) = self.send_unsent_custom_emails(email_id).await {
+                        error!("Custom email sending failed: {:?}", e);
+                    }
+                }
+                CustomEmailMsg::SendDraft {
+                    email_id,
+                    target_account_id,
+                } => {
+                    if let Err(e) = self.send_draft_to_target(target_account_id, email_id).await {
+                        error!("Custom email draft sending failed: {:?}", e);
+                    }
+                }
             }
         }
     }
@@ -103,6 +115,29 @@ impl CustomEmailHandler {
             .change_context(EmailError::SendingFailed)?;
 
         self.mark_custom_as_sent(recipient, email_id).await
+    }
+
+    async fn send_draft_to_target(
+        &self,
+        recipient: AccountIdInternal,
+        email_id: i64,
+    ) -> error_stack::Result<(), EmailError> {
+        let Some(info) = self.get_custom_email_data(recipient, email_id).await? else {
+            // Email disabled for the email recipient
+            return Ok(());
+        };
+
+        self.smtp_client
+            .send(
+                &info.email_address,
+                &info.subject,
+                &info.body,
+                info.body_is_html,
+            )
+            .await
+            .change_context(EmailError::SendingFailed)?;
+
+        Ok(())
     }
 
     /// If `Ok(None)` is returned the email sending is disabled for the

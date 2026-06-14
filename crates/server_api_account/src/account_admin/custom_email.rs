@@ -189,6 +189,44 @@ pub async fn post_send_custom_email_to_all_accounts(
     Ok(())
 }
 
+const PATH_POST_SEND_CUSTOM_EMAIL_DRAFT_TO_MY_EMAIL_ADDRESS: &str =
+    "/account_api/send_custom_email_draft_to_my_email_address";
+
+#[utoipa::path(
+    post,
+    path = PATH_POST_SEND_CUSTOM_EMAIL_DRAFT_TO_MY_EMAIL_ADDRESS,
+    request_body(content = SendCustomEmail),
+    responses(
+        (status = 200, description = "Success."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_send_custom_email_draft_to_my_email_address(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+    Extension(permissions): Extension<Permissions>,
+    Json(data): Json<SendCustomEmail>,
+) -> Result<(), StatusCode> {
+    ACCOUNT
+        .post_send_custom_email_draft_to_my_email_address
+        .incr();
+
+    if !permissions.admin_custom_email {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    db_write!(state, move |cmds| {
+        cmds.account_admin()
+            .custom_email()
+            .send_custom_email_draft_to_target(data.email_id, account_id)
+            .await
+    })?;
+
+    Ok(())
+}
+
 create_open_api_router!(
     fn router_admin_custom_email,
     get_custom_email_config,
@@ -196,6 +234,7 @@ create_open_api_router!(
     post_create_custom_email,
     post_update_custom_email,
     post_send_custom_email_to_all_accounts,
+    post_send_custom_email_draft_to_my_email_address,
 );
 
 create_counters!(
@@ -207,4 +246,5 @@ create_counters!(
     post_create_custom_email,
     post_update_custom_email,
     post_send_custom_email_to_all_accounts,
+    post_send_custom_email_draft_to_my_email_address,
 );

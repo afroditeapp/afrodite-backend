@@ -25,9 +25,14 @@ pub struct NormalEmailMsg {
     pub message: model::EmailMessages,
 }
 
-pub struct CustomEmailMsg {
-    /// CustomEmailId
-    pub email_id: i64,
+pub enum CustomEmailMsg {
+    /// Send to all accounts that haven't received it yet.
+    SendToAll { email_id: i64 },
+    /// Send a draft to one specific account, no DB persistence.
+    SendDraft {
+        email_id: i64,
+        target_account_id: model::AccountIdInternal,
+    },
 }
 
 pub struct HighPriorityEmailMsg {
@@ -57,8 +62,18 @@ impl EmailChannelSender {
         }
     }
 
-    pub fn trigger_custom_email_sending(&self, email_id: i64) {
-        let cmd = CustomEmailMsg { email_id };
+    pub fn trigger_custom_email_sending(
+        &self,
+        email_id: i64,
+        target_account_id: Option<model::AccountIdInternal>,
+    ) {
+        let cmd = match target_account_id {
+            Some(target_account_id) => CustomEmailMsg::SendDraft {
+                email_id,
+                target_account_id,
+            },
+            None => CustomEmailMsg::SendToAll { email_id },
+        };
         match self.custom_sender.try_send(cmd) {
             Ok(()) => (),
             Err(TrySendError::Closed(_)) => {

@@ -39,7 +39,18 @@ impl WriteCommandsAccountCustomEmailAdmin<'_> {
         })?;
 
         self.email_sender()
-            .trigger_custom_email_sending(email_id.eid);
+            .trigger_custom_email_sending(email_id.eid, None);
+
+        Ok(())
+    }
+
+    pub async fn send_custom_email_draft_to_target(
+        &self,
+        email_id: CustomEmailId,
+        target_account_id: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        self.email_sender()
+            .trigger_custom_email_sending(email_id.eid, Some(target_account_id));
 
         Ok(())
     }
