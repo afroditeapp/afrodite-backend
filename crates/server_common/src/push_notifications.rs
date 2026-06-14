@@ -1,4 +1,4 @@
-use std::{future::Future, sync::Arc, time::Duration};
+use std::{future::Future, sync::Arc};
 
 use config::Config;
 use error_stack::{Result, ResultExt};
@@ -10,7 +10,6 @@ use simple_backend_utils::{ContextExt, consts::MIB_IN_BYTES};
 use tokio::{
     sync::mpsc::{Receiver, Sender, error::TrySendError},
     task::JoinHandle,
-    time::MissedTickBehavior,
 };
 use tracing::{error, warn};
 
@@ -229,31 +228,24 @@ impl<T: PushNotificationStateProvider + Clone + Send + Sync + 'static> PushNotif
     }
 
     pub async fn run(mut self, mut quit_notification: ServerQuitWatcher) {
-        self.logic(&mut quit_notification).await;
+        tokio::select! {
+            _ = self.logic() => (),
+            _ = quit_notification.recv() => (),
+        }
+
         // Make sure that quit started (closed channel also
         // breaks the logic loop, but that should not happen)
         let _ = quit_notification.recv().await;
         self.quit_logic().await;
     }
 
-    pub async fn logic(&mut self, quit_notification: &mut ServerQuitWatcher) {
-        let mut low_priority_notification_allowed = false;
-        let mut low_priority_notification_interval =
-            tokio::time::interval(Duration::from_millis(500));
-        low_priority_notification_interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
+    pub async fn logic(&mut self) {
         loop {
             let notification = tokio::select! {
+                biased;
+
                 notification = self.receiver.receiver.recv() => notification,
-                notification = self.receiver.receiver_low_priority.recv(), if low_priority_notification_allowed => {
-                    low_priority_notification_allowed = false;
-                    low_priority_notification_interval.reset();
-                    notification
-                },
-                _ = low_priority_notification_interval.tick(), if !low_priority_notification_allowed => {
-                    low_priority_notification_allowed = true;
-                    continue;
-                }
-                _ = quit_notification.recv() => return,
+                notification = self.receiver.receiver_low_priority.recv() => notification,
             };
 
             match notification {
