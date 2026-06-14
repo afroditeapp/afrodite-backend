@@ -78,7 +78,7 @@ impl CustomEmailHandler {
 
         for recipient in &unsent {
             self.handle_custom_send(*recipient, email_id.eid).await?;
-            tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
         }
 
         db_write_raw!(self.state, move |cmds| {

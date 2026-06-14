@@ -11,7 +11,7 @@ use crate::DataError;
 
 const EMAIL_CHANNEL_BUFFER_SIZE: usize = MIB_IN_BYTES;
 const EMAIL_HIGH_PRIORITY_CHANNEL_BUFFER_SIZE: usize = MIB_IN_BYTES;
-const CUSTOM_EMAIL_CHANNEL_BUFFER_SIZE: usize = MIB_IN_BYTES;
+const CUSTOM_EMAIL_CHANNEL_BUFFER_SIZE: usize = 16;
 
 pub struct EmailData {
     pub email_address: String,
