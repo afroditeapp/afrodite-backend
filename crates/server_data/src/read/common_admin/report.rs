@@ -19,7 +19,7 @@ impl ReadCommandsCommonAdminReport<'_> {
         let mut wanted_report_types_internal = Vec::with_capacity(wanted_report_types.len());
         for report_type in wanted_report_types {
             let report_type_internal =
-                TryInto::<ReportTypeInternal>::try_into(Into::<i16>::into(report_type.n))
+                TryInto::<ReportTypeInternal>::try_into(Into::<i16>::into(report_type.t))
                     .into_error_string(DataError::NotAllowed)?;
             wanted_report_types_internal.push(report_type_internal);
         }

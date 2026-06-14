@@ -24,7 +24,7 @@ impl WriteCommandsCommonAdminReport<'_> {
         content: ReportContent,
         accepted: bool,
     ) -> Result<(), DataError> {
-        let report_type = TryInto::<ReportTypeInternal>::try_into(Into::<i16>::into(report_type.n))
+        let report_type = TryInto::<ReportTypeInternal>::try_into(Into::<i16>::into(report_type.t))
             .into_error_string(DataError::NotAllowed)?;
 
         let current_reports = self

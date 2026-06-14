@@ -66,7 +66,7 @@ impl CustomReportTypeValue {
     }
 
     pub fn to_report_type(&self) -> ReportType {
-        ReportType { n: self.0 }
+        ReportType { t: self.0 }
     }
 
     pub fn to_report_type_internal(&self) -> ReportTypeInternal {
@@ -167,7 +167,7 @@ where
 
 impl From<ReportTypeInternal> for ReportType {
     fn from(value: ReportTypeInternal) -> Self {
-        Self { n: value.to_i8() }
+        Self { t: value.to_i8() }
     }
 }
 
@@ -182,7 +182,7 @@ impl From<ReportTypeInternal> for ReportType {
 pub struct ReportType {
     /// This is i8 so that max value is 127. That makes SQLite to
     /// store the value using single byte.
-    pub n: i8,
+    pub t: i8,
 }
 
 impl ReportType {
