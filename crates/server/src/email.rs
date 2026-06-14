@@ -89,6 +89,8 @@ impl EmailManager {
 
         loop {
             tokio::select! {
+                biased;
+
                 Some(cmd) = self.high_priority_receiver.recv() => {
                     let result = self.handle_send(cmd.recipient, cmd.message).await;
 
