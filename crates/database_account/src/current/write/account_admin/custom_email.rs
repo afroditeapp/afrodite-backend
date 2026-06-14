@@ -1,7 +1,7 @@
 use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{insert_into, prelude::*, update, upsert::excluded};
 use error_stack::Result;
-use model::{AccountIdInternal, UnixTime};
+use model::{AccountIdInternal, CustomEmailSendingLimits, UnixTime};
 use model_account::{CustomEmailId, UpdateCustomEmail};
 use simple_backend_utils::db::MyRunQueryDsl;
 
@@ -138,6 +138,34 @@ impl CurrentWriteAccountCustomEmailAdmin<'_> {
             .filter(id.eq(email_id_value))
             .set(sending_completed_unix_time.eq(UnixTime::current_time()))
             .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
+
+    pub fn upsert_custom_email_sending_limits(
+        &mut self,
+        limits: &CustomEmailSendingLimits,
+    ) -> Result<(), DieselDatabaseError> {
+        use crate::schema::custom_email_sending_limits::dsl::*;
+
+        insert_into(custom_email_sending_limits)
+            .values((
+                row_type.eq(0),
+                send_to_all_accounts_monthly_count.eq(limits.send_to_all_accounts_monthly_count),
+                send_draft_to_my_email_monthly_count
+                    .eq(limits.send_draft_to_my_email_monthly_count),
+                reset_unix_time.eq(limits.reset_unix_time),
+            ))
+            .on_conflict(row_type)
+            .do_update()
+            .set((
+                send_to_all_accounts_monthly_count.eq(limits.send_to_all_accounts_monthly_count),
+                send_draft_to_my_email_monthly_count
+                    .eq(limits.send_draft_to_my_email_monthly_count),
+                reset_unix_time.eq(limits.reset_unix_time),
+            ))
+            .execute_my_conn(self.conn())
             .into_db_error(())?;
 
         Ok(())

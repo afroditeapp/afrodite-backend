@@ -1,6 +1,6 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::{ExpressionMethods, prelude::*};
-use error_stack::Result;
+use error_stack::{Result, ResultExt};
 use model::AccountIdInternal;
 use model_account::{
     CustomEmail, CustomEmailId, CustomEmailInternal, CustomEmailTranslation,
@@ -115,5 +115,18 @@ impl CurrentReadAccountCustomEmailAdmin<'_> {
             .collect();
 
         Ok(result)
+    }
+
+    pub fn custom_email_sending_limits(
+        &mut self,
+    ) -> Result<Option<model::CustomEmailSendingLimits>, DieselDatabaseError> {
+        use crate::schema::custom_email_sending_limits::dsl::*;
+
+        custom_email_sending_limits
+            .filter(row_type.eq(0))
+            .select(model::CustomEmailSendingLimits::as_select())
+            .first(self.conn())
+            .optional()
+            .change_context(DieselDatabaseError::Execute)
     }
 }

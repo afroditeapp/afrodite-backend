@@ -576,6 +576,14 @@ CREATE TABLE IF NOT EXISTS custom_email_sending_state(
             ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS custom_email_sending_limits(
+    -- 0 = custom email sending limits
+    row_type                                INTEGER PRIMARY KEY NOT NULL,
+    send_to_all_accounts_monthly_count      INTEGER NOT NULL DEFAULT 0,
+    send_draft_to_my_email_monthly_count    INTEGER NOT NULL DEFAULT 0,
+    reset_unix_time                         BIGINT NOT NULL DEFAULT 0
+);
+
 -- Store custom reports file hash, so that changes to it can be detected
 -- when server starts.
 CREATE TABLE IF NOT EXISTS custom_reports_file_hash(

@@ -621,6 +621,16 @@ impl OtherSharedState {
     }
 }
 
+#[derive(Debug, Clone, Default, Queryable, Selectable)]
+#[diesel(table_name = crate::schema::custom_email_sending_limits)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct CustomEmailSendingLimits {
+    pub row_type: i32,
+    pub send_to_all_accounts_monthly_count: i32,
+    pub send_draft_to_my_email_monthly_count: i32,
+    pub reset_unix_time: UnixTime,
+}
+
 impl AccountStateRelatedSharedState {
     pub fn is_profile_visible(&self) -> bool {
         self.account_state_initial_setup_completed

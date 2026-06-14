@@ -363,6 +363,15 @@ diesel::table! {
 }
 
 diesel::table! {
+    custom_email_sending_limits (row_type) {
+        row_type -> Int4,
+        send_to_all_accounts_monthly_count -> Int4,
+        send_draft_to_my_email_monthly_count -> Int4,
+        reset_unix_time -> Int8,
+    }
+}
+
+diesel::table! {
     custom_email_sending_state (email_id, account_id) {
         email_id -> Int8,
         account_id -> Int8,
@@ -1055,6 +1064,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     conversation_id,
     current_account_media,
     custom_email,
+    custom_email_sending_limits,
     custom_email_sending_state,
     custom_email_translations,
     custom_reports_file_hash,

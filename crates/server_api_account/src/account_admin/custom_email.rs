@@ -162,6 +162,7 @@ const PATH_POST_SEND_CUSTOM_EMAIL_TO_ALL_ACCOUNTS: &str =
     responses(
         (status = 200, description = "Success."),
         (status = 401, description = "Unauthorized."),
+        (status = 429, description = "Too many requests."),
         (status = 500, description = "Internal server error."),
     ),
     security(("access_token" = [])),
@@ -178,13 +179,16 @@ pub async fn post_send_custom_email_to_all_accounts(
     }
 
     let account_ids = state.read().common().account_ids_internal_vec().await?;
-
-    db_write!(state, move |cmds| {
+    let limit_reached = db_write!(state, move |cmds| {
         cmds.account_admin()
             .custom_email()
             .send_custom_email(data.email_id, account_ids)
             .await
     })?;
+
+    if limit_reached.is_some() {
+        return Err(StatusCode::TOO_MANY_REQUESTS);
+    }
 
     Ok(())
 }
@@ -199,6 +203,7 @@ const PATH_POST_SEND_CUSTOM_EMAIL_DRAFT_TO_MY_EMAIL_ADDRESS: &str =
     responses(
         (status = 200, description = "Success."),
         (status = 401, description = "Unauthorized."),
+        (status = 429, description = "Too many requests."),
         (status = 500, description = "Internal server error."),
     ),
     security(("access_token" = [])),
@@ -217,12 +222,16 @@ pub async fn post_send_custom_email_draft_to_my_email_address(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    db_write!(state, move |cmds| {
+    let limit_reached = db_write!(state, move |cmds| {
         cmds.account_admin()
             .custom_email()
             .send_custom_email_draft_to_target(data.email_id, account_id)
             .await
     })?;
+
+    if limit_reached.is_some() {
+        return Err(StatusCode::TOO_MANY_REQUESTS);
+    }
 
     Ok(())
 }

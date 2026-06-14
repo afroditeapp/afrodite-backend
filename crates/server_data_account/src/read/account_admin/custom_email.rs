@@ -1,5 +1,5 @@
 use database_account::current::read::GetDbReadCommandsAccount;
-use model::AccountIdInternal;
+use model::{AccountIdInternal, CustomEmailSendingLimits};
 use model_account::{CustomEmail, CustomEmailId, CustomEmailTranslation};
 use server_data::{
     DataError, IntoDataError, define_cmd_wrapper_read, read::DbRead, result::Result,
@@ -51,6 +51,18 @@ impl ReadCommandsAccountCustomEmailAdmin<'_> {
             cmds.account_admin()
                 .custom_email()
                 .custom_email_translations(email_id_value)
+        })
+        .await
+        .into_error()
+    }
+
+    pub async fn custom_email_sending_limits(
+        &self,
+    ) -> Result<Option<CustomEmailSendingLimits>, DataError> {
+        self.db_read(move |mut cmds| {
+            cmds.account_admin()
+                .custom_email()
+                .custom_email_sending_limits()
         })
         .await
         .into_error()
