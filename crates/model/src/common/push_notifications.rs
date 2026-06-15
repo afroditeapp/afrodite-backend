@@ -208,7 +208,6 @@ diesel_string_wrapper!(PushNotificationEncryptionKey);
 #[derive(Debug, Clone, Default, Serialize, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::push_notification)]
 #[diesel(check_for_backend(crate::Db))]
-#[diesel(treat_none_as_null = true)]
 pub struct PushNotificationDbState {
     pub pending_flags: PushNotificationFlagsDb,
     pub encryption_key: Option<PushNotificationEncryptionKey>,

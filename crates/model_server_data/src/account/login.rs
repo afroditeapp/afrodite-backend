@@ -5,7 +5,6 @@ use simple_backend_model::diesel_string_wrapper;
 #[derive(Debug, Clone, PartialEq, Default, Insertable)]
 #[diesel(table_name = crate::schema::sign_in_with_info)]
 #[diesel(check_for_backend(crate::Db))]
-#[diesel(treat_none_as_null = true)]
 pub struct SignInWithInfo {
     pub apple_account_id: Option<AppleAccountId>,
     pub google_account_id: Option<GoogleAccountId>,
