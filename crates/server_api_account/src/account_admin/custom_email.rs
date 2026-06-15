@@ -114,7 +114,8 @@ const PATH_POST_UPDATE_CUSTOM_EMAIL: &str = "/account_api/update_custom_email";
 
 /// Update a custom email message draft.
 ///
-/// Translation with "default" locale must exist.
+/// Translation with "default" locale must exist and all translations must
+/// have non empty subject and body.
 #[utoipa::path(
     post,
     path = PATH_POST_UPDATE_CUSTOM_EMAIL,
@@ -134,11 +135,6 @@ pub async fn post_update_custom_email(
     ACCOUNT.post_update_custom_email.incr();
 
     if !permissions.admin_custom_email {
-        return Err(StatusCode::INTERNAL_SERVER_ERROR);
-    }
-
-    // Validate that "default" locale translation exists
-    if !data.translations.iter().any(|t| t.locale == "default") {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 

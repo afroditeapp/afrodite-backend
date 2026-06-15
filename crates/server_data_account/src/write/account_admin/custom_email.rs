@@ -5,13 +5,28 @@ use server_data::{
     DataError,
     app::{GetConfig, GetEmailSender},
     db_transaction, define_cmd_wrapper_write,
-    result::Result,
+    result::{Result, WrappedContextExt},
     write::DbTransaction,
 };
 
 use crate::read::GetReadCommandsAccount;
 
 pub struct LimitReached;
+
+fn validate_custom_email_translations(
+    translations: &[model_account::CustomEmailTranslation],
+) -> Result<(), DataError> {
+    let all_non_empty = translations
+        .iter()
+        .all(|t| !t.subject.trim().is_empty() && !t.body.trim().is_empty());
+    let has_default = translations.iter().any(|t| t.locale == "default");
+
+    if !all_non_empty || !has_default {
+        return Err(DataError::NotAllowed.report());
+    }
+
+    Ok(())
+}
 
 define_cmd_wrapper_write!(WriteCommandsAccountCustomEmailAdmin);
 
@@ -26,11 +41,25 @@ impl WriteCommandsAccountCustomEmailAdmin<'_> {
     }
 
     pub async fn update_custom_email(&self, data: UpdateCustomEmail) -> Result<(), DataError> {
+        validate_custom_email_translations(&data.translations)?;
+
         db_transaction!(self, move |mut cmds| {
             cmds.account_admin()
                 .custom_email()
                 .update_custom_email(data)
         })
+    }
+
+    async fn validate_custom_email(&self, email_id: CustomEmailId) -> Result<(), DataError> {
+        let translations = self
+            .handle()
+            .read()
+            .account_admin()
+            .custom_email()
+            .custom_email_translations(email_id)
+            .await?;
+
+        validate_custom_email_translations(&translations)
     }
 
     async fn handle_custom_email_limit(
@@ -69,6 +98,8 @@ impl WriteCommandsAccountCustomEmailAdmin<'_> {
         email_id: CustomEmailId,
         account_ids: Vec<AccountIdInternal>,
     ) -> Result<Option<LimitReached>, DataError> {
+        self.validate_custom_email(email_id).await?;
+
         let limit = self
             .config()
             .limits_account()
@@ -106,6 +137,8 @@ impl WriteCommandsAccountCustomEmailAdmin<'_> {
         email_id: CustomEmailId,
         target_account_id: AccountIdInternal,
     ) -> Result<Option<LimitReached>, DataError> {
+        self.validate_custom_email(email_id).await?;
+
         let limit = self
             .config()
             .limits_account()
