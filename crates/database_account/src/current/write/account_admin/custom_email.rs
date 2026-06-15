@@ -34,9 +34,10 @@ impl CurrentWriteAccountCustomEmailAdmin<'_> {
             use crate::schema::custom_email::dsl::*;
             if custom_email
                 .filter(id.eq(data.id))
-                .select(sending_initiated)
-                .first::<bool>(self.conn())
+                .select(sending_initiated_unix_time)
+                .first::<Option<UnixTime>>(self.conn())
                 .into_db_error(())?
+                .is_some()
             {
                 return Err(error_stack::report!(DieselDatabaseError::NotAllowed));
             }
@@ -100,10 +101,7 @@ impl CurrentWriteAccountCustomEmailAdmin<'_> {
 
             update(custom_email)
                 .filter(id.eq(email_id_value))
-                .set((
-                    sending_initiated.eq(true),
-                    sending_initiated_unix_time.eq(UnixTime::current_time()),
-                ))
+                .set(sending_initiated_unix_time.eq(UnixTime::current_time()))
                 .execute(self.conn())
                 .into_db_error(())?;
         }

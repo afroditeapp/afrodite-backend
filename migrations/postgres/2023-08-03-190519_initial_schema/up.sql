@@ -540,7 +540,6 @@ CREATE TABLE IF NOT EXISTS account_global_state(
 CREATE TABLE IF NOT EXISTS custom_email(
     id                          BIGSERIAL PRIMARY KEY NOT NULL,
     account_id_creator          BIGINT,
-    sending_initiated           BOOLEAN               NOT NULL DEFAULT FALSE,
     sending_initiated_unix_time BIGINT,
     sending_completed_unix_time BIGINT,
     FOREIGN KEY (account_id_creator)

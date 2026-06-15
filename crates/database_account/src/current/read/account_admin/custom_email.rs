@@ -51,7 +51,6 @@ impl CurrentReadAccountCustomEmailAdmin<'_> {
 
             result.push(CustomEmail {
                 id: item.id,
-                sending_initiated: item.sending_initiated,
                 sending_initiated_unix_time: item.sending_initiated_unix_time,
                 sending_completed_unix_time: item.sending_completed_unix_time,
                 translations,
@@ -67,7 +66,7 @@ impl CurrentReadAccountCustomEmailAdmin<'_> {
         use crate::schema::custom_email::dsl::*;
 
         let ids: Vec<CustomEmailId> = custom_email
-            .filter(sending_initiated.eq(true))
+            .filter(sending_initiated_unix_time.is_not_null())
             .filter(sending_completed_unix_time.is_null())
             .select(id)
             .load(self.conn())

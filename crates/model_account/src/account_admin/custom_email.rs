@@ -61,7 +61,6 @@ impl From<CustomEmailId> for i64 {
 pub struct CustomEmailInternal {
     pub id: CustomEmailId,
     pub account_id_creator: Option<AccountIdDb>,
-    pub sending_initiated: bool,
     pub sending_initiated_unix_time: Option<simple_backend_model::UnixTime>,
     pub sending_completed_unix_time: Option<simple_backend_model::UnixTime>,
 }
@@ -87,7 +86,6 @@ pub struct CustomEmailTranslation {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CustomEmail {
     pub id: CustomEmailId,
-    pub sending_initiated: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sending_initiated_unix_time: Option<UnixTime>,
     #[serde(skip_serializing_if = "Option::is_none")]

@@ -356,7 +356,6 @@ diesel::table! {
     custom_email (id) {
         id -> Int8,
         account_id_creator -> Nullable<Int8>,
-        sending_initiated -> Bool,
         sending_initiated_unix_time -> Nullable<Int8>,
         sending_completed_unix_time -> Nullable<Int8>,
     }
