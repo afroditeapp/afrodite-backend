@@ -78,6 +78,24 @@ pub enum GetAllAdminsError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`get_custom_email_config`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetCustomEmailConfigError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`get_custom_email_list`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetCustomEmailListError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_email_address_state_admin`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -132,6 +150,15 @@ pub enum PostAdminLogoutError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`post_create_custom_email`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostCreateCustomEmailError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`post_create_news_item`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -168,6 +195,26 @@ pub enum PostSaveInfoBannersError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`post_send_custom_email_draft_to_my_email_address`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostSendCustomEmailDraftToMyEmailAddressError {
+    Status401(),
+    Status429(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_send_custom_email_to_all_accounts`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostSendCustomEmailToAllAccountsError {
+    Status401(),
+    Status429(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`post_set_account_locked_state`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -199,6 +246,15 @@ pub enum PostSetNewsPublicityError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PostSetPermissionsError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_update_custom_email`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostUpdateCustomEmailError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -467,6 +523,83 @@ pub async fn get_all_admins(configuration: &configuration::Configuration, ) -> R
     }
 }
 
+pub async fn get_custom_email_config(configuration: &configuration::Configuration, ) -> Result<models::GetCustomEmailConfig, Error<GetCustomEmailConfigError>> {
+
+    let uri_str = format!("{}/account_api/custom_email_config", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::GetCustomEmailConfig`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::GetCustomEmailConfig`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetCustomEmailConfigError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn get_custom_email_list(configuration: &configuration::Configuration, page: i32) -> Result<Vec<models::CustomEmail>, Error<GetCustomEmailListError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_page = page;
+
+    let uri_str = format!("{}/account_api/custom_email_list", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    req_builder = req_builder.query(&[("page", &p_query_page.to_string())]);
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `Vec&lt;models::CustomEmail&gt;`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `Vec&lt;models::CustomEmail&gt;`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetCustomEmailListError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 /// Requires `admin_view_email_address` permission.
 pub async fn get_email_address_state_admin(configuration: &configuration::Configuration, aid: &str) -> Result<models::EmailAddressStateAdmin, Error<GetEmailAddressStateAdminError>> {
     // add a prefix to parameters to efficiently prevent name collisions
@@ -676,6 +809,43 @@ pub async fn post_admin_logout(configuration: &configuration::Configuration, aid
     }
 }
 
+pub async fn post_create_custom_email(configuration: &configuration::Configuration, ) -> Result<models::CustomEmailId, Error<PostCreateCustomEmailError>> {
+
+    let uri_str = format!("{}/account_api/create_custom_email", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::CustomEmailId`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::CustomEmailId`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostCreateCustomEmailError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 pub async fn post_create_news_item(configuration: &configuration::Configuration, ) -> Result<models::NewsId, Error<PostCreateNewsItemError>> {
 
     let uri_str = format!("{}/account_api/create_news_item", configuration.base_path);
@@ -813,6 +983,64 @@ pub async fn post_save_info_banners(configuration: &configuration::Configuration
     }
 }
 
+pub async fn post_send_custom_email_draft_to_my_email_address(configuration: &configuration::Configuration, send_custom_email: models::SendCustomEmail) -> Result<(), Error<PostSendCustomEmailDraftToMyEmailAddressError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_send_custom_email = send_custom_email;
+
+    let uri_str = format!("{}/account_api/send_custom_email_draft_to_my_email_address", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_send_custom_email);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostSendCustomEmailDraftToMyEmailAddressError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn post_send_custom_email_to_all_accounts(configuration: &configuration::Configuration, send_custom_email: models::SendCustomEmail) -> Result<(), Error<PostSendCustomEmailToAllAccountsError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_send_custom_email = send_custom_email;
+
+    let uri_str = format!("{}/account_api/send_custom_email_to_all_accounts", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_send_custom_email);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostSendCustomEmailToAllAccountsError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 /// # Access  Permission [model::Permissions::admin_edit_login] is required.
 pub async fn post_set_account_locked_state(configuration: &configuration::Configuration, aid: &str, account_locked_state: models::AccountLockedState) -> Result<(), Error<PostSetAccountLockedStateError>> {
     // add a prefix to parameters to efficiently prevent name collisions
@@ -931,6 +1159,36 @@ pub async fn post_set_permissions(configuration: &configuration::Configuration, 
     } else {
         let content = resp.text().await?;
         let entity: Option<PostSetPermissionsError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// Translation with \"default\" locale must exist and all translations must have non empty subject and body.
+pub async fn post_update_custom_email(configuration: &configuration::Configuration, update_custom_email: models::UpdateCustomEmail) -> Result<(), Error<PostUpdateCustomEmailError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_update_custom_email = update_custom_email;
+
+    let uri_str = format!("{}/account_api/update_custom_email", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_update_custom_email);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostUpdateCustomEmailError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

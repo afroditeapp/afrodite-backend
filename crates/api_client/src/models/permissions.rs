@@ -17,6 +17,8 @@ pub struct Permissions {
     pub admin_ban_account: Option<bool>,
     #[serde(rename = "admin_change_email_address", skip_serializing_if = "Option::is_none")]
     pub admin_change_email_address: Option<bool>,
+    #[serde(rename = "admin_custom_email", skip_serializing_if = "Option::is_none")]
+    pub admin_custom_email: Option<bool>,
     #[serde(rename = "admin_delete_account", skip_serializing_if = "Option::is_none")]
     pub admin_delete_account: Option<bool>,
     #[serde(rename = "admin_delete_media_content", skip_serializing_if = "Option::is_none")]
@@ -121,6 +123,7 @@ impl Permissions {
         Permissions {
             admin_ban_account: None,
             admin_change_email_address: None,
+            admin_custom_email: None,
             admin_delete_account: None,
             admin_delete_media_content: None,
             admin_edit_login: None,

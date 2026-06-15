@@ -70,20 +70,26 @@ Class | Method | HTTP request | Description
 *AccountAdminApi* | [**get_account_state_admin**](docs/AccountAdminApi.md#get_account_state_admin) | **GET** /account_api/get_account_state_admin/{aid} | Get [model::Account] for specific account.
 *AccountAdminApi* | [**get_account_verification_queue_next_item**](docs/AccountAdminApi.md#get_account_verification_queue_next_item) | **GET** /account_api/account_verification_queue_next_item | Get next item in account verification queue.
 *AccountAdminApi* | [**get_all_admins**](docs/AccountAdminApi.md#get_all_admins) | **GET** /account_api/get_all_admins | Get all admins
+*AccountAdminApi* | [**get_custom_email_config**](docs/AccountAdminApi.md#get_custom_email_config) | **GET** /account_api/custom_email_config | 
+*AccountAdminApi* | [**get_custom_email_list**](docs/AccountAdminApi.md#get_custom_email_list) | **GET** /account_api/custom_email_list | List all custom emails, newest first.
 *AccountAdminApi* | [**get_email_address_state_admin**](docs/AccountAdminApi.md#get_email_address_state_admin) | **GET** /account_api/email_address_state_admin/{aid} | Get email address state for admin.
 *AccountAdminApi* | [**get_permissions**](docs/AccountAdminApi.md#get_permissions) | **GET** /account_api/get_permissions/{aid} | Get [model::Permissions] for specific account.
 *AccountAdminApi* | [**post_account_verification_queue_remove_next_item**](docs/AccountAdminApi.md#post_account_verification_queue_remove_next_item) | **POST** /account_api/account_verification_queue_remove_next_item | Remove next item from account verification queue if possible.
 *AccountAdminApi* | [**post_admin_cancel_email_change**](docs/AccountAdminApi.md#post_admin_cancel_email_change) | **POST** /account_api/admin_cancel_email_change/{aid} | Cancel email changing process for any account.
 *AccountAdminApi* | [**post_admin_init_email_change**](docs/AccountAdminApi.md#post_admin_init_email_change) | **POST** /account_api/admin_init_email_change | Initiate email change process for any account by providing a new email address.
 *AccountAdminApi* | [**post_admin_logout**](docs/AccountAdminApi.md#post_admin_logout) | **POST** /account_api/admin_logout/{aid} | Logout any account
+*AccountAdminApi* | [**post_create_custom_email**](docs/AccountAdminApi.md#post_create_custom_email) | **POST** /account_api/create_custom_email | Create a new custom email message draft.
 *AccountAdminApi* | [**post_create_news_item**](docs/AccountAdminApi.md#post_create_news_item) | **POST** /account_api/create_news_item | 
 *AccountAdminApi* | [**post_delete_account**](docs/AccountAdminApi.md#post_delete_account) | **POST** /account_api/delete_account/{aid} | Delete account instantly
 *AccountAdminApi* | [**post_get_client_version_statistics**](docs/AccountAdminApi.md#post_get_client_version_statistics) | **POST** /account_api/client_version_statistics | Get client version statistics.
 *AccountAdminApi* | [**post_save_info_banners**](docs/AccountAdminApi.md#post_save_info_banners) | **POST** /account_api/save_info_banners | Save info banners to dynamic client config.
+*AccountAdminApi* | [**post_send_custom_email_draft_to_my_email_address**](docs/AccountAdminApi.md#post_send_custom_email_draft_to_my_email_address) | **POST** /account_api/send_custom_email_draft_to_my_email_address | 
+*AccountAdminApi* | [**post_send_custom_email_to_all_accounts**](docs/AccountAdminApi.md#post_send_custom_email_to_all_accounts) | **POST** /account_api/send_custom_email_to_all_accounts | 
 *AccountAdminApi* | [**post_set_account_locked_state**](docs/AccountAdminApi.md#post_set_account_locked_state) | **POST** /account_api/set_account_locked_state/{aid} | Set account locked state
 *AccountAdminApi* | [**post_set_ban_state**](docs/AccountAdminApi.md#post_set_ban_state) | **POST** /account_api/set_ban_state | Ban or unban account
 *AccountAdminApi* | [**post_set_news_publicity**](docs/AccountAdminApi.md#post_set_news_publicity) | **DELETE** /account_api/set_news_publicity/{nid} | 
 *AccountAdminApi* | [**post_set_permissions**](docs/AccountAdminApi.md#post_set_permissions) | **POST** /account_api/set_permissions/{aid} | Set permissions for account
+*AccountAdminApi* | [**post_update_custom_email**](docs/AccountAdminApi.md#post_update_custom_email) | **POST** /account_api/update_custom_email | Update a custom email message draft.
 *AccountAdminApi* | [**post_update_news_translation**](docs/AccountAdminApi.md#post_update_news_translation) | **POST** /account_api/update_news_translation/{nid}/{locale} | 
 *AccountBotApi* | [**post_bot_login**](docs/AccountBotApi.md#post_bot_login) | **POST** /account_api/bot_login | Get new AccessToken for a bot account. If the account is not registered as a bot account, then the request will fail.
 *AccountBotApi* | [**post_bot_register**](docs/AccountBotApi.md#post_bot_register) | **POST** /account_api/bot_register | Register a new bot account. Returns new account ID which is UUID.
@@ -314,6 +320,8 @@ Class | Method | HTTP request | Description
  - [AttributeValueOrderMode](docs/AttributeValueOrderMode.md)
  - [AttributionConfig](docs/AttributionConfig.md)
  - [AuthPair](docs/AuthPair.md)
+ - [AutomaticBanningDayCountConfig](docs/AutomaticBanningDayCountConfig.md)
+ - [AutomaticBanningExpectedLlmResponsesConfig](docs/AutomaticBanningExpectedLlmResponsesConfig.md)
  - [AutomaticProfileSearchIteratorSessionId](docs/AutomaticProfileSearchIteratorSessionId.md)
  - [AutomaticProfileSearchSettings](docs/AutomaticProfileSearchSettings.md)
  - [BackupTransferByteCount](docs/BackupTransferByteCount.md)
@@ -354,6 +362,9 @@ Class | Method | HTTP request | Description
  - [ContentSlot](docs/ContentSlot.md)
  - [ConversationId](docs/ConversationId.md)
  - [CurrentAccountInteractionState](docs/CurrentAccountInteractionState.md)
+ - [CustomEmail](docs/CustomEmail.md)
+ - [CustomEmailId](docs/CustomEmailId.md)
+ - [CustomEmailTranslation](docs/CustomEmailTranslation.md)
  - [CustomReport](docs/CustomReport.md)
  - [CustomReportLanguage](docs/CustomReportLanguage.md)
  - [CustomReportTranslation](docs/CustomReportTranslation.md)
@@ -402,6 +413,7 @@ Class | Method | HTTP request | Description
  - [GetClientVersionStatisticsResult](docs/GetClientVersionStatisticsResult.md)
  - [GetClientVersionStatisticsSettings](docs/GetClientVersionStatisticsSettings.md)
  - [GetConversationId](docs/GetConversationId.md)
+ - [GetCustomEmailConfig](docs/GetCustomEmailConfig.md)
  - [GetCustomReportsConfigResult](docs/GetCustomReportsConfigResult.md)
  - [GetDynamicClientFeaturesConfigResult](docs/GetDynamicClientFeaturesConfigResult.md)
  - [GetInitialProfileAgeResult](docs/GetInitialProfileAgeResult.md)
@@ -605,6 +617,7 @@ Class | Method | HTTP request | Description
  - [SearchGroups](docs/SearchGroups.md)
  - [SecurityContentAdminInfo](docs/SecurityContentAdminInfo.md)
  - [SeenMessage](docs/SeenMessage.md)
+ - [SendCustomEmail](docs/SendCustomEmail.md)
  - [SendLike](docs/SendLike.md)
  - [SendLikeResult](docs/SendLikeResult.md)
  - [SendMessageResult](docs/SendMessageResult.md)
@@ -637,6 +650,7 @@ Class | Method | HTTP request | Description
  - [UnreadNewsCount](docs/UnreadNewsCount.md)
  - [UnreadNewsCountResult](docs/UnreadNewsCountResult.md)
  - [UpdateChatMessageReports](docs/UpdateChatMessageReports.md)
+ - [UpdateCustomEmail](docs/UpdateCustomEmail.md)
  - [UpdateCustomReportEmpty](docs/UpdateCustomReportEmpty.md)
  - [UpdateNewsTranslation](docs/UpdateNewsTranslation.md)
  - [UpdateNewsTranslationResult](docs/UpdateNewsTranslationResult.md)

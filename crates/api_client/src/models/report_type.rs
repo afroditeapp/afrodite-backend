@@ -15,15 +15,15 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ReportType {
     /// This is i8 so that max value is 127. That makes SQLite to store the value using single byte.
-    #[serde(rename = "n")]
-    pub n: i32,
+    #[serde(rename = "t")]
+    pub t: i32,
 }
 
 impl ReportType {
     /// Values:  * ProfileName = 0 * ProfileText = 1 * ProfileContent = 2 * ChatMessage = 3 * CustomReport = values from 64 to 127
-    pub fn new(n: i32) -> ReportType {
+    pub fn new(t: i32) -> ReportType {
         ReportType {
-            n,
+            t,
         }
     }
 }

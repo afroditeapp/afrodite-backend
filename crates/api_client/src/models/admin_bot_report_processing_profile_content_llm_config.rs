@@ -18,13 +18,16 @@ pub struct AdminBotReportProcessingProfileContentLlmConfig {
     pub expected_response: String,
     #[serde(rename = "system_text")]
     pub system_text: String,
+    #[serde(rename = "automatic_banning_expected_responses")]
+    pub automatic_banning_expected_responses: Box<models::AutomaticBanningExpectedLlmResponsesConfig>,
 }
 
 impl AdminBotReportProcessingProfileContentLlmConfig {
-    pub fn new(expected_response: String, system_text: String) -> AdminBotReportProcessingProfileContentLlmConfig {
+    pub fn new(expected_response: String, system_text: String, automatic_banning_expected_responses: models::AutomaticBanningExpectedLlmResponsesConfig) -> AdminBotReportProcessingProfileContentLlmConfig {
         AdminBotReportProcessingProfileContentLlmConfig {
             expected_response,
             system_text,
+            automatic_banning_expected_responses: Box::new(automatic_banning_expected_responses),
         }
     }
 }

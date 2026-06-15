@@ -21,14 +21,17 @@ pub struct AdminBotReportProcessingProfileStringLlmConfig {
     /// Placeholder \"{text}\" is replaced with the reported content.
     #[serde(rename = "user_text_template")]
     pub user_text_template: String,
+    #[serde(rename = "automatic_banning_expected_responses")]
+    pub automatic_banning_expected_responses: Box<models::AutomaticBanningExpectedLlmResponsesConfig>,
 }
 
 impl AdminBotReportProcessingProfileStringLlmConfig {
-    pub fn new(expected_response: String, system_text: String, user_text_template: String) -> AdminBotReportProcessingProfileStringLlmConfig {
+    pub fn new(expected_response: String, system_text: String, user_text_template: String, automatic_banning_expected_responses: models::AutomaticBanningExpectedLlmResponsesConfig) -> AdminBotReportProcessingProfileStringLlmConfig {
         AdminBotReportProcessingProfileStringLlmConfig {
             expected_response,
             system_text,
             user_text_template,
+            automatic_banning_expected_responses: Box::new(automatic_banning_expected_responses),
         }
     }
 }

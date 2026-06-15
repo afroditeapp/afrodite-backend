@@ -21,20 +21,23 @@ pub struct AdminBotReportProcessingMessagesLlmConfig {
     /// Placeholder \"{text}\" is replaced with the reported content.
     #[serde(rename = "user_text_template")]
     pub user_text_template: String,
-    /// Placeholder \"{text}\" is replaced with the report creator's message.
+    #[serde(rename = "automatic_banning_expected_responses")]
+    pub automatic_banning_expected_responses: Box<models::AutomaticBanningExpectedLlmResponsesConfig>,
+    /// Required placeholder \"{text}\" is replaced with the report creator's message. Optional placeholder \"{message_number}\" is replaced with the message number.
     #[serde(rename = "report_creator_message_template")]
     pub report_creator_message_template: String,
-    /// Placeholder \"{text}\" is replaced with the report target's message.
+    /// Required placeholder \"{text}\" is replaced with the report target's message. Optional placeholder \"{message_number}\" is replaced with the message number.
     #[serde(rename = "report_target_message_template")]
     pub report_target_message_template: String,
 }
 
 impl AdminBotReportProcessingMessagesLlmConfig {
-    pub fn new(expected_response: String, system_text: String, user_text_template: String, report_creator_message_template: String, report_target_message_template: String) -> AdminBotReportProcessingMessagesLlmConfig {
+    pub fn new(expected_response: String, system_text: String, user_text_template: String, automatic_banning_expected_responses: models::AutomaticBanningExpectedLlmResponsesConfig, report_creator_message_template: String, report_target_message_template: String) -> AdminBotReportProcessingMessagesLlmConfig {
         AdminBotReportProcessingMessagesLlmConfig {
             expected_response,
             system_text,
             user_text_template,
+            automatic_banning_expected_responses: Box::new(automatic_banning_expected_responses),
             report_creator_message_template,
             report_target_message_template,
         }

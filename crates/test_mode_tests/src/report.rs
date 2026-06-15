@@ -58,7 +58,7 @@ async fn process_all_reports_as(context: &mut TestContext, accepted: bool) -> Te
                 accepted,
                 (*report.content).clone(),
                 *report.info.creator.clone(),
-                ReportType::new(report.info.report_type.n),
+                ReportType::new(report.info.report_type.t),
                 *report.info.target.clone(),
             )
         })
@@ -152,10 +152,10 @@ async fn auto_ban_spam_reporters_threshold_1_accepted_and_rejected_reports_do_no
         let is_accepted = if report.info.creator.aid == reporter.account_id().aid
             && report.info.target.aid == target.account_id().aid
         {
-            if report.info.report_type.n == 2 {
+            if report.info.report_type.t == 2 {
                 // Profile content
                 true
-            } else if report.info.report_type.n == 0 {
+            } else if report.info.report_type.t == 0 {
                 // Profile name
                 false
             } else {
@@ -169,7 +169,7 @@ async fn auto_ban_spam_reporters_threshold_1_accepted_and_rejected_reports_do_no
             is_accepted,
             (*report.content).clone(),
             *report.info.creator.clone(),
-            ReportType::new(report.info.report_type.n),
+            ReportType::new(report.info.report_type.t),
             *report.info.target.clone(),
         ));
     }

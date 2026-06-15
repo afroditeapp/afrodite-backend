@@ -81,6 +81,8 @@ src/models/attribute_value.rs
 src/models/attribute_value_order_mode.rs
 src/models/attribution_config.rs
 src/models/auth_pair.rs
+src/models/automatic_banning_day_count_config.rs
+src/models/automatic_banning_expected_llm_responses_config.rs
 src/models/automatic_profile_search_iterator_session_id.rs
 src/models/automatic_profile_search_settings.rs
 src/models/backup_transfer_byte_count.rs
@@ -121,6 +123,9 @@ src/models/content_processing_state_type.rs
 src/models/content_slot.rs
 src/models/conversation_id.rs
 src/models/current_account_interaction_state.rs
+src/models/custom_email.rs
+src/models/custom_email_id.rs
+src/models/custom_email_translation.rs
 src/models/custom_report.rs
 src/models/custom_report_language.rs
 src/models/custom_report_translation.rs
@@ -169,6 +174,7 @@ src/models/get_client_language.rs
 src/models/get_client_version_statistics_result.rs
 src/models/get_client_version_statistics_settings.rs
 src/models/get_conversation_id.rs
+src/models/get_custom_email_config.rs
 src/models/get_custom_reports_config_result.rs
 src/models/get_dynamic_client_features_config_result.rs
 src/models/get_initial_profile_age_result.rs
@@ -373,6 +379,7 @@ src/models/search_age_range.rs
 src/models/search_groups.rs
 src/models/security_content_admin_info.rs
 src/models/seen_message.rs
+src/models/send_custom_email.rs
 src/models/send_like.rs
 src/models/send_like_result.rs
 src/models/send_message_result.rs
@@ -405,6 +412,7 @@ src/models/unix_time.rs
 src/models/unread_news_count.rs
 src/models/unread_news_count_result.rs
 src/models/update_chat_message_reports.rs
+src/models/update_custom_email.rs
 src/models/update_custom_report_empty.rs
 src/models/update_news_translation.rs
 src/models/update_news_translation_result.rs

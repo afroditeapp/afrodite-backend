@@ -42,8 +42,8 @@ pub async fn convert_to_report_internal(
     let mut result: Vec<ReportInternal> = Vec::new();
 
     for report in values {
-        let n = report.info.report_type.n;
-        match n {
+        let t = report.info.report_type.t;
+        match t {
             // ProfileName = 0
             0 => {
                 result.push(ReportInternal::ProfileName(report));
@@ -66,7 +66,7 @@ pub async fn convert_to_report_internal(
             }
             _ => {
                 return Err(TestError::InvalidValue.report())
-                    .attach_printable(format!("Unknown report type: {n}"));
+                    .attach_printable(format!("Unknown report type: {t}"));
             }
         }
     }
@@ -106,7 +106,7 @@ pub async fn convert_to_report_internal(
             } else {
                 return Err(TestError::InvalidValue.report()).attach_printable(format!(
                     "Unknown report type {} from post_get_chat_message_reports API",
-                    report.info.report_type.n
+                    report.info.report_type.t
                 ));
             }
         }
