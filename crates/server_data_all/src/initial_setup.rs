@@ -15,6 +15,7 @@ use server_data_account::{
 use server_data_media::{read::GetReadMediaCommands, write::GetWriteCommandsMedia};
 use server_data_profile::write::GetWriteCommandsProfile;
 use tracing::warn;
+use utils::api::ADMIN_BOT_EMAIL;
 
 pub async fn complete_initial_setup(
     config: &Config,
@@ -84,7 +85,10 @@ pub async fn complete_initial_setup(
                 None
             };
 
-            if enable_all_permissions.is_some() && cmds.read().common().is_bot(id).await? {
+            if enable_all_permissions.is_some()
+                && cmds.read().common().is_bot(id).await?
+                && email_address_state.email.as_ref().map(|v| v.as_str()) == Some(ADMIN_BOT_EMAIL)
+            {
                 cmds.common()
                     .set_bot_account_type_number(id, BotAccountType::Admin)
                     .await?;

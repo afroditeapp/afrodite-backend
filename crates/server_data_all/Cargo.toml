@@ -19,6 +19,7 @@ axum = { workspace = true }
 
 error-stack = { workspace = true }
 
+utils = { path = "../utils" }
 config = { path = "../config" }
 model = { path = "../model" }
 model_account = { path = "../model_account" }

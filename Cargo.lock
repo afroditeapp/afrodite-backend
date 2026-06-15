@@ -5217,6 +5217,7 @@ dependencies = [
  "simple_backend_model",
  "tokio",
  "tracing",
+ "utils",
  "zip 4.6.1",
 ]
 
