@@ -15,7 +15,7 @@ use server_api::{
 use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
-use utils::api::ADMIN_BOT_EMAIL;
+use utils::api::{ADMIN_BOT_EMAIL, USER_BOT_EMAIL_PREFIX, USER_BOT_EMAIL_SUFFIX};
 
 use super::account::login_impl;
 use crate::{
@@ -172,9 +172,6 @@ async fn get_or_create_bots_impl(state: &S) -> Result<Json<GetBotsResult>, Statu
     // Get existing bot accounts using data layer
     let mut result = state.read().account().get_existing_bots().await?;
 
-    const BOT_EMAIL_PREFIX: &str = "bot";
-    const BOT_EMAIL_SUFFIX: &str = "@example.com";
-
     // Get bot config to determine expected user bot count
     let bot_config = state
         .read()
@@ -204,7 +201,7 @@ async fn get_or_create_bots_impl(state: &S) -> Result<Json<GetBotsResult>, Statu
             let bot_number = i + 1; // Start from bot1, not bot0
             let bot_email = EmailAddress(format!(
                 "{}{}{}",
-                BOT_EMAIL_PREFIX, bot_number, BOT_EMAIL_SUFFIX
+                USER_BOT_EMAIL_PREFIX, bot_number, USER_BOT_EMAIL_SUFFIX
             ));
             if let Some(bot) = create_bot_account(state, bot_email, BotAccountType::User).await? {
                 result.users.push(bot);

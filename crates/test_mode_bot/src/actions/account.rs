@@ -24,7 +24,7 @@ use tokio_stream::StreamExt;
 use tokio_tungstenite::tungstenite::{Message, client::IntoClientRequest};
 use tracing::warn;
 use url::Url;
-use utils::api::{ADMIN_BOT_EMAIL, PATH_CONNECT};
+use utils::api::{ADMIN_BOT_EMAIL, PATH_CONNECT, USER_BOT_EMAIL_PREFIX, USER_BOT_EMAIL_SUFFIX};
 
 use super::{BotAction, BotState, PreviousValue};
 use crate::{
@@ -412,7 +412,10 @@ impl BotAction for SetInitialEmailAction {
         let email = if self.admin {
             ADMIN_BOT_EMAIL.to_string()
         } else {
-            format!("bot{}@example.com", state.task_id)
+            format!(
+                "{}{}{}",
+                USER_BOT_EMAIL_PREFIX, state.task_id, USER_BOT_EMAIL_SUFFIX
+            )
         };
 
         account_api::post_initial_email(&state.api(), SetInitialEmail { email })
