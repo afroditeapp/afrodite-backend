@@ -152,11 +152,12 @@ impl AdminBot {
             account_verification_config,
             report_processing_config,
         ) = config::bot_config_file::internal::merge(
-            admin_bot_config,
+            admin_bot_config.clone(),
             (*state.bot_config_file).clone(),
         );
 
         warnings::log_warnings(
+            &admin_bot_config,
             &profile_name_config,
             &profile_text_config,
             &content_config,
