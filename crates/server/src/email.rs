@@ -163,14 +163,7 @@ impl EmailManager {
         };
 
         let email = if let Some(email) = email_to_use {
-            let treat_example_com_as_test =
-                if let Some(email_config) = self.state.config().simple_backend().email_sending() {
-                    !email_config.debug_example_com_is_normal_email
-                } else {
-                    true
-                };
-
-            if treat_example_com_as_test && email.0.ends_with("@example.com") {
+            if email.0.ends_with("@example.com") {
                 if message == EmailMessages::EmailVerification {
                     db_write_raw!(self.state, move |cmds| {
                         cmds.account()
