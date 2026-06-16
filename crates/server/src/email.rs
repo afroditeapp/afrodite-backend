@@ -164,7 +164,18 @@ impl EmailManager {
 
         let email = if let Some(email) = email_to_use {
             if email.0.ends_with("@example.com") {
-                if message == EmailMessages::EmailVerification {
+                let is_bot = async || {
+                    self.state
+                        .read()
+                        .common()
+                        .is_bot(recipient)
+                        .await
+                        .map_err(|e| e.into_report())
+                        .change_context(EmailError::GettingEmailDataFailed)
+                };
+                if message == EmailMessages::EmailVerification
+                    && (self.state.config().debug_mode() || is_bot().await?)
+                {
                     db_write_raw!(self.state, move |cmds| {
                         cmds.account()
                             .update_syncable_account_data(recipient, |account| {
@@ -188,9 +199,9 @@ impl EmailManager {
                 self.mark_as_sent(recipient, message).await?;
 
                 return Ok(None);
+            } else {
+                email.0
             }
-
-            email.0
         } else {
             return Ok(None);
         };

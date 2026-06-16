@@ -132,6 +132,7 @@ impl Config {
     /// Debug mode changes:
     /// * Routes for only related to benchmarking are available.
     /// * Axum JSON extractor shows errors.
+    /// * Email addresses ending with `@example.com` are automatically verified.
     ///
     /// Check also [SimpleBackendConfig::debug_mode].
     pub fn debug_mode(&self) -> bool {
