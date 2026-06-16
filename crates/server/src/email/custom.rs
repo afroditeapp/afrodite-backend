@@ -156,9 +156,14 @@ impl CustomEmailHandler {
             .map_err(|e| e.into_report())
             .change_context(EmailError::GettingEmailDataFailed)?;
 
-        let email = match data.email {
-            Some(e) => e.0,
-            None => return Ok(None),
+        let email = if let Some(email) = data.email {
+            if email.0.ends_with("@example.com") {
+                return Ok(None);
+            } else {
+                email.0
+            }
+        } else {
+            return Ok(None);
         };
 
         let email_id = CustomEmailId::new(message);
