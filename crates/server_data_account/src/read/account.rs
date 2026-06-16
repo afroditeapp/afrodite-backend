@@ -145,6 +145,15 @@ impl ReadCommandsAccount<'_> {
             .into_error()
     }
 
+    pub async fn is_account_owned_by_demo_account(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<bool, DataError> {
+        self.db_read(move |mut cmds| cmds.account().demo().is_account_owned_by_demo_account(id))
+            .await
+            .into_error()
+    }
+
     pub async fn global_state(&self) -> Result<AccountGlobalState, DataError> {
         self.db_read(move |mut cmds| cmds.account().data().global_state())
             .await

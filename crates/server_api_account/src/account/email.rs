@@ -379,7 +379,11 @@ pub async fn post_init_email_change(
 
 const PATH_POST_INITIAL_EMAIL: &str = "/account_api/initial_email";
 
-/// Set initial email when initial setup is ongoing
+/// Set initial email address for bots and accounts owned by demo account when
+/// initial setup is ongoing.
+///
+/// Does nothing if the provided email address is the same as the current
+/// email address.
 #[utoipa::path(
     post,
     path = PATH_POST_INITIAL_EMAIL,
@@ -400,6 +404,35 @@ pub async fn post_initial_email(
     ACCOUNT.post_initial_email.incr();
 
     if api_caller_account_state != AccountState::InitialSetup {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    let internal = state
+        .read()
+        .account()
+        .email_address_state_internal(api_caller_account_id)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    if internal.email.as_ref() == Some(&email.email) {
+        return Ok(());
+    }
+
+    let is_bot = state
+        .read()
+        .common()
+        .is_bot(api_caller_account_id)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let is_owned_by_demo_account = state
+        .read()
+        .account()
+        .is_account_owned_by_demo_account(api_caller_account_id)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    if !is_bot && !is_owned_by_demo_account {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
