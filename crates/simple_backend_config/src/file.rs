@@ -129,6 +129,7 @@ local_bot_api_port = 3001
 # jwt_secret = "TODO"
 # jwt_aud = "afrodite"
 # jwt_iss = "afrodite"
+# jwt_sub = "jitsi.example.com"
 # jwt_validity_time = "1h"
 # room_prefix = "Afrodite_meeting_"
 
@@ -763,6 +764,7 @@ pub struct JitsiMeetConfig {
     pub jwt_secret: String,
     pub jwt_aud: String,
     pub jwt_iss: String,
+    pub jwt_sub: String,
     pub jwt_validity_time: DurationValue,
     pub room_prefix: String,
     /// Template URL which contains "{room}" and "{jwt}".

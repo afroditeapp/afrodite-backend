@@ -64,6 +64,7 @@ impl<'a> JitsiMeetUrlCreator<'a> {
         let claims = Claims {
             aud: config.jwt_aud.clone(),
             iss: config.jwt_iss.clone(),
+            sub: config.jwt_sub.clone(),
             exp: exp.ut,
             room: room.clone(),
             context: Context {
@@ -114,6 +115,7 @@ struct Context {
 struct Claims {
     aud: String,
     iss: String,
+    sub: String,
     exp: i64,
     room: String,
     context: Context,
