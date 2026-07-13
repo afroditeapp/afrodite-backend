@@ -35,6 +35,7 @@ pub use parser::parse_server_binary_message;
 /// - `AccountStateChanged` (30): payload is empty.
 /// - `AccountVerificationQueuePositionChanged` (31): payload format:
 ///   - optional queue position as 1 byte (empty payload means `None`)
+/// - `EmailAddressStateChanged` (32): payload is empty.
 /// - `ProfileChanged` (60): payload is empty.
 /// - `ResponseResetProfilePaging` (61): payload format:
 ///   - request id byte (u8)
@@ -129,6 +130,7 @@ pub enum ServerMessageType {
     /// Account state, profile visibility or permissions changed
     AccountStateChanged = 30,
     AccountVerificationQueuePositionChanged = 31,
+    EmailAddressStateChanged = 32,
     // - profile: 60..=89
     ProfileChanged = 60,
     ResponseResetProfilePaging = 61,
@@ -194,6 +196,9 @@ pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
         EventToClientInternal::AppUpdateAvailable => ServerMessageType::AppUpdateAvailable,
         EventToClientInternal::PushNotificationInfoChanged => {
             ServerMessageType::PushNotificationInfoChanged
+        }
+        EventToClientInternal::EmailAddressStateChanged => {
+            ServerMessageType::EmailAddressStateChanged
         }
         EventToClientInternal::TypingStart(_) => ServerMessageType::TypingStart,
         EventToClientInternal::TypingStop(_) => ServerMessageType::TypingStop,
@@ -282,6 +287,7 @@ pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
         | EventToClientInternal::MediaContentChanged
         | EventToClientInternal::DailyLikesLeftChanged
         | EventToClientInternal::PushNotificationInfoChanged
+        | EventToClientInternal::EmailAddressStateChanged
         | EventToClientInternal::MessageDeliveryInfoChanged
         | EventToClientInternal::LatestSeenMessageChanged => (),
     }

@@ -7,7 +7,9 @@ use axum::{
     http::StatusCode,
 };
 use axum_extra::{TypedHeader, headers::ContentType};
-use model::{AccessToken, AccountIdInternal, AccountState, Permissions, UnixTime};
+use model::{
+    AccessToken, AccountIdInternal, AccountState, EventToClientInternal, Permissions, UnixTime,
+};
 use model_account::{
     EmailAddressState, InitEmailChange, InitEmailChangeResult, SendVerifyEmailMessageResult,
     SetEmailLoginEnabled, SetInitialEmail,
@@ -592,7 +594,18 @@ pub async fn post_set_email_login_enabled(
         cmds.account()
             .email()
             .set_email_login_enabled(target_account, request.enabled)
-            .await
+            .await?;
+
+        if !is_own_account {
+            cmds.events()
+                .send_connected_event(
+                    target_account.uuid,
+                    EventToClientInternal::EmailAddressStateChanged,
+                )
+                .await?;
+        }
+
+        Ok(())
     })?;
 
     Ok(())

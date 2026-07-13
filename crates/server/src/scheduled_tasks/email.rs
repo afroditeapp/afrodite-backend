@@ -1,4 +1,6 @@
-use model::{AccountIdInternal, EmailMessages, PendingAppNotificationType, UnixTime};
+use model::{
+    AccountIdInternal, EmailMessages, EventToClientInternal, PendingAppNotificationType, UnixTime,
+};
 use server_api::{
     DataError,
     app::{GetConfig, ReadData, WriteData},
@@ -307,6 +309,9 @@ async fn cancel_email_change_if_needed(state: &S, id: AccountIdInternal) -> Resu
     {
         db_write_raw!(state, move |cmds| {
             cmds.account().email().cancel_email_change(id).await?;
+            cmds.events()
+                .send_connected_event(id, EventToClientInternal::EmailAddressStateChanged)
+                .await?;
             Ok(())
         })
         .await?;

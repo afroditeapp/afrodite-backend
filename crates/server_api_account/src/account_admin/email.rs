@@ -2,15 +2,19 @@ use axum::{
     Extension,
     extract::{Path, State},
 };
-use model::{AccountId, Permissions};
+use model::{AccountId, EventToClientInternal, Permissions};
 use model_account::{EmailAddressStateAdmin, InitEmailChangeAdmin, InitEmailChangeResult};
-use server_api::{S, create_open_api_router, db_write};
+use server_api::{
+    S,
+    app::{EventManagerProvider, ReadData, WriteData},
+    create_open_api_router, db_write,
+};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
 
 use crate::{
     account::email::init_email_change_impl,
-    app::{GetAccounts, ReadData, WriteData},
+    app::GetAccounts,
     utils::{Json, StatusCode},
 };
 
@@ -95,7 +99,16 @@ pub async fn post_admin_cancel_email_change(
         cmds.account()
             .email()
             .cancel_email_change(target_account)
-            .await
+            .await?;
+
+        cmds.events()
+            .send_connected_event(
+                target_account.uuid,
+                EventToClientInternal::EmailAddressStateChanged,
+            )
+            .await?;
+
+        Ok(())
     })?;
 
     Ok(())
@@ -135,6 +148,16 @@ pub async fn post_admin_init_email_change(
     let target_account = state.get_internal_id(request.account_id).await?;
 
     let result = init_email_change_impl(&state, target_account, request.new_email).await?;
+
+    state
+        .event_manager()
+        .send_connected_event(
+            target_account.uuid,
+            EventToClientInternal::EmailAddressStateChanged,
+        )
+        .await
+        .ok();
+
     Ok(result.into())
 }
 

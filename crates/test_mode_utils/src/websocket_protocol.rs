@@ -158,6 +158,7 @@ fn convert_server_event_to_client_for_test_mode(
             Some(event)
         }
         EventToClientInternal::AccountStateChanged
+        | EventToClientInternal::EmailAddressStateChanged
         | EventToClientInternal::NewMessageReceived
         | EventToClientInternal::PendingChatNotificationsChanged
         | EventToClientInternal::PendingAppNotificationsChanged

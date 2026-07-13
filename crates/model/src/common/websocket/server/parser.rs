@@ -43,6 +43,9 @@ pub fn parse_server_binary_message(message: &[u8]) -> Result<EventToClientIntern
             EventToClientInternal::PushNotificationInfoChanged
         }
         ServerMessageType::AccountStateChanged => EventToClientInternal::AccountStateChanged,
+        ServerMessageType::EmailAddressStateChanged => {
+            EventToClientInternal::EmailAddressStateChanged
+        }
         ServerMessageType::ProfileChanged => EventToClientInternal::ProfileChanged,
         ServerMessageType::ResponseResetProfilePaging => {
             let (request_id, status, iterator_session_id) =
@@ -504,6 +507,11 @@ mod tests {
         roundtrip_account_state_changed_message,
         EventToClientInternal::AccountStateChanged,
         EventToClientInternal::AccountStateChanged
+    );
+    assert_roundtrip_without_payload!(
+        roundtrip_email_address_state_changed_message,
+        EventToClientInternal::EmailAddressStateChanged,
+        EventToClientInternal::EmailAddressStateChanged
     );
     assert_roundtrip_without_payload!(
         roundtrip_profile_changed_message,

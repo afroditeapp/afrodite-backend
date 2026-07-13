@@ -131,6 +131,7 @@ pub enum EventToClientInternal {
     ScheduledMaintenanceStatus(ScheduledMaintenanceStatus),
     AdminBotNotification(crate::AdminBotNotificationTypes),
     PushNotificationInfoChanged,
+    EmailAddressStateChanged,
     TypingStart(AccountId),
     TypingStop(AccountId),
     OnlineStatusUpdated(OnlineStatusUpdate),

@@ -95,6 +95,12 @@ impl WriteCommandsAccountEmail<'_> {
                 self.event_manager()
                     .send_connected_event(account_id, EventToClientInternal::AccountStateChanged)
                     .await?;
+                self.event_manager()
+                    .send_connected_event(
+                        account_id,
+                        EventToClientInternal::EmailAddressStateChanged,
+                    )
+                    .await?;
             }
             Ok(TokenCheckResult::Valid)
         } else {
@@ -234,6 +240,9 @@ impl WriteCommandsAccountEmail<'_> {
                     .email()
                     .verify_pending_email_address(account_id)
             })?;
+            self.event_manager()
+                .send_connected_event(account_id, EventToClientInternal::EmailAddressStateChanged)
+                .await?;
             Ok(TokenCheckResult::Valid)
         } else {
             Ok(TokenCheckResult::Invalid)
@@ -286,6 +295,9 @@ impl WriteCommandsAccountEmail<'_> {
 
         self.event_manager()
             .send_connected_event(id, EventToClientInternal::AccountStateChanged)
+            .await?;
+        self.event_manager()
+            .send_connected_event(id, EventToClientInternal::EmailAddressStateChanged)
             .await?;
 
         Ok(())
