@@ -371,7 +371,7 @@ pub async fn post_request_email_login_token(
 
     let wait_until = Instant::now() + Duration::from_secs(5);
 
-    let client_token = timeout(Duration::from_secs(10), async {
+    let (client_token, handle) = async {
         let account_id = state
             .read()
             .account()
@@ -415,20 +415,22 @@ pub async fn post_request_email_login_token(
                 .set_email_login_tokens_and_return_client_token(account_id)
                 .await?;
 
-            cmds.account()
+            let handle = cmds
+                .account()
                 .email()
-                .send_email_login_token_high_priority(account_id)
-                .await?;
+                .send_email_login_token_high_priority(account_id)?;
 
-            Ok(Some(client_token))
+            Ok(Some((client_token, Some(handle))))
         })
         .ok()
-    })
+    }
     .await
-    .ok()
     .flatten()
-    .flatten()
-    .unwrap_or_else(EmailLoginToken::generate_new);
+    .unwrap_or_else(|| (EmailLoginToken::generate_new(), None));
+
+    if let Some(handle) = handle {
+        let _ = timeout(Duration::from_secs(10), handle.wait()).await;
+    }
 
     // Wait until at least 5 seconds have elapsed
     tokio::time::sleep_until(wait_until.into()).await;

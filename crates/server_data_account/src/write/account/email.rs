@@ -6,6 +6,7 @@ use server_data::{
     DataError,
     app::{EventManagerProvider, GetConfig, GetEmailSender},
     db_transaction, define_cmd_wrapper_write,
+    email::EmailSendingHandle,
     read::DbRead,
     result::{Result, WrappedContextExt},
     write::DbTransaction,
@@ -163,16 +164,13 @@ impl WriteCommandsAccountEmail<'_> {
         Ok(())
     }
 
-    pub async fn send_email_verification_message_high_priority(
+    pub fn send_email_verification_message_high_priority(
         &self,
         id: AccountIdInternal,
-    ) -> Result<(), DataError> {
+    ) -> Result<EmailSendingHandle, DataError> {
         self.email_sender()
             .send_high_priority(id, EmailMessages::EmailVerification)
-            .await
-            .map_err(|_| DataError::EmailSendingFailed.report())?;
-
-        Ok(())
+            .map_err(|_| DataError::EmailSendingFailed.report())
     }
 
     pub async fn init_email_change(
@@ -248,28 +246,22 @@ impl WriteCommandsAccountEmail<'_> {
         })
     }
 
-    pub async fn send_email_change_verification_high_priority(
+    pub fn send_email_change_verification_high_priority(
         &self,
         id: AccountIdInternal,
-    ) -> Result<(), DataError> {
+    ) -> Result<EmailSendingHandle, DataError> {
         self.email_sender()
             .send_high_priority(id, EmailMessages::EmailChangeVerification)
-            .await
-            .map_err(|_| DataError::EmailSendingFailed.report())?;
-
-        Ok(())
+            .map_err(|_| DataError::EmailSendingFailed.report())
     }
 
-    pub async fn send_email_change_notification_high_priority(
+    pub fn send_email_change_notification_high_priority(
         &self,
         id: AccountIdInternal,
-    ) -> Result<(), DataError> {
+    ) -> Result<EmailSendingHandle, DataError> {
         self.email_sender()
             .send_high_priority(id, EmailMessages::EmailChangeNotification)
-            .await
-            .map_err(|_| DataError::EmailSendingFailed.report())?;
-
-        Ok(())
+            .map_err(|_| DataError::EmailSendingFailed.report())
     }
 
     /// The new_email must be verified email address.
@@ -328,16 +320,13 @@ impl WriteCommandsAccountEmail<'_> {
         Ok(client_token)
     }
 
-    pub async fn send_email_login_token_high_priority(
+    pub fn send_email_login_token_high_priority(
         &self,
         id: AccountIdInternal,
-    ) -> Result<(), DataError> {
+    ) -> Result<EmailSendingHandle, DataError> {
         self.email_sender()
             .send_high_priority(id, EmailMessages::EmailLoginToken)
-            .await
-            .map_err(|_| DataError::EmailSendingFailed.report())?;
-
-        Ok(())
+            .map_err(|_| DataError::EmailSendingFailed.report())
     }
 
     pub async fn verify_and_remove_email_login_tokens(

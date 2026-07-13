@@ -41,6 +41,22 @@ pub struct HighPriorityEmailMsg {
     pub result_sender: oneshot::Sender<Result<(), DataError>>,
 }
 
+/// A handle that can be awaited to get the result of sending a high priority email.
+/// Created by [`EmailChannelSender::send_high_priority`].
+pub struct EmailSendingHandle {
+    result_receiver: oneshot::Receiver<Result<(), DataError>>,
+}
+
+impl EmailSendingHandle {
+    /// Wait for the email sending result.
+    pub async fn wait(self) -> Result<(), DataError> {
+        match self.result_receiver.await {
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(_)) | Err(_) => Err(DataError::EmailSendingFailed),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct EmailChannelSender {
     sender: Sender<NormalEmailMsg>,
@@ -85,11 +101,11 @@ impl EmailChannelSender {
         }
     }
 
-    pub async fn send_high_priority(
+    pub fn send_high_priority(
         &self,
         recipient: model::AccountIdInternal,
         message: model::EmailMessages,
-    ) -> error_stack::Result<(), DataError> {
+    ) -> error_stack::Result<EmailSendingHandle, DataError> {
         let (result_sender, result_receiver) = oneshot::channel();
         let cmd = HighPriorityEmailMsg {
             recipient,
@@ -102,10 +118,7 @@ impl EmailChannelSender {
             Err(TrySendError::Full(_)) => return Err(report!(DataError::EmailSendingFailed)),
         }
 
-        match result_receiver.await {
-            Ok(Ok(())) => Ok(()),
-            Ok(Err(_)) | Err(_) => Err(report!(DataError::EmailSendingFailed)),
-        }
+        Ok(EmailSendingHandle { result_receiver })
     }
 }
 
