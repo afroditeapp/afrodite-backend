@@ -9,7 +9,7 @@ use std::{
 
 use axum::body::BodyDataStream;
 use futures::Future;
-use model::{AccountId, AccountIdInternal, ProfileLink};
+use model::{AccountId, AccountIdInternal, ContentQualityVariant, ProfileLink};
 use model_server_data::{
     AutomaticProfileSearchIteratorSessionId, AutomaticProfileSearchIteratorSessionIdInternal,
     ProfileIteratorSessionId, ProfileIteratorSessionIdInternal,
@@ -275,15 +275,31 @@ impl<'a> WriteCommandsConcurrent<'a> {
             .save_stream_with_cancel(stream, upload_permit.cancel_receiver_mut())
             .await?;
 
-        let tmp_img = self.file_dir.processed_content_upload(id.as_id());
+        let tmp_img_high = self
+            .file_dir
+            .processed_content_upload_variant(id.as_id(), ContentQualityVariant::High);
+        let tmp_img_medium = self
+            .file_dir
+            .processed_content_upload_variant(id.as_id(), ContentQualityVariant::Medium);
+        let tmp_img_low = self
+            .file_dir
+            .processed_content_upload_variant(id.as_id(), ContentQualityVariant::Low);
 
-        if let Err(e) = tmp_img.overwrite_and_remove_if_exists().await {
-            warn!("tmp_img removing failed {:?}", e)
+        if let Err(e) = tmp_img_high.overwrite_and_remove_if_exists().await {
+            warn!("tmp_img_high removing failed {:?}", e)
+        }
+        if let Err(e) = tmp_img_medium.overwrite_and_remove_if_exists().await {
+            warn!("tmp_img_medium removing failed {:?}", e)
+        }
+        if let Err(e) = tmp_img_low.overwrite_and_remove_if_exists().await {
+            warn!("tmp_img_low removing failed {:?}", e)
         }
 
         Ok(UploadInfo {
             tmp_raw_img,
-            tmp_img,
+            tmp_img_high,
+            tmp_img_medium,
+            tmp_img_low,
             upload_permit,
         })
     }

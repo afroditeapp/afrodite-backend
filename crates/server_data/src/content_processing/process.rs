@@ -45,7 +45,9 @@ impl ProcessManagerData {
     ) {
         let UploadInfo {
             tmp_raw_img,
-            tmp_img,
+            tmp_img_high,
+            tmp_img_medium,
+            tmp_img_low,
             upload_permit,
         } = upload_info;
         *processing_phase_lock = ProcessingPhase::Processing;
@@ -62,7 +64,9 @@ impl ProcessManagerData {
             processing_state: ContentProcessingStateInternal::InQueue {
                 wait_queue_position: write.queue.len().try_into().unwrap_or(i64::MAX),
             },
-            tmp_img,
+            tmp_img_high,
+            tmp_img_medium,
+            tmp_img_low,
             tmp_raw_img,
             new_content_params,
         };
@@ -166,7 +170,9 @@ pub struct ProcessingState {
     pub slot: ContentSlot,
     pub processing_state: ContentProcessingStateInternal,
     pub tmp_raw_img: TmpContentFile,
-    pub tmp_img: TmpContentFile,
+    pub tmp_img_high: TmpContentFile,
+    pub tmp_img_medium: TmpContentFile,
+    pub tmp_img_low: TmpContentFile,
     pub new_content_params: NewContentParams,
 }
 
@@ -187,7 +193,11 @@ impl ProcessingState {
 pub struct UploadInfo {
     /// Source file for content processing
     pub tmp_raw_img: TmpContentFile,
-    /// Target file for content processing
-    pub tmp_img: TmpContentFile,
+    /// Target file for high quality variant
+    pub tmp_img_high: TmpContentFile,
+    /// Target file for medium quality variant
+    pub tmp_img_medium: TmpContentFile,
+    /// Target file for low quality variant
+    pub tmp_img_low: TmpContentFile,
     pub upload_permit: UploadPermit,
 }

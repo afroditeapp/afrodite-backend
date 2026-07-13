@@ -1,5 +1,5 @@
 use database_media::current::read::GetDbReadCommandsMedia;
-use model::ContentIdInternal;
+use model::{ContentIdInternal, ContentQualityVariant};
 use model_media::{
     AccountId, AccountIdInternal, ContentId, CurrentAccountMediaInternal, MediaContentRaw,
     MediaContentSyncVersion,
@@ -30,7 +30,10 @@ impl ReadCommandsMedia<'_> {
         account_id: AccountId,
         content_id: ContentId,
     ) -> Result<ContentFile, DataError> {
-        let c = self.files().media_content(account_id, content_id);
+        // Serve high quality variant by default
+        let c =
+            self.files()
+                .media_content_variant(account_id, content_id, ContentQualityVariant::High);
         Ok(c)
     }
 

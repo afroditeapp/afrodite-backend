@@ -125,7 +125,9 @@ impl ContentProcessingManager {
                         Ok(dynamic_config)
                     },
                     content.tmp_raw_img.as_path(),
-                    content.tmp_img.as_path(),
+                    content.tmp_img_high.as_path(),
+                    content.tmp_img_medium.as_path(),
+                    content.tmp_img_low.as_path(),
                 )
                 .await
                 .change_context(ContentProcessingError::ContentProcessingFailed)
@@ -208,7 +210,9 @@ impl ContentProcessingManager {
             cmds.media()
                 .save_img(
                     state_copy.content_owner,
-                    state_copy.tmp_img,
+                    state_copy.tmp_img_high,
+                    state_copy.tmp_img_medium,
+                    state_copy.tmp_img_low,
                     state_copy.slot,
                     state_copy.new_content_params,
                     face_detected,

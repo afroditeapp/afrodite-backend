@@ -76,8 +76,12 @@ pub enum ImageProcessMessage {
 pub struct ProcessImageCommand {
     /// Input image file.
     pub input: PathBuf,
-    /// Output jpeg image file. Will be overwritten if exists.
-    pub output: PathBuf,
+    /// Output jpeg image file for high quality. Will be overwritten if exists.
+    pub output_high: PathBuf,
+    /// Output jpeg image file for medium quality. Will be overwritten if exists.
+    pub output_medium: PathBuf,
+    /// Output jpeg image file for low quality. Will be overwritten if exists.
+    pub output_low: PathBuf,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -178,8 +182,43 @@ fn handle_image(
         return Err(report!(ImageProcessError::SourceImageTooSmall));
     }
 
-    let mut img = resize_image_if_needed(img);
-    img.apply_orientation(orientation);
+    let mut oriented = img;
+    oriented.apply_orientation(orientation);
+
+    let high = resize_image_if_needed(&oriented, 1920);
+
+    let face_detected = match face_detector.detect_face(high.to_luma8()) {
+        Ok(v) => v,
+        Err(e) => {
+            // Ignore
+            eprintln!("{e:?}");
+            false
+        }
+    };
+
+    let nsfw_detected = nsfw_detector.detect_nsfw(high.to_rgba8())?;
+
+    encode_and_save_jpeg(config, &high, &command.output_high)?;
+
+    let medium = resize_image_if_needed(&oriented, 1280);
+    encode_and_save_jpeg(config, &medium, &command.output_medium)?;
+
+    let low = resize_image_if_needed(&oriented, 854);
+    encode_and_save_jpeg(config, &low, &command.output_low)?;
+
+    let info = ImageProcessingInfo {
+        face_detected,
+        nsfw_detected,
+    };
+
+    Ok(info)
+}
+
+fn encode_and_save_jpeg(
+    config: &ImageProcessingConfig,
+    img: &DynamicImage,
+    output_path: &PathBuf,
+) -> Result<(), ImageProcessError> {
     let width = img.width();
     let height = img.height();
 
@@ -221,42 +260,14 @@ fn handle_image(
     }
     .change_context(ImageProcessError::EncodingError)?;
 
-    std::fs::write(&command.output, data).change_context(ImageProcessError::FileWriting)?;
-
-    let face_detected = match face_detector.detect_face(img.to_luma8()) {
-        Ok(v) => v,
-        Err(e) => {
-            // Ignore
-            eprintln!("{e:?}");
-            false
-        }
-    };
-
-    let nsfw_detected = nsfw_detector.detect_nsfw(img.into_rgba8())?;
-
-    let info = ImageProcessingInfo {
-        face_detected,
-        nsfw_detected,
-    };
-
-    Ok(info)
+    std::fs::write(output_path, data).change_context(ImageProcessError::FileWriting)?;
+    Ok(())
 }
 
-fn resize_image_if_needed(img: DynamicImage) -> DynamicImage {
-    const WIDTH: u32 = 1920;
-    const HEIGHT: u32 = 1080;
-
-    // Check both using width because it is larger value
-    if img.width() > WIDTH || img.height() > WIDTH {
-        // Resize, so that suggested new resolution matches the image
-        // orientation. This makes resized image the largest possible which can
-        // fit in Full HD area with the same aspect ratio.
-        if img.width() > img.height() {
-            img.resize(WIDTH, HEIGHT, image::imageops::FilterType::Lanczos3)
-        } else {
-            img.resize(HEIGHT, WIDTH, image::imageops::FilterType::Lanczos3)
-        }
+fn resize_image_if_needed(img: &DynamicImage, size: u32) -> DynamicImage {
+    if img.width() > size || img.height() > size {
+        img.resize(size, size, image::imageops::FilterType::Lanczos3)
     } else {
-        img
+        img.clone()
     }
 }

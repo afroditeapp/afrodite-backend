@@ -1,7 +1,12 @@
 //! Image process
 
 use std::{
-    env, os::unix::process::CommandExt, path::Path, process::Stdio, sync::OnceLock, time::Duration,
+    env,
+    os::unix::process::CommandExt,
+    path::{Path, PathBuf},
+    process::Stdio,
+    sync::OnceLock,
+    time::Duration,
 };
 
 use error_stack::{Result, ResultExt};
@@ -184,7 +189,9 @@ impl ImageProcessHandle {
         let message = ImageProcessMessage::ProcessImage {
             process_image: ProcessImageCommand {
                 input: command.input,
-                output: command.output,
+                output_high: command.output_high,
+                output_medium: command.output_medium,
+                output_low: command.output_low,
             },
         };
 
@@ -236,28 +243,42 @@ impl ImageProcess {
         config: &SimpleBackendConfig,
         load_config: impl AsyncFnOnce() -> Result<ImageProcessingDynamicConfig, ImageProcessError>,
         input: &Path,
-        output: &Path,
+        output_high: &Path,
+        output_medium: &Path,
+        output_low: &Path,
     ) -> Result<ImageProcessingInfo, ImageProcessError> {
         let input = std::fs::canonicalize(input)
             .change_context(ImageProcessError::ImageProcessingCommandCreationFailed)?;
-        let output = if output.exists() {
-            std::fs::canonicalize(output)
-                .change_context(ImageProcessError::ImageProcessingCommandCreationFailed)?
-        } else {
-            let output_file_name = output
-                .file_name()
-                .ok_or(ImageProcessError::ImageProcessingCommandCreationFailed.report())?;
-            if let Some(parent) = output.parent() {
-                let path = std::fs::canonicalize(parent)
-                    .change_context(ImageProcessError::ImageProcessingCommandCreationFailed)?;
-                path.join(output_file_name)
+
+        let canonicalize_or_create = |path: &Path| -> Result<PathBuf, ImageProcessError> {
+            if path.exists() {
+                std::fs::canonicalize(path)
+                    .change_context(ImageProcessError::ImageProcessingCommandCreationFailed)
             } else {
-                return Err(ImageProcessError::ImageProcessingCommandCreationFailed.report())
-                    .attach_printable(format!("Output path {output:?} has no parent"));
+                let file_name = path
+                    .file_name()
+                    .ok_or(ImageProcessError::ImageProcessingCommandCreationFailed.report())?;
+                if let Some(parent) = path.parent() {
+                    let parent = std::fs::canonicalize(parent)
+                        .change_context(ImageProcessError::ImageProcessingCommandCreationFailed)?;
+                    Ok(parent.join(file_name))
+                } else {
+                    Err(ImageProcessError::ImageProcessingCommandCreationFailed.report())
+                        .attach_printable(format!("Output path {path:?} has no parent"))
+                }
             }
         };
 
-        let command = ProcessImageCommand { input, output };
+        let output_high = canonicalize_or_create(output_high)?;
+        let output_medium = canonicalize_or_create(output_medium)?;
+        let output_low = canonicalize_or_create(output_low)?;
+
+        let command = ProcessImageCommand {
+            input,
+            output_high,
+            output_medium,
+            output_low,
+        };
 
         let mut state = get_image_process().lock().await;
 

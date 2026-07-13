@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use database::current::read::GetDbReadCommandsCommon;
 use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia};
 use error_stack::ResultExt;
-use model::{AccountState, ContentIdInternal, EventToClientInternal};
+use model::{AccountState, ContentIdInternal, ContentQualityVariant, EventToClientInternal};
 use model_media::{
     AccountIdInternal, ContentId, ContentIdDb, ContentSlot, CurrentAccountMediaInternal,
     NewContentParams, ProfileContent, ProfileContentModificationMetadata, SetProfileContent,
@@ -43,10 +43,13 @@ impl<'a> WriteCommandsMedia<'a> {
 
 impl WriteCommandsMedia<'_> {
     /// Completes previous save_to_tmp.
+    #[allow(clippy::too_many_arguments)]
     pub async fn save_img(
         &self,
         id: AccountIdInternal,
-        tmp_img: TmpContentFile,
+        tmp_img_high: TmpContentFile,
+        tmp_img_medium: TmpContentFile,
+        tmp_img_low: TmpContentFile,
         slot: ContentSlot,
         new_content_params: NewContentParams,
         face_detected: bool,
@@ -72,8 +75,32 @@ impl WriteCommandsMedia<'_> {
                 .await?;
 
             if let Some(content) = current_content_in_slot {
-                let path = self.files().media_content(id.as_id(), content.into());
-                path.overwrite_and_remove_if_exists()
+                let content_id = content.content_id();
+                let path_h = self.files().media_content_variant(
+                    id.as_id(),
+                    content_id,
+                    ContentQualityVariant::High,
+                );
+                path_h
+                    .overwrite_and_remove_if_exists()
+                    .await
+                    .change_context(DataError::File)?;
+                let path_m = self.files().media_content_variant(
+                    id.as_id(),
+                    content_id,
+                    ContentQualityVariant::Medium,
+                );
+                path_m
+                    .overwrite_and_remove_if_exists()
+                    .await
+                    .change_context(DataError::File)?;
+                let path_l = self.files().media_content_variant(
+                    id.as_id(),
+                    content_id,
+                    ContentQualityVariant::Low,
+                );
+                path_l
+                    .overwrite_and_remove_if_exists()
                     .await
                     .change_context(DataError::File)?;
                 self.db_transaction(move |mut cmds| {
@@ -92,7 +119,18 @@ impl WriteCommandsMedia<'_> {
                 let content_id = cmds.media().get_next_unique_content_id(id)?;
 
                 // Paths related to moving content from tmp dir to content dir
-                let processed_content_path = files.media_content(id.as_id(), content_id);
+                let processed_content_path_high = files.media_content_variant(
+                    id.as_id(),
+                    content_id,
+                    ContentQualityVariant::High,
+                );
+                let processed_content_path_medium = files.media_content_variant(
+                    id.as_id(),
+                    content_id,
+                    ContentQualityVariant::Medium,
+                );
+                let processed_content_path_low =
+                    files.media_content_variant(id.as_id(), content_id, ContentQualityVariant::Low);
 
                 cmds.media().media_content().insert_content_id(
                     id,
@@ -104,8 +142,14 @@ impl WriteCommandsMedia<'_> {
                 )?;
 
                 // Move content from tmp dir to content dir
-                tmp_img
-                    .move_to_blocking(&processed_content_path)
+                tmp_img_high
+                    .move_to_blocking(&processed_content_path_high)
+                    .map_err(|e| e.change_context(DieselDatabaseError::File))?;
+                tmp_img_medium
+                    .move_to_blocking(&processed_content_path_medium)
+                    .map_err(|e| e.change_context(DieselDatabaseError::File))?;
+                tmp_img_low
+                    .move_to_blocking(&processed_content_path_low)
                     .map_err(|e| e.change_context(DieselDatabaseError::File))?;
                 // If moving fails, diesel rollbacks the transaction.
 
@@ -286,8 +330,18 @@ impl WriteCommandsMedia<'_> {
                 .await?;
         }
 
+        let account_id = content_id.content_owner().into();
+        let cid = content_id.content_id();
         self.files()
-            .media_content(content_id.content_owner().into(), content_id.content_id())
+            .media_content_variant(account_id, cid, ContentQualityVariant::High)
+            .overwrite_and_remove_if_exists()
+            .await?;
+        self.files()
+            .media_content_variant(account_id, cid, ContentQualityVariant::Medium)
+            .overwrite_and_remove_if_exists()
+            .await?;
+        self.files()
+            .media_content_variant(account_id, cid, ContentQualityVariant::Low)
             .overwrite_and_remove_if_exists()
             .await?;
 

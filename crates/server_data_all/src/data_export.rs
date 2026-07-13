@@ -2,7 +2,7 @@ use std::io::Write;
 
 use database::{DbReadMode, DieselDatabaseError};
 use error_stack::ResultExt;
-use model::{ContentId, DataExportType};
+use model::{ContentId, ContentQualityVariant, DataExportType};
 use serde::Serialize;
 use server_data::{
     DataError,
@@ -99,11 +99,17 @@ fn db_data_export(
     }
 
     for c in media.content {
-        let data = file_dir
-            .media_content(cmd.source().0.uuid, c.cid)
-            .read_all_blocking()
-            .change_context(DieselDatabaseError::File)?;
-        writer.write_media_content(c.cid, &data)?;
+        for variant in [
+            ContentQualityVariant::High,
+            ContentQualityVariant::Medium,
+            ContentQualityVariant::Low,
+        ] {
+            let data = file_dir
+                .media_content_variant(cmd.source().0.uuid, c.cid, variant)
+                .read_all_blocking()
+                .change_context(DieselDatabaseError::File)?;
+            writer.write_media_content(c.cid, variant, &data)?;
+        }
     }
 
     let mut file = writer
@@ -159,11 +165,14 @@ impl DataExportArchiveWriter {
     fn write_media_content(
         &mut self,
         content_id: ContentId,
+        variant: ContentQualityVariant,
         data: &[u8],
     ) -> error_stack::Result<(), DieselDatabaseError> {
         let zip_main_directory_name = &self.zip_main_directory_name;
-        let content_file_name = content_id.content_file_name();
-        let file_name = format!("{zip_main_directory_name}/media/{content_file_name}.jpg");
+        let file_name = format!(
+            "{zip_main_directory_name}/media/{}.jpg",
+            content_id.content_file_name_variant(variant)
+        );
         self.zip_writer
             .start_file(file_name, SimpleFileOptions::default())
             .change_context(DieselDatabaseError::Zip)?;

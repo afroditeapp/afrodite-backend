@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use axum::body::BodyDataStream;
 use config::Config;
 use error_stack::{Result, ResultExt};
-use model::{AccountId, ContentId};
+use model::{AccountId, ContentId, ContentQualityVariant};
 use server_common::data::DataError;
 use simple_backend_database::data::create_dirs_and_get_files_dir_path;
 use simple_backend_utils::{
@@ -20,7 +20,9 @@ pub const CONTENT_DIR_NAME: &str = "content";
 
 const MAX_TMP_FILE_SIZE: usize = MIB_IN_BYTES * 10; // 10 MiB
 const TMP_RAW_UPLOAD_FILE_NAME: &str = "content.raw";
-const TMP_PROCESSED_UPLOAD_FILE_NAME: &str = "content.processed";
+const TMP_PROCESSED_UPLOAD_FILE_NAME_HIGH: &str = "content.processed_h";
+const TMP_PROCESSED_UPLOAD_FILE_NAME_MEDIUM: &str = "content.processed_m";
+const TMP_PROCESSED_UPLOAD_FILE_NAME_LOW: &str = "content.processed_l";
 
 /// Path to directory which contains all account data directories.
 #[derive(Debug, Clone)]
@@ -41,12 +43,25 @@ impl FileDir {
         self.account_dir(id).tmp_dir().raw_content_upload()
     }
 
-    pub fn processed_content_upload(&self, id: AccountId) -> TmpContentFile {
-        self.account_dir(id).tmp_dir().processed_content_upload()
+    pub fn processed_content_upload_variant(
+        &self,
+        id: AccountId,
+        variant: ContentQualityVariant,
+    ) -> TmpContentFile {
+        self.account_dir(id)
+            .tmp_dir()
+            .processed_content_upload_variant(variant)
     }
 
-    pub fn media_content(&self, id: AccountId, content_id: ContentId) -> ContentFile {
-        self.account_dir(id).content_dir().media_content(content_id)
+    pub fn media_content_variant(
+        &self,
+        id: AccountId,
+        content_id: ContentId,
+        variant: ContentQualityVariant,
+    ) -> ContentFile {
+        self.account_dir(id)
+            .content_dir()
+            .media_content_variant(content_id, variant)
     }
 
     pub fn account_dir(&self, id: AccountId) -> AccountDir {
@@ -138,8 +153,16 @@ impl TmpDir {
         }
     }
 
-    pub fn processed_content_upload(mut self) -> TmpContentFile {
-        self.dir.push(TMP_PROCESSED_UPLOAD_FILE_NAME);
+    pub fn processed_content_upload_variant(
+        mut self,
+        variant: ContentQualityVariant,
+    ) -> TmpContentFile {
+        let name = match variant {
+            ContentQualityVariant::High => TMP_PROCESSED_UPLOAD_FILE_NAME_HIGH,
+            ContentQualityVariant::Medium => TMP_PROCESSED_UPLOAD_FILE_NAME_MEDIUM,
+            ContentQualityVariant::Low => TMP_PROCESSED_UPLOAD_FILE_NAME_LOW,
+        };
+        self.dir.push(name);
         TmpContentFile {
             path: PathToFile { path: self.dir },
         }
@@ -163,8 +186,12 @@ impl ContentDir {
         &self.dir
     }
 
-    pub fn media_content(mut self, content_id: ContentId) -> ContentFile {
-        self.dir.push(content_id.content_file_name());
+    pub fn media_content_variant(
+        mut self,
+        content_id: ContentId,
+        variant: ContentQualityVariant,
+    ) -> ContentFile {
+        self.dir.push(content_id.content_file_name_variant(variant));
         ContentFile {
             path: PathToFile { path: self.dir },
         }

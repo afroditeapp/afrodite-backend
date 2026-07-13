@@ -9,6 +9,23 @@ use utoipa::{IntoParams, ToSchema};
 
 use crate::{AccountId, AccountIdInternal};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize, Serialize)]
+pub enum ContentQualityVariant {
+    High,
+    Medium,
+    Low,
+}
+
+impl ContentQualityVariant {
+    pub fn variant_suffix(&self) -> &'static str {
+        match self {
+            Self::High => "_h",
+            Self::Medium => "_m",
+            Self::Low => "_l",
+        }
+    }
+}
+
 /// media_content table primary key
 #[derive(
     Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, FromSqlRow, AsExpression,
@@ -70,8 +87,8 @@ impl ContentId {
         format!("{}.raw", self.cid)
     }
 
-    pub fn content_file_name(&self) -> String {
-        format!("{}", self.cid)
+    pub fn content_file_name_variant(&self, variant: ContentQualityVariant) -> String {
+        format!("{}{}", self.cid, variant.variant_suffix())
     }
 
     pub fn not_in(&self, mut iter: impl Iterator<Item = ContentId>) -> bool {
