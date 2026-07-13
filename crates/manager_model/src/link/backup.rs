@@ -3,6 +3,7 @@ use std::{
     num::Wrapping,
 };
 
+use simple_backend_model::ContentQualityVariant;
 use simple_backend_utils::UuidBase64Url;
 
 #[derive(Debug, Clone, Copy, PartialEq, num_enum::TryFromPrimitive)]
@@ -28,6 +29,7 @@ pub enum BackupMessageType {
     ///
     /// - Account ID UUID (16 bytes, big-endian)
     /// - Content ID UUID (16 bytes, big-endian)
+    /// - Content quality variant bitflag (1 byte): High=1, Medium=2, Low=4
     ContentQuery = 3,
     /// Source sends this to target when answering to content query.
     ///
@@ -35,8 +37,11 @@ pub enum BackupMessageType {
     ///
     /// Data:
     ///
-    /// - Content SHA-256 (32 bytes)
-    /// - Content data
+    /// - Repeated for each variant:
+    ///   - Content quality variant byte (1 byte): High=1, Medium=2, Low=4
+    ///   - Content SHA-256 (32 bytes)
+    ///   - Content data length (4 bytes, little-endian, u32)
+    ///   - Content data
     ContentQueryAnswer = 4,
     /// When target is handled the received content list the target
     /// sends this to source.
@@ -90,15 +95,14 @@ pub struct AccountAndContent {
     pub content_ids: Vec<UuidBase64Url>,
 }
 
+pub type ContentQueryAnswer = Vec<(ContentQualityVariant, Sha256Bytes, Vec<u8>)>;
+
 pub enum SourceToTargetMessage {
     StartBackupSession,
     ContentList {
         data: Vec<AccountAndContent>,
     },
-    ContentQueryAnswer {
-        sha256: Sha256Bytes,
-        data: Vec<u8>,
-    },
+    ContentQueryAnswer(ContentQueryAnswer),
     StartFileBackup {
         sha256: Sha256Bytes,
         file_name: String,
@@ -114,7 +118,7 @@ impl SourceToTargetMessage {
         let message_type = match self {
             Self::StartBackupSession => BackupMessageType::StartBackupSession,
             Self::ContentList { .. } => BackupMessageType::ContentList,
-            Self::ContentQueryAnswer { .. } => BackupMessageType::ContentQueryAnswer,
+            Self::ContentQueryAnswer(_) => BackupMessageType::ContentQueryAnswer,
             Self::StartFileBackup { .. } => BackupMessageType::StartFileBackup,
             Self::FileBackupData { .. } => BackupMessageType::FileBackupData,
         };
@@ -134,8 +138,17 @@ impl SourceToTargetMessage {
                 }
                 serialized
             }
-            Self::ContentQueryAnswer { sha256, data } => {
-                sha256.0.iter().chain(data.iter()).copied().collect()
+            Self::ContentQueryAnswer(v) => {
+                let mut serialized = vec![];
+                for (variant, sha256, data) in v {
+                    serialized.push(variant.as_u8());
+                    serialized.extend(sha256.0);
+                    let len: u32 =
+                        TryInto::<u32>::try_into(data.len()).map_err(|e| e.to_string())?;
+                    serialized.extend(len.to_le_bytes());
+                    serialized.extend(data);
+                }
+                serialized
             }
             Self::StartFileBackup { sha256, file_name } => sha256
                 .0
@@ -215,15 +228,34 @@ impl TryFrom<BackupMessage> for SourceToTargetMessage {
                 SourceToTargetMessage::ContentList { data: parsed }
             }
             BackupMessageType::ContentQueryAnswer => {
-                let Some((sha256, data)) = value.data.split_at_checked(32) else {
-                    return Err("No enough data".to_string());
-                };
-                let sha256: [u8; 32] =
-                    TryInto::<[u8; 32]>::try_into(sha256).map_err(|v| v.to_string())?;
-                SourceToTargetMessage::ContentQueryAnswer {
-                    sha256: Sha256Bytes(sha256),
-                    data: data.to_vec(),
+                let mut data_reader = value.data.as_slice();
+                let mut variants = vec![];
+
+                loop {
+                    let mut variant_byte = [0u8; 1];
+                    match data_reader.read_exact(&mut variant_byte) {
+                        Ok(()) => (),
+                        Err(e) if e.kind() == ErrorKind::UnexpectedEof => break,
+                        Err(e) => return Err(e.to_string()),
+                    }
+                    let Some(variant) = ContentQualityVariant::from_u8(variant_byte[0]) else {
+                        return Err("Invalid content quality variant byte".to_string());
+                    };
+                    let mut sha256 = [0u8; 32];
+                    data_reader
+                        .read_exact(&mut sha256)
+                        .map_err(|e| e.to_string())?;
+                    let mut len_bytes = [0u8; 4];
+                    data_reader
+                        .read_exact(&mut len_bytes)
+                        .map_err(|e| e.to_string())?;
+                    let len = u32::from_le_bytes(len_bytes) as usize;
+                    let mut d = vec![0u8; len];
+                    data_reader.read_exact(&mut d).map_err(|e| e.to_string())?;
+                    variants.push((variant, Sha256Bytes(sha256), d));
                 }
+
+                SourceToTargetMessage::ContentQueryAnswer(variants)
             }
             BackupMessageType::StartFileBackup => {
                 let Some((sha256, file_name)) = value.data.split_at_checked(32) else {
@@ -261,6 +293,9 @@ pub enum TargetToSourceMessage {
     ContentQuery {
         account_id: UuidBase64Url,
         content_id: UuidBase64Url,
+        high: bool,
+        medium: bool,
+        low: bool,
     },
 }
 
@@ -276,12 +311,28 @@ impl TargetToSourceMessage {
             Self::ContentQuery {
                 account_id,
                 content_id,
-            } => account_id
-                .as_bytes()
-                .iter()
-                .chain(content_id.as_bytes())
-                .copied()
-                .collect::<Vec<u8>>(),
+                high,
+                medium,
+                low,
+            } => {
+                let mut bitflags: u8 = 0;
+                if high {
+                    bitflags |= ContentQualityVariant::High.as_u8();
+                }
+                if medium {
+                    bitflags |= ContentQualityVariant::Medium.as_u8();
+                }
+                if low {
+                    bitflags |= ContentQualityVariant::Low.as_u8();
+                }
+                account_id
+                    .as_bytes()
+                    .iter()
+                    .chain(content_id.as_bytes())
+                    .copied()
+                    .chain([bitflags])
+                    .collect::<Vec<u8>>()
+            }
         };
 
         BackupMessage {
@@ -325,9 +376,18 @@ impl TryFrom<BackupMessage> for TargetToSourceMessage {
                     .map_err(|e| e.to_string())?;
                 let content_id = UuidBase64Url::from_bytes(bytes);
 
+                let mut bitflag = [0u8; 1];
+                data_reader
+                    .read_exact(&mut bitflag)
+                    .map_err(|e| e.to_string())?;
+                let bitflag = bitflag[0];
+
                 Self::ContentQuery {
                     account_id,
                     content_id,
+                    high: bitflag & ContentQualityVariant::High.as_u8() != 0,
+                    medium: bitflag & ContentQualityVariant::Medium.as_u8() != 0,
+                    low: bitflag & ContentQualityVariant::Low.as_u8() != 0,
                 }
             }
         };

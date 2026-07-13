@@ -11,7 +11,7 @@ use error_stack::{Result, ResultExt};
 use manager_config::Config;
 use manager_model::Sha256Bytes;
 use sha2::{Digest, Sha256};
-use simple_backend_model::UnixTime;
+use simple_backend_model::{ContentQualityVariant, UnixTime};
 use simple_backend_utils::{
     ContextExt, IntoReportFromString, UuidBase64Url, file::overwrite_and_remove_if_exists,
 };
@@ -66,18 +66,24 @@ impl<'a> BackupDirUtils<'a> {
         self.create_dir_if_needed(&self.create_content_dir_if_needed(), &account.to_string())
     }
 
-    fn content_file_path(&self, account: UuidBase64Url, content: UuidBase64Url) -> PathBuf {
+    fn content_file_path(
+        &self,
+        account: UuidBase64Url,
+        content: UuidBase64Url,
+        variant: ContentQualityVariant,
+    ) -> PathBuf {
         self.create_account_content_dir_if_needed(account)
-            .join(content.to_string())
+            .join(format!("{}{}", content, variant.variant_suffix()))
     }
 
     fn content_file_checksum_path(
         &self,
         account: UuidBase64Url,
         content: UuidBase64Url,
+        variant: ContentQualityVariant,
     ) -> PathBuf {
         self.create_account_content_dir_if_needed(account)
-            .join(format!("{content}.sha256"))
+            .join(format!("{}{}.sha256", content, variant.variant_suffix()))
     }
 
     fn create_files_dir_if_needed(&self) -> PathBuf {
@@ -166,10 +172,20 @@ impl SaveContentBackup {
                 return Err(BackupTargetError::InvalidContentId.report());
             };
 
-            let content_id = UuidBase64Url::from_text(text)
+            let (content_text, variant) = if let Some(stripped) = text.strip_suffix("_h") {
+                (stripped, ContentQualityVariant::High)
+            } else if let Some(stripped) = text.strip_suffix("_m") {
+                (stripped, ContentQualityVariant::Medium)
+            } else if let Some(stripped) = text.strip_suffix("_l") {
+                (stripped, ContentQualityVariant::Low)
+            } else {
+                continue;
+            };
+
+            let content_id = UuidBase64Url::from_text(content_text)
                 .into_error_string(BackupTargetError::InvalidContentId)?;
 
-            initial_content.insert(content_id);
+            initial_content.insert((content_id, variant));
         }
 
         Ok(UpdateAccountContent {
@@ -202,23 +218,28 @@ impl SaveContentBackup {
 pub struct UpdateAccountContent {
     config: Arc<Config>,
     account: UuidBase64Url,
-    initial_content: HashSet<UuidBase64Url>,
+    initial_content: HashSet<(UuidBase64Url, ContentQualityVariant)>,
 }
 
 impl UpdateAccountContent {
-    pub fn exists(&self, content: UuidBase64Url) -> bool {
+    pub fn exists_variant(&self, content: UuidBase64Url, variant: ContentQualityVariant) -> bool {
         BackupDirUtils::new(&self.config)
-            .content_file_path(self.account, content)
+            .content_file_path(self.account, content, variant)
             .exists()
     }
 
-    pub fn mark_as_still_existing(&mut self, content: UuidBase64Url) {
-        self.initial_content.remove(&content);
+    pub fn mark_as_still_existing(
+        &mut self,
+        content: UuidBase64Url,
+        variant: ContentQualityVariant,
+    ) {
+        self.initial_content.remove(&(content, variant));
     }
 
-    pub async fn new_content(
+    pub async fn new_content_variant(
         &self,
         content: UuidBase64Url,
+        variant: ContentQualityVariant,
         sha256: Sha256Bytes,
         data: Vec<u8>,
     ) -> Result<(), BackupTargetError> {
@@ -229,26 +250,38 @@ impl UpdateAccountContent {
             return Err(BackupTargetError::ContentDataCorruptionDetected.report());
         }
 
-        let f = BackupDirUtils::new(&self.config).content_file_checksum_path(self.account, content);
+        let f = BackupDirUtils::new(&self.config).content_file_checksum_path(
+            self.account,
+            content,
+            variant,
+        );
         tokio::fs::write(
             f,
-            sha256.to_shasum_tool_compatible_checksum(&content.to_string()),
+            sha256.to_shasum_tool_compatible_checksum(&format!(
+                "{}{}",
+                content,
+                variant.variant_suffix(),
+            )),
         )
         .await
         .change_context(BackupTargetError::Write)?;
-        let f = BackupDirUtils::new(&self.config).content_file_path(self.account, content);
+        let f = BackupDirUtils::new(&self.config).content_file_path(self.account, content, variant);
         tokio::fs::write(f, data)
             .await
             .change_context(BackupTargetError::Write)
     }
 
     pub async fn finalize(self) -> Result<(), BackupTargetError> {
-        for c in self.initial_content {
-            let f = BackupDirUtils::new(&self.config).content_file_checksum_path(self.account, c);
+        for (c, variant) in self.initial_content {
+            let f = BackupDirUtils::new(&self.config).content_file_checksum_path(
+                self.account,
+                c,
+                variant,
+            );
             overwrite_and_remove_if_exists(f)
                 .await
                 .change_context(BackupTargetError::FileOverwritingAndRemovingFailed)?;
-            let f = BackupDirUtils::new(&self.config).content_file_path(self.account, c);
+            let f = BackupDirUtils::new(&self.config).content_file_path(self.account, c, variant);
             overwrite_and_remove_if_exists(f)
                 .await
                 .change_context(BackupTargetError::FileOverwritingAndRemovingFailed)?;

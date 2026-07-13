@@ -5,7 +5,7 @@ use std::{
 
 use manager_api::backup::BackupSourceClient;
 use manager_model::{AccountAndContent, Sha256Bytes, SourceToTargetMessage, TargetToSourceMessage};
-use model::{AccountId, ContentId};
+use model::{AccountId, ContentId, ContentQualityVariant};
 use server_api::{
     DataError,
     app::{GetConfig, ReadData},
@@ -92,25 +92,46 @@ pub async fn backup_data(
                 TargetToSourceMessage::ContentQuery {
                     account_id,
                     content_id,
+                    high,
+                    medium,
+                    low,
                 } => {
-                    let content_data = state
-                        .read()
-                        .media()
-                        .content_data(AccountId { aid: account_id }, ContentId { cid: content_id })
-                        .await
-                        .change_context(ScheduledTaskError::DatabaseError)?;
-                    let data = content_data
-                        .read_all()
-                        .await
-                        .change_context(ScheduledTaskError::FileReadingError)?;
-                    let mut hasher = Sha256::new();
-                    hasher.update(&data);
-                    let result = hasher.finalize();
+                    let read_variant_data = async |variant| -> Result<
+                        (ContentQualityVariant, Sha256Bytes, Vec<u8>),
+                        ScheduledTaskError,
+                    > {
+                        let content_data = state
+                            .read()
+                            .media()
+                            .content_data_variant(
+                                AccountId { aid: account_id },
+                                ContentId { cid: content_id },
+                                variant,
+                            )
+                            .change_context(ScheduledTaskError::DatabaseError)?;
+                        let data = content_data
+                            .read_all()
+                            .await
+                            .change_context(ScheduledTaskError::FileReadingError)?;
+                        let mut hasher = Sha256::new();
+                        hasher.update(&data);
+                        let result = hasher.finalize();
+                        Ok((variant, Sha256Bytes(result.into()), data))
+                    };
+
+                    let mut variants = vec![];
+                    if high {
+                        variants.push(read_variant_data(ContentQualityVariant::High).await?);
+                    }
+                    if medium {
+                        variants.push(read_variant_data(ContentQualityVariant::Medium).await?);
+                    }
+                    if low {
+                        variants.push(read_variant_data(ContentQualityVariant::Low).await?);
+                    }
+
                     backup_client
-                        .send_message(SourceToTargetMessage::ContentQueryAnswer {
-                            sha256: Sha256Bytes(result.into()),
-                            data,
-                        })
+                        .send_message(SourceToTargetMessage::ContentQueryAnswer(variants))
                         .await
                         .change_context(ScheduledTaskError::Backup)?;
                 }

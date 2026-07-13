@@ -100,8 +100,7 @@ pub async fn get_content(
         let data = state
             .read()
             .media()
-            .content_data(requested_profile, requested_content_id)
-            .await?;
+            .content_data(requested_profile, requested_content_id)?;
 
         let (length, stream) = data
             .byte_count_and_read_stream()

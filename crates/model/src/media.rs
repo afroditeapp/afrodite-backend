@@ -3,28 +3,13 @@ use diesel::{
     sql_types::{BigInt, Binary, SmallInt},
 };
 use serde::{Deserialize, Serialize};
-pub use simple_backend_model::{ImageProcessingDynamicConfig, ImageProcessingWarnings};
+pub use simple_backend_model::{
+    ContentQualityVariant, ImageProcessingDynamicConfig, ImageProcessingWarnings,
+};
 use simple_backend_model::{SimpleDieselEnum, diesel_i64_wrapper, diesel_uuid_wrapper};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{AccountId, AccountIdInternal};
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize, Serialize)]
-pub enum ContentQualityVariant {
-    High,
-    Medium,
-    Low,
-}
-
-impl ContentQualityVariant {
-    pub fn variant_suffix(&self) -> &'static str {
-        match self {
-            Self::High => "_h",
-            Self::Medium => "_m",
-            Self::Low => "_l",
-        }
-    }
-}
 
 /// media_content table primary key
 #[derive(

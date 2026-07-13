@@ -27,6 +27,9 @@ pub use version::*;
 pub mod image_processing;
 pub use image_processing::*;
 
+pub mod content_quality;
+pub use content_quality::*;
+
 #[cfg(test)]
 mod tests {
     // Ignore unused dependency warning. Unit tests need this dependency.

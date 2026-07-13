@@ -11,9 +11,10 @@ use manager_api::{
 };
 use manager_config::{Config, file::BackupLinkConfigTarget};
 use manager_model::{
-    AccountAndContent, BackupMessage, BackupMessageType, Sha256Bytes, SourceToTargetMessage,
-    TargetToSourceMessage,
+    AccountAndContent, BackupMessage, BackupMessageType, ContentQueryAnswer, Sha256Bytes,
+    SourceToTargetMessage, TargetToSourceMessage,
 };
+use simple_backend_model::ContentQualityVariant;
 use simple_backend_utils::{ContextExt, IntoReportFromString};
 use tokio::{sync::mpsc, task::JoinHandle};
 use tracing::{error, info, warn};
@@ -309,6 +310,7 @@ struct BackupSessionTaskTarget {
     receiver: mpsc::Receiver<SourceToTargetMessage>,
     current_backup_session: u32,
     synced_accounts: u64,
+    /// Counts processed ContentIds only
     synced_content: u64,
     received_files: u64,
     deleted_files: u64,
@@ -354,16 +356,34 @@ impl BackupSessionTaskTarget {
             for a in &m {
                 let mut content_state = backup.update_account_content_backup(a.account_id).await?;
                 for &c in &a.content_ids {
-                    if content_state.exists(c) {
-                        content_state.mark_as_still_existing(c);
-                    } else {
+                    let mut is_download_needed = |c, variant| {
+                        if content_state.exists_variant(c, variant) {
+                            content_state.mark_as_still_existing(c, variant);
+                            false
+                        } else {
+                            true
+                        }
+                    };
+
+                    let high = is_download_needed(c, ContentQualityVariant::High);
+                    let medium = is_download_needed(c, ContentQualityVariant::Medium);
+                    let low = is_download_needed(c, ContentQualityVariant::Low);
+
+                    if high || medium || low {
                         self.send_message(TargetToSourceMessage::ContentQuery {
                             account_id: a.account_id,
                             content_id: c,
+                            high,
+                            medium,
+                            low,
                         })
                         .await?;
-                        let (sha256, data) = self.receive_content().await?;
-                        content_state.new_content(c, sha256, data).await?;
+                        let variants = self.receive_content(high, medium, low).await?;
+                        for (variant, sha256, data) in variants {
+                            content_state
+                                .new_content_variant(c, variant, sha256, data)
+                                .await?;
+                        }
                     }
                     self.synced_content += 1;
                 }
@@ -417,12 +437,43 @@ impl BackupSessionTaskTarget {
         }
     }
 
-    pub async fn receive_content(&mut self) -> Result<(Sha256Bytes, Vec<u8>), BackupTargetError> {
+    pub async fn receive_content(
+        &mut self,
+        high: bool,
+        medium: bool,
+        low: bool,
+    ) -> Result<ContentQueryAnswer, BackupTargetError> {
         let Some(m) = self.receiver.recv().await else {
             return Err(BackupTargetError::BrokenMessageChannel.report());
         };
         match m {
-            SourceToTargetMessage::ContentQueryAnswer { sha256, data } => Ok((sha256, data)),
+            SourceToTargetMessage::ContentQueryAnswer(v) => {
+                let contains_single = |variant| {
+                    let count = v.iter().filter(|item| item.0 == variant).count();
+                    if count == 1 {
+                        Ok(())
+                    } else {
+                        Err(BackupTargetError::Protocol
+                            .report()
+                            .attach_printable(format!(
+                                "{:?}, count: {}, expected 1",
+                                variant, count
+                            )))
+                    }
+                };
+
+                if high {
+                    contains_single(ContentQualityVariant::High)?
+                }
+                if medium {
+                    contains_single(ContentQualityVariant::Medium)?
+                }
+                if low {
+                    contains_single(ContentQualityVariant::Low)?
+                }
+
+                Ok(v)
+            }
             _ => Err(BackupTargetError::Protocol.report()),
         }
     }

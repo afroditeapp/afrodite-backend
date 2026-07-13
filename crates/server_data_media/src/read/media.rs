@@ -25,7 +25,19 @@ impl<'a> ReadCommandsMedia<'a> {
 }
 
 impl ReadCommandsMedia<'_> {
-    pub async fn content_data(
+    pub fn content_data_variant(
+        &self,
+        account_id: AccountId,
+        content_id: ContentId,
+        variant: ContentQualityVariant,
+    ) -> Result<ContentFile, DataError> {
+        let c = self
+            .files()
+            .media_content_variant(account_id, content_id, variant);
+        Ok(c)
+    }
+
+    pub fn content_data(
         &self,
         account_id: AccountId,
         content_id: ContentId,
