@@ -35,10 +35,17 @@ pub enum CustomEmailMsg {
     },
 }
 
-pub struct HighPriorityEmailMsg {
-    pub recipient: model::AccountIdInternal,
-    pub message: model::EmailMessages,
-    pub result_sender: oneshot::Sender<Result<(), DataError>>,
+pub enum HighPriorityEmailMsg {
+    Normal {
+        recipient: model::AccountIdInternal,
+        message: model::EmailMessages,
+        result_sender: oneshot::Sender<Result<(), DataError>>,
+    },
+    RegistrationToken {
+        email: String,
+        token: String,
+        result_sender: oneshot::Sender<Result<(), DataError>>,
+    },
 }
 
 /// A handle that can be awaited to get the result of sending a high priority email.
@@ -107,9 +114,29 @@ impl EmailChannelSender {
         message: model::EmailMessages,
     ) -> error_stack::Result<EmailSendingHandle, DataError> {
         let (result_sender, result_receiver) = oneshot::channel();
-        let cmd = HighPriorityEmailMsg {
+        let cmd = HighPriorityEmailMsg::Normal {
             recipient,
             message,
+            result_sender,
+        };
+        match self.high_priority_sender.try_send(cmd) {
+            Ok(()) => (),
+            Err(TrySendError::Closed(_)) => return Err(report!(DataError::EmailSendingFailed)),
+            Err(TrySendError::Full(_)) => return Err(report!(DataError::EmailSendingFailed)),
+        }
+
+        Ok(EmailSendingHandle { result_receiver })
+    }
+
+    pub fn send_registration_login_token(
+        &self,
+        email: String,
+        token: String,
+    ) -> error_stack::Result<EmailSendingHandle, DataError> {
+        let (result_sender, result_receiver) = oneshot::channel();
+        let cmd = HighPriorityEmailMsg::RegistrationToken {
+            email,
+            token,
             result_sender,
         };
         match self.high_priority_sender.try_send(cmd) {

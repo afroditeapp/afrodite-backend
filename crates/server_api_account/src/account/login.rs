@@ -17,7 +17,10 @@ use server_api::{
     app::{GetConfig, GetDynamicServerConfig},
     db_write,
 };
-use server_data::{IntoDataError, db_manager::InternalReading, write::GetWriteCommandsCommon};
+use server_data::{
+    IntoDataError, db_manager::InternalReading, email::EmailSendingHandle,
+    write::GetWriteCommandsCommon,
+};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::{
     app::SignInWith,
@@ -27,9 +30,12 @@ use simple_backend::{
 use tokio::time::{Duration, timeout};
 
 use crate::{
+    account::login::register::request_email_registration_token,
     app::{GetAccounts, ReadData, WriteData},
     utils::{Json, StatusCode},
 };
+
+pub mod register;
 
 pub async fn login_impl(
     id: AccountId,
@@ -345,41 +351,119 @@ pub async fn post_sign_in_with_apple_redirect_to_app(
     Ok(Redirect::temporary(&redirect))
 }
 
+struct EmailLoginResultInternal {
+    token: EmailLoginToken,
+    handle: Option<EmailSendingHandle>,
+    error_registration_ip_address_limit_reached: bool,
+}
+
+impl EmailLoginResultInternal {
+    fn successful(token: EmailLoginToken, handle: EmailSendingHandle) -> Self {
+        Self {
+            token,
+            handle: Some(handle),
+            error_registration_ip_address_limit_reached: false,
+        }
+    }
+
+    fn error_hidden() -> Self {
+        Self {
+            token: EmailLoginToken::generate_new(),
+            handle: None,
+            error_registration_ip_address_limit_reached: false,
+        }
+    }
+
+    fn error_registration_ip_address_limit_reached() -> Self {
+        Self {
+            token: EmailLoginToken::generate_new(),
+            handle: None,
+            error_registration_ip_address_limit_reached: true,
+        }
+    }
+}
+
 pub const PATH_POST_REQUEST_EMAIL_LOGIN_TOKEN: &str = "/account_api/request_email_login_token";
 
 /// Request email login token to be sent via email.
 ///
 /// The route always takes at least 5 seconds to complete to prevent timing attacks
 /// that could be used to enumerate existing email addresses.
-///
-/// No error is returned to prevent attackers from discovering which email
-/// addresses exist in the system.
 #[utoipa::path(
     post,
     path = PATH_POST_REQUEST_EMAIL_LOGIN_TOKEN,
     request_body = RequestEmailLoginToken,
     responses(
         (status = 200, description = "Request processed.", body = RequestEmailLoginTokenResult),
+        (status = 500, description = "Internal server error."),
     ),
     security(),
 )]
 pub async fn post_request_email_login_token(
     State(state): State<S>,
+    ConnectInfo(address): ConnectInfo<SocketAddr>,
     Json(request): Json<RequestEmailLoginToken>,
 ) -> Result<Json<RequestEmailLoginTokenResult>, StatusCode> {
     ACCOUNT.post_request_email_login_token.incr();
 
     let wait_until = Instant::now() + Duration::from_secs(5);
 
-    let (client_token, handle) = async {
-        let account_id = state
-            .read()
-            .account()
-            .email()
-            .account_id_from_email(request.email.clone())
-            .await
-            .ok()??;
+    let r = handle_login_token_sending(&state, address, request).await?;
 
+    if let Some(handle) = r.handle {
+        let _ = timeout(Duration::from_secs(10), handle.wait()).await;
+    }
+
+    // Wait until at least 5 seconds have elapsed
+    tokio::time::sleep_until(wait_until.into()).await;
+
+    if r.error_registration_ip_address_limit_reached {
+        Ok(Json(
+            RequestEmailLoginTokenResult::error_email_registration_ip_address_limit_reached(),
+        ))
+    } else {
+        Ok(Json(RequestEmailLoginTokenResult::successful(
+            r.token,
+            state
+                .config()
+                .limits_account()
+                .email_login_token_validity_duration
+                .seconds as i64,
+            state
+                .config()
+                .limits_account()
+                .email_login_resend_min_wait_duration
+                .seconds as i64,
+        )))
+    }
+}
+
+async fn handle_login_token_sending(
+    state: &S,
+    address: SocketAddr,
+    request: RequestEmailLoginToken,
+) -> Result<EmailLoginResultInternal, StatusCode> {
+    if !request.login_only {
+        let max_per_day = state
+            .config()
+            .limits_account()
+            .email_registration_max_per_day_per_ip;
+        if state
+            .email_registration_rate_limiter()
+            .check_and_increment(address.ip(), max_per_day)
+            .await
+        {
+            return Ok(EmailLoginResultInternal::error_registration_ip_address_limit_reached());
+        }
+    }
+
+    let account_id = state
+        .read()
+        .account()
+        .email()
+        .account_id_from_email(request.email.clone())
+        .await?;
+    if let Some(account_id) = account_id {
         db_write!(state, move |cmds| {
             let internal = cmds
                 .read()
@@ -390,7 +474,7 @@ pub async fn post_request_email_login_token(
             if !internal.email_login_enabled {
                 // Email login is disabled, but don't return error to prevent
                 // email enumeration.
-                return Ok(None);
+                return Ok(EmailLoginResultInternal::error_hidden());
             }
 
             let token_time = cmds
@@ -405,7 +489,7 @@ pub async fn post_request_email_login_token(
                     .email_login_resend_min_wait_duration;
                 if !token_time.duration_value_elapsed(min_wait_duration) {
                     // Too soon to send another token, but don't return error
-                    return Ok(None);
+                    return Ok(EmailLoginResultInternal::error_hidden());
                 }
             }
 
@@ -420,35 +504,13 @@ pub async fn post_request_email_login_token(
                 .email()
                 .send_email_login_token_high_priority(account_id)?;
 
-            Ok(Some((client_token, Some(handle))))
+            Ok(EmailLoginResultInternal::successful(client_token, handle))
         })
-        .ok()
+    } else if request.login_only {
+        Ok(EmailLoginResultInternal::error_hidden())
+    } else {
+        request_email_registration_token(state, &request).await
     }
-    .await
-    .flatten()
-    .unwrap_or_else(|| (EmailLoginToken::generate_new(), None));
-
-    if let Some(handle) = handle {
-        let _ = timeout(Duration::from_secs(10), handle.wait()).await;
-    }
-
-    // Wait until at least 5 seconds have elapsed
-    tokio::time::sleep_until(wait_until.into()).await;
-
-    // Always return success with config values (and a token) to prevent email enumeration
-    Ok(Json(RequestEmailLoginTokenResult {
-        client_token,
-        token_validity_seconds: state
-            .config()
-            .limits_account()
-            .email_login_token_validity_duration
-            .seconds as i64,
-        resend_wait_seconds: state
-            .config()
-            .limits_account()
-            .email_login_resend_min_wait_duration
-            .seconds as i64,
-    }))
 }
 
 pub const PATH_POST_EMAIL_LOGIN_WITH_TOKEN: &str = "/account_api/email_login_with_token";
@@ -507,31 +569,35 @@ async fn post_email_login_with_token_impl(
         return Ok(LoginResult::error_invalid_email_login_token().into());
     };
 
+    let client_token_clone = client_token.clone();
+    let email_token_clone = email_token.clone();
     let account_id = db_write!(state, move |cmds| {
         cmds.account()
             .email()
-            .verify_and_remove_email_login_tokens(client_token, email_token)
+            .verify_and_remove_email_login_tokens(client_token_clone, email_token_clone)
             .await
     })
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let account_id = match account_id {
-        Some(id) => id,
-        None => return Ok(LoginResult::error_invalid_email_login_token().into()),
-    };
+    if let Some(account_id) = account_id {
+        // Login token was valid
+        let r = login_impl(account_id.as_id(), address, &state).await?;
 
-    let r = login_impl(account_id.as_id(), address, &state).await?;
+        if let Some(aid) = r.aid() {
+            let id = state.get_internal_id(aid).await?;
+            db_write!(state, move |cmds| {
+                cmds.common()
+                    .client_config()
+                    .client_login_session_platform(id, request.client_info.client_type)
+                    .await
+            })?;
+        }
 
-    if let Some(aid) = r.aid() {
-        // Login successful
-        let id = state.get_internal_id(aid).await?;
-        db_write!(state, move |cmds| {
-            cmds.common()
-                .client_config()
-                .client_login_session_platform(id, request.client_info.client_type)
-                .await
-        })?;
+        return Ok(r.into());
     }
+
+    let r = register::email_registration_with_token_impl(state, address, client_token, email_token)
+        .await?;
 
     Ok(r.into())
 }

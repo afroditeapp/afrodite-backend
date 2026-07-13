@@ -16,14 +16,14 @@ use model::{
     AccountIdInternal, AccountVerificationErrorFlagsValue, ClientMessageForDataAllCrate,
     EditVerificationValues, UnixTime, VerificationMethod,
 };
-use model_chat::SignInWithInfo;
-use model_server_data::EmailAddress;
+use model_server_data::{EmailAddress, SignInWithInfo};
 use server_common::{push_notifications::PushNotificationSender, websocket::WebSocketError};
 use server_data::{
     app::{DataAllUtils, GetConfig},
     content_processing::ContentProcessingManagerData,
     data_export::{DataExportCmd, DataExportManagerData},
     db_manager::RouterDatabaseReadHandle,
+    email::EmailChannelSender,
     statistics::ProfileStatisticsCache,
     write_commands::WriteCommandRunnerHandle,
 };
@@ -31,8 +31,12 @@ use simple_backend::app::SimpleBackendAppState;
 
 use crate::{
     account_verification_queue::AccountVerificationQueueData,
-    admin_bot_status::AdminBotStatusManagerData, admin_notifications::AdminNotificationManagerData,
-    demo::DemoAccountManager, dynamic_config::DynamicConfigManagerData, utils::ETagUtils,
+    admin_bot_status::AdminBotStatusManagerData,
+    admin_notifications::AdminNotificationManagerData,
+    demo::DemoAccountManager,
+    dynamic_config::DynamicConfigManagerData,
+    email_registration::{EmailRegistrationRateLimiter, EmailRegistrationTokenStore},
+    utils::ETagUtils,
 };
 
 pub mod account_verification_queue;
@@ -45,6 +49,7 @@ pub mod client_version;
 pub mod data_signer;
 pub mod demo;
 pub mod dynamic_config;
+pub mod email_registration;
 pub mod ip_address;
 pub mod state_impl;
 pub mod utils;
@@ -80,6 +85,9 @@ struct AppStateInternal {
     dynamic_config_manager: DynamicConfigManagerData,
     admin_bot_status: AdminBotStatusManagerData,
     etag_utils: ETagUtils,
+    email_registration_tokens: EmailRegistrationTokenStore,
+    email_registration_rate_limiter: EmailRegistrationRateLimiter,
+    email_channel_sender: EmailChannelSender,
 }
 
 impl AppState {
@@ -97,6 +105,7 @@ impl AppState {
         dynamic_config_manager: DynamicConfigManagerData,
         simple_backend_state: SimpleBackendAppState,
         data_all_utils: &'static dyn DataAllUtils,
+        email_channel_sender: EmailChannelSender,
     ) -> AppState {
         let database = Arc::new(database_handle);
         let state = AppStateInternal {
@@ -121,6 +130,9 @@ impl AppState {
             dynamic_config_manager,
             admin_bot_status: AdminBotStatusManagerData::new(),
             etag_utils: ETagUtils::new(),
+            email_registration_tokens: EmailRegistrationTokenStore::default(),
+            email_registration_rate_limiter: EmailRegistrationRateLimiter::default(),
+            email_channel_sender,
         };
 
         AppState {
@@ -134,6 +146,18 @@ impl AppState {
 
     pub fn data_all_access(&self) -> DataAllAccess<'_> {
         DataAllAccess { state: &self.state }
+    }
+
+    pub fn email_registration_tokens(&self) -> &EmailRegistrationTokenStore {
+        &self.state.email_registration_tokens
+    }
+
+    pub fn email_registration_rate_limiter(&self) -> &EmailRegistrationRateLimiter {
+        &self.state.email_registration_rate_limiter
+    }
+
+    pub fn email_channel_sender(&self) -> &EmailChannelSender {
+        &self.state.email_channel_sender
     }
 
     pub fn etag_utils(&self) -> &ETagUtils {
@@ -176,11 +200,11 @@ impl DataAllAccess<'_> {
     pub async fn register_impl(
         &self,
         sign_in_with: SignInWithInfo,
-        sign_in_with_email: Option<EmailAddress>,
+        email: Option<EmailAddress>,
     ) -> server_common::result::Result<AccountIdInternal, DataError> {
         let cmd = self
             .utils()
-            .register_impl(self.write(), sign_in_with, sign_in_with_email);
+            .register_impl(self.write(), sign_in_with, email);
         cmd.await
     }
 

@@ -29,17 +29,11 @@ impl RegisterAccount<'_> {
         &self,
         account_id: AccountIdInternal,
         sign_in_with_info: SignInWithInfo,
-        sign_in_with_email: Option<EmailAddress>,
+        email: Option<EmailAddress>,
     ) -> Result<(), DataError> {
         let config = self.config_arc().clone();
         self.db_transaction(move |current| {
-            Self::register_db_action(
-                config,
-                account_id,
-                sign_in_with_info,
-                sign_in_with_email,
-                current,
-            )
+            Self::register_db_action(config, account_id, sign_in_with_info, email, current)
         })
         .await?;
 
@@ -66,7 +60,7 @@ impl RegisterAccount<'_> {
         config: Arc<Config>,
         id: AccountIdInternal,
         sign_in_with_info: SignInWithInfo,
-        sign_in_with_email: Option<EmailAddress>,
+        email: Option<EmailAddress>,
         mut current: DbWriteMode,
     ) -> error_stack::Result<AccountIdInternal, DieselDatabaseError> {
         // Common
@@ -97,7 +91,7 @@ impl RegisterAccount<'_> {
             .account()
             .sign_in_with()
             .insert_sign_in_with_info(id, &sign_in_with_info)?;
-        if let Some(email) = sign_in_with_email {
+        if let Some(email) = email {
             current.account().data().update_account_email(id, &email)?;
         }
 

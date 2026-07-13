@@ -195,17 +195,52 @@ pub struct DemoAccountLoginToAccount {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct RequestEmailLoginToken {
     pub email: EmailAddress,
+    /// Use this to bypass [LoginResult::error_email_registration_ip_address_limit_reached]
+    /// when user wants to login to existing account.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub login_only: bool,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+#[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]
 pub struct RequestEmailLoginTokenResult {
     /// Client token to be used together with the email token.
-    /// Always returned to prevent email enumeration attacks.
-    pub client_token: EmailLoginToken,
+    client_token: Option<EmailLoginToken>,
     /// Token validity duration in seconds
-    pub token_validity_seconds: i64,
+    token_validity_seconds: Option<i64>,
     /// Minimum wait duration between token requests in seconds
-    pub resend_wait_seconds: i64,
+    resend_wait_seconds: Option<i64>,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error: bool,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_email_registration_ip_address_limit_reached: bool,
+}
+
+impl RequestEmailLoginTokenResult {
+    pub fn successful(
+        client_token: EmailLoginToken,
+        token_validity_seconds: i64,
+        resend_wait_seconds: i64,
+    ) -> Self {
+        Self {
+            client_token: Some(client_token),
+            token_validity_seconds: Some(token_validity_seconds),
+            resend_wait_seconds: Some(resend_wait_seconds),
+            ..Default::default()
+        }
+    }
+
+    pub fn error_email_registration_ip_address_limit_reached() -> Self {
+        Self {
+            error: true,
+            error_email_registration_ip_address_limit_reached: true,
+            ..Default::default()
+        }
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]

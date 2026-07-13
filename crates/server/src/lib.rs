@@ -389,6 +389,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
             dynamic_config_manager,
             simple_state,
             &DataAllUtilsImpl,
+            email_channel_sender.clone(),
         )
         .await;
 

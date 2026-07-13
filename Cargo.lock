@@ -5320,7 +5320,6 @@ dependencies = [
  "hyper",
  "manager_api",
  "model",
- "model_chat",
  "model_server_data",
  "model_server_state",
  "server_common",

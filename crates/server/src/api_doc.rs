@@ -291,6 +291,7 @@ impl ApiDoc {
             dynamic_config_manager,
             simple_state,
             &DataAllUtilsImpl,
+            email_sender,
         )
         .await;
 

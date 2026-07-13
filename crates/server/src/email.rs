@@ -92,13 +92,24 @@ impl EmailManager {
                 biased;
 
                 Some(cmd) = self.high_priority_receiver.recv() => {
-                    let result = self.handle_send(cmd.recipient, cmd.message).await;
+                    match cmd {
+                        HighPriorityEmailMsg::Normal { recipient, message, result_sender } => {
+                            let result = self.handle_send(recipient, message).await;
 
-                    if let Err(e) = &result {
-                        error!("High priority email send failed: {:?}", e);
+                            if let Err(e) = &result {
+                                error!("High priority email send failed: {:?}", e);
+                            }
+
+                            let _ = result_sender.send(result.map_err(|_| DataError::EmailSendingFailed));
+                        }
+                        HighPriorityEmailMsg::RegistrationToken { email, token, result_sender } => {
+                            let result = self.handle_send_registration_token(&email, &token).await;
+                            if let Err(e) = &result {
+                                error!("Registration token email send failed: {:?}", e);
+                            }
+                            let _ = result_sender.send(result.map_err(|_| DataError::EmailSendingFailed));
+                        }
                     }
-
-                    let _ = cmd.result_sender.send(result.map_err(|_| DataError::EmailSendingFailed));
                 }
                 Some(cmd) = self.normal_receiver.recv() => {
                     if let Err(e) = self.handle_send(cmd.recipient, cmd.message).await {
@@ -137,6 +148,30 @@ impl EmailManager {
             .change_context(EmailError::SendingFailed)?;
 
         self.mark_as_sent(recipient, message).await
+    }
+
+    async fn handle_send_registration_token(
+        &self,
+        email: &str,
+        token: &str,
+    ) -> error_stack::Result<(), EmailError> {
+        if email.ends_with("@example.com") {
+            return Ok(());
+        }
+
+        let email_content = self.state.config().email_content();
+        // TODO(prod): Get language using login route
+        let getter = email_content.get::<String>(None);
+        let content = getter
+            .email_login(token)
+            .change_context(EmailError::GettingEmailDataFailed)?;
+
+        self.smtp_client
+            .send(email, &content.subject, &content.body, content.body_is_html)
+            .await
+            .change_context(EmailError::SendingFailed)?;
+
+        Ok(())
     }
 
     /// If `Ok(None)` is returned the email sending is disabled for the
