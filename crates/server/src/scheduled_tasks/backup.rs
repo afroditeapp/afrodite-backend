@@ -11,7 +11,10 @@ use server_api::{
     app::{GetConfig, ReadData},
     result::WrappedContextExt,
 };
-use server_common::result::{Result, WrappedResultExt};
+use server_common::{
+    backup_encryption::encrypt_backup_data,
+    result::{Result, WrappedResultExt},
+};
 use server_data::read::GetReadCommandsCommon;
 use server_data_media::read::GetReadMediaCommands;
 use server_state::S;
@@ -31,7 +34,7 @@ pub async fn backup_data(
     state: &S,
     quit_notification: &mut ServerQuitWatcher,
 ) -> Result<(), ScheduledTaskError> {
-    let Some(mut backup_client) = state
+    let Some((mut backup_client, encryption_key)) = state
         .manager_api_client()
         .new_backup_connection(BACKUP_SESSION.fetch_add(1, Ordering::Relaxed))
         .await
@@ -109,14 +112,15 @@ pub async fn backup_data(
                                 variant,
                             )
                             .change_context(ScheduledTaskError::DatabaseError)?;
-                        let data = content_data
+                        let plaintext = content_data
                             .read_all()
                             .await
                             .change_context(ScheduledTaskError::FileReadingError)?;
+                        let encrypted = encrypt_backup_data(&encryption_key.0, &plaintext);
                         let mut hasher = Sha256::new();
-                        hasher.update(&data);
+                        hasher.update(&encrypted);
                         let result = hasher.finalize();
-                        Ok((variant, Sha256Bytes(result.into()), data))
+                        Ok((variant, Sha256Bytes(result.into()), encrypted))
                     };
 
                     let mut variants = vec![];

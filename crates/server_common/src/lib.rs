@@ -4,6 +4,7 @@
 #![warn(unused_crate_dependencies)]
 
 pub mod app;
+pub mod backup_encryption;
 pub mod data;
 pub mod push_notifications;
 pub mod result;

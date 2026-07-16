@@ -6,7 +6,10 @@ use manager_api::{
     ServerEventListerner, TlsConfig, backup::BackupSourceClient,
 };
 use manager_model::{ManagerInstanceName, ServerEventType};
-use simple_backend_config::SimpleBackendConfig;
+use simple_backend_config::{
+    SimpleBackendConfig,
+    file::{BackupConfig, BackupEncryptionKey},
+};
 use simple_backend_model::{ScheduledMaintenanceStatus, UnixTime};
 use simple_backend_utils::ContextExt;
 use tokio::{sync::RwLock, task::JoinHandle};
@@ -14,16 +17,9 @@ use tracing::{error, info, warn};
 
 use crate::ServerQuitWatcher;
 
-#[derive(Debug, Clone)]
-struct BackupLinkPassword(String);
-
 #[derive(Debug)]
 pub struct ManagerApiClient {
-    manager: Option<(
-        ClientConfig,
-        ManagerInstanceName,
-        Option<BackupLinkPassword>,
-    )>,
+    manager: Option<(ClientConfig, ManagerInstanceName, Option<BackupConfig>)>,
     maintenance_status: RwLock<ScheduledMaintenanceStatus>,
 }
 
@@ -55,11 +51,7 @@ impl ManagerApiClient {
 
             info!("Manager API URL: {}", c.address);
 
-            Some((
-                config,
-                c.name.clone(),
-                c.backup_link_password.clone().map(BackupLinkPassword),
-            ))
+            Some((config, c.name.clone(), c.backup.clone()))
         } else {
             None
         };
@@ -91,21 +83,20 @@ impl ManagerApiClient {
         }
     }
 
-    /// None is returned when the backup link password is not configured
+    /// None is returned when the [BackupConfig] is not available
     pub async fn new_backup_connection(
         &self,
         backup_session: u32,
-    ) -> Result<Option<BackupSourceClient>, ClientError> {
-        if let Some((c, _, password)) = self.manager.clone() {
-            if let Some(password) = password {
+    ) -> Result<Option<(BackupSourceClient, BackupEncryptionKey)>, ClientError> {
+        if let Some((c, _, backup_config)) = self.manager.clone() {
+            if let Some(backup_config) = backup_config {
                 let (reader, writer) = ManagerClient::connect(c)
                     .await?
-                    .backup_link(password.0)
+                    .backup_link(backup_config.link_password)
                     .await?;
-                Ok(Some(BackupSourceClient::new(
-                    reader,
-                    writer,
-                    backup_session,
+                Ok(Some((
+                    BackupSourceClient::new(reader, writer, backup_session),
+                    backup_config.encryption_key_128_bits_base64,
                 )))
             } else {
                 Ok(None)

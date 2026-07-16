@@ -5488,6 +5488,7 @@ dependencies = [
 name = "simple_backend_config"
 version = "0.0.0"
 dependencies = [
+ "base64 0.22.1",
  "chrono",
  "clap",
  "error-stack",

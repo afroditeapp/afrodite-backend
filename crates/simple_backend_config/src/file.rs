@@ -6,6 +6,7 @@ use std::{
     str::FromStr,
 };
 
+use base64::Engine;
 use chrono::{Datelike, Utc};
 use error_stack::{Report, Result, ResultExt};
 use manager_model::ManagerInstanceName;
@@ -38,7 +39,10 @@ local_bot_api_port = 3001
 # manager_name = "default"
 # address = "tls://localhost:4000"
 # api_key = "TODO"
-# backup_link_password = "password"
+
+# [manager.backup]
+# link_password = "TODO"
+# encryption_key_128_bits_base64 = "TODO"
 
 # [manager.tls]
 # client_auth_cert = "/home/afrodite/manager-tls/server.crt"
@@ -328,7 +332,42 @@ pub struct ManagerConfig {
     pub address: Url,
     pub api_key: String,
     pub tls: Option<ManagerTlsConfig>,
-    pub backup_link_password: Option<String>,
+    pub backup: Option<BackupConfig>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct BackupConfig {
+    /// Password for backup link connection
+    pub link_password: String,
+    /// Base64-encoded 128-bit (16 byte) AES-GCM encryption key
+    pub encryption_key_128_bits_base64: BackupEncryptionKey,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
+#[serde(into = "String")]
+#[serde(try_from = "String")]
+pub struct BackupEncryptionKey(pub [u8; 16]);
+
+impl From<BackupEncryptionKey> for String {
+    fn from(value: BackupEncryptionKey) -> Self {
+        base64::engine::general_purpose::STANDARD.encode(value.0)
+    }
+}
+
+impl std::convert::TryFrom<String> for BackupEncryptionKey {
+    type Error = String;
+    fn try_from(value: String) -> std::result::Result<Self, Self::Error> {
+        let decoded = base64::engine::general_purpose::STANDARD
+            .decode(value.as_str())
+            .map_err(|e| format!("Backup encryption key is not valid base64: {e}"))?;
+        let arr: [u8; 16] = decoded.try_into().map_err(|v: Vec<u8>| {
+            format!(
+                "Backup encryption key must be 16 bytes (128 bits) after base64 decode, got {} bytes",
+                v.len()
+            )
+        })?;
+        Ok(Self(arr))
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
