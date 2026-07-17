@@ -6,6 +6,7 @@
 use tls_client as _;
 
 pub mod args;
+pub mod backup_tools;
 pub mod build_info;
 pub mod config_tools;
 pub mod data_tools;
@@ -24,7 +25,7 @@ use server::{DatingAppServer, api_doc::ApiDoc};
 use simple_backend_utils::dir::abs_path_for_directory_or_file_which_might_not_exists;
 use test_mode::TestRunner;
 
-use crate::build_info::build_info;
+use crate::{backup_tools::handle_backup_mode, build_info::build_info};
 
 fn main() -> ExitCode {
     tokio_rustls::rustls::crypto::ring::default_provider();
@@ -130,5 +131,6 @@ fn handle_app_mode(args: ArgsConfig) -> ExitCode {
             println!("{}", build_info());
             ExitCode::SUCCESS
         }
+        AppMode::Backup { mode } => handle_backup_mode(mode),
     }
 }

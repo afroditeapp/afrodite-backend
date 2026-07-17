@@ -44,6 +44,8 @@ pub fn encrypt_backup_data_stream(key: &[u8; 16], plaintext: &[u8], first_chunk:
     result
 }
 
+pub mod decrypt;
+
 #[cfg(test)]
 mod tests {
     use aes_gcm::aead::Aead;

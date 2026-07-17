@@ -45,6 +45,11 @@ pub enum AppMode {
     Data(DataMode),
     /// Print build info and quit
     BuildInfo,
+    /// Backup related commands
+    Backup {
+        #[command(subcommand)]
+        mode: BackupMode,
+    },
 }
 
 #[derive(Args, Debug, Clone)]
@@ -450,5 +455,22 @@ pub enum ConfigViewMode {
     IndexInfo {
         /// Server config dir
         dir: PathBuf,
+    },
+}
+
+#[derive(Parser, Debug, Clone)]
+pub enum BackupMode {
+    /// Verify all .sha256 checksum files in backup directory
+    Verify {
+        /// Backup root directory
+        dir: PathBuf,
+    },
+    /// Decrypt all encrypted backup files
+    Decrypt {
+        /// Backup root directory
+        dir: PathBuf,
+        /// Path to file containing the 16-byte AES-128-GCM key (base64-encoded)
+        #[arg(long, value_name = "FILE")]
+        key_file: PathBuf,
     },
 }

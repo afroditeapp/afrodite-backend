@@ -80,6 +80,8 @@ dependencies = [
 name = "afrodite-backend"
 version = "0.19.0"
 dependencies = [
+ "base16ct",
+ "base64 0.22.1",
  "clap",
  "config",
  "csv",
@@ -93,6 +95,7 @@ dependencies = [
  "server",
  "server_common",
  "server_data",
+ "sha2",
  "simple_backend_config",
  "simple_backend_image_process",
  "simple_backend_utils",
