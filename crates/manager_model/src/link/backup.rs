@@ -52,17 +52,21 @@ pub enum BackupMessageType {
     ///
     /// Data:
     ///
-    /// - File SHA-256 (32 bytes)
     /// - File name UTF-8 bytes
     StartFileBackup = 6,
-    /// File backup data package. Empty package means that transfer is
-    /// completed.
+    /// File backup data packet. Empty packets are ignored.
+    /// [BackupMessageType::EndFileBackup] is used as ending signal.
     ///
     /// Data:
     ///
-    /// - Package number (u32, little-endian, can wrap)
     /// - Data
     FileBackupData = 7,
+    /// End file backup. Sent after file data transfer is completed.
+    ///
+    /// Data:
+    ///
+    /// - File SHA-256 (32 bytes)
+    EndFileBackup = 8,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -99,18 +103,11 @@ pub type ContentQueryAnswer = Vec<(ContentQualityVariant, Sha256Bytes, Vec<u8>)>
 
 pub enum SourceToTargetMessage {
     StartBackupSession,
-    ContentList {
-        data: Vec<AccountAndContent>,
-    },
+    ContentList { data: Vec<AccountAndContent> },
     ContentQueryAnswer(ContentQueryAnswer),
-    StartFileBackup {
-        sha256: Sha256Bytes,
-        file_name: String,
-    },
-    FileBackupData {
-        package_number: Wrapping<u32>,
-        data: Vec<u8>,
-    },
+    StartFileBackup { file_name: String },
+    FileBackupData { data: Vec<u8> },
+    EndFileBackup { sha256: Sha256Bytes },
 }
 
 impl SourceToTargetMessage {
@@ -121,6 +118,7 @@ impl SourceToTargetMessage {
             Self::ContentQueryAnswer(_) => BackupMessageType::ContentQueryAnswer,
             Self::StartFileBackup { .. } => BackupMessageType::StartFileBackup,
             Self::FileBackupData { .. } => BackupMessageType::FileBackupData,
+            Self::EndFileBackup { .. } => BackupMessageType::EndFileBackup,
         };
 
         let data = match self {
@@ -150,21 +148,9 @@ impl SourceToTargetMessage {
                 }
                 serialized
             }
-            Self::StartFileBackup { sha256, file_name } => sha256
-                .0
-                .iter()
-                .chain(file_name.as_bytes())
-                .copied()
-                .collect(),
-            Self::FileBackupData {
-                package_number,
-                data,
-            } => package_number
-                .0
-                .to_le_bytes()
-                .into_iter()
-                .chain(data)
-                .collect(),
+            Self::StartFileBackup { file_name } => file_name.as_bytes().to_vec(),
+            Self::FileBackupData { data } => data.clone(),
+            Self::EndFileBackup { sha256 } => sha256.0.to_vec(),
         };
 
         Ok(BackupMessage {
@@ -258,28 +244,19 @@ impl TryFrom<BackupMessage> for SourceToTargetMessage {
                 SourceToTargetMessage::ContentQueryAnswer(variants)
             }
             BackupMessageType::StartFileBackup => {
-                let Some((sha256, file_name)) = value.data.split_at_checked(32) else {
-                    return Err("No enough data".to_string());
-                };
-                let sha256: [u8; 32] =
-                    TryInto::<[u8; 32]>::try_into(sha256).map_err(|v| v.to_string())?;
-                let file_name = String::from_utf8(file_name.to_vec()).map_err(|e| e.to_string())?;
-                SourceToTargetMessage::StartFileBackup {
-                    sha256: Sha256Bytes(sha256),
-                    file_name,
-                }
+                let file_name = String::from_utf8(value.data).map_err(|e| e.to_string())?;
+                SourceToTargetMessage::StartFileBackup { file_name }
             }
             BackupMessageType::FileBackupData => {
-                let Some((package_number, data)) = value.data.split_at_checked(4) else {
+                let data = value.data.to_vec();
+                SourceToTargetMessage::FileBackupData { data }
+            }
+            BackupMessageType::EndFileBackup => {
+                let Ok(sha256) = TryInto::<[u8; 32]>::try_into(value.data) else {
                     return Err("No enough data".to_string());
                 };
-                let package_number =
-                    TryInto::<[u8; 4]>::try_into(package_number).map_err(|e| e.to_string())?;
-                let package_number = Wrapping(u32::from_le_bytes(package_number));
-                let data = data.to_vec();
-                SourceToTargetMessage::FileBackupData {
-                    package_number,
-                    data,
+                SourceToTargetMessage::EndFileBackup {
+                    sha256: Sha256Bytes(sha256),
                 }
             }
         };
@@ -354,7 +331,8 @@ impl TryFrom<BackupMessage> for TargetToSourceMessage {
             | BackupMessageType::ContentList
             | BackupMessageType::ContentQueryAnswer
             | BackupMessageType::StartFileBackup
-            | BackupMessageType::FileBackupData => {
+            | BackupMessageType::FileBackupData
+            | BackupMessageType::EndFileBackup => {
                 return Err(format!(
                     "Type conversion for message type {:?} is not supported",
                     value.header.message_type

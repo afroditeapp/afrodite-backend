@@ -1,6 +1,5 @@
 use std::{
     collections::HashSet,
-    num::Wrapping,
     path::{Path, PathBuf},
     sync::Arc,
     time::SystemTime,
@@ -292,22 +291,16 @@ impl UpdateAccountContent {
 }
 
 pub struct SaveFileBackup {
-    expected_packet_number: Wrapping<u32>,
+    target_file_name: String,
     target_path: PathBuf,
     target_checksum_path: PathBuf,
-    target_checksum_file_content: String,
     tmp_file_path: PathBuf,
     tmp_file: tokio::fs::File,
-    expected_sha256: Sha256Bytes,
     sha256_state: Sha256,
 }
 
 impl SaveFileBackup {
-    pub async fn new(
-        config: Arc<Config>,
-        expected_sha256: Sha256Bytes,
-        backup_name: &str,
-    ) -> Result<Self, BackupTargetError> {
+    pub async fn new(config: Arc<Config>, backup_name: &str) -> Result<Self, BackupTargetError> {
         let tmp_file_path = BackupDirUtils::new(&config)
             .remove_tmp_file_and_get_tmp_file_path()
             .await?;
@@ -315,42 +308,34 @@ impl SaveFileBackup {
             .await
             .change_context(BackupTargetError::Write)?;
 
-        let time = Utc::now().format("%Y-%m-%d_%H-%M-%S");
-        let name = format!("backup_{backup_name}_{time}");
-        let target_path = BackupDirUtils::new(&config).file_path(&name);
+        let target_file_name = format!(
+            "backup_{}_{}",
+            backup_name,
+            Utc::now().format("%Y-%m-%d_%H-%M-%S")
+        );
+        let target_path = BackupDirUtils::new(&config).file_path(&target_file_name);
 
         if target_path.exists() {
-            return Err(BackupTargetError::FileBackupAlreadyExists.report()).attach_printable(name);
+            return Err(BackupTargetError::FileBackupAlreadyExists.report())
+                .attach_printable(target_file_name);
         }
 
-        let checksum_file_name = format!("{name}.sha256");
-        let target_checksum_path = BackupDirUtils::new(&config).file_path(&checksum_file_name);
-        let target_checksum_file_content =
-            expected_sha256.to_shasum_tool_compatible_checksum(&name);
+        let target_checksum_path =
+            BackupDirUtils::new(&config).file_path(&format!("{target_file_name}.sha256"));
 
         Ok(Self {
-            expected_packet_number: Wrapping(0),
+            target_file_name,
             target_path,
             target_checksum_path,
-            target_checksum_file_content,
             tmp_file_path,
             tmp_file,
-            expected_sha256,
             sha256_state: Sha256::new(),
         })
     }
 
-    pub async fn save_packet(
-        &mut self,
-        packet_number: Wrapping<u32>,
-        data: Vec<u8>,
-    ) -> Result<(), BackupTargetError> {
-        if self.expected_packet_number != packet_number {
-            return Err(BackupTargetError::FileBackupPacketNumberMismatch.report())
-                .attach_printable(format!(
-                    "expected: {}, actual: {}",
-                    self.expected_packet_number, packet_number
-                ));
+    pub async fn save_packet(&mut self, data: Vec<u8>) -> Result<(), BackupTargetError> {
+        if data.is_empty() {
+            return Ok(());
         }
 
         self.tmp_file
@@ -358,28 +343,19 @@ impl SaveFileBackup {
             .await
             .change_context(BackupTargetError::Write)?;
 
-        self.expected_packet_number += 1;
-
         self.sha256_state.update(&data);
 
         Ok(())
     }
 
-    pub async fn finalize(mut self, packet_number: Wrapping<u32>) -> Result<(), BackupTargetError> {
-        if self.expected_packet_number != packet_number {
-            return Err(BackupTargetError::FileBackupPacketNumberMismatch.report())
-                .attach_printable(format!(
-                    "expected: {}, actual: {}",
-                    self.expected_packet_number, packet_number
-                ));
-        }
-
+    pub async fn finalize(mut self, sha256: Sha256Bytes) -> Result<(), BackupTargetError> {
         let received_file_hash = self.sha256_state.finalize();
-        if received_file_hash.as_slice() != self.expected_sha256.0 {
+        if received_file_hash.as_slice() != sha256.0 {
             return Err(BackupTargetError::FileBackupDataCorruptionDetected.report());
         }
 
-        tokio::fs::write(self.target_checksum_path, self.target_checksum_file_content)
+        let checksum_content = sha256.to_shasum_tool_compatible_checksum(&self.target_file_name);
+        tokio::fs::write(self.target_checksum_path, checksum_content)
             .await
             .change_context(BackupTargetError::Write)?;
 

@@ -1,4 +1,4 @@
-use std::{num::Wrapping, sync::Arc, time::Duration};
+use std::{sync::Arc, time::Duration};
 
 use backup::{DeleteOldFileBackups, SaveContentBackup, SaveFileBackup};
 use error_stack::{FutureExt, Result, ResultExt};
@@ -64,9 +64,6 @@ enum BackupTargetError {
     #[error("File backup already exists")]
     FileBackupAlreadyExists,
 
-    #[error("File backup packet number mismatch")]
-    FileBackupPacketNumberMismatch,
-
     #[error("File backup data corruption detected")]
     FileBackupDataCorruptionDetected,
 
@@ -84,6 +81,11 @@ enum BackupTargetError {
 
     #[error("Content data corruption detected")]
     ContentDataCorruptionDetected,
+}
+
+enum FileBackupReceiveResult {
+    Data(Vec<u8>),
+    End(Sha256Bytes),
 }
 
 #[derive(Debug)]
@@ -403,19 +405,21 @@ impl BackupSessionTaskTarget {
         backup.finalize().await?;
 
         loop {
-            let (sha256, file_name) = self.receive_start_file_backup().await?;
+            let file_name = self.receive_start_file_backup().await?;
             if file_name.is_empty() {
                 break;
             }
-            let mut state = SaveFileBackup::new(self.config.clone(), sha256, &file_name).await?;
+            let mut state = SaveFileBackup::new(self.config.clone(), &file_name).await?;
             loop {
-                let (packet_number, data) = self.receive_file_backup_data().await?;
-                if data.is_empty() {
-                    state.finalize(packet_number).await?;
-                    self.received_files += 1;
-                    break;
-                } else {
-                    state.save_packet(packet_number, data).await?;
+                match self.receive_file_backup_data_or_end().await? {
+                    FileBackupReceiveResult::Data(data) => {
+                        state.save_packet(data).await?;
+                    }
+                    FileBackupReceiveResult::End(sha256) => {
+                        state.finalize(sha256).await?;
+                        self.received_files += 1;
+                        break;
+                    }
                 }
             }
         }
@@ -478,29 +482,30 @@ impl BackupSessionTaskTarget {
         }
     }
 
-    pub async fn receive_start_file_backup(
-        &mut self,
-    ) -> Result<(Sha256Bytes, String), BackupTargetError> {
+    pub async fn receive_start_file_backup(&mut self) -> Result<String, BackupTargetError> {
         let Some(m) = self.receiver.recv().await else {
             return Err(BackupTargetError::BrokenMessageChannel.report());
         };
         match m {
-            SourceToTargetMessage::StartFileBackup { sha256, file_name } => Ok((sha256, file_name)),
+            SourceToTargetMessage::StartFileBackup { file_name } => Ok(file_name),
             _ => Err(BackupTargetError::Protocol.report()),
         }
     }
 
-    pub async fn receive_file_backup_data(
+    /// Returns either file backup data or the end signal with sha256.
+    async fn receive_file_backup_data_or_end(
         &mut self,
-    ) -> Result<(Wrapping<u32>, Vec<u8>), BackupTargetError> {
+    ) -> Result<FileBackupReceiveResult, BackupTargetError> {
         let Some(m) = self.receiver.recv().await else {
             return Err(BackupTargetError::BrokenMessageChannel.report());
         };
         match m {
-            SourceToTargetMessage::FileBackupData {
-                package_number,
-                data,
-            } => Ok((package_number, data)),
+            SourceToTargetMessage::FileBackupData { data } => {
+                Ok(FileBackupReceiveResult::Data(data))
+            }
+            SourceToTargetMessage::EndFileBackup { sha256 } => {
+                Ok(FileBackupReceiveResult::End(sha256))
+            }
             _ => Err(BackupTargetError::Protocol.report()),
         }
     }

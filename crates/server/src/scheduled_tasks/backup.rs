@@ -1,7 +1,4 @@
-use std::{
-    num::Wrapping,
-    sync::atomic::{AtomicU32, Ordering},
-};
+use std::sync::atomic::{AtomicU32, Ordering};
 
 use manager_api::backup::BackupSourceClient;
 use manager_model::{AccountAndContent, Sha256Bytes, SourceToTargetMessage, TargetToSourceMessage};
@@ -177,7 +174,6 @@ pub async fn backup_data(
     // Empty file name ends file backup waiting
     backup_client
         .send_message(SourceToTargetMessage::StartFileBackup {
-            sha256: Sha256Bytes([0; 32]),
             file_name: String::new(),
         })
         .await
@@ -217,7 +213,6 @@ async fn send_backup_db(
     let sha256 = calculate_hash(tmp_db_path).await?;
     backup_client
         .send_message(SourceToTargetMessage::StartFileBackup {
-            sha256,
             file_name: info.sqlite_name().to_string(),
         })
         .await
@@ -229,29 +224,27 @@ async fn send_backup_db(
 
     let buffer_size: usize = MIB_IN_BYTES;
     let mut read_buffer: Vec<u8> = vec![0; buffer_size];
-    let mut next_packet_number: Wrapping<u32> = Wrapping(0);
 
     loop {
         let size = file
             .read(&mut read_buffer)
             .await
             .change_context(ScheduledTaskError::Backup)?;
-        let data = read_buffer[..size].to_vec();
-
-        backup_client
-            .send_message(SourceToTargetMessage::FileBackupData {
-                package_number: next_packet_number,
-                data,
-            })
-            .await
-            .change_context(ScheduledTaskError::Backup)?;
-
-        next_packet_number += 1;
-
         if size == 0 {
             break;
         }
+        let data = read_buffer[..size].to_vec();
+
+        backup_client
+            .send_message(SourceToTargetMessage::FileBackupData { data })
+            .await
+            .change_context(ScheduledTaskError::Backup)?;
     }
+
+    backup_client
+        .send_message(SourceToTargetMessage::EndFileBackup { sha256 })
+        .await
+        .change_context(ScheduledTaskError::Backup)?;
 
     Ok(())
 }
