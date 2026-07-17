@@ -9,7 +9,7 @@ use server_api::{
     result::WrappedContextExt,
 };
 use server_common::{
-    backup_encryption::encrypt_backup_data,
+    backup_encryption::{encrypt_backup_data, encrypt_backup_data_stream},
     result::{Result, WrappedResultExt},
 };
 use server_data::read::GetReadCommandsCommon;
@@ -154,6 +154,7 @@ pub async fn backup_data(
         &mut backup_client,
         &tmp_db,
         &databases.current,
+        &encryption_key.0,
         state
             .read()
             .common()
@@ -164,6 +165,7 @@ pub async fn backup_data(
         &mut backup_client,
         &tmp_db,
         &databases.history,
+        &encryption_key.0,
         state
             .read()
             .common_history()
@@ -186,6 +188,7 @@ async fn handle_db(
     backup_client: &mut BackupSourceClient,
     tmp_db: &str,
     db_name: &Database,
+    key: &[u8; 16],
     create_backup_file: impl Future<Output = Result<(), DataError>>,
 ) -> Result<(), ScheduledTaskError> {
     overwrite_and_remove_if_exists(tmp_db)
@@ -196,7 +199,7 @@ async fn handle_db(
         .await
         .change_context(ScheduledTaskError::DatabaseError)?;
 
-    send_backup_db(db_name, tmp_db, backup_client).await?;
+    send_backup_db(db_name, tmp_db, key, backup_client).await?;
 
     overwrite_and_remove_if_exists(tmp_db)
         .await
@@ -208,9 +211,9 @@ async fn handle_db(
 async fn send_backup_db(
     info: &Database,
     tmp_db_path: &str,
+    key: &[u8; 16],
     backup_client: &mut BackupSourceClient,
 ) -> Result<(), ScheduledTaskError> {
-    let sha256 = calculate_hash(tmp_db_path).await?;
     backup_client
         .send_message(SourceToTargetMessage::StartFileBackup {
             file_name: info.sqlite_name().to_string(),
@@ -218,22 +221,12 @@ async fn send_backup_db(
         .await
         .change_context(ScheduledTaskError::Backup)?;
 
-    let mut file = tokio::fs::File::open(tmp_db_path)
-        .await
-        .change_context(ScheduledTaskError::Backup)?;
-
-    let buffer_size: usize = MIB_IN_BYTES;
-    let mut read_buffer: Vec<u8> = vec![0; buffer_size];
+    let mut stream = EncryptedBackupFileStream::open(tmp_db_path, key).await?;
 
     loop {
-        let size = file
-            .read(&mut read_buffer)
-            .await
-            .change_context(ScheduledTaskError::Backup)?;
-        if size == 0 {
+        let Some(data) = stream.next_packet().await? else {
             break;
-        }
-        let data = read_buffer[..size].to_vec();
+        };
 
         backup_client
             .send_message(SourceToTargetMessage::FileBackupData { data })
@@ -241,39 +234,14 @@ async fn send_backup_db(
             .change_context(ScheduledTaskError::Backup)?;
     }
 
+    let sha256 = stream.finalize_hash();
+
     backup_client
         .send_message(SourceToTargetMessage::EndFileBackup { sha256 })
         .await
         .change_context(ScheduledTaskError::Backup)?;
 
     Ok(())
-}
-
-async fn calculate_hash(tmp_db_path: &str) -> Result<Sha256Bytes, ScheduledTaskError> {
-    let mut hasher = Sha256::new();
-
-    let mut file = tokio::fs::File::open(tmp_db_path)
-        .await
-        .change_context(ScheduledTaskError::Backup)?;
-
-    let buffer_size: usize = MIB_IN_BYTES;
-    let mut read_buffer: Vec<u8> = vec![0; buffer_size];
-
-    loop {
-        let size = file
-            .read(&mut read_buffer)
-            .await
-            .change_context(ScheduledTaskError::Backup)?;
-        let data = &read_buffer[..size];
-        hasher.update(data);
-
-        if size == 0 {
-            break;
-        }
-    }
-
-    let result = hasher.finalize();
-    Ok(Sha256Bytes(result.into()))
 }
 
 fn tmp_db_path_string(state: &S) -> Result<String, ScheduledTaskError> {
@@ -285,4 +253,50 @@ fn tmp_db_path_string(state: &S) -> Result<String, ScheduledTaskError> {
         .to_str()
         .map(|v| v.to_string())
         .ok_or(ScheduledTaskError::Backup.report())
+}
+
+struct EncryptedBackupFileStream<'a> {
+    file: tokio::fs::File,
+    key: &'a [u8; 16],
+    hasher: Sha256,
+    buffer: Vec<u8>,
+    is_first: bool,
+}
+
+impl<'a> EncryptedBackupFileStream<'a> {
+    async fn open(path: &str, key: &'a [u8; 16]) -> Result<Self, ScheduledTaskError> {
+        let file = tokio::fs::File::open(path)
+            .await
+            .change_context(ScheduledTaskError::Backup)?;
+        Ok(Self {
+            file,
+            key,
+            hasher: Sha256::new(),
+            buffer: vec![0; MIB_IN_BYTES],
+            is_first: true,
+        })
+    }
+
+    /// Read next chunk from file, encrypt it, update SHA-256.
+    /// Returns `None` on EOF.
+    async fn next_packet(&mut self) -> Result<Option<Vec<u8>>, ScheduledTaskError> {
+        let size = self
+            .file
+            .read(&mut self.buffer)
+            .await
+            .change_context(ScheduledTaskError::Backup)?;
+        if size == 0 {
+            return Ok(None);
+        }
+        let plaintext = &self.buffer[..size];
+        let is_first = self.is_first;
+        self.is_first = false;
+        let encrypted = encrypt_backup_data_stream(self.key, plaintext, is_first);
+        self.hasher.update(&encrypted);
+        Ok(Some(encrypted))
+    }
+
+    fn finalize_hash(self) -> Sha256Bytes {
+        Sha256Bytes(self.hasher.finalize().into())
+    }
 }
