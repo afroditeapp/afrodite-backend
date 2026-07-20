@@ -82,6 +82,8 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # unused_content_wait_duration = "90d"
 # put_upload_content_daily_max_count = 100
 # get_profile_content_info_daily_max_count = 2000
+# get_content_medium_quality_concurrent_requests_threshold = 500
+# get_content_low_quality_concurrent_requests_threshold = 1000
 
 # [limits.profile]
 # profile_iterator_reset_daily_max_count = 200
@@ -455,6 +457,8 @@ pub struct MediaLimitsConfig {
     pub unused_content_wait_duration: DurationValue,
     pub put_upload_content_daily_max_count: u16,
     pub get_profile_content_info_daily_max_count: u16,
+    pub get_content_medium_quality_concurrent_requests_threshold: u32,
+    pub get_content_low_quality_concurrent_requests_threshold: u32,
 }
 
 impl Default for MediaLimitsConfig {
@@ -464,6 +468,8 @@ impl Default for MediaLimitsConfig {
             unused_content_wait_duration: DurationValue::from_days(90),
             put_upload_content_daily_max_count: 100,
             get_profile_content_info_daily_max_count: 2000,
+            get_content_medium_quality_concurrent_requests_threshold: 500,
+            get_content_low_quality_concurrent_requests_threshold: 1000,
         }
     }
 }

@@ -5,7 +5,9 @@ use axum::{
 };
 use axum_extra::TypedHeader;
 use headers::{CacheControl, ContentLength, ContentType, ETag, IfNoneMatch};
-use model::{EventToClientInternal, NotificationEvent, PendingAppNotificationInternal};
+use model::{
+    ContentQualityVariant, EventToClientInternal, NotificationEvent, PendingAppNotificationInternal,
+};
 use model_media::{
     AccountContent, AccountId, AccountIdInternal, AccountState, ContentId, ContentProcessingState,
     ContentSlot, GetContentQueryParams, NewContentParams, Permissions,
@@ -30,8 +32,11 @@ use simple_backend::create_counters;
 
 use crate::{
     app::{ContentProcessingProvider, GetAccounts, ReadData, WriteData},
+    media::{content::quality::ContentQualityHeader, quality::ContentSendingTracker},
     utils::{Json, StatusCode},
 };
+
+pub mod quality;
 
 const PATH_GET_CONTENT: &str = "/media_api/content/{aid}/{cid}";
 
@@ -58,6 +63,14 @@ const PATH_GET_CONTENT: &str = "/media_api/content/{aid}/{cid}";
 /// - [Permissions::admin_edit_media_content_face_verified_value]
 /// - [Permissions::admin_edit_security_content_verified_value]
 /// - [Permissions::admin_process_reports]
+///
+/// # Content quality
+///
+/// When content owner or admins requests content, high quality version
+/// is returned even if lower quality version is requested.
+///
+/// For any other case preferred quality is used if API has not
+/// too much concurrent access.
 ///
 #[utoipa::path(
     get,
@@ -86,6 +99,7 @@ pub async fn get_content(
         TypedHeader<CacheControl>,
         TypedHeader<ContentType>,
         TypedHeader<ContentLength>,
+        TypedHeader<ContentQualityHeader>,
         Body,
     ),
     StatusCode,
@@ -96,32 +110,43 @@ pub async fn get_content(
         .incr(account_id, |u| &u.get_content)
         .await;
 
-    let send_content = || async {
-        let data = state
-            .read()
-            .media()
-            .content_data(requested_profile, requested_content_id)?;
-
-        let (length, stream) = data
-            .byte_count_and_read_stream()
-            .await
-            .change_context(DataError::File)?;
-
-        if browser_etag.matches(state.etag_utils().immutable_content()) {
-            return Err(StatusCode::NOT_MODIFIED);
-        }
-
-        Ok((
-            TypedHeader(state.etag_utils().immutable_content().clone()),
-            TypedHeader(cache_control_for_images()),
-            TypedHeader(ContentType::octet_stream()),
-            TypedHeader(ContentLength(length)),
-            Body::from_stream(stream),
-        ))
-    };
+    let preferred_quality = params
+        .q
+        .as_deref()
+        .and_then(|q| match q {
+            "h" => Some(ContentQualityVariant::High),
+            "m" => Some(ContentQualityVariant::Medium),
+            "l" => Some(ContentQualityVariant::Low),
+            _ => None,
+        })
+        .unwrap_or(ContentQualityVariant::High);
 
     if account_id.as_id() == requested_profile {
-        return send_content().await;
+        return send_content(
+            &state,
+            ContentQualityVariant::High,
+            requested_profile,
+            requested_content_id,
+            browser_etag,
+        )
+        .await;
+    }
+
+    let is_admin = permissions.admin_view_all_profiles
+        || permissions.admin_moderate_media_content
+        || permissions.admin_edit_media_content_face_verified_value
+        || permissions.admin_edit_security_content_verified_value
+        || permissions.admin_process_reports;
+
+    if is_admin {
+        return send_content(
+            &state,
+            ContentQualityVariant::High,
+            requested_profile,
+            requested_content_id,
+            browser_etag,
+        )
+        .await;
     }
 
     if account_state != AccountState::Normal {
@@ -149,24 +174,103 @@ pub async fn get_content(
     let requested_content_is_profile_content = content.is_some();
     let content_accepted = content.map(|v| v.state().is_accepted()).unwrap_or_default();
 
-    if (visibility && requested_content_is_profile_content && content_accepted)
-        || permissions.admin_view_all_profiles
-        || permissions.admin_moderate_media_content
-        || permissions.admin_edit_media_content_face_verified_value
-        || permissions.admin_edit_security_content_verified_value
-        || permissions.admin_process_reports
+    let access_allowed = (visibility && requested_content_is_profile_content && content_accepted)
         || (params.is_match
             && requested_content_is_profile_content
             && content_accepted
             && state
                 .data_all_access()
                 .is_match(account_id, requested_profile_internal_id)
-                .await?)
-    {
-        send_content().await
-    } else {
-        Err(StatusCode::INTERNAL_SERVER_ERROR)
+                .await?);
+
+    if !access_allowed {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
+
+    let _guard = ContentSendingTracker::track();
+    let concurrent = ContentSendingTracker::concurrent_count();
+    let limits = state.config().limits_media();
+
+    let max_allowed = if concurrent
+        >= limits
+            .get_content_low_quality_concurrent_requests_threshold
+            .into()
+    {
+        ContentQualityVariant::Low
+    } else if concurrent
+        >= limits
+            .get_content_medium_quality_concurrent_requests_threshold
+            .into()
+    {
+        ContentQualityVariant::Medium
+    } else {
+        ContentQualityVariant::High
+    };
+
+    let actual_quality = select_quality(preferred_quality, max_allowed);
+
+    send_content(
+        &state,
+        actual_quality,
+        requested_profile,
+        requested_content_id,
+        browser_etag,
+    )
+    .await
+}
+
+fn select_quality(
+    preferred: ContentQualityVariant,
+    max_allowed: ContentQualityVariant,
+) -> ContentQualityVariant {
+    use ContentQualityVariant::*;
+    match (preferred, max_allowed) {
+        (_, Low) | (Low, _) => Low,
+        (_, Medium) | (Medium, High) => Medium,
+        (High, High) => High,
+    }
+}
+
+async fn send_content(
+    state: &S,
+    quality: ContentQualityVariant,
+    requested_profile: AccountId,
+    requested_content_id: ContentId,
+    browser_etag: Option<TypedHeader<IfNoneMatch>>,
+) -> Result<
+    (
+        TypedHeader<ETag>,
+        TypedHeader<CacheControl>,
+        TypedHeader<ContentType>,
+        TypedHeader<ContentLength>,
+        TypedHeader<ContentQualityHeader>,
+        Body,
+    ),
+    StatusCode,
+> {
+    let data = state.read().media().content_data_variant(
+        requested_profile,
+        requested_content_id,
+        quality,
+    )?;
+
+    let (length, stream) = data
+        .byte_count_and_read_stream()
+        .await
+        .change_context(DataError::File)?;
+
+    if browser_etag.matches(state.etag_utils().immutable_content()) {
+        return Err(StatusCode::NOT_MODIFIED);
+    }
+
+    Ok((
+        TypedHeader(state.etag_utils().immutable_content().clone()),
+        TypedHeader(cache_control_for_images()),
+        TypedHeader(ContentType::octet_stream()),
+        TypedHeader(ContentLength(length)),
+        TypedHeader(ContentQualityHeader(quality)),
+        Body::from_stream(stream),
+    ))
 }
 
 const PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT: &str = "/media_api/all_account_media_content/{aid}";

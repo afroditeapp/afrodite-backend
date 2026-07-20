@@ -670,12 +670,16 @@ impl SecurityContentUserDataExport {
     }
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
 pub struct GetContentQueryParams {
     /// If false media content access is allowed when profile is set as public.
     /// If true media content access is allowed when users are a match.
     #[serde(default)]
     pub is_match: bool,
+    /// Preferred content quality. Use value: h (high), m (medium), or l (low).
+    /// Server may downgrade quality based on load. Response header "q"
+    /// contains the actual quality returned.
+    pub q: Option<String>,
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
