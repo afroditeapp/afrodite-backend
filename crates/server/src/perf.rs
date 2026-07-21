@@ -22,7 +22,8 @@ use server_api_account::{
         ACCOUNT_VERIFICATION_COUNTERS_LIST,
     },
     account_admin::{
-        ACCOUNT_ADMIN_BAN_COUNTERS_LIST, ACCOUNT_ADMIN_CLIENT_FEATURES_COUNTERS_LIST,
+        ACCOUNT_ADMIN_ASSOCIATION_COUNTERS_LIST, ACCOUNT_ADMIN_BAN_COUNTERS_LIST,
+        ACCOUNT_ADMIN_CLIENT_FEATURES_COUNTERS_LIST,
         ACCOUNT_ADMIN_CLIENT_VERSION_PERF_COUNTERS_LIST, ACCOUNT_ADMIN_CUSTOM_EMAIL_COUNTERS_LIST,
         ACCOUNT_ADMIN_DELETE_COUNTERS_LIST, ACCOUNT_ADMIN_EMAIL_COUNTERS_LIST,
         ACCOUNT_ADMIN_LOGIN_COUNTERS_LIST, ACCOUNT_ADMIN_LOGOUT_COUNTERS_LIST,
@@ -134,6 +135,10 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
     &CounterCategory::new("account_email", ACCOUNT_EMAIL_COUNTERS_LIST),
     &CounterCategory::new("account_verification", ACCOUNT_VERIFICATION_COUNTERS_LIST),
     // Account admin
+    &CounterCategory::new(
+        "account_admin_association",
+        ACCOUNT_ADMIN_ASSOCIATION_COUNTERS_LIST,
+    ),
     &CounterCategory::new("account_admin_ban", ACCOUNT_ADMIN_BAN_COUNTERS_LIST),
     &CounterCategory::new("account_admin_delete", ACCOUNT_ADMIN_DELETE_COUNTERS_LIST),
     &CounterCategory::new(

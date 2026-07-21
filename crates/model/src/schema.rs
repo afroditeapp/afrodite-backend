@@ -110,6 +110,7 @@ diesel::table! {
     account_permissions (account_id) {
         account_id -> Int8,
         admin_change_email_address -> Bool,
+        admin_edit_association_membership -> Bool,
         admin_edit_login -> Bool,
         admin_edit_permissions -> Bool,
         admin_edit_profile_name -> Bool,
@@ -128,6 +129,7 @@ diesel::table! {
         admin_delete_account -> Bool,
         admin_ban_account -> Bool,
         admin_request_account_deletion -> Bool,
+        admin_view_association_membership -> Bool,
         admin_view_all_profiles -> Bool,
         admin_view_account_state -> Bool,
         admin_view_account_api_usage -> Bool,
@@ -226,6 +228,20 @@ diesel::table! {
     api_usage_statistics_save_time (id) {
         id -> Int8,
         unix_time -> Int8,
+    }
+}
+
+diesel::table! {
+    association_membership_manual (id) {
+        id -> Int8,
+        account_id_creator -> Nullable<Int8>,
+        account_id_editor -> Nullable<Int8>,
+        creation_unix_time -> Int8,
+        edit_unix_time -> Int8,
+        full_name -> Nullable<Text>,
+        domicile -> Nullable<Text>,
+        email -> Nullable<Text>,
+        membership_type -> Int2,
     }
 }
 
@@ -1050,6 +1066,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     api_usage_statistics_metric_name,
     api_usage_statistics_metric_value,
     api_usage_statistics_save_time,
+    association_membership_manual,
     bot_config,
     chat_app_notification_settings,
     chat_email_notification_settings,

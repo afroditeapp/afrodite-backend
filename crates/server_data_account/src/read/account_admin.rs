@@ -1,5 +1,6 @@
 use server_data::define_cmd_wrapper_read;
 
+pub mod association;
 pub mod custom_email;
 pub mod login;
 pub mod news;
@@ -7,6 +8,10 @@ pub mod permissions;
 define_cmd_wrapper_read!(ReadCommandsAccountAdmin);
 
 impl<'a> ReadCommandsAccountAdmin<'a> {
+    pub fn association(self) -> association::ReadCommandsAccountAssociationAdmin<'a> {
+        association::ReadCommandsAccountAssociationAdmin::new(self.0)
+    }
+
     pub fn custom_email(self) -> custom_email::ReadCommandsAccountCustomEmailAdmin<'a> {
         custom_email::ReadCommandsAccountCustomEmailAdmin::new(self.0)
     }

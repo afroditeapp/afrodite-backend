@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS login_session(
 CREATE TABLE IF NOT EXISTS account_permissions(
     account_id    BIGINT PRIMARY KEY NOT NULL,
     admin_change_email_address                   BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_edit_association_membership            BOOLEAN NOT NULL DEFAULT FALSE,
     admin_edit_login                             BOOLEAN NOT NULL DEFAULT FALSE,
     admin_edit_permissions                       BOOLEAN NOT NULL DEFAULT FALSE,
     admin_edit_profile_name                      BOOLEAN NOT NULL DEFAULT FALSE,
@@ -81,6 +82,7 @@ CREATE TABLE IF NOT EXISTS account_permissions(
     admin_delete_account                         BOOLEAN NOT NULL DEFAULT FALSE,
     admin_ban_account                            BOOLEAN NOT NULL DEFAULT FALSE,
     admin_request_account_deletion               BOOLEAN NOT NULL DEFAULT FALSE,
+    admin_view_association_membership            BOOLEAN NOT NULL DEFAULT FALSE,
     admin_view_all_profiles                      BOOLEAN NOT NULL DEFAULT FALSE,
     admin_view_account_state                     BOOLEAN NOT NULL DEFAULT FALSE,
     admin_view_account_api_usage                 BOOLEAN NOT NULL DEFAULT FALSE,
@@ -581,6 +583,26 @@ CREATE TABLE IF NOT EXISTS custom_email_sending_limits(
     send_to_all_accounts_monthly_count      INTEGER NOT NULL DEFAULT 0,
     send_draft_to_my_email_monthly_count    INTEGER NOT NULL DEFAULT 0,
     reset_unix_time                         BIGINT NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS association_membership_manual(
+    id                 BIGSERIAL PRIMARY KEY NOT NULL,
+    account_id_creator BIGINT,
+    account_id_editor  BIGINT,
+    creation_unix_time BIGINT                NOT NULL,
+    edit_unix_time     BIGINT                NOT NULL,
+    full_name          TEXT,
+    domicile           TEXT,
+    email              TEXT,
+    membership_type    SMALLINT              NOT NULL,
+    FOREIGN KEY (account_id_creator)
+        REFERENCES account_id (id)
+            ON DELETE SET NULL
+            ON UPDATE CASCADE,
+    FOREIGN KEY (account_id_editor)
+        REFERENCES account_id (id)
+            ON DELETE SET NULL
+            ON UPDATE CASCADE
 );
 
 -- Store custom reports file hash, so that changes to it can be detected

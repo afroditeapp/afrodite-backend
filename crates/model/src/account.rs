@@ -197,6 +197,7 @@ macro_rules! define_permissions {
 define_permissions!(
     struct Permissions,
     admin_change_email_address,
+    admin_edit_association_membership,
     admin_edit_login,
     admin_edit_permissions,
     admin_edit_profile_name,
@@ -215,6 +216,7 @@ define_permissions!(
     admin_delete_account,
     admin_ban_account,
     admin_request_account_deletion,
+    admin_view_association_membership,
     /// View public and private profiles.
     admin_view_all_profiles,
     admin_view_account_state,

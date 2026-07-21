@@ -2,6 +2,7 @@ use model::{AccountId, UnixTime};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
+mod association;
 mod client_features;
 mod client_version;
 mod custom_email;
@@ -11,6 +12,7 @@ mod permissions;
 mod search;
 mod verification;
 
+pub use association::*;
 pub use client_features::*;
 pub use client_version::*;
 pub use custom_email::*;

@@ -1,5 +1,6 @@
 use server_data::define_cmd_wrapper_write;
 
+pub mod association;
 pub mod ban;
 mod client_features;
 mod custom_email;
@@ -11,6 +12,10 @@ pub use client_features::SaveInfoBannersResult;
 define_cmd_wrapper_write!(WriteCommandsAccountAdmin);
 
 impl<'a> WriteCommandsAccountAdmin<'a> {
+    pub fn association(self) -> association::WriteCommandsAccountAssociationAdmin<'a> {
+        association::WriteCommandsAccountAssociationAdmin::new(self.0)
+    }
+
     pub fn ban(self) -> ban::WriteCommandsAccountBan<'a> {
         ban::WriteCommandsAccountBan::new(self.0)
     }

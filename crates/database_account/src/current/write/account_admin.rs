@@ -1,5 +1,6 @@
 use database::define_current_write_commands;
 
+mod association;
 mod ban;
 mod custom_email;
 mod login;
@@ -8,6 +9,10 @@ mod news;
 define_current_write_commands!(CurrentWriteAccountAdmin);
 
 impl<'a> CurrentWriteAccountAdmin<'a> {
+    pub fn association(self) -> association::CurrentWriteAccountAssociationAdmin<'a> {
+        association::CurrentWriteAccountAssociationAdmin::new(self.cmds)
+    }
+
     pub fn ban(self) -> ban::CurrentWriteAccountBanAdmin<'a> {
         ban::CurrentWriteAccountBanAdmin::new(self.cmds)
     }

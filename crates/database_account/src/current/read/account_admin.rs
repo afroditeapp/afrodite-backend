@@ -2,11 +2,16 @@ use database::define_current_read_commands;
 
 define_current_read_commands!(CurrentReadAccountAdmin);
 
+mod association;
 mod custom_email;
 mod login;
 mod news;
 
 impl<'a> CurrentReadAccountAdmin<'a> {
+    pub fn association(self) -> association::CurrentReadAccountAssociationAdmin<'a> {
+        association::CurrentReadAccountAssociationAdmin::new(self.cmds)
+    }
+
     pub fn login(self) -> login::CurrentReadAccountLock<'a> {
         login::CurrentReadAccountLock::new(self.cmds)
     }
