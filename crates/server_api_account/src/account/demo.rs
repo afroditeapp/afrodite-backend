@@ -14,7 +14,7 @@ use server_api::{
     app::{GetAccounts, GetConfig, ReadData},
     create_open_api_router, db_write,
 };
-use server_data::write::GetWriteCommandsCommon;
+use server_data::{app::RegisterImplResult, write::GetWriteCommandsCommon};
 use server_data_account::{
     demo::{AccessibleAccountsInfoUtils, DemoAccountUtils},
     read::GetReadCommandsAccount,
@@ -127,10 +127,13 @@ pub async fn post_demo_account_register_account(
         return Ok(DemoAccountRegisterAccountResult::error_max_account_count().into());
     }
 
-    let id = state
+    let RegisterImplResult::Ok(id) = state
         .data_all_access()
         .register_impl(SignInWithInfo::default(), None)
-        .await?;
+        .await?
+    else {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    };
 
     db_write!(state, move |cmds| cmds
         .account()

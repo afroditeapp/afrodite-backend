@@ -3,14 +3,11 @@ use std::net::SocketAddr;
 use model::EmailLoginToken;
 use model_account::{LoginResult, RequestEmailLoginToken, SignInWithInfo};
 use server_api::{S, app::GetConfig, db_write};
-use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
+use server_data::app::RegisterImplResult;
+use server_data_account::write::GetWriteCommandsAccount;
 
 use super::login_impl;
-use crate::{
-    account::login::EmailLoginResultInternal,
-    app::{ReadData, WriteData},
-    utils::StatusCode,
-};
+use crate::{account::login::EmailLoginResultInternal, app::WriteData, utils::StatusCode};
 
 pub(super) async fn request_email_registration_token(
     state: &S,
@@ -65,21 +62,16 @@ pub(super) async fn email_registration_with_token_impl(
         return Ok(LoginResult::error_invalid_email_login_token());
     };
 
-    let email_already_used = state
-        .read()
-        .account()
-        .email()
-        .account_id_from_email(email.clone())
-        .await?;
-
-    if email_already_used.is_some() {
-        return Ok(LoginResult::error_email_already_used());
-    }
-
-    let id = state
+    let id = match state
         .data_all_access()
         .register_impl(SignInWithInfo::default(), Some(email))
-        .await?;
+        .await?
+    {
+        RegisterImplResult::Ok(id) => id,
+        RegisterImplResult::EmailAlreadyExists => {
+            return Ok(LoginResult::error_email_already_used());
+        }
+    };
 
     db_write!(state, move |cmds| {
         cmds.account()

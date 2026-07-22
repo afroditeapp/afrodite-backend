@@ -18,7 +18,7 @@ use server_api::{
     db_write,
 };
 use server_data::{
-    IntoDataError, db_manager::InternalReading, email::EmailSendingHandle,
+    IntoDataError, app::RegisterImplResult, db_manager::InternalReading, email::EmailSendingHandle,
     write::GetWriteCommandsCommon,
 };
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
@@ -300,22 +300,16 @@ async fn handle_sign_in_with_info(
             .try_into()
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-        // Check if email is already used by another account
-        let email_already_used = state
-            .read()
-            .account()
-            .email()
-            .account_id_from_email(email.clone())
-            .await?;
-
-        if email_already_used.is_some() {
-            return Ok(LoginResult::error_email_already_used());
-        }
-
-        let id = state
+        let id = match state
             .data_all_access()
             .register_impl(info.sign_in_with_info(), Some(email))
-            .await?;
+            .await?
+        {
+            RegisterImplResult::Ok(id) => id,
+            RegisterImplResult::EmailAlreadyExists => {
+                return Ok(LoginResult::error_email_already_used());
+            }
+        };
         login_impl(id.as_id(), address, state).await
     }
 }

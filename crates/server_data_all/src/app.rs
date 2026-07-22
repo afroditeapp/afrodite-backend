@@ -11,11 +11,18 @@ use model_account::{
 };
 use server_common::websocket::WebSocketError;
 use server_data::{
-    DataError, app::DataAllUtils, data_export::DataExportCmd, data_reset::BACKEND_DATA_RESET_STATE,
-    db_manager::RouterDatabaseReadHandle, result::WrappedContextExt,
+    DataError,
+    app::{DataAllUtils, RegisterImplResult},
+    data_export::DataExportCmd,
+    data_reset::BACKEND_DATA_RESET_STATE,
+    db_manager::RouterDatabaseReadHandle,
+    result::WrappedContextExt,
     write_commands::WriteCommandRunnerHandle,
 };
-use server_data_account::write::{GetWriteCommandsAccount, account_admin::SetAccountBanStateMode};
+use server_data_account::{
+    read::GetReadCommandsAccount,
+    write::{GetWriteCommandsAccount, account_admin::SetAccountBanStateMode},
+};
 use server_data_chat::read::GetReadChatCommands;
 use simple_backend::manager_client::ManagerApiClient;
 use simple_backend_model::NonEmptyString;
@@ -48,12 +55,25 @@ impl DataAllUtils for DataAllUtilsImpl {
         write_command_runner: &'a WriteCommandRunnerHandle,
         sign_in_with: SignInWithInfo,
         email: Option<EmailAddress>,
-    ) -> BoxFuture<'a, server_common::result::Result<AccountIdInternal, DataError>> {
+    ) -> BoxFuture<'a, server_common::result::Result<RegisterImplResult, DataError>> {
         async move {
-            let id = write_command_runner
+            let r = write_command_runner
                 .write(move |cmds| async move {
                     if BACKEND_DATA_RESET_STATE.is_ongoing() {
                         return Err(DataError::NotAllowed.report());
+                    }
+
+                    if let Some(email) = email.clone() {
+                        let account_found = cmds
+                            .read()
+                            .account()
+                            .email()
+                            .account_id_from_email(email)
+                            .await?;
+
+                        if account_found.is_some() {
+                            return Ok(RegisterImplResult::EmailAlreadyExists);
+                        }
                     }
 
                     let id = cmds.account().get_next_unique_account_id().await?;
@@ -68,11 +88,11 @@ impl DataAllUtils for DataAllUtilsImpl {
                             .await?;
                     }
 
-                    Ok(id)
+                    Ok(RegisterImplResult::Ok(id))
                 })
                 .await?;
 
-            Ok(id)
+            Ok(r)
         }
         .boxed()
     }

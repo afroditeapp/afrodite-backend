@@ -119,6 +119,11 @@ impl<I: InternalWriting> GetEmailSender for I {
     }
 }
 
+pub enum RegisterImplResult {
+    Ok(AccountIdInternal),
+    EmailAlreadyExists,
+}
+
 /// Data commands which have cross component dependencies.
 ///
 /// This exists to avoid recompiling most of the crates when data layer crate
@@ -136,7 +141,7 @@ pub trait DataAllUtils: Send + Sync + 'static {
         write_command_runner: &'a WriteCommandRunnerHandle,
         sign_in_with: SignInWithInfo,
         email: Option<EmailAddress>,
-    ) -> BoxFuture<'a, server_common::result::Result<AccountIdInternal, DataError>>;
+    ) -> BoxFuture<'a, server_common::result::Result<RegisterImplResult, DataError>>;
 
     #[allow(clippy::too_many_arguments)]
     fn handle_websocket_binary_message_from_client<'a>(

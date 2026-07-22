@@ -19,7 +19,7 @@ use model::{
 use model_server_data::{EmailAddress, SignInWithInfo};
 use server_common::{push_notifications::PushNotificationSender, websocket::WebSocketError};
 use server_data::{
-    app::{DataAllUtils, GetConfig},
+    app::{DataAllUtils, GetConfig, RegisterImplResult},
     content_processing::ContentProcessingManagerData,
     data_export::{DataExportCmd, DataExportManagerData},
     db_manager::RouterDatabaseReadHandle,
@@ -201,7 +201,7 @@ impl DataAllAccess<'_> {
         &self,
         sign_in_with: SignInWithInfo,
         email: Option<EmailAddress>,
-    ) -> server_common::result::Result<AccountIdInternal, DataError> {
+    ) -> server_common::result::Result<RegisterImplResult, DataError> {
         let cmd = self
             .utils()
             .register_impl(self.write(), sign_in_with, email);

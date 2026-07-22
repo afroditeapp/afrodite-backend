@@ -12,7 +12,9 @@ use server_api::{
     common::is_ip_address_accepted,
     db_write,
 };
-use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
+use server_data::{
+    app::RegisterImplResult, read::GetReadCommandsCommon, write::GetWriteCommandsCommon,
+};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
 use utils::api::{ADMIN_BOT_EMAIL, USER_BOT_EMAIL_PREFIX, USER_BOT_EMAIL_SUFFIX};
@@ -88,10 +90,13 @@ pub const PATH_BOT_REGISTER: &str = "/account_api/bot_register";
 )]
 pub async fn post_bot_register(State(state): State<S>) -> Result<Json<AccountId>, StatusCode> {
     ACCOUNT_BOT.post_bot_register.incr();
-    let new_account_id = state
+    let RegisterImplResult::Ok(new_account_id) = state
         .data_all_access()
         .register_impl(SignInWithInfo::default(), None)
-        .await?;
+        .await?
+    else {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    };
 
     db_write!(state, move |cmds| {
         cmds.common()
@@ -185,7 +190,7 @@ async fn get_or_create_bots_impl(state: &S) -> Result<Json<GetBotsResult>, Statu
     // Create missing admin bot if needed
     if bot_config.admin_bot
         && result.admin.is_none()
-        && let Some(admin) = create_bot_account(
+        && let admin = create_bot_account(
             state,
             EmailAddress(ADMIN_BOT_EMAIL.to_string()),
             BotAccountType::Admin,
@@ -203,9 +208,8 @@ async fn get_or_create_bots_impl(state: &S) -> Result<Json<GetBotsResult>, Statu
                 "{}{}{}",
                 USER_BOT_EMAIL_PREFIX, bot_number, USER_BOT_EMAIL_SUFFIX
             ));
-            if let Some(bot) = create_bot_account(state, bot_email, BotAccountType::User).await? {
-                result.users.push(bot);
-            }
+            let bot = create_bot_account(state, bot_email, BotAccountType::User).await?;
+            result.users.push(bot);
         }
     }
 
@@ -217,11 +221,14 @@ async fn create_bot_account(
     state: &S,
     email: EmailAddress,
     bot_type: BotAccountType,
-) -> Result<Option<BotAccount>, StatusCode> {
-    let new_account_id = state
+) -> Result<BotAccount, StatusCode> {
+    let RegisterImplResult::Ok(new_account_id) = state
         .data_all_access()
         .register_impl(SignInWithInfo::default(), None)
-        .await?;
+        .await?
+    else {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    };
 
     db_write!(state, move |cmds| {
         cmds.common()
@@ -233,9 +240,9 @@ async fn create_bot_account(
             .await
     })?;
 
-    Ok(Some(BotAccount {
+    Ok(BotAccount {
         aid: new_account_id.as_id(),
-    }))
+    })
 }
 
 pub const PATH_REMOTE_BOT_LOGIN: &str = "/account_api/remote_bot_login";
