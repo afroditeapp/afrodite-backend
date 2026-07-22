@@ -1,5 +1,6 @@
 use database::define_current_write_commands;
 
+mod association;
 mod client_features;
 mod data;
 mod delete;
@@ -14,6 +15,10 @@ mod verification;
 define_current_write_commands!(CurrentWriteAccount);
 
 impl<'a> CurrentWriteAccount<'a> {
+    pub fn association(self) -> association::CurrentWriteAccountAssociation<'a> {
+        association::CurrentWriteAccountAssociation::new(self.cmds)
+    }
+
     pub fn data(self) -> data::CurrentWriteAccountData<'a> {
         data::CurrentWriteAccountData::new(self.cmds)
     }

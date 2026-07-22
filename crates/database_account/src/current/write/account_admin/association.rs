@@ -1,6 +1,7 @@
 use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::Result;
+use model::AccountIdInternal;
 use model_account::{
     AssociationMemberIdManual, NewAssociationMemberManualEntry, UpdateAssociationMemberManualEntry,
 };
@@ -51,6 +52,19 @@ impl CurrentWriteAccountAssociationAdmin<'_> {
         use crate::schema::association_membership_manual::dsl::*;
 
         delete(association_membership_manual.filter(id.eq(entry_id)))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
+
+    pub fn delete_entry(
+        &mut self,
+        member_id: AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        use crate::schema::association_membership::dsl::*;
+
+        diesel::delete(association_membership.filter(account_id_member.eq(member_id.as_db_id())))
             .execute(self.conn())
             .into_db_error(())?;
 

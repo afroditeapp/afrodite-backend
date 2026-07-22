@@ -16,6 +16,7 @@ use server_data::{
     write::{DbTransaction, GetWriteCommandsCommon},
 };
 
+pub mod association;
 pub mod client_features;
 pub mod delete;
 pub mod email;
@@ -29,6 +30,10 @@ pub struct IncrementAdminAccessGrantedCount;
 define_cmd_wrapper_write!(WriteCommandsAccount);
 
 impl<'a> WriteCommandsAccount<'a> {
+    pub fn association(self) -> association::WriteCommandsAccountAssociation<'a> {
+        association::WriteCommandsAccountAssociation::new(self.0)
+    }
+
     pub fn delete(self) -> WriteCommandsAccountDelete<'a> {
         WriteCommandsAccountDelete::new(self.0)
     }

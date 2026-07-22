@@ -2,7 +2,8 @@ use database::{DbReadMode, DieselDatabaseError};
 use database_account::current::read::GetDbReadCommandsAccount;
 use model::UnixTime;
 use model_account::{
-    AccountEmailSendingStateRaw, AccountStateTableRaw, EmailAddressState, EmailLoginTokens,
+    AccountEmailSendingStateRaw, AccountStateTableRaw, AssociationMembershipDataExportEntry,
+    EmailAddressState, EmailLoginTokens,
 };
 use model_chat::AccountAppNotificationSettings;
 use serde::Serialize;
@@ -21,6 +22,7 @@ pub struct UserDataExportJsonAccount {
     email_login_token_time: Option<UnixTime>,
     email_verification_token: Option<Vec<u8>>,
     email_verification_token_time: Option<UnixTime>,
+    association_membership: Option<AssociationMembershipDataExportEntry>,
     note: &'static str,
 }
 
@@ -44,6 +46,15 @@ impl UserDataExportJsonAccount {
             email_login_token_time: current.account().email().email_login_token_time(id)?,
             email_verification_token,
             email_verification_token_time,
+            association_membership: current.account().association().get_own_entry(id)?.map(|e| {
+                AssociationMembershipDataExportEntry {
+                    creation_unix_time: e.creation_unix_time,
+                    edit_unix_time: e.edit_unix_time,
+                    full_name: e.full_name,
+                    domicile: e.domicile,
+                    membership_type: e.membership_type,
+                }
+            }),
             note: "If you created or edited news, that data is not currently included here.",
         };
         Ok(data)

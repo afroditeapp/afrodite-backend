@@ -2,6 +2,7 @@ use database::define_current_read_commands;
 
 define_current_read_commands!(CurrentReadAccount);
 
+mod association;
 mod ban;
 mod client_features;
 mod data;
@@ -15,6 +16,10 @@ mod sign_in_with;
 mod verification;
 
 impl<'a> CurrentReadAccount<'a> {
+    pub fn association(self) -> association::CurrentReadAccountAssociation<'a> {
+        association::CurrentReadAccountAssociation::new(self.cmds)
+    }
+
     pub fn ban(self) -> ban::CurrentReadAccountBan<'a> {
         ban::CurrentReadAccountBan::new(self.cmds)
     }

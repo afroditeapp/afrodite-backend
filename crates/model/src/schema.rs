@@ -232,6 +232,19 @@ diesel::table! {
 }
 
 diesel::table! {
+    association_membership (account_id_member) {
+        account_id_member -> Int8,
+        account_id_creator -> Nullable<Int8>,
+        account_id_editor -> Nullable<Int8>,
+        creation_unix_time -> Int8,
+        edit_unix_time -> Int8,
+        full_name -> Nullable<Text>,
+        domicile -> Nullable<Text>,
+        membership_type -> Int2,
+    }
+}
+
+diesel::table! {
     association_membership_manual (id) {
         id -> Int8,
         account_id_creator -> Nullable<Int8>,
@@ -1066,6 +1079,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     api_usage_statistics_metric_name,
     api_usage_statistics_metric_value,
     api_usage_statistics_save_time,
+    association_membership,
     association_membership_manual,
     bot_config,
     chat_app_notification_settings,

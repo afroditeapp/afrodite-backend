@@ -54,6 +54,9 @@ impl ApiDoc {
         // Account
         doc.merge(server_api_account::ApiDocAccount::openapi());
         let account = ApiDoc::openapi()
+            .merge_from(
+                server_api_account::account::router_association(state.clone()).into_openapi(),
+            )
             .merge_from(server_api_account::account::router_ban(state.clone()).into_openapi())
             .merge_from(server_api_account::account::router_delete(state.clone()).into_openapi())
             .merge_from(server_api_account::account::router_demo(state.clone()).into_openapi())

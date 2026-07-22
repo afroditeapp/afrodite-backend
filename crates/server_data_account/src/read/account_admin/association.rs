@@ -1,5 +1,5 @@
 use database_account::current::read::GetDbReadCommandsAccount;
-use model_account::AssociationMemberManual;
+use model_account::{AssociationMemberManual, AssociationMembersPage, GetAssociationMembersPage};
 use server_data::{
     DataError, IntoDataError, define_cmd_wrapper_read, read::DbRead, result::Result,
 };
@@ -10,6 +10,18 @@ impl ReadCommandsAccountAssociationAdmin<'_> {
     pub async fn get_all_manual(&self) -> Result<Vec<AssociationMemberManual>, DataError> {
         self.db_read(move |mut cmds| {
             let entries = cmds.account_admin().association().get_all_manual()?;
+            Ok(entries)
+        })
+        .await
+        .into_error()
+    }
+
+    pub async fn get_page(
+        &self,
+        query: GetAssociationMembersPage,
+    ) -> Result<AssociationMembersPage, DataError> {
+        self.db_read(move |mut cmds| {
+            let entries = cmds.account_admin().association().get_page(&query)?;
             Ok(entries)
         })
         .await

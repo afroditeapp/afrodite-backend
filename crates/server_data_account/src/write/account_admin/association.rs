@@ -73,4 +73,10 @@ impl WriteCommandsAccountAssociationAdmin<'_> {
                 .delete_entry_manual(entry_id)
         })
     }
+
+    pub async fn delete_entry(&self, member: AccountIdInternal) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.account_admin().association().delete_entry(member)
+        })
+    }
 }

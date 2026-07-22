@@ -37,6 +37,7 @@ impl PrivateRoutes {
 
     pub fn private_account_server_router(&self) -> Router {
         let private = Router::new()
+            .merge(api::account::router_association(self.state.clone()))
             .merge(api::account::router_register(self.state.clone()))
             .merge(api::account::router_logout(self.state.clone()))
             .merge(api::account::router_ban(self.state.clone()))

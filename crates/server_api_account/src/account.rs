@@ -1,3 +1,4 @@
+pub mod association;
 pub mod ban;
 pub mod client_features;
 pub mod delete;
@@ -13,6 +14,7 @@ pub mod settings;
 pub mod state;
 pub mod verification;
 
+pub use association::*;
 pub use ban::*;
 pub use client_features::*;
 pub use delete::*;

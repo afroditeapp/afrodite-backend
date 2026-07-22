@@ -11,6 +11,7 @@ use server_data::{
     DataError, IntoDataError, define_cmd_wrapper_read, read::DbRead, result::Result,
 };
 
+pub mod association;
 pub mod ban;
 pub mod delete;
 pub mod email;
@@ -20,6 +21,10 @@ pub mod notification;
 define_cmd_wrapper_read!(ReadCommandsAccount);
 
 impl<'a> ReadCommandsAccount<'a> {
+    pub fn association(self) -> association::ReadCommandsAccountAssociation<'a> {
+        association::ReadCommandsAccountAssociation::new(self.0)
+    }
+
     pub fn ban(self) -> ban::ReadCommandsAccountBan<'a> {
         ban::ReadCommandsAccountBan::new(self.0)
     }

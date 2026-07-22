@@ -605,6 +605,29 @@ CREATE TABLE IF NOT EXISTS association_membership_manual(
             ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS association_membership(
+    account_id_member  INTEGER PRIMARY KEY   NOT NULL,
+    account_id_creator BIGINT,
+    account_id_editor  BIGINT,
+    creation_unix_time BIGINT                NOT NULL,
+    edit_unix_time     BIGINT                NOT NULL,
+    full_name          TEXT,
+    domicile           TEXT,
+    membership_type    SMALLINT              NOT NULL,
+    FOREIGN KEY (account_id_member)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    FOREIGN KEY (account_id_creator)
+        REFERENCES account_id (id)
+            ON DELETE SET NULL
+            ON UPDATE CASCADE,
+    FOREIGN KEY (account_id_editor)
+        REFERENCES account_id (id)
+            ON DELETE SET NULL
+            ON UPDATE CASCADE
+);
+
 -- Store custom reports file hash, so that changes to it can be detected
 -- when server starts.
 CREATE TABLE IF NOT EXISTS custom_reports_file_hash(

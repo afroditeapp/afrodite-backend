@@ -9,6 +9,9 @@ use utoipa::{IntoParams, ToSchema};
 
 use crate::{AccountId, AccountIdDb, AccountVerificationErrorFlagsValue, VerificationMethod};
 
+mod association;
+pub use association::*;
+
 mod email;
 pub use email::*;
 
