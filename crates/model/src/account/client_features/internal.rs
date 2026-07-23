@@ -3,10 +3,11 @@ use std::collections::BTreeMap;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
-use super::{ChatConfig, FeaturesConfig, LikesConfig, MapConfig, NewsConfig, ProfileConfig};
-use crate::{
-    AccountVerificationConfig, AgeVerificationConfig, AssociationConfig, ClientFeaturesConfig,
+use super::{
+    AssociationConfig, ChatConfig, FeaturesConfig, LikesConfig, MapConfig, MembershipType,
+    NewsConfig, ProfileConfig,
 };
+use crate::{AccountVerificationConfig, AgeVerificationConfig, ClientFeaturesConfig};
 
 const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 [attribution.generic]
@@ -81,7 +82,7 @@ pub struct ClientFeaturesConfigInternal {
     pub age_verification: AgeVerificationConfig,
     #[serde(default)]
     pub account_verification: AccountVerificationConfig,
-    pub association: Option<AssociationConfig>,
+    pub association: Option<AssociationConfigInternal>,
 }
 
 impl ClientFeaturesConfigInternal {
@@ -115,7 +116,7 @@ impl ClientFeaturesConfigInternal {
             chat: self.chat.into(),
             age_verification: self.age_verification.into(),
             account_verification: self.account_verification.into(),
-            association: self.association,
+            association: self.association.map(Into::into),
         })
     }
 }
@@ -149,5 +150,48 @@ impl StringResourceInternal {
         }
 
         true
+    }
+}
+
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct AssociationConfigInternal {
+    #[serde(default)]
+    pub user_can_join_association: bool,
+    #[serde(default)]
+    pub user_can_edit_existing_membership: bool,
+    pub association_name: StringResourceInternal,
+    pub association_info_markdown: Option<StringResourceInternal>,
+    pub membership_info_markdown: Option<StringResourceInternal>,
+    pub membership_types: Vec<MembershipTypeInternal>,
+}
+
+#[derive(Debug, Default, Clone, Deserialize)]
+pub struct MembershipTypeInternal {
+    pub id: i16,
+    #[serde(default)]
+    pub admin_only: bool,
+    pub title: StringResourceInternal,
+}
+
+impl From<AssociationConfigInternal> for AssociationConfig {
+    fn from(value: AssociationConfigInternal) -> Self {
+        Self {
+            user_can_join_association: value.user_can_join_association,
+            user_can_edit_existing_membership: value.user_can_edit_existing_membership,
+            association_name: value.association_name.into(),
+            association_info_markdown: value.association_info_markdown.map(Into::into),
+            membership_info_markdown: value.membership_info_markdown.map(Into::into),
+            membership_types: value.membership_types.into_iter().map(Into::into).collect(),
+        }
+    }
+}
+
+impl From<MembershipTypeInternal> for MembershipType {
+    fn from(value: MembershipTypeInternal) -> Self {
+        Self {
+            id: value.id,
+            admin_only: value.admin_only,
+            title: value.title.into(),
+        }
     }
 }
