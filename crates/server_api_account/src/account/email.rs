@@ -30,7 +30,7 @@ use tokio::time::timeout;
 
 use crate::app::GetAccounts;
 
-pub const PATH_GET_VERIFY_EMAIL: &str = "/account_api/verify_email/{token}";
+pub const PATH_GET_VERIFY_EMAIL: &str = "/verify_email/{token}";
 
 /// Verify email address using the token sent via email.
 /// This endpoint is meant to be accessed via a link in the verification email.
@@ -203,7 +203,7 @@ pub async fn post_send_verify_email_message(
     }
 }
 
-pub const PATH_GET_VERIFY_NEW_EMAIL: &str = "/account_api/verify_new_email/{token}";
+pub const PATH_GET_VERIFY_NEW_EMAIL: &str = "/verify_new_email/{token}";
 
 /// Verify new email address using the token sent via email.
 /// This endpoint is meant to be accessed via a link in the verification email.
