@@ -35,7 +35,7 @@ use simple_backend::create_counters;
 
 use crate::{
     app::{ContentProcessingProvider, GetAccounts, ReadData, WriteData},
-    media::{content::quality::ContentQualityHeader, quality::ContentSendingTracker},
+    media::quality::ContentSendingTracker,
     utils::{Json, StatusCode},
 };
 
@@ -102,7 +102,6 @@ pub async fn get_content(
         TypedHeader<CacheControl>,
         TypedHeader<ContentType>,
         TypedHeader<ContentLength>,
-        TypedHeader<ContentQualityHeader>,
         Body,
     ),
     StatusCode,
@@ -250,7 +249,6 @@ async fn send_content(
         TypedHeader<CacheControl>,
         TypedHeader<ContentType>,
         TypedHeader<ContentLength>,
-        TypedHeader<ContentQualityHeader>,
         Body,
     ),
     StatusCode,
@@ -283,7 +281,6 @@ async fn send_content(
         TypedHeader(cache_control),
         TypedHeader(ContentType::octet_stream()),
         TypedHeader(ContentLength(length)),
-        TypedHeader(ContentQualityHeader(actual_quality)),
         Body::from_stream(stream),
     ))
 }
