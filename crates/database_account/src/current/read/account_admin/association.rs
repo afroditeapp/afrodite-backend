@@ -2,10 +2,7 @@ use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::{alias, prelude::*};
 use error_stack::Result;
 use model::{AccountId, AccountIdDb, AccountIdInternal, UnixTime};
-use model_account::{
-    AssociationMember, AssociationMemberManual, AssociationMemberManualEntryInternal,
-    AssociationMembersPage, GetAssociationMembersPage,
-};
+use model_account::{AssociationMember, AssociationMembersPage, GetAssociationMembersPage};
 use simple_backend_utils::string::NonEmptyString;
 
 use crate::IntoDatabaseError;
@@ -39,53 +36,17 @@ impl CurrentReadAccountAssociationAdmin<'_> {
             .collect())
     }
 
-    /// Get all association membership manual entries.
-    pub fn get_all_manual(&mut self) -> Result<Vec<AssociationMemberManual>, DieselDatabaseError> {
-        use crate::schema::association_membership_manual;
+    pub fn get_manual_registry(&mut self) -> Result<String, DieselDatabaseError> {
+        use crate::schema::manual_association_membership_registry::dsl::*;
 
-        let (creator_aid, editor_aid) = alias!(
-            crate::schema::account_id as creator_aid,
-            crate::schema::account_id as editor_aid
-        );
-
-        let entries = association_membership_manual::table
-            .left_outer_join(
-                creator_aid.on(association_membership_manual::account_id_creator
-                    .eq(creator_aid.field(crate::schema::account_id::id).nullable())),
-            )
-            .left_outer_join(
-                editor_aid.on(association_membership_manual::account_id_editor
-                    .eq(editor_aid.field(crate::schema::account_id::id).nullable())),
-            )
-            .order(association_membership_manual::id.asc())
-            .select((
-                AssociationMemberManualEntryInternal::as_select(),
-                creator_aid
-                    .field(crate::schema::account_id::uuid)
-                    .nullable(),
-                editor_aid.field(crate::schema::account_id::uuid).nullable(),
-            ))
-            .load(self.conn())
+        let value: Option<String> = manual_association_membership_registry
+            .filter(row_type.eq(0))
+            .select(registry)
+            .first(self.conn())
+            .optional()
             .into_db_error(())?;
 
-        let result = entries
-            .into_iter()
-            .map(
-                |(internal, creator_uuid, editor_uuid)| AssociationMemberManual {
-                    id: internal.id,
-                    aid_creator: creator_uuid,
-                    aid_editor: editor_uuid,
-                    creation_unix_time: internal.creation_unix_time,
-                    edit_unix_time: internal.edit_unix_time,
-                    full_name: internal.full_name,
-                    domicile: internal.domicile,
-                    email: internal.email,
-                    membership_type: internal.membership_type,
-                },
-            )
-            .collect();
-
-        Ok(result)
+        Ok(value.unwrap_or_default())
     }
 
     /// Get a paged list of association membership entries with email.

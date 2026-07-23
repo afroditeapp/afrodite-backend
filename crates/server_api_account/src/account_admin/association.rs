@@ -1,8 +1,8 @@
 use axum::{Extension, extract::State};
 use model::{AccountId, Permissions};
 use model_account::{
-    AssociationMemberIdManual, AssociationMemberManual, AssociationMembersPage,
-    EditAssociationMemberManual, GetAssociationMembersPage, NewAssociationMemberManual,
+    AssociationMembersPage, GetAssociationMembersPage, ManualAssociationMembershipRegistry,
+    ManualAssociationMembershipRegistryInput,
 };
 use server_api::{
     S,
@@ -17,101 +17,58 @@ use crate::{
     utils::{Json, StatusCode},
 };
 
-const PATH_GET_ALL_ASSOCIATION_MEMBERS_MANUAL: &str = "/account_api/association_members_manual";
+const PATH_GET_MANUAL_ASSOCIATION_MEMBERSHIP_REGISTRY: &str =
+    "/account_api/manual_association_membership_registry";
 
-/// Get all manually added association members.
+/// Get the manual association membership registry.
 ///
 /// # Access
 ///
 /// Permission [model::Permissions::admin_view_association_membership] is required.
 #[utoipa::path(
     get,
-    path = PATH_GET_ALL_ASSOCIATION_MEMBERS_MANUAL,
+    path = PATH_GET_MANUAL_ASSOCIATION_MEMBERSHIP_REGISTRY,
     responses(
-        (status = 200, description = "Successful.", body = Vec<AssociationMemberManual>),
+        (status = 200, description = "Successful.", body = ManualAssociationMembershipRegistry),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
     security(("access_token" = [])),
 )]
-pub async fn get_all_association_members_manual(
+pub async fn get_manual_association_membership_registry(
     State(state): State<S>,
     Extension(permissions): Extension<Permissions>,
-) -> Result<Json<Vec<AssociationMemberManual>>, StatusCode> {
-    ACCOUNT_ADMIN.get_all_association_members_manual.incr();
+) -> Result<Json<ManualAssociationMembershipRegistry>, StatusCode> {
+    ACCOUNT_ADMIN
+        .get_manual_association_membership_registry
+        .incr();
 
     if !permissions.admin_view_association_membership {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let entries = state
+    let registry = state
         .read()
         .account_admin()
         .association()
-        .get_all_manual()
+        .get_manual_registry()
         .await?;
 
-    Ok(entries.into())
+    Ok(registry.into())
 }
 
-const PATH_POST_ADD_ASSOCIATION_MEMBER_MANUAL: &str = "/account_api/add_association_member_manual";
+const PATH_POST_MANUAL_ASSOCIATION_MEMBERSHIP_REGISTRY: &str =
+    "/account_api/manual_association_membership_registry";
 
-/// Add a new manual association member.
+/// Set the manual association membership registry.
 ///
 /// # Access
 ///
 /// Permission [model::Permissions::admin_edit_association_membership] is required.
 #[utoipa::path(
     post,
-    path = PATH_POST_ADD_ASSOCIATION_MEMBER_MANUAL,
-    request_body = NewAssociationMemberManual,
-    responses(
-        (status = 200, description = "Successful.", body = AssociationMemberIdManual),
-        (status = 401, description = "Unauthorized."),
-        (status = 500, description = "Internal server error."),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn post_add_association_member_manual(
-    State(state): State<S>,
-    Extension(permissions): Extension<Permissions>,
-    Extension(account_id): Extension<model::AccountIdInternal>,
-    Json(data): Json<NewAssociationMemberManual>,
-) -> Result<Json<AssociationMemberIdManual>, StatusCode> {
-    ACCOUNT_ADMIN.post_add_association_member_manual.incr();
-
-    if !permissions.admin_edit_association_membership {
-        return Err(StatusCode::INTERNAL_SERVER_ERROR);
-    }
-
-    let entry_id = db_write!(state, move |cmds| {
-        cmds.account_admin()
-            .association()
-            .create_entry_manual(
-                account_id,
-                data.full_name,
-                data.domicile,
-                data.email,
-                data.membership_type,
-            )
-            .await
-    })?;
-
-    Ok(entry_id.into())
-}
-
-const PATH_POST_EDIT_ASSOCIATION_MEMBER_MANUAL: &str =
-    "/account_api/edit_association_member_manual";
-
-/// Edit manual association member.
-///
-/// # Access
-///
-/// Permission [model::Permissions::admin_edit_association_membership] is required.
-#[utoipa::path(
-    post,
-    path = PATH_POST_EDIT_ASSOCIATION_MEMBER_MANUAL,
-    request_body = EditAssociationMemberManual,
+    path = PATH_POST_MANUAL_ASSOCIATION_MEMBERSHIP_REGISTRY,
+    request_body = ManualAssociationMembershipRegistryInput,
     responses(
         (status = 200, description = "Successful."),
         (status = 401, description = "Unauthorized."),
@@ -119,13 +76,14 @@ const PATH_POST_EDIT_ASSOCIATION_MEMBER_MANUAL: &str =
     ),
     security(("access_token" = [])),
 )]
-pub async fn post_edit_association_member_manual(
+pub async fn post_manual_association_membership_registry(
     State(state): State<S>,
     Extension(permissions): Extension<Permissions>,
-    Extension(account_id): Extension<model::AccountIdInternal>,
-    Json(data): Json<EditAssociationMemberManual>,
+    Json(data): Json<ManualAssociationMembershipRegistryInput>,
 ) -> Result<(), StatusCode> {
-    ACCOUNT_ADMIN.post_edit_association_member_manual.incr();
+    ACCOUNT_ADMIN
+        .post_manual_association_membership_registry
+        .incr();
 
     if !permissions.admin_edit_association_membership {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
@@ -134,52 +92,7 @@ pub async fn post_edit_association_member_manual(
     db_write!(state, move |cmds| {
         cmds.account_admin()
             .association()
-            .edit_entry_manual(
-                account_id,
-                data.id,
-                data.full_name,
-                data.domicile,
-                data.email,
-                data.membership_type,
-            )
-            .await
-    })?;
-
-    Ok(())
-}
-
-const PATH_DELETE_ASSOCIATION_MEMBER_MANUAL: &str = "/account_api/delete_association_member_manual";
-
-/// Delete a manual association member.
-///
-/// # Access
-///
-/// Permission [model::Permissions::admin_edit_association_membership] is required.
-#[utoipa::path(
-    delete,
-    path = PATH_DELETE_ASSOCIATION_MEMBER_MANUAL,
-    responses(
-        (status = 200, description = "Successful."),
-        (status = 401, description = "Unauthorized."),
-        (status = 500, description = "Internal server error."),
-    ),
-    security(("access_token" = [])),
-)]
-pub async fn delete_association_member_manual(
-    State(state): State<S>,
-    Extension(permissions): Extension<Permissions>,
-    Json(data): Json<AssociationMemberIdManual>,
-) -> Result<(), StatusCode> {
-    ACCOUNT_ADMIN.delete_association_member_manual.incr();
-
-    if !permissions.admin_edit_association_membership {
-        return Err(StatusCode::INTERNAL_SERVER_ERROR);
-    }
-
-    db_write!(state, move |cmds| {
-        cmds.account_admin()
-            .association()
-            .delete_entry_manual(data)
+            .upsert_manual_registry(data.registry)
             .await
     })?;
 
@@ -268,10 +181,8 @@ pub async fn post_delete_association_membership(
 
 create_open_api_router!(
     fn router_admin_association,
-    get_all_association_members_manual,
-    post_add_association_member_manual,
-    post_edit_association_member_manual,
-    delete_association_member_manual,
+    get_manual_association_membership_registry,
+    post_manual_association_membership_registry,
     post_get_association_members_page,
     post_delete_association_membership,
 );
@@ -280,10 +191,8 @@ create_counters!(
     AccountAdminCounterAssociation,
     ACCOUNT_ADMIN,
     ACCOUNT_ADMIN_ASSOCIATION_COUNTERS_LIST,
-    get_all_association_members_manual,
-    post_add_association_member_manual,
-    post_edit_association_member_manual,
-    delete_association_member_manual,
+    get_manual_association_membership_registry,
+    post_manual_association_membership_registry,
     post_get_association_members_page,
     post_delete_association_membership,
 );

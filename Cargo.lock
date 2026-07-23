@@ -5186,7 +5186,6 @@ dependencies = [
  "model_server_state",
  "server_common",
  "server_data",
- "simple_backend_utils",
  "tracing",
 ]
 

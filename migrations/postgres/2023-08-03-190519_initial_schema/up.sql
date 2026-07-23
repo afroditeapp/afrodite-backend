@@ -585,24 +585,10 @@ CREATE TABLE IF NOT EXISTS custom_email_sending_limits(
     reset_unix_time                         BIGINT NOT NULL DEFAULT 0
 );
 
-CREATE TABLE IF NOT EXISTS association_membership_manual(
-    id                 BIGSERIAL PRIMARY KEY NOT NULL,
-    account_id_creator BIGINT,
-    account_id_editor  BIGINT,
-    creation_unix_time BIGINT                NOT NULL,
-    edit_unix_time     BIGINT                NOT NULL,
-    full_name          TEXT,
-    domicile           TEXT,
-    email              TEXT,
-    membership_type    SMALLINT              NOT NULL,
-    FOREIGN KEY (account_id_creator)
-        REFERENCES account_id (id)
-            ON DELETE SET NULL
-            ON UPDATE CASCADE,
-    FOREIGN KEY (account_id_editor)
-        REFERENCES account_id (id)
-            ON DELETE SET NULL
-            ON UPDATE CASCADE
+CREATE TABLE IF NOT EXISTS manual_association_membership_registry(
+    -- 0 = manual association membership registry
+    row_type      INTEGER PRIMARY KEY NOT NULL,
+    registry      TEXT                NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS association_membership(
