@@ -35,4 +35,19 @@ impl CurrentWriteAccountAssociationAdmin<'_> {
 
         Ok(())
     }
+
+    pub fn update_membership_type(
+        &mut self,
+        member_id: AccountIdInternal,
+        new_type: i16,
+    ) -> Result<(), DieselDatabaseError> {
+        use crate::schema::association_membership::dsl::*;
+
+        diesel::update(association_membership.filter(account_id_member.eq(member_id.as_db_id())))
+            .set(membership_type.eq(new_type))
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
 }

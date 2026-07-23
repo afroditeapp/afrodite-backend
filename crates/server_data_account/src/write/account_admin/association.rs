@@ -20,4 +20,16 @@ impl WriteCommandsAccountAssociationAdmin<'_> {
             cmds.account_admin().association().delete_entry(member)
         })
     }
+
+    pub async fn update_membership_type(
+        &self,
+        member: AccountIdInternal,
+        membership_type: i16,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.account_admin()
+                .association()
+                .update_membership_type(member, membership_type)
+        })
+    }
 }

@@ -2,11 +2,11 @@ use axum::{Extension, extract::State};
 use model::{AccountId, Permissions};
 use model_account::{
     AssociationMembersPage, GetAssociationMembersPage, ManualAssociationMembershipRegistry,
-    ManualAssociationMembershipRegistryInput,
+    ManualAssociationMembershipRegistryInput, UpdateAssociationMembershipType,
 };
 use server_api::{
     S,
-    app::{GetAccounts, ReadData},
+    app::{GetAccounts, GetConfig, ReadData},
     create_open_api_router, db_write,
 };
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
@@ -179,12 +179,68 @@ pub async fn post_delete_association_membership(
     Ok(())
 }
 
+const PATH_POST_UPDATE_ASSOCIATION_MEMBERSHIP_TYPE: &str =
+    "/account_api/update_association_membership_type";
+
+/// Change the membership type of an existing association membership.
+///
+/// # Access
+///
+/// Permission [model::Permissions::admin_edit_association_membership] is required.
+#[utoipa::path(
+    post,
+    path = PATH_POST_UPDATE_ASSOCIATION_MEMBERSHIP_TYPE,
+    request_body = UpdateAssociationMembershipType,
+    responses(
+        (status = 200, description = "Successful."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_update_association_membership_type(
+    State(state): State<S>,
+    Extension(permissions): Extension<Permissions>,
+    Json(data): Json<UpdateAssociationMembershipType>,
+) -> Result<(), StatusCode> {
+    ACCOUNT_ADMIN.post_update_association_membership_type.incr();
+
+    if !permissions.admin_edit_association_membership {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    let config = state
+        .config()
+        .client_features_internal()
+        .association
+        .as_ref()
+        .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    config
+        .membership_types
+        .iter()
+        .find(|t| t.id == data.membership_type)
+        .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let member = state.get_internal_id(data.member).await?;
+
+    db_write!(state, move |cmds| {
+        cmds.account_admin()
+            .association()
+            .update_membership_type(member, data.membership_type)
+            .await
+    })?;
+
+    Ok(())
+}
+
 create_open_api_router!(
     fn router_admin_association,
     get_manual_association_membership_registry,
     post_manual_association_membership_registry,
     post_get_association_members_page,
     post_delete_association_membership,
+    post_update_association_membership_type,
 );
 
 create_counters!(
@@ -195,4 +251,5 @@ create_counters!(
     post_manual_association_membership_registry,
     post_get_association_members_page,
     post_delete_association_membership,
+    post_update_association_membership_type,
 );
