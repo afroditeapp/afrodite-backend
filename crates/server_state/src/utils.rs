@@ -2,7 +2,7 @@ use axum::response::{IntoResponse, Response};
 use config::file::ConfigFileError;
 use headers::ETag;
 use manager_api::ClientError;
-use model::UnixTime;
+use model::{ContentQualityVariant, UnixTime};
 use server_common::data::cache::CacheError;
 use server_data::{data_export::DataExportError, event::EventError};
 use simple_backend::{
@@ -155,6 +155,9 @@ impl From<crate::result::WrappedReport<error_stack::Report<ApiLimitError>>> for 
 
 pub struct ETagUtils {
     immutable_content: ETag,
+    immutable_content_high: ETag,
+    immutable_content_medium: ETag,
+    immutable_content_low: ETag,
     server_start_time: ETag,
 }
 
@@ -162,6 +165,9 @@ impl ETagUtils {
     pub(crate) fn new() -> Self {
         Self {
             immutable_content: "\"i\"".to_string().parse().unwrap(),
+            immutable_content_high: "\"h\"".parse().unwrap(),
+            immutable_content_medium: "\"m\"".parse().unwrap(),
+            immutable_content_low: "\"l\"".parse().unwrap(),
             server_start_time: format!("\"{}\"", UnixTime::current_time().ut)
                 .parse()
                 .unwrap(),
@@ -170,6 +176,14 @@ impl ETagUtils {
 
     pub fn immutable_content(&self) -> &ETag {
         &self.immutable_content
+    }
+
+    pub fn immutable_content_variant(&self, variant: ContentQualityVariant) -> &ETag {
+        match variant {
+            ContentQualityVariant::High => &self.immutable_content_high,
+            ContentQualityVariant::Medium => &self.immutable_content_medium,
+            ContentQualityVariant::Low => &self.immutable_content_low,
+        }
     }
 
     pub fn server_start_time(&self) -> &ETag {

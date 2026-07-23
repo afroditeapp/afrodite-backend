@@ -18,7 +18,10 @@ use server_api::{
     app::{ApiLimitsProvider, ApiUsageTrackerProvider, GetConfig},
     create_open_api_router, db_write,
     result::WrappedResultExt,
-    utils::{IfNoneMatchExtensions, cache_control_for_images},
+    utils::{
+        IfNoneMatchExtensions, cache_control_for_images,
+        cache_control_for_images_with_downgraded_quality,
+    },
 };
 use server_data::{
     DataError,
@@ -125,6 +128,7 @@ pub async fn get_content(
         return send_content(
             &state,
             ContentQualityVariant::High,
+            ContentQualityVariant::High,
             requested_profile,
             requested_content_id,
             browser_etag,
@@ -141,6 +145,7 @@ pub async fn get_content(
     if is_admin {
         return send_content(
             &state,
+            ContentQualityVariant::High,
             ContentQualityVariant::High,
             requested_profile,
             requested_content_id,
@@ -211,6 +216,7 @@ pub async fn get_content(
 
     send_content(
         &state,
+        preferred_quality,
         actual_quality,
         requested_profile,
         requested_content_id,
@@ -233,7 +239,8 @@ fn select_quality(
 
 async fn send_content(
     state: &S,
-    quality: ContentQualityVariant,
+    preferred_quality: ContentQualityVariant,
+    actual_quality: ContentQualityVariant,
     requested_profile: AccountId,
     requested_content_id: ContentId,
     browser_etag: Option<TypedHeader<IfNoneMatch>>,
@@ -248,10 +255,16 @@ async fn send_content(
     ),
     StatusCode,
 > {
+    let etag = state.etag_utils().immutable_content_variant(actual_quality);
+
+    if browser_etag.matches(etag) {
+        return Err(StatusCode::NOT_MODIFIED);
+    }
+
     let data = state.read().media().content_data_variant(
         requested_profile,
         requested_content_id,
-        quality,
+        actual_quality,
     )?;
 
     let (length, stream) = data
@@ -259,16 +272,18 @@ async fn send_content(
         .await
         .change_context(DataError::File)?;
 
-    if browser_etag.matches(state.etag_utils().immutable_content()) {
-        return Err(StatusCode::NOT_MODIFIED);
-    }
+    let cache_control = if actual_quality == preferred_quality {
+        cache_control_for_images()
+    } else {
+        cache_control_for_images_with_downgraded_quality()
+    };
 
     Ok((
-        TypedHeader(state.etag_utils().immutable_content().clone()),
-        TypedHeader(cache_control_for_images()),
+        TypedHeader(etag.clone()),
+        TypedHeader(cache_control),
         TypedHeader(ContentType::octet_stream()),
         TypedHeader(ContentLength(length)),
-        TypedHeader(ContentQualityHeader(quality)),
+        TypedHeader(ContentQualityHeader(actual_quality)),
         Body::from_stream(stream),
     ))
 }

@@ -152,6 +152,15 @@ pub fn cache_control_for_images() -> CacheControl {
         .with_immutable()
 }
 
+pub fn cache_control_for_images_with_downgraded_quality() -> CacheControl {
+    const HOUR_SECONDS: u64 = 60 * 60;
+    CacheControl::new()
+        .with_max_age(Duration::from_secs(HOUR_SECONDS * 3))
+        .with_must_revalidate()
+        .with_private()
+        .with_immutable()
+}
+
 pub trait IfNoneMatchExtensions {
     fn matches(&self, tag: &ETag) -> bool;
 }
