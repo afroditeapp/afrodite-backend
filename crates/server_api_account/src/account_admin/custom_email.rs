@@ -3,8 +3,8 @@ use axum::{
     extract::{Query, State},
 };
 use model_account::{
-    AccountIdInternal, CustomEmailId, GetCustomEmailConfig, GetCustomEmailListParams, Permissions,
-    SendCustomEmail, UpdateCustomEmail,
+    AccountIdInternal, CustomEmailId, CustomEmailTargetGroup, GetCustomEmailConfig,
+    GetCustomEmailListParams, Permissions, SendCustomEmail, UpdateCustomEmail,
 };
 use server_api::{S, app::GetConfig, create_open_api_router, db_write};
 use server_data::read::GetReadCommandsCommon;
@@ -174,7 +174,19 @@ pub async fn post_send_custom_email_to_all_accounts(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let account_ids = state.read().common().account_ids_internal_vec().await?;
+    let account_ids = match data.target_group {
+        CustomEmailTargetGroup::AllAccounts => {
+            state.read().common().account_ids_internal_vec().await?
+        }
+        CustomEmailTargetGroup::AssociationMembers => {
+            state
+                .read()
+                .account_admin()
+                .association()
+                .all_account_ids_with_membership()
+                .await?
+        }
+    };
     let limit_reached = db_write!(state, move |cmds| {
         cmds.account_admin()
             .custom_email()

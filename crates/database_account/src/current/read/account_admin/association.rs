@@ -1,7 +1,7 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::{alias, prelude::*};
 use error_stack::Result;
-use model::{AccountId, UnixTime};
+use model::{AccountId, AccountIdDb, AccountIdInternal, UnixTime};
 use model_account::{
     AssociationMember, AssociationMemberManual, AssociationMemberManualEntryInternal,
     AssociationMembersPage, GetAssociationMembersPage,
@@ -13,6 +13,32 @@ use crate::IntoDatabaseError;
 define_current_read_commands!(CurrentReadAccountAssociationAdmin);
 
 impl CurrentReadAccountAssociationAdmin<'_> {
+    /// Get all account IDs with association membership.
+    pub fn all_account_ids_with_membership(
+        &mut self,
+    ) -> Result<Vec<AccountIdInternal>, DieselDatabaseError> {
+        use crate::schema::association_membership::dsl::*;
+
+        let member_aid = alias!(crate::schema::account_id as member_aid);
+
+        let result: Vec<(AccountIdDb, AccountId)> = association_membership
+            .inner_join(
+                member_aid
+                    .on(account_id_member.eq(member_aid.field(crate::schema::account_id::id))),
+            )
+            .select((
+                account_id_member,
+                member_aid.field(crate::schema::account_id::uuid),
+            ))
+            .load(self.conn())
+            .into_db_error(())?;
+
+        Ok(result
+            .into_iter()
+            .map(|(id, uuid)| AccountIdInternal::new(id, uuid))
+            .collect())
+    }
+
     /// Get all association membership manual entries.
     pub fn get_all_manual(&mut self) -> Result<Vec<AssociationMemberManual>, DieselDatabaseError> {
         use crate::schema::association_membership_manual;

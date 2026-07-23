@@ -114,4 +114,11 @@ pub struct GetCustomEmailConfig {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct SendCustomEmail {
     pub email_id: CustomEmailId,
+    pub target_group: CustomEmailTargetGroup,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize, ToSchema)]
+pub enum CustomEmailTargetGroup {
+    AllAccounts,
+    AssociationMembers,
 }
