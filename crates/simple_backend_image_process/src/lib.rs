@@ -185,7 +185,7 @@ fn handle_image(
     let mut oriented = img;
     oriented.apply_orientation(orientation);
 
-    let high = resize_image_if_needed(&oriented, 1920);
+    let high = resize_image_if_needed(&oriented, 1280);
 
     let face_detected = match face_detector.detect_face(high.to_luma8()) {
         Ok(v) => v,
@@ -200,10 +200,10 @@ fn handle_image(
 
     encode_and_save_jpeg(config, &high, &command.output_high)?;
 
-    let medium = resize_image_if_needed(&oriented, 1280);
+    let medium = resize_image_if_needed(&oriented, 854);
     encode_and_save_jpeg(config, &medium, &command.output_medium)?;
 
-    let low = resize_image_if_needed(&oriented, 854);
+    let low = resize_image_if_needed(&oriented, 640);
     encode_and_save_jpeg(config, &low, &command.output_low)?;
 
     let info = ImageProcessingInfo {
