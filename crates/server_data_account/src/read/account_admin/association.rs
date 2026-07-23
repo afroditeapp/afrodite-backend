@@ -1,7 +1,8 @@
 use database_account::current::read::GetDbReadCommandsAccount;
 use model::AccountIdInternal;
 use model_account::{
-    AssociationMembersPage, GetAssociationMembersPage, ManualAssociationMembershipRegistry,
+    AssociationMember, AssociationMembersPage, GetAssociationMembersPage,
+    ManualAssociationMembershipRegistry,
 };
 use server_data::{
     DataError, IntoDataError, define_cmd_wrapper_read, read::DbRead, result::Result,
@@ -41,5 +42,14 @@ impl ReadCommandsAccountAssociationAdmin<'_> {
         })
         .await
         .into_error()
+    }
+
+    pub async fn get_entry(
+        &self,
+        member: AccountIdInternal,
+    ) -> Result<Option<AssociationMember>, DataError> {
+        self.db_read(move |mut cmds| cmds.account_admin().association().get_entry(member))
+            .await
+            .into_error()
     }
 }

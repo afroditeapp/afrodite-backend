@@ -1,8 +1,9 @@
 use axum::{Extension, extract::State};
 use model::{AccountId, Permissions};
 use model_account::{
-    AssociationMembersPage, GetAssociationMembersPage, ManualAssociationMembershipRegistry,
-    ManualAssociationMembershipRegistryInput, UpdateAssociationMembershipType,
+    AssociationMember, AssociationMembersPage, GetAssociationMembersPage,
+    ManualAssociationMembershipRegistry, ManualAssociationMembershipRegistryInput,
+    UpdateAssociationMembershipType,
 };
 use server_api::{
     S,
@@ -234,6 +235,47 @@ pub async fn post_update_association_membership_type(
     Ok(())
 }
 
+const PATH_GET_ASSOCIATION_MEMBER: &str = "/account_api/association_member";
+
+/// Get a single association member entry for an account.
+///
+/// # Access
+///
+/// Permission [model::Permissions::admin_view_association_membership] is required.
+#[utoipa::path(
+    post,
+    path = PATH_GET_ASSOCIATION_MEMBER,
+    request_body = AccountId,
+    responses(
+        (status = 200, description = "Successful.", body = Option<AssociationMember>),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_get_association_member(
+    State(state): State<S>,
+    Extension(permissions): Extension<Permissions>,
+    Json(member): Json<AccountId>,
+) -> Result<Json<Option<AssociationMember>>, StatusCode> {
+    ACCOUNT_ADMIN.post_get_association_member.incr();
+
+    if !permissions.admin_view_association_membership {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    let member = state.get_internal_id(member).await?;
+
+    let entry = state
+        .read()
+        .account_admin()
+        .association()
+        .get_entry(member)
+        .await?;
+
+    Ok(entry.into())
+}
+
 create_open_api_router!(
     fn router_admin_association,
     get_manual_association_membership_registry,
@@ -241,6 +283,7 @@ create_open_api_router!(
     post_get_association_members_page,
     post_delete_association_membership,
     post_update_association_membership_type,
+    post_get_association_member,
 );
 
 create_counters!(
@@ -252,4 +295,5 @@ create_counters!(
     post_get_association_members_page,
     post_delete_association_membership,
     post_update_association_membership_type,
+    post_get_association_member,
 );

@@ -7,6 +7,11 @@ use simple_backend_utils::string::NonEmptyString;
 
 use crate::IntoDatabaseError;
 
+enum AssociationMemberQuery {
+    ByMember(AccountIdInternal),
+    Paged(i64),
+}
+
 define_current_read_commands!(CurrentReadAccountAssociationAdmin);
 
 impl CurrentReadAccountAssociationAdmin<'_> {
@@ -54,6 +59,23 @@ impl CurrentReadAccountAssociationAdmin<'_> {
         &mut self,
         query: &GetAssociationMembersPage,
     ) -> Result<AssociationMembersPage, DieselDatabaseError> {
+        let entries = self.query_entries(AssociationMemberQuery::Paged(query.page))?;
+        Ok(AssociationMembersPage { entries })
+    }
+
+    /// Get a single association membership entry for a specific account.
+    pub fn get_entry(
+        &mut self,
+        member_id: AccountIdInternal,
+    ) -> Result<Option<AssociationMember>, DieselDatabaseError> {
+        let mut entries = self.query_entries(AssociationMemberQuery::ByMember(member_id))?;
+        Ok(entries.pop())
+    }
+
+    fn query_entries(
+        &mut self,
+        query: AssociationMemberQuery,
+    ) -> Result<Vec<AssociationMember>, DieselDatabaseError> {
         use crate::schema::{account_email_address_state, association_membership::dsl::*};
 
         let (member_aid, creator_aid, editor_aid) = alias!(
@@ -62,7 +84,7 @@ impl CurrentReadAccountAssociationAdmin<'_> {
             crate::schema::account_id as editor_aid
         );
 
-        let entries = association_membership
+        let mut q = association_membership
             .inner_join(
                 member_aid
                     .on(account_id_member.eq(member_aid.field(crate::schema::account_id::id))),
@@ -77,9 +99,6 @@ impl CurrentReadAccountAssociationAdmin<'_> {
                 account_email_address_state::table
                     .on(account_id_member.eq(account_email_address_state::account_id)),
             )
-            .order(account_id_member.asc())
-            .offset(query.page * 25)
-            .limit(25)
             .select((
                 creation_unix_time,
                 edit_unix_time,
@@ -93,6 +112,18 @@ impl CurrentReadAccountAssociationAdmin<'_> {
                 editor_aid.field(crate::schema::account_id::uuid).nullable(),
                 account_email_address_state::email.nullable(),
             ))
+            .into_boxed();
+
+        match query {
+            AssociationMemberQuery::ByMember(member) => {
+                q = q.filter(account_id_member.eq(member.as_db_id().0));
+            }
+            AssociationMemberQuery::Paged(page) => {
+                q = q.order(account_id_member.asc()).offset(page * 25).limit(25);
+            }
+        }
+
+        let entries = q
             .load::<(
                 UnixTime,
                 UnixTime,
@@ -135,6 +166,6 @@ impl CurrentReadAccountAssociationAdmin<'_> {
             )
             .collect();
 
-        Ok(AssociationMembersPage { entries })
+        Ok(entries)
     }
 }
