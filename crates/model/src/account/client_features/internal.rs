@@ -4,7 +4,9 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 
 use super::{ChatConfig, FeaturesConfig, LikesConfig, MapConfig, NewsConfig, ProfileConfig};
-use crate::{AccountVerificationConfig, AgeVerificationConfig, ClientFeaturesConfig};
+use crate::{
+    AccountVerificationConfig, AgeVerificationConfig, AssociationConfig, ClientFeaturesConfig,
+};
 
 const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 [attribution.generic]
@@ -79,6 +81,7 @@ pub struct ClientFeaturesConfigInternal {
     pub age_verification: AgeVerificationConfig,
     #[serde(default)]
     pub account_verification: AccountVerificationConfig,
+    pub association: Option<AssociationConfig>,
 }
 
 impl ClientFeaturesConfigInternal {
@@ -112,6 +115,7 @@ impl ClientFeaturesConfigInternal {
             chat: self.chat.into(),
             age_verification: self.age_verification.into(),
             account_verification: self.account_verification.into(),
+            association: self.association,
         })
     }
 }

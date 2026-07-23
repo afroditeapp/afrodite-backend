@@ -154,6 +154,8 @@ pub struct ClientFeaturesConfig {
     age_verification: Option<AgeVerificationConfig>,
     #[serde(skip_serializing_if = "Option::is_none")]
     account_verification: Option<AccountVerificationConfig>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    association: Option<AssociationConfig>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
@@ -524,4 +526,29 @@ impl Default for CheckOnlineStatusConfig {
             min_wait_seconds_between_requests_client: 8,
         }
     }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct AssociationConfig {
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub user_can_join_association: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub user_can_edit_existing_membership: bool,
+    pub association_name: StringResource,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub association_info_markdown: Option<StringResource>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub membership_info_markdown: Option<StringResource>,
+    pub membership_types: Vec<MembershipType>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct MembershipType {
+    pub id: i16,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub admin_only: bool,
+    pub title: StringResource,
 }

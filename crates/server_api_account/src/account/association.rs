@@ -1,13 +1,14 @@
 use axum::{Extension, extract::State};
 use model_account::{AccountIdInternal, AssociationMembership, UpdateAssociationMembership};
-use server_api::{S, app::WriteData, create_open_api_router, db_write};
+use server_api::{
+    S,
+    app::{GetConfig, ReadData, WriteData},
+    create_open_api_router, db_write,
+};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
 
-use crate::{
-    app::ReadData,
-    utils::{Json, StatusCode},
-};
+use crate::utils::{Json, StatusCode};
 
 const PATH_GET_ASSOCIATION_MEMBERSHIP: &str = "/account_api/association_membership";
 
@@ -27,6 +28,14 @@ pub async fn get_association_membership(
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<Option<AssociationMembership>>, StatusCode> {
     ACCOUNT.get_association_membership.incr();
+
+    if GetConfig::config(&state)
+        .client_features_internal()
+        .association
+        .is_none()
+    {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
 
     let entry = state
         .read()
@@ -59,6 +68,39 @@ pub async fn post_association_membership(
 ) -> Result<(), StatusCode> {
     ACCOUNT.post_association_membership.incr();
 
+    let config = GetConfig::config(&state)
+        .client_features_internal()
+        .association
+        .as_ref()
+        .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let existing = state
+        .read()
+        .account()
+        .association()
+        .get_own_entry(account_id)
+        .await?;
+
+    if existing.is_some() {
+        if !config.user_can_edit_existing_membership {
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    } else {
+        if !config.user_can_join_association {
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    let membership_type = config
+        .membership_types
+        .iter()
+        .find(|t| t.id == data.membership_type)
+        .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    if membership_type.admin_only {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
     db_write!(state, move |cmds| {
         cmds.account()
             .association()
@@ -87,6 +129,16 @@ pub async fn delete_association_membership(
     Extension(account_id): Extension<AccountIdInternal>,
 ) -> Result<(), StatusCode> {
     ACCOUNT.delete_association_membership.incr();
+
+    let config = GetConfig::config(&state)
+        .client_features_internal()
+        .association
+        .as_ref()
+        .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    if !config.user_can_edit_existing_membership {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
 
     db_write!(state, move |cmds| {
         cmds.account()
