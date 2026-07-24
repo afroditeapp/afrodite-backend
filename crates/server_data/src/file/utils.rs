@@ -23,6 +23,8 @@ const TMP_RAW_UPLOAD_FILE_NAME: &str = "content.raw";
 const TMP_PROCESSED_UPLOAD_FILE_NAME_HIGH: &str = "content.processed6";
 const TMP_PROCESSED_UPLOAD_FILE_NAME_MEDIUM: &str = "content.processed5";
 const TMP_PROCESSED_UPLOAD_FILE_NAME_LOW: &str = "content.processed4";
+const TMP_PROCESSED_UPLOAD_FILE_NAME_LOWER: &str = "content.processed3";
+const TMP_PROCESSED_UPLOAD_FILE_NAME_VERY_LOW: &str = "content.processed2";
 
 /// Path to directory which contains all account data directories.
 #[derive(Debug, Clone)]
@@ -161,6 +163,8 @@ impl TmpDir {
             ContentQualityVariant::High => TMP_PROCESSED_UPLOAD_FILE_NAME_HIGH,
             ContentQualityVariant::Medium => TMP_PROCESSED_UPLOAD_FILE_NAME_MEDIUM,
             ContentQualityVariant::Low => TMP_PROCESSED_UPLOAD_FILE_NAME_LOW,
+            ContentQualityVariant::Lower => TMP_PROCESSED_UPLOAD_FILE_NAME_LOWER,
+            ContentQualityVariant::VeryLow => TMP_PROCESSED_UPLOAD_FILE_NAME_VERY_LOW,
         };
         self.dir.push(name);
         TmpContentFile {

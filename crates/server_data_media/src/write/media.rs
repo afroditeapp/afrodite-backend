@@ -50,6 +50,8 @@ impl WriteCommandsMedia<'_> {
         tmp_img_high: TmpContentFile,
         tmp_img_medium: TmpContentFile,
         tmp_img_low: TmpContentFile,
+        tmp_img_lower: TmpContentFile,
+        tmp_img_very_low: TmpContentFile,
         slot: ContentSlot,
         new_content_params: NewContentParams,
         face_detected: bool,
@@ -103,6 +105,24 @@ impl WriteCommandsMedia<'_> {
                     .overwrite_and_remove_if_exists()
                     .await
                     .change_context(DataError::File)?;
+                let path_lo = self.files().media_content_variant(
+                    id.as_id(),
+                    content_id,
+                    ContentQualityVariant::Lower,
+                );
+                path_lo
+                    .overwrite_and_remove_if_exists()
+                    .await
+                    .change_context(DataError::File)?;
+                let path_vl = self.files().media_content_variant(
+                    id.as_id(),
+                    content_id,
+                    ContentQualityVariant::VeryLow,
+                );
+                path_vl
+                    .overwrite_and_remove_if_exists()
+                    .await
+                    .change_context(DataError::File)?;
                 self.db_transaction(move |mut cmds| {
                     cmds.media()
                         .media_content()
@@ -131,6 +151,16 @@ impl WriteCommandsMedia<'_> {
                 );
                 let processed_content_path_low =
                     files.media_content_variant(id.as_id(), content_id, ContentQualityVariant::Low);
+                let processed_content_path_lower = files.media_content_variant(
+                    id.as_id(),
+                    content_id,
+                    ContentQualityVariant::Lower,
+                );
+                let processed_content_path_very_low = files.media_content_variant(
+                    id.as_id(),
+                    content_id,
+                    ContentQualityVariant::VeryLow,
+                );
 
                 cmds.media().media_content().insert_content_id(
                     id,
@@ -150,6 +180,12 @@ impl WriteCommandsMedia<'_> {
                     .map_err(|e| e.change_context(DieselDatabaseError::File))?;
                 tmp_img_low
                     .move_to_blocking(&processed_content_path_low)
+                    .map_err(|e| e.change_context(DieselDatabaseError::File))?;
+                tmp_img_lower
+                    .move_to_blocking(&processed_content_path_lower)
+                    .map_err(|e| e.change_context(DieselDatabaseError::File))?;
+                tmp_img_very_low
+                    .move_to_blocking(&processed_content_path_very_low)
                     .map_err(|e| e.change_context(DieselDatabaseError::File))?;
                 // If moving fails, diesel rollbacks the transaction.
 
@@ -342,6 +378,14 @@ impl WriteCommandsMedia<'_> {
             .await?;
         self.files()
             .media_content_variant(account_id, cid, ContentQualityVariant::Low)
+            .overwrite_and_remove_if_exists()
+            .await?;
+        self.files()
+            .media_content_variant(account_id, cid, ContentQualityVariant::Lower)
+            .overwrite_and_remove_if_exists()
+            .await?;
+        self.files()
+            .media_content_variant(account_id, cid, ContentQualityVariant::VeryLow)
             .overwrite_and_remove_if_exists()
             .await?;
 

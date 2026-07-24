@@ -48,6 +48,8 @@ impl ProcessManagerData {
             tmp_img_high,
             tmp_img_medium,
             tmp_img_low,
+            tmp_img_lower,
+            tmp_img_very_low,
             upload_permit,
         } = upload_info;
         *processing_phase_lock = ProcessingPhase::Processing;
@@ -67,6 +69,8 @@ impl ProcessManagerData {
             tmp_img_high,
             tmp_img_medium,
             tmp_img_low,
+            tmp_img_lower,
+            tmp_img_very_low,
             tmp_raw_img,
             new_content_params,
         };
@@ -173,6 +177,8 @@ pub struct ProcessingState {
     pub tmp_img_high: TmpContentFile,
     pub tmp_img_medium: TmpContentFile,
     pub tmp_img_low: TmpContentFile,
+    pub tmp_img_lower: TmpContentFile,
+    pub tmp_img_very_low: TmpContentFile,
     pub new_content_params: NewContentParams,
 }
 
@@ -199,5 +205,9 @@ pub struct UploadInfo {
     pub tmp_img_medium: TmpContentFile,
     /// Target file for low quality variant
     pub tmp_img_low: TmpContentFile,
+    /// Target file for lower quality variant
+    pub tmp_img_lower: TmpContentFile,
+    /// Target file for very low quality variant
+    pub tmp_img_very_low: TmpContentFile,
     pub upload_permit: UploadPermit,
 }

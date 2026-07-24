@@ -177,6 +177,10 @@ impl SaveContentBackup {
                 (stripped, ContentQualityVariant::Medium)
             } else if let Some(stripped) = text.strip_suffix("4") {
                 (stripped, ContentQualityVariant::Low)
+            } else if let Some(stripped) = text.strip_suffix("3") {
+                (stripped, ContentQualityVariant::Lower)
+            } else if let Some(stripped) = text.strip_suffix("2") {
+                (stripped, ContentQualityVariant::VeryLow)
             } else {
                 continue;
             };

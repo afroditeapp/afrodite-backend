@@ -284,6 +284,12 @@ impl<'a> WriteCommandsConcurrent<'a> {
         let tmp_img_low = self
             .file_dir
             .processed_content_upload_variant(id.as_id(), ContentQualityVariant::Low);
+        let tmp_img_lower = self
+            .file_dir
+            .processed_content_upload_variant(id.as_id(), ContentQualityVariant::Lower);
+        let tmp_img_very_low = self
+            .file_dir
+            .processed_content_upload_variant(id.as_id(), ContentQualityVariant::VeryLow);
 
         if let Err(e) = tmp_img_high.overwrite_and_remove_if_exists().await {
             warn!("tmp_img_high removing failed {:?}", e)
@@ -294,12 +300,20 @@ impl<'a> WriteCommandsConcurrent<'a> {
         if let Err(e) = tmp_img_low.overwrite_and_remove_if_exists().await {
             warn!("tmp_img_low removing failed {:?}", e)
         }
+        if let Err(e) = tmp_img_lower.overwrite_and_remove_if_exists().await {
+            warn!("tmp_img_lower removing failed {:?}", e)
+        }
+        if let Err(e) = tmp_img_very_low.overwrite_and_remove_if_exists().await {
+            warn!("tmp_img_very_low removing failed {:?}", e)
+        }
 
         Ok(UploadInfo {
             tmp_raw_img,
             tmp_img_high,
             tmp_img_medium,
             tmp_img_low,
+            tmp_img_lower,
+            tmp_img_very_low,
             upload_permit,
         })
     }

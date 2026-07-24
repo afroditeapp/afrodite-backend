@@ -120,6 +120,8 @@ pub async fn get_content(
             "6" => Some(ContentQualityVariant::High),
             "5" => Some(ContentQualityVariant::Medium),
             "4" => Some(ContentQualityVariant::Low),
+            "3" => Some(ContentQualityVariant::Lower),
+            "2" => Some(ContentQualityVariant::VeryLow),
             _ => None,
         })
         .unwrap_or(ContentQualityVariant::High);
@@ -197,6 +199,18 @@ pub async fn get_content(
 
     let max_allowed = if concurrent
         >= limits
+            .get_content_very_low_quality_concurrent_requests_threshold
+            .into()
+    {
+        ContentQualityVariant::VeryLow
+    } else if concurrent
+        >= limits
+            .get_content_lower_quality_concurrent_requests_threshold
+            .into()
+    {
+        ContentQualityVariant::Lower
+    } else if concurrent
+        >= limits
             .get_content_low_quality_concurrent_requests_threshold
             .into()
     {
@@ -211,7 +225,11 @@ pub async fn get_content(
         ContentQualityVariant::High
     };
 
-    let actual_quality = select_quality(preferred_quality, max_allowed);
+    let actual_quality = if preferred_quality.as_u8() <= max_allowed.as_u8() {
+        preferred_quality
+    } else {
+        max_allowed
+    };
 
     send_content(
         &state,
@@ -222,18 +240,6 @@ pub async fn get_content(
         browser_etag,
     )
     .await
-}
-
-fn select_quality(
-    preferred: ContentQualityVariant,
-    max_allowed: ContentQualityVariant,
-) -> ContentQualityVariant {
-    use ContentQualityVariant::*;
-    match (preferred, max_allowed) {
-        (_, Low) | (Low, _) => Low,
-        (_, Medium) | (Medium, High) => Medium,
-        (High, High) => High,
-    }
 }
 
 async fn send_content(

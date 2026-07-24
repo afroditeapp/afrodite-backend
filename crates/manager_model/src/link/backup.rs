@@ -31,7 +31,7 @@ pub enum BackupMessageType {
     /// - Account ID UUID (16 bytes, big-endian)
     /// - Content ID UUID (16 bytes, big-endian)
     /// - Mode byte (1 byte): 0=all variants, 1=variant list follows
-    /// - If mode=1: variant bytes until end of data (6=High, 5=Medium, 4=Low)
+    /// - If mode=1: variant bytes until end of data (6=High, 5=Medium, 4=Low, 3=Lower, 2=VeryLow)
     ContentQuery = 3,
     /// Source sends this to target when answering to content query.
     ///

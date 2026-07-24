@@ -84,6 +84,8 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # get_profile_content_info_daily_max_count = 2000
 # get_content_medium_quality_concurrent_requests_threshold = 500
 # get_content_low_quality_concurrent_requests_threshold = 1000
+# get_content_lower_quality_concurrent_requests_threshold = 2000
+# get_content_very_low_quality_concurrent_requests_threshold = 4000
 
 # [limits.profile]
 # profile_iterator_reset_daily_max_count = 200
@@ -459,6 +461,8 @@ pub struct MediaLimitsConfig {
     pub get_profile_content_info_daily_max_count: u16,
     pub get_content_medium_quality_concurrent_requests_threshold: u32,
     pub get_content_low_quality_concurrent_requests_threshold: u32,
+    pub get_content_lower_quality_concurrent_requests_threshold: u32,
+    pub get_content_very_low_quality_concurrent_requests_threshold: u32,
 }
 
 impl Default for MediaLimitsConfig {
@@ -470,6 +474,8 @@ impl Default for MediaLimitsConfig {
             get_profile_content_info_daily_max_count: 2000,
             get_content_medium_quality_concurrent_requests_threshold: 500,
             get_content_low_quality_concurrent_requests_threshold: 1000,
+            get_content_lower_quality_concurrent_requests_threshold: 2000,
+            get_content_very_low_quality_concurrent_requests_threshold: 4000,
         }
     }
 }

@@ -82,6 +82,10 @@ pub struct ProcessImageCommand {
     pub output_medium: PathBuf,
     /// Output jpeg image file for low quality. Will be overwritten if exists.
     pub output_low: PathBuf,
+    /// Output jpeg image file for lower quality. Will be overwritten if exists.
+    pub output_lower: PathBuf,
+    /// Output jpeg image file for very low quality. Will be overwritten if exists.
+    pub output_very_low: PathBuf,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -205,6 +209,12 @@ fn handle_image(
 
     let low = resize_image_if_needed(&oriented, 640);
     encode_and_save_jpeg(config, &low, &command.output_low)?;
+
+    let lower = resize_image_if_needed(&oriented, 426);
+    encode_and_save_jpeg(config, &lower, &command.output_lower)?;
+
+    let very_low = resize_image_if_needed(&oriented, 256);
+    encode_and_save_jpeg(config, &very_low, &command.output_very_low)?;
 
     let info = ImageProcessingInfo {
         face_detected,

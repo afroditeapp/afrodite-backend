@@ -192,6 +192,8 @@ impl ImageProcessHandle {
                 output_high: command.output_high,
                 output_medium: command.output_medium,
                 output_low: command.output_low,
+                output_lower: command.output_lower,
+                output_very_low: command.output_very_low,
             },
         };
 
@@ -239,6 +241,7 @@ impl ImageProcessHandle {
 pub struct ImageProcess;
 
 impl ImageProcess {
+    #[allow(clippy::too_many_arguments)]
     pub async fn start_image_process(
         config: &SimpleBackendConfig,
         load_config: impl AsyncFnOnce() -> Result<ImageProcessingDynamicConfig, ImageProcessError>,
@@ -246,6 +249,8 @@ impl ImageProcess {
         output_high: &Path,
         output_medium: &Path,
         output_low: &Path,
+        output_lower: &Path,
+        output_very_low: &Path,
     ) -> Result<ImageProcessingInfo, ImageProcessError> {
         let input = std::fs::canonicalize(input)
             .change_context(ImageProcessError::ImageProcessingCommandCreationFailed)?;
@@ -272,12 +277,16 @@ impl ImageProcess {
         let output_high = canonicalize_or_create(output_high)?;
         let output_medium = canonicalize_or_create(output_medium)?;
         let output_low = canonicalize_or_create(output_low)?;
+        let output_lower = canonicalize_or_create(output_lower)?;
+        let output_very_low = canonicalize_or_create(output_very_low)?;
 
         let command = ProcessImageCommand {
             input,
             output_high,
             output_medium,
             output_low,
+            output_lower,
+            output_very_low,
         };
 
         let mut state = get_image_process().lock().await;

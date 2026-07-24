@@ -158,6 +158,8 @@ pub struct ETagUtils {
     immutable_content_high: ETag,
     immutable_content_medium: ETag,
     immutable_content_low: ETag,
+    immutable_content_lower: ETag,
+    immutable_content_very_low: ETag,
     server_start_time: ETag,
 }
 
@@ -168,6 +170,8 @@ impl ETagUtils {
             immutable_content_high: "\"6\"".parse().unwrap(),
             immutable_content_medium: "\"5\"".parse().unwrap(),
             immutable_content_low: "\"4\"".parse().unwrap(),
+            immutable_content_lower: "\"3\"".parse().unwrap(),
+            immutable_content_very_low: "\"2\"".parse().unwrap(),
             server_start_time: format!("\"{}\"", UnixTime::current_time().ut)
                 .parse()
                 .unwrap(),
@@ -183,6 +187,8 @@ impl ETagUtils {
             ContentQualityVariant::High => &self.immutable_content_high,
             ContentQualityVariant::Medium => &self.immutable_content_medium,
             ContentQualityVariant::Low => &self.immutable_content_low,
+            ContentQualityVariant::Lower => &self.immutable_content_lower,
+            ContentQualityVariant::VeryLow => &self.immutable_content_very_low,
         }
     }
 

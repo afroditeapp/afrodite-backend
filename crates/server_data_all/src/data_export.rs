@@ -103,6 +103,8 @@ fn db_data_export(
             ContentQualityVariant::High,
             ContentQualityVariant::Medium,
             ContentQualityVariant::Low,
+            ContentQualityVariant::Lower,
+            ContentQualityVariant::VeryLow,
         ] {
             let data = file_dir
                 .media_content_variant(cmd.source().0.uuid, c.cid, variant)

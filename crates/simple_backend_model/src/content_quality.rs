@@ -5,6 +5,8 @@ pub enum ContentQualityVariant {
     High,
     Medium,
     Low,
+    Lower,
+    VeryLow,
 }
 
 impl ContentQualityVariant {
@@ -13,6 +15,8 @@ impl ContentQualityVariant {
             Self::High => "6",
             Self::Medium => "5",
             Self::Low => "4",
+            Self::Lower => "3",
+            Self::VeryLow => "2",
         }
     }
 
@@ -22,6 +26,8 @@ impl ContentQualityVariant {
             Self::High => 6,
             Self::Medium => 5,
             Self::Low => 4,
+            Self::Lower => 3,
+            Self::VeryLow => 2,
         }
     }
 
@@ -30,13 +36,21 @@ impl ContentQualityVariant {
             6 => Some(Self::High),
             5 => Some(Self::Medium),
             4 => Some(Self::Low),
+            3 => Some(Self::Lower),
+            2 => Some(Self::VeryLow),
             _ => None,
         }
     }
 
-    pub const VARIANT_COUNT: usize = 3;
+    pub const VARIANT_COUNT: usize = 5;
 
-    pub fn all_variants() -> [Self; 3] {
-        [Self::High, Self::Medium, Self::Low]
+    pub fn all_variants() -> [Self; 5] {
+        [
+            Self::High,
+            Self::Medium,
+            Self::Low,
+            Self::Lower,
+            Self::VeryLow,
+        ]
     }
 }

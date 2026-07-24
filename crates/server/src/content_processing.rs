@@ -128,6 +128,8 @@ impl ContentProcessingManager {
                     content.tmp_img_high.as_path(),
                     content.tmp_img_medium.as_path(),
                     content.tmp_img_low.as_path(),
+                    content.tmp_img_lower.as_path(),
+                    content.tmp_img_very_low.as_path(),
                 )
                 .await
                 .change_context(ContentProcessingError::ContentProcessingFailed)
@@ -213,6 +215,8 @@ impl ContentProcessingManager {
                     state_copy.tmp_img_high,
                     state_copy.tmp_img_medium,
                     state_copy.tmp_img_low,
+                    state_copy.tmp_img_lower,
+                    state_copy.tmp_img_very_low,
                     state_copy.slot,
                     state_copy.new_content_params,
                     face_detected,
