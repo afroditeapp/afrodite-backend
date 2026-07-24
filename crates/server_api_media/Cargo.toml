@@ -8,6 +8,7 @@ edition = "2024"
 [dependencies]
 axum = { workspace = true }
 axum-extra = { workspace = true }
+futures = { workspace = true }
 tracing = { workspace = true }
 headers = { workspace = true }
 

@@ -5091,6 +5091,7 @@ version = "0.0.0"
 dependencies = [
  "axum",
  "axum-extra",
+ "futures",
  "headers",
  "model",
  "model_media",

@@ -35,11 +35,12 @@ use simple_backend::create_counters;
 
 use crate::{
     app::{ContentProcessingProvider, GetAccounts, ReadData, WriteData},
-    media::quality::ContentSendingTracker,
+    media::{content::stream::ContentSendingStream, quality::ContentSendingTracker},
     utils::{Json, StatusCode},
 };
 
 pub mod quality;
+pub mod stream;
 
 const PATH_GET_CONTENT: &str = "/media_api/content/{aid}/{cid}";
 
@@ -191,7 +192,6 @@ pub async fn get_content(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let _guard = ContentSendingTracker::track();
     let concurrent = ContentSendingTracker::concurrent_count();
     let limits = state.config().limits_media();
 
@@ -269,6 +269,8 @@ async fn send_content(
         .byte_count_and_read_stream()
         .await
         .change_context(DataError::File)?;
+
+    let stream = ContentSendingStream::new(stream, ContentSendingTracker::track());
 
     let cache_control = if actual_quality == preferred_quality {
         cache_control_for_images()
