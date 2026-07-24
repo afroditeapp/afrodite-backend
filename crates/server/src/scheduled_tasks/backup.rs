@@ -92,9 +92,7 @@ pub async fn backup_data(
                 TargetToSourceMessage::ContentQuery {
                     account_id,
                     content_id,
-                    high,
-                    medium,
-                    low,
+                    variants,
                 } => {
                     let read_variant_data = async |variant| -> Result<
                         (ContentQualityVariant, Sha256Bytes, Vec<u8>),
@@ -120,19 +118,13 @@ pub async fn backup_data(
                         Ok((variant, Sha256Bytes(result.into()), encrypted))
                     };
 
-                    let mut variants = vec![];
-                    if high {
-                        variants.push(read_variant_data(ContentQualityVariant::High).await?);
-                    }
-                    if medium {
-                        variants.push(read_variant_data(ContentQualityVariant::Medium).await?);
-                    }
-                    if low {
-                        variants.push(read_variant_data(ContentQualityVariant::Low).await?);
+                    let mut result = Vec::with_capacity(variants.len());
+                    for &v in &variants {
+                        result.push(read_variant_data(v).await?);
                     }
 
                     backup_client
-                        .send_message(SourceToTargetMessage::ContentQueryAnswer(variants))
+                        .send_message(SourceToTargetMessage::ContentQueryAnswer(result))
                         .await
                         .change_context(ScheduledTaskError::Backup)?;
                 }

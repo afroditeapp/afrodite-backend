@@ -1,4 +1,5 @@
 use std::{
+    collections::HashSet,
     io::{ErrorKind, Read},
     num::Wrapping,
 };
@@ -271,9 +272,7 @@ pub enum TargetToSourceMessage {
     ContentQuery {
         account_id: UuidBase64Url,
         content_id: UuidBase64Url,
-        high: bool,
-        medium: bool,
-        low: bool,
+        variants: HashSet<ContentQualityVariant>,
     },
 }
 
@@ -289,26 +288,18 @@ impl TargetToSourceMessage {
             Self::ContentQuery {
                 account_id,
                 content_id,
-                high,
-                medium,
-                low,
+                variants,
             } => {
                 let mut data = Vec::with_capacity(33);
                 data.extend(account_id.as_bytes());
                 data.extend(content_id.as_bytes());
 
-                if high && medium && low {
+                if variants.len() == ContentQualityVariant::VARIANT_COUNT {
                     data.push(0);
                 } else {
                     data.push(1);
-                    if high {
-                        data.push(ContentQualityVariant::High.as_u8());
-                    }
-                    if medium {
-                        data.push(ContentQualityVariant::Medium.as_u8());
-                    }
-                    if low {
-                        data.push(ContentQualityVariant::Low.as_u8());
+                    for &v in &variants {
+                        data.push(v.as_u8());
                     }
                 }
 
@@ -364,12 +355,10 @@ impl TryFrom<BackupMessage> for TargetToSourceMessage {
                     .map_err(|e| e.to_string())?;
                 let mode = mode[0];
 
-                let (high, medium, low) = if mode == 0 {
-                    (true, true, true)
+                let variants = if mode == 0 {
+                    HashSet::from(ContentQualityVariant::all_variants())
                 } else {
-                    let mut high = false;
-                    let mut medium = false;
-                    let mut low = false;
+                    let mut variants = HashSet::new();
                     loop {
                         let mut variant_byte = [0u8; 1];
                         match data_reader.read_exact(&mut variant_byte) {
@@ -377,22 +366,18 @@ impl TryFrom<BackupMessage> for TargetToSourceMessage {
                             Err(e) if e.kind() == ErrorKind::UnexpectedEof => break,
                             Err(e) => return Err(e.to_string()),
                         }
-                        match ContentQualityVariant::from_u8(variant_byte[0]) {
-                            Some(ContentQualityVariant::High) => high = true,
-                            Some(ContentQualityVariant::Medium) => medium = true,
-                            Some(ContentQualityVariant::Low) => low = true,
-                            None => return Err("Invalid variant byte".to_string()),
-                        }
+                        let Some(v) = ContentQualityVariant::from_u8(variant_byte[0]) else {
+                            return Err("Invalid variant byte".to_string());
+                        };
+                        variants.insert(v);
                     }
-                    (high, medium, low)
+                    variants
                 };
 
                 Self::ContentQuery {
                     account_id,
                     content_id,
-                    high,
-                    medium,
-                    low,
+                    variants,
                 }
             }
         };

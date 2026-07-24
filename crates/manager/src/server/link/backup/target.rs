@@ -1,4 +1,4 @@
-use std::{sync::Arc, time::Duration};
+use std::{collections::HashSet, sync::Arc, time::Duration};
 
 use backup::{DeleteOldFileBackups, SaveContentBackup, SaveFileBackup};
 use error_stack::{FutureExt, Result, ResultExt};
@@ -358,29 +358,23 @@ impl BackupSessionTaskTarget {
             for a in &m {
                 let mut content_state = backup.update_account_content_backup(a.account_id).await?;
                 for &c in &a.content_ids {
-                    let mut is_download_needed = |c, variant| {
-                        if content_state.exists_variant(c, variant) {
-                            content_state.mark_as_still_existing(c, variant);
-                            false
+                    let mut needed_variants = HashSet::new();
+                    for &v in &ContentQualityVariant::all_variants() {
+                        if content_state.exists_variant(c, v) {
+                            content_state.mark_as_still_existing(c, v);
                         } else {
-                            true
+                            needed_variants.insert(v);
                         }
-                    };
+                    }
 
-                    let high = is_download_needed(c, ContentQualityVariant::High);
-                    let medium = is_download_needed(c, ContentQualityVariant::Medium);
-                    let low = is_download_needed(c, ContentQualityVariant::Low);
-
-                    if high || medium || low {
+                    if !needed_variants.is_empty() {
                         self.send_message(TargetToSourceMessage::ContentQuery {
                             account_id: a.account_id,
                             content_id: c,
-                            high,
-                            medium,
-                            low,
+                            variants: needed_variants.clone(),
                         })
                         .await?;
-                        let variants = self.receive_content(high, medium, low).await?;
+                        let variants = self.receive_content(&needed_variants).await?;
                         for (variant, sha256, data) in variants {
                             content_state
                                 .new_content_variant(c, variant, sha256, data)
@@ -443,37 +437,20 @@ impl BackupSessionTaskTarget {
 
     pub async fn receive_content(
         &mut self,
-        high: bool,
-        medium: bool,
-        low: bool,
+        needed: &HashSet<ContentQualityVariant>,
     ) -> Result<ContentQueryAnswer, BackupTargetError> {
         let Some(m) = self.receiver.recv().await else {
             return Err(BackupTargetError::BrokenMessageChannel.report());
         };
         match m {
             SourceToTargetMessage::ContentQueryAnswer(v) => {
-                let contains_single = |variant| {
+                for &variant in needed {
                     let count = v.iter().filter(|item| item.0 == variant).count();
-                    if count == 1 {
-                        Ok(())
-                    } else {
-                        Err(BackupTargetError::Protocol
-                            .report()
-                            .attach_printable(format!(
-                                "{:?}, count: {}, expected 1",
-                                variant, count
-                            )))
+                    if count != 1 {
+                        return Err(BackupTargetError::Protocol.report().attach_printable(
+                            format!("{:?}, count: {}, expected 1", variant, count),
+                        ));
                     }
-                };
-
-                if high {
-                    contains_single(ContentQualityVariant::High)?
-                }
-                if medium {
-                    contains_single(ContentQualityVariant::Medium)?
-                }
-                if low {
-                    contains_single(ContentQualityVariant::Low)?
                 }
 
                 Ok(v)

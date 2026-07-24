@@ -33,4 +33,10 @@ impl ContentQualityVariant {
             _ => None,
         }
     }
+
+    pub const VARIANT_COUNT: usize = 3;
+
+    pub fn all_variants() -> [Self; 3] {
+        [Self::High, Self::Medium, Self::Low]
+    }
 }
