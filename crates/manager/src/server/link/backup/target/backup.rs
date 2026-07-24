@@ -171,11 +171,11 @@ impl SaveContentBackup {
                 return Err(BackupTargetError::InvalidContentId.report());
             };
 
-            let (content_text, variant) = if let Some(stripped) = text.strip_suffix("_h") {
+            let (content_text, variant) = if let Some(stripped) = text.strip_suffix("6") {
                 (stripped, ContentQualityVariant::High)
-            } else if let Some(stripped) = text.strip_suffix("_m") {
+            } else if let Some(stripped) = text.strip_suffix("5") {
                 (stripped, ContentQualityVariant::Medium)
-            } else if let Some(stripped) = text.strip_suffix("_l") {
+            } else if let Some(stripped) = text.strip_suffix("4") {
                 (stripped, ContentQualityVariant::Low)
             } else {
                 continue;

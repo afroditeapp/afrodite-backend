@@ -20,9 +20,9 @@ pub const CONTENT_DIR_NAME: &str = "content";
 
 const MAX_TMP_FILE_SIZE: usize = MIB_IN_BYTES * 10; // 10 MiB
 const TMP_RAW_UPLOAD_FILE_NAME: &str = "content.raw";
-const TMP_PROCESSED_UPLOAD_FILE_NAME_HIGH: &str = "content.processed_h";
-const TMP_PROCESSED_UPLOAD_FILE_NAME_MEDIUM: &str = "content.processed_m";
-const TMP_PROCESSED_UPLOAD_FILE_NAME_LOW: &str = "content.processed_l";
+const TMP_PROCESSED_UPLOAD_FILE_NAME_HIGH: &str = "content.processed6";
+const TMP_PROCESSED_UPLOAD_FILE_NAME_MEDIUM: &str = "content.processed5";
+const TMP_PROCESSED_UPLOAD_FILE_NAME_LOW: &str = "content.processed4";
 
 /// Path to directory which contains all account data directories.
 #[derive(Debug, Clone)]

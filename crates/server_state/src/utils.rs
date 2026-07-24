@@ -165,9 +165,9 @@ impl ETagUtils {
     pub(crate) fn new() -> Self {
         Self {
             immutable_content: "\"i\"".to_string().parse().unwrap(),
-            immutable_content_high: "\"h\"".parse().unwrap(),
-            immutable_content_medium: "\"m\"".parse().unwrap(),
-            immutable_content_low: "\"l\"".parse().unwrap(),
+            immutable_content_high: "\"6\"".parse().unwrap(),
+            immutable_content_medium: "\"5\"".parse().unwrap(),
+            immutable_content_low: "\"4\"".parse().unwrap(),
             server_start_time: format!("\"{}\"", UnixTime::current_time().ut)
                 .parse()
                 .unwrap(),

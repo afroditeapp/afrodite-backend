@@ -29,7 +29,8 @@ pub enum BackupMessageType {
     ///
     /// - Account ID UUID (16 bytes, big-endian)
     /// - Content ID UUID (16 bytes, big-endian)
-    /// - Content quality variant bitflag (1 byte): High=1, Medium=2, Low=4
+    /// - Mode byte (1 byte): 0=all variants, 1=variant list follows
+    /// - If mode=1: variant bytes until end of data (6=High, 5=Medium, 4=Low)
     ContentQuery = 3,
     /// Source sends this to target when answering to content query.
     ///
@@ -38,7 +39,7 @@ pub enum BackupMessageType {
     /// Data:
     ///
     /// - Repeated for each variant:
-    ///   - Content quality variant byte (1 byte): High=1, Medium=2, Low=4
+    ///   - Content quality variant byte (1 byte): High=6, Medium=5, Low=4
     ///   - Content SHA-256 (32 bytes)
     ///   - Content data length (4 bytes, little-endian, u32)
     ///   - Content data
@@ -292,23 +293,26 @@ impl TargetToSourceMessage {
                 medium,
                 low,
             } => {
-                let mut bitflags: u8 = 0;
-                if high {
-                    bitflags |= ContentQualityVariant::High.as_u8();
+                let mut data = Vec::with_capacity(33);
+                data.extend(account_id.as_bytes());
+                data.extend(content_id.as_bytes());
+
+                if high && medium && low {
+                    data.push(0);
+                } else {
+                    data.push(1);
+                    if high {
+                        data.push(ContentQualityVariant::High.as_u8());
+                    }
+                    if medium {
+                        data.push(ContentQualityVariant::Medium.as_u8());
+                    }
+                    if low {
+                        data.push(ContentQualityVariant::Low.as_u8());
+                    }
                 }
-                if medium {
-                    bitflags |= ContentQualityVariant::Medium.as_u8();
-                }
-                if low {
-                    bitflags |= ContentQualityVariant::Low.as_u8();
-                }
-                account_id
-                    .as_bytes()
-                    .iter()
-                    .chain(content_id.as_bytes())
-                    .copied()
-                    .chain([bitflags])
-                    .collect::<Vec<u8>>()
+
+                data
             }
         };
 
@@ -354,18 +358,41 @@ impl TryFrom<BackupMessage> for TargetToSourceMessage {
                     .map_err(|e| e.to_string())?;
                 let content_id = UuidBase64Url::from_bytes(bytes);
 
-                let mut bitflag = [0u8; 1];
+                let mut mode = [0u8; 1];
                 data_reader
-                    .read_exact(&mut bitflag)
+                    .read_exact(&mut mode)
                     .map_err(|e| e.to_string())?;
-                let bitflag = bitflag[0];
+                let mode = mode[0];
+
+                let (high, medium, low) = if mode == 0 {
+                    (true, true, true)
+                } else {
+                    let mut high = false;
+                    let mut medium = false;
+                    let mut low = false;
+                    loop {
+                        let mut variant_byte = [0u8; 1];
+                        match data_reader.read_exact(&mut variant_byte) {
+                            Ok(()) => (),
+                            Err(e) if e.kind() == ErrorKind::UnexpectedEof => break,
+                            Err(e) => return Err(e.to_string()),
+                        }
+                        match ContentQualityVariant::from_u8(variant_byte[0]) {
+                            Some(ContentQualityVariant::High) => high = true,
+                            Some(ContentQualityVariant::Medium) => medium = true,
+                            Some(ContentQualityVariant::Low) => low = true,
+                            None => return Err("Invalid variant byte".to_string()),
+                        }
+                    }
+                    (high, medium, low)
+                };
 
                 Self::ContentQuery {
                     account_id,
                     content_id,
-                    high: bitflag & ContentQualityVariant::High.as_u8() != 0,
-                    medium: bitflag & ContentQualityVariant::Medium.as_u8() != 0,
-                    low: bitflag & ContentQualityVariant::Low.as_u8() != 0,
+                    high,
+                    medium,
+                    low,
                 }
             }
         };

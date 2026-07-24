@@ -10,25 +10,25 @@ pub enum ContentQualityVariant {
 impl ContentQualityVariant {
     pub fn variant_suffix(&self) -> &'static str {
         match self {
-            Self::High => "_h",
-            Self::Medium => "_m",
-            Self::Low => "_l",
+            Self::High => "6",
+            Self::Medium => "5",
+            Self::Low => "4",
         }
     }
 
-    /// Protocol byte value matching bitflag positions in ContentQuery.
+    /// Protocol byte value.
     pub fn as_u8(&self) -> u8 {
         match self {
-            Self::High => 1,
-            Self::Medium => 2,
+            Self::High => 6,
+            Self::Medium => 5,
             Self::Low => 4,
         }
     }
 
     pub fn from_u8(value: u8) -> Option<Self> {
         match value {
-            1 => Some(Self::High),
-            2 => Some(Self::Medium),
+            6 => Some(Self::High),
+            5 => Some(Self::Medium),
             4 => Some(Self::Low),
             _ => None,
         }

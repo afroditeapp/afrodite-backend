@@ -117,9 +117,9 @@ pub async fn get_content(
         .q
         .as_deref()
         .and_then(|q| match q {
-            "h" => Some(ContentQualityVariant::High),
-            "m" => Some(ContentQualityVariant::Medium),
-            "l" => Some(ContentQualityVariant::Low),
+            "6" => Some(ContentQualityVariant::High),
+            "5" => Some(ContentQualityVariant::Medium),
+            "4" => Some(ContentQualityVariant::Low),
             _ => None,
         })
         .unwrap_or(ContentQualityVariant::High);
