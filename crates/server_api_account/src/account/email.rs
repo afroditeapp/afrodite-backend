@@ -1,9 +1,9 @@
-use std::time::Duration;
+use std::{collections::HashMap, time::Duration};
 
 use axum::{
     Extension,
     body::Bytes,
-    extract::{Path, State},
+    extract::{Form, Query, State},
     http::StatusCode,
 };
 use axum_extra::{TypedHeader, headers::ContentType};
@@ -30,48 +30,111 @@ use tokio::time::timeout;
 
 use crate::app::GetAccounts;
 
-pub const PATH_GET_VERIFY_EMAIL: &str = "/verify_email/{token}";
+pub const PATH_GET_VERIFY_EMAIL: &str = "/verify_email";
 
-/// Verify email address using the token sent via email.
-/// This endpoint is meant to be accessed via a link in the verification email.
-/// To workaround email security scanning related link accessing, the link
-/// can be opened multiple times.
-///
-/// This modifies server state even if the HTTP method is GET.
-///
-/// Returns plain text response indicating success or failure.
+/// Show email verification form page.
+/// Token is passed via query parameter to prevent email scanners from
+/// accidentally verifying the email.
 #[utoipa::path(
     get,
     path = PATH_GET_VERIFY_EMAIL,
-    params(AccessToken),
     responses(
-        (status = 200, description = "Email verified successfully.", content_type = "text/plain"),
-        (status = 400, description = "Invalid or expired token.", content_type = "text/plain"),
+        (status = 200, description = "Email verification form.", content_type = "text/html"),
+        (status = 400, description = "Invalid or expired token."),
         (status = 500, description = "Internal server error.", content_type = "text/plain"),
     ),
     security(),
 )]
 pub async fn get_verify_email(
     State(state): State<S>,
-    Path(token): Path<AccessToken>,
+    Query(params): Query<HashMap<String, String>>,
     accept_language: Option<TypedHeader<AcceptLanguage>>,
 ) -> Result<(TypedHeader<ContentType>, Bytes), (StatusCode, TypedHeader<ContentType>, Bytes)> {
     ACCOUNT.get_verify_email.incr();
 
-    let token = match token.bytes() {
-        Ok(bytes) => bytes,
-        Err(_) => {
-            return create_invalid_token_response(&state, accept_language);
+    handle_get_verify_email(&state, params, accept_language).await
+}
+
+async fn handle_get_verify_email(
+    state: &S,
+    params: HashMap<String, String>,
+    accept_language: Option<TypedHeader<AcceptLanguage>>,
+) -> Result<(TypedHeader<ContentType>, Bytes), (StatusCode, TypedHeader<ContentType>, Bytes)> {
+    let token = match params.get("token") {
+        Some(token) => token.clone(),
+        None => {
+            return create_invalid_token_response(state, accept_language);
         }
     };
 
-    let result = db_write!(state, move |cmds| {
-        cmds.account().email().verify_email_with_token(token).await
-    });
+    let web_config = state.config().web_content();
+    let language = accept_language.as_ref().map(|h| h.language());
+    match web_config.get(language.as_ref()).email_verification(&token) {
+        Ok(page) => Ok((TypedHeader(ContentType::html()), Bytes::from(page.content))),
+        Err(_) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            TypedHeader(ContentType::text_utf8()),
+            Bytes::from("Internal Server Error"),
+        )),
+    }
+}
+
+pub const PATH_POST_VERIFY_EMAIL: &str = "/verify_email";
+
+/// Verify email address using the token from the form submission.
+#[utoipa::path(
+    post,
+    path = PATH_POST_VERIFY_EMAIL,
+    responses(
+        (status = 200, description = "Email verified successfully."),
+        (status = 400, description = "Invalid or expired token."),
+        (status = 500, description = "Internal server error.", content_type = "text/plain"),
+    ),
+    security(),
+)]
+pub async fn post_verify_email(
+    State(state): State<S>,
+    accept_language: Option<TypedHeader<AcceptLanguage>>,
+    Form(form): Form<HashMap<String, String>>,
+) -> Result<(TypedHeader<ContentType>, Bytes), (StatusCode, TypedHeader<ContentType>, Bytes)> {
+    ACCOUNT.post_verify_email.incr();
+
+    handle_post_verify_email(&state, accept_language, form, async |token_bytes| {
+        db_write!(state, move |cmds| {
+            cmds.account()
+                .email()
+                .verify_email_with_token(token_bytes)
+                .await
+        })
+    })
+    .await
+}
+
+async fn handle_post_verify_email(
+    state: &S,
+    accept_language: Option<TypedHeader<AcceptLanguage>>,
+    form: HashMap<String, String>,
+    check_token: impl AsyncFnOnce(Vec<u8>) -> Result<TokenCheckResult, server_api::utils::StatusCode>,
+) -> Result<(TypedHeader<ContentType>, Bytes), (StatusCode, TypedHeader<ContentType>, Bytes)> {
+    let token = match form.get("token") {
+        Some(token) => token.clone(),
+        None => {
+            return create_invalid_token_response(state, accept_language);
+        }
+    };
+
+    let token_bytes = match AccessToken::new(token).bytes() {
+        Ok(bytes) => bytes,
+        Err(_) => {
+            return create_invalid_token_response(state, accept_language);
+        }
+    };
+
+    let result = check_token(token_bytes).await;
 
     match result {
-        Ok(TokenCheckResult::Valid) => create_success_response(&state, accept_language),
-        Ok(TokenCheckResult::Invalid) => create_invalid_token_response(&state, accept_language),
+        Ok(TokenCheckResult::Valid) => create_success_response(state, accept_language),
+        Ok(TokenCheckResult::Invalid) => create_invalid_token_response(state, accept_language),
         Err(_) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
             TypedHeader(ContentType::text_utf8()),
@@ -203,57 +266,60 @@ pub async fn post_send_verify_email_message(
     }
 }
 
-pub const PATH_GET_VERIFY_NEW_EMAIL: &str = "/verify_new_email/{token}";
+pub const PATH_GET_VERIFY_NEW_EMAIL: &str = "/verify_new_email";
 
-/// Verify new email address using the token sent via email.
-/// This endpoint is meant to be accessed via a link in the verification email.
-/// To workaround email security scanning related link accessing, the link
-/// can be opened multiple times.
-///
-/// This modifies server state even if the HTTP method is GET.
-///
-/// Returns plain text response indicating success or failure.
+/// Show email change verification form page.
+/// Token is passed via query parameter to prevent email scanners from
+/// accidentally verifying the new email.
 #[utoipa::path(
     get,
     path = PATH_GET_VERIFY_NEW_EMAIL,
-    params(AccessToken),
     responses(
-        (status = 200, description = "New email verified successfully.", content_type = "text/plain"),
-        (status = 400, description = "Invalid or expired token.", content_type = "text/plain"),
+        (status = 200, description = "Email change verification form.", content_type = "text/html"),
+        (status = 400, description = "Invalid or expired token."),
         (status = 500, description = "Internal server error.", content_type = "text/plain"),
     ),
     security(),
 )]
 pub async fn get_verify_new_email(
     State(state): State<S>,
-    Path(token): Path<AccessToken>,
+    Query(params): Query<HashMap<String, String>>,
     accept_language: Option<TypedHeader<AcceptLanguage>>,
 ) -> Result<(TypedHeader<ContentType>, Bytes), (StatusCode, TypedHeader<ContentType>, Bytes)> {
     ACCOUNT.get_verify_new_email.incr();
 
-    let token = match token.bytes() {
-        Ok(bytes) => bytes,
-        Err(_) => {
-            return create_invalid_token_response(&state, accept_language);
-        }
-    };
+    handle_get_verify_email(&state, params, accept_language).await
+}
 
-    let result = db_write!(state, move |cmds| {
-        cmds.account()
-            .email()
-            .email_change_try_to_verify_new_email(token)
-            .await
-    });
+pub const PATH_POST_VERIFY_NEW_EMAIL: &str = "/verify_new_email";
 
-    match result {
-        Ok(TokenCheckResult::Valid) => create_success_response(&state, accept_language),
-        Ok(TokenCheckResult::Invalid) => create_invalid_token_response(&state, accept_language),
-        Err(_) => Err((
-            StatusCode::INTERNAL_SERVER_ERROR,
-            TypedHeader(ContentType::text_utf8()),
-            Bytes::from("Internal Server Error"),
-        )),
-    }
+/// Verify new email address using the token from the form submission.
+#[utoipa::path(
+    post,
+    path = PATH_POST_VERIFY_NEW_EMAIL,
+    responses(
+        (status = 200, description = "New email verified successfully."),
+        (status = 400, description = "Invalid or expired token."),
+        (status = 500, description = "Internal server error.", content_type = "text/plain"),
+    ),
+    security(),
+)]
+pub async fn post_verify_new_email(
+    State(state): State<S>,
+    accept_language: Option<TypedHeader<AcceptLanguage>>,
+    Form(form): Form<HashMap<String, String>>,
+) -> Result<(TypedHeader<ContentType>, Bytes), (StatusCode, TypedHeader<ContentType>, Bytes)> {
+    ACCOUNT.post_verify_new_email.incr();
+
+    handle_post_verify_email(&state, accept_language, form, async |token_bytes| {
+        db_write!(state, move |cmds| {
+            cmds.account()
+                .email()
+                .email_change_try_to_verify_new_email(token_bytes)
+                .await
+        })
+    })
+    .await
 }
 
 pub const PATH_POST_CANCEL_EMAIL_CHANGE: &str = "/account_api/cancel_email_change";
@@ -561,6 +627,8 @@ create_counters!(
     ACCOUNT_EMAIL_COUNTERS_LIST,
     get_verify_email,
     get_verify_new_email,
+    post_verify_email,
+    post_verify_new_email,
     post_cancel_email_change,
     post_send_verify_email_message,
     post_init_email_change,

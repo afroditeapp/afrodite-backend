@@ -28,7 +28,36 @@ default = "Access Denied"
 [access_denied.body]
 default = "Sorry, access to this application is not allowed from your current IP address.\n\nYour IP: {{ip_address}}\n\nIf you believe this is an error, please contact the system administrator."
 
-# Email Verification Page
+# Email Verification Form Page
+# This page must be HTML (is forced). Template variables: {{title}}, {{body}}, {{button}}, {{token}}.
+
+[email_verification]
+web_page_template = """
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+</head>
+<body>
+<h1>{{title}}</h1>
+<p>{{body}}</p>
+<form action="" method="POST">
+<input type="hidden" name="token" value="{{token}}">
+<button type="submit">{{button}}</button>
+</form>
+</body>
+</html>
+"""
+[email_verification.title]
+default = "Verify Email"
+
+[email_verification.body]
+default = "Click the button below to verify your email address."
+
+[email_verification.button]
+default = "Verify Email"
+
+# Email Verified Success Page
 
 [email_verified.title]
 default = "Email Verified"
@@ -56,11 +85,20 @@ struct WebContentStrings {
     body: StringResourceInternal,
 }
 
+#[derive(Debug, Default, Deserialize)]
+struct EmailVerificationStrings {
+    title: StringResourceInternal,
+    body: StringResourceInternal,
+    button: StringResourceInternal,
+    web_page_template: String,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct WebContentFile {
     web_page_template: String,
     web_page_content_type_is_html: bool,
     access_denied: Option<WebContentStrings>,
+    email_verification: Option<EmailVerificationStrings>,
     email_verified: Option<WebContentStrings>,
     invalid_link: Option<WebContentStrings>,
     #[serde(flatten)]
@@ -79,6 +117,7 @@ impl Default for WebContentFile {
             web_page_template: DEFAULT_TEMPLATE.to_string(),
             web_page_content_type_is_html: false,
             access_denied: None,
+            email_verification: None,
             email_verified: None,
             invalid_link: None,
             other: Map::new(),
@@ -119,6 +158,15 @@ impl WebContentFile {
         ) {
             return Err(ConfigFileError::InvalidConfig)
                 .attach_printable(format!("Template parsing error: {e}"));
+        }
+
+        // Validate email_verification template contains {{token}}
+        if let Some(ref v) = config.email_verification
+            && !v.web_page_template.contains("{{token}}")
+        {
+            return Err(ConfigFileError::InvalidConfig).attach_printable(
+                "email_verification.web_page_template must contain '{{token}}'".to_string(),
+            );
         }
 
         Ok(config)
@@ -196,6 +244,55 @@ impl<'a> WebStringGetter<'a> {
             "Sorry, access to this application is not allowed from your current IP address.\n\nYour IP: {{ip_address}}\n\nIf you believe this is an error, please contact the system administrator.",
             HashMap::from_iter([("ip_address", ip_address)]),
         )
+    }
+
+    /// Render the email verification form page.
+    /// This page must be HTML (is forced).
+    pub fn email_verification(&self, token: &str) -> Result<WebContent, ConfigFileError> {
+        let resource = &self.config.email_verification;
+
+        let title = resource
+            .as_ref()
+            .map(|v| &v.title)
+            .map(|v| v.translations.get(self.language).unwrap_or(&v.default))
+            .cloned()
+            .unwrap_or_else(|| "Verify Email".to_string());
+
+        let body = resource
+            .as_ref()
+            .map(|v| &v.body)
+            .map(|v| v.translations.get(self.language).unwrap_or(&v.default))
+            .cloned()
+            .unwrap_or_else(|| "Click the button below to verify your email address.".to_string());
+
+        let button = resource
+            .as_ref()
+            .map(|v| &v.button)
+            .map(|v| v.translations.get(self.language).unwrap_or(&v.default))
+            .cloned()
+            .unwrap_or_else(|| "Verify Email".to_string());
+
+        let template = resource
+            .as_ref()
+            .map(|v| v.web_page_template.as_str())
+            .unwrap_or_default();
+
+        let data = json!({
+            "title": title,
+            "body": body,
+            "button": button,
+            "token": token,
+        });
+
+        let rendered = Handlebars::new()
+            .render_template(template, &data)
+            .change_context(ConfigFileError::InvalidConfig)
+            .attach_printable_lazy(|| "Template rendering error".to_string())?;
+
+        Ok(WebContent {
+            content: rendered,
+            is_html: true,
+        })
     }
 
     pub fn email_verified(&self) -> Result<WebContent, ConfigFileError> {

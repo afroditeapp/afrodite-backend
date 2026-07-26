@@ -28,7 +28,9 @@ pub use server_common::{data::DataError, result};
         account::post_request_email_login_token,
         account::post_email_login_with_token,
         account::get_verify_email,
+        account::post_verify_email,
         account::get_verify_new_email,
+        account::post_verify_new_email,
         // Account bot API
         account_bot::post_bot_register,
         account_bot::post_bot_login,
