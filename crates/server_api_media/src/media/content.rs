@@ -2,9 +2,10 @@ use axum::{
     Extension,
     body::Body,
     extract::{Path, Query, State},
+    response::{IntoResponse, Response},
 };
 use axum_extra::TypedHeader;
-use headers::{CacheControl, ContentLength, ContentType, ETag, IfNoneMatch};
+use headers::{ContentLength, ContentType, IfNoneMatch};
 use model::{
     ContentQualityVariant, EventToClientInternal, NotificationEvent, PendingAppNotificationInternal,
 };
@@ -97,16 +98,7 @@ pub async fn get_content(
     Path(requested_content_id): Path<ContentId>,
     Query(params): Query<GetContentQueryParams>,
     browser_etag: Option<TypedHeader<IfNoneMatch>>,
-) -> Result<
-    (
-        TypedHeader<ETag>,
-        TypedHeader<CacheControl>,
-        TypedHeader<ContentType>,
-        TypedHeader<ContentLength>,
-        Body,
-    ),
-    StatusCode,
-> {
+) -> Result<Response, StatusCode> {
     MEDIA.get_content.incr();
     state
         .api_usage_tracker()
@@ -249,20 +241,21 @@ async fn send_content(
     requested_profile: AccountId,
     requested_content_id: ContentId,
     browser_etag: Option<TypedHeader<IfNoneMatch>>,
-) -> Result<
-    (
-        TypedHeader<ETag>,
-        TypedHeader<CacheControl>,
-        TypedHeader<ContentType>,
-        TypedHeader<ContentLength>,
-        Body,
-    ),
-    StatusCode,
-> {
+) -> Result<Response, StatusCode> {
     let etag = state.etag_utils().immutable_content_variant(actual_quality);
+    let cache_control = if actual_quality == preferred_quality {
+        cache_control_for_images()
+    } else {
+        cache_control_for_images_with_downgraded_quality()
+    };
 
     if browser_etag.matches(etag) {
-        return Err(StatusCode::NOT_MODIFIED);
+        return Ok((
+            axum::http::StatusCode::NOT_MODIFIED,
+            TypedHeader(etag.clone()),
+            TypedHeader(cache_control),
+        )
+            .into_response());
     }
 
     let data = state.read().media().content_data_variant(
@@ -278,19 +271,14 @@ async fn send_content(
 
     let stream = ContentSendingStream::new(stream, ContentSendingTracker::track());
 
-    let cache_control = if actual_quality == preferred_quality {
-        cache_control_for_images()
-    } else {
-        cache_control_for_images_with_downgraded_quality()
-    };
-
     Ok((
         TypedHeader(etag.clone()),
         TypedHeader(cache_control),
         TypedHeader(ContentType::octet_stream()),
         TypedHeader(ContentLength(length)),
         Body::from_stream(stream),
-    ))
+    )
+        .into_response())
 }
 
 const PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT: &str = "/media_api/all_account_media_content/{aid}";

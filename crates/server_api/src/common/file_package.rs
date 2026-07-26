@@ -1,13 +1,12 @@
 use std::{net::SocketAddr, time::Duration};
 
 use axum::{
-    body::{Body, Bytes},
+    body::Body,
     extract::{ConnectInfo, Path, State},
+    response::{IntoResponse, Response},
 };
 use axum_extra::TypedHeader;
-use headers::{
-    CacheControl, ContentEncoding, ContentType, ETag, Header, HeaderName, HeaderValue, IfNoneMatch,
-};
+use headers::{CacheControl, ContentType, Header, HeaderName, HeaderValue, IfNoneMatch};
 use http::StatusCode;
 use server_data::app::GetConfig;
 use simple_backend::{
@@ -90,15 +89,6 @@ impl ServiceWorkerAllowed {
     }
 }
 
-type StaticFileResponse = (
-    TypedHeader<ETag>,
-    TypedHeader<CacheControl>,
-    TypedHeader<ContentType>,
-    Option<TypedHeader<ContentEncoding>>,
-    Option<TypedHeader<ServiceWorkerAllowed>>,
-    Bytes,
-);
-
 pub const PATH_FILE_PACKAGE_ACCESS: &str = "/app/{*path}";
 
 pub async fn get_file_package_access(
@@ -107,7 +97,7 @@ pub async fn get_file_package_access(
     ConnectInfo(address): ConnectInfo<SocketAddr>,
     accept_language: Option<TypedHeader<AcceptLanguage>>,
     browser_etag: Option<TypedHeader<IfNoneMatch>>,
-) -> Result<StaticFileResponse, (StatusCode, TypedHeader<ContentType>, Body)> {
+) -> Result<Response, (StatusCode, TypedHeader<ContentType>, Body)> {
     COMMON.get_file_package_access.incr();
 
     check_ip_allowlist(&state, address, accept_language).await?;
@@ -119,20 +109,21 @@ pub async fn get_file_package_access(
         Body::empty(),
     ))?;
 
-    if browser_etag.matches(state.etag_utils().immutable_content()) {
-        return Err((
-            StatusCode::NOT_MODIFIED,
-            TypedHeader(ContentType::html()),
-            Body::empty(),
-        ));
-    }
-
     const MONTH_SECONDS: u64 = 60 * 60 * 24 * 30;
     let cache_control = CacheControl::new()
         .with_max_age(Duration::from_secs(MONTH_SECONDS * 12))
         .with_must_revalidate()
         .with_public()
         .with_immutable();
+
+    if browser_etag.matches(state.etag_utils().immutable_content()) {
+        return Ok((
+            StatusCode::NOT_MODIFIED,
+            TypedHeader(state.etag_utils().immutable_content().clone()),
+            TypedHeader(cache_control),
+        )
+            .into_response());
+    }
 
     let service_worker_header = if wanted_file.ends_with("/sw.js") {
         Some(TypedHeader(ServiceWorkerAllowed::root_scope()))
@@ -147,7 +138,8 @@ pub async fn get_file_package_access(
         file.content_encoding.map(TypedHeader),
         service_worker_header,
         file.data,
-    ))
+    )
+        .into_response())
 }
 
 pub const PATH_FILE_PACKAGE_ACCESS_ROOT: &str = "/";
@@ -157,7 +149,7 @@ pub async fn get_file_package_access_root(
     ConnectInfo(address): ConnectInfo<SocketAddr>,
     accept_language: Option<TypedHeader<AcceptLanguage>>,
     browser_etag: Option<TypedHeader<IfNoneMatch>>,
-) -> Result<StaticFileResponse, (StatusCode, TypedHeader<ContentType>, Body)> {
+) -> Result<Response, (StatusCode, TypedHeader<ContentType>, Body)> {
     COMMON.get_file_package_access_root.incr();
     return_index_html(state, address, accept_language, browser_etag).await
 }
@@ -169,7 +161,7 @@ pub async fn get_file_package_access_pwa_index_html(
     ConnectInfo(address): ConnectInfo<SocketAddr>,
     accept_language: Option<TypedHeader<AcceptLanguage>>,
     browser_etag: Option<TypedHeader<IfNoneMatch>>,
-) -> Result<StaticFileResponse, (StatusCode, TypedHeader<ContentType>, Body)> {
+) -> Result<Response, (StatusCode, TypedHeader<ContentType>, Body)> {
     COMMON.get_file_package_access_pwa_index_html.incr();
     return_index_html(state, address, accept_language, browser_etag).await
 }
@@ -179,15 +171,18 @@ async fn return_index_html(
     address: SocketAddr,
     accept_language: Option<TypedHeader<AcceptLanguage>>,
     browser_etag: Option<TypedHeader<IfNoneMatch>>,
-) -> Result<StaticFileResponse, (StatusCode, TypedHeader<ContentType>, Body)> {
+) -> Result<Response, (StatusCode, TypedHeader<ContentType>, Body)> {
     check_ip_allowlist(&state, address, accept_language).await?;
 
+    let cache_control = CacheControl::new().with_no_cache();
+
     if browser_etag.matches(state.etag_utils().server_start_time()) {
-        return Err((
+        return Ok((
             StatusCode::NOT_MODIFIED,
-            TypedHeader(ContentType::html()),
-            Body::empty(),
-        ));
+            TypedHeader(state.etag_utils().server_start_time().clone()),
+            TypedHeader(cache_control),
+        )
+            .into_response());
     }
 
     let file = state.file_package().index_html().ok_or((
@@ -196,16 +191,14 @@ async fn return_index_html(
         Body::empty(),
     ))?;
 
-    let cache_control = CacheControl::new().with_no_cache();
-
     Ok((
         TypedHeader(state.etag_utils().server_start_time().clone()),
         TypedHeader(cache_control),
         TypedHeader(file.content_type),
         file.content_encoding.map(TypedHeader),
-        None,
         file.data,
-    ))
+    )
+        .into_response())
 }
 
 async fn check_ip_allowlist(

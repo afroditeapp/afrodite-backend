@@ -1,9 +1,11 @@
 use axum::{
     body::Body,
     extract::{Path, Query, State},
+    http::StatusCode,
+    response::{IntoResponse, Response},
 };
 use axum_extra::TypedHeader;
-use headers::{CacheControl, ContentLength, ContentType, ETag, IfNoneMatch};
+use headers::{ContentLength, ContentType, IfNoneMatch};
 use model_media::{MapTileVersion, MapTileX, MapTileY, MapTileZ};
 use server_api::{
     S,
@@ -13,8 +15,6 @@ use server_api::{
 };
 use simple_backend::{app::GetTileMap, create_counters};
 use tracing::error;
-
-use crate::utils::StatusCode;
 
 const PATH_GET_MAP_TILE: &str = "/media_api/map_tile/{z}/{x}/{y}";
 
@@ -40,16 +40,7 @@ pub async fn get_map_tile(
     Path(y): Path<MapTileY>,
     Query(v): Query<MapTileVersion>,
     browser_etag: Option<TypedHeader<IfNoneMatch>>,
-) -> Result<
-    (
-        TypedHeader<ETag>,
-        TypedHeader<CacheControl>,
-        TypedHeader<ContentType>,
-        TypedHeader<ContentLength>,
-        Body,
-    ),
-    StatusCode,
-> {
+) -> Result<Response, StatusCode> {
     MEDIA.get_map_tile.incr();
 
     let tile_data_version = state
@@ -77,16 +68,24 @@ pub async fn get_map_tile(
 
     match byte_count_and_data_stream {
         Some((byte_count, data_stream)) => {
+            let etag = state.etag_utils().immutable_content().clone();
+            let cache_control = cache_control_for_images();
             if browser_etag.matches(state.etag_utils().immutable_content()) {
-                Err(StatusCode::NOT_MODIFIED)
+                Ok((
+                    StatusCode::NOT_MODIFIED,
+                    TypedHeader(etag),
+                    TypedHeader(cache_control),
+                )
+                    .into_response())
             } else {
                 Ok((
-                    TypedHeader(state.etag_utils().immutable_content().clone()),
-                    TypedHeader(cache_control_for_images()),
+                    TypedHeader(etag),
+                    TypedHeader(cache_control),
                     TypedHeader(ContentType::png()),
                     TypedHeader(ContentLength(byte_count)),
                     Body::from_stream(data_stream),
-                ))
+                )
+                    .into_response())
             }
         }
         None => Err(StatusCode::NOT_FOUND),
