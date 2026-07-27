@@ -29,11 +29,13 @@ pub async fn get_association_membership(
 ) -> Result<Json<Option<AssociationMembership>>, StatusCode> {
     ACCOUNT.get_association_membership.incr();
 
-    if GetConfig::config(&state)
+    let config = GetConfig::config(&state)
         .client_features_internal()
         .association
-        .is_none()
-    {
+        .as_ref()
+        .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    if !config.user_can_view_existing_membership {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 

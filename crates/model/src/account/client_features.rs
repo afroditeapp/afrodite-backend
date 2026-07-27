@@ -536,6 +536,9 @@ pub struct AssociationConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub user_can_edit_existing_membership: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub user_can_view_existing_membership: bool,
     pub association_name: StringResource,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub association_info_markdown: Option<StringResource>,

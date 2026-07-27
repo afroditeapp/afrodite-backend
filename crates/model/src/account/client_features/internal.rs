@@ -159,6 +159,8 @@ pub struct AssociationConfigInternal {
     pub user_can_join_association: bool,
     #[serde(default)]
     pub user_can_edit_existing_membership: bool,
+    #[serde(default)]
+    pub user_can_view_existing_membership: bool,
     pub association_name: StringResourceInternal,
     pub association_info_markdown: Option<StringResourceInternal>,
     pub membership_info_markdown: Option<StringResourceInternal>,
@@ -178,6 +180,7 @@ impl From<AssociationConfigInternal> for AssociationConfig {
         Self {
             user_can_join_association: value.user_can_join_association,
             user_can_edit_existing_membership: value.user_can_edit_existing_membership,
+            user_can_view_existing_membership: value.user_can_view_existing_membership,
             association_name: value.association_name.into(),
             association_info_markdown: value.association_info_markdown.map(Into::into),
             membership_info_markdown: value.membership_info_markdown.map(Into::into),
