@@ -1,5 +1,5 @@
 use diesel::{Insertable, Queryable, Selectable};
-use model::AccountIdDb;
+use model::{AccountIdDb, StringResource};
 use serde::{Deserialize, Serialize};
 use simple_backend_model::{NonEmptyString, UnixTime};
 use utoipa::ToSchema;
@@ -97,4 +97,10 @@ pub struct AssociationMembershipDataExportEntry {
     pub full_name: Option<NonEmptyString>,
     pub domicile: Option<NonEmptyString>,
     pub membership_type: i16,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct GetAssociationMembersOnlyInfo {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub info_markdown: Option<StringResource>,
 }

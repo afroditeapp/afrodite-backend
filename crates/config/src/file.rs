@@ -166,6 +166,7 @@ pub struct ConfigFile {
     pub limits: Option<LimitsConfig>,
     pub profile_name_allowlists: Option<Vec<ProfiletNameAllowlistConfig>>,
     pub manual_server_maintenance_info_for_another_server: Option<StringResourceInternal>,
+    pub association: Option<AssociationServerConfig>,
 }
 
 impl ConfigFile {
@@ -184,6 +185,7 @@ impl ConfigFile {
             limits: None,
             profile_name_allowlists: None,
             manual_server_maintenance_info_for_another_server: None,
+            association: None,
         }
     }
 
@@ -603,4 +605,9 @@ impl Default for ScheduledTasksConfig {
             daily_start_time: UtcTimeValue(DEFAULT_START_TIME),
         }
     }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct AssociationServerConfig {
+    pub members_only_info_markdown: Option<StringResourceInternal>,
 }

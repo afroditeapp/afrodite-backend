@@ -1,5 +1,8 @@
 use axum::{Extension, extract::State};
-use model_account::{AccountIdInternal, GetAssociationMembership, UpdateAssociationMembership};
+use model_account::{
+    AccountIdInternal, GetAssociationMembersOnlyInfo, GetAssociationMembership,
+    UpdateAssociationMembership,
+};
 use server_api::{
     S,
     app::{GetConfig, ReadData, WriteData},
@@ -166,11 +169,65 @@ pub async fn delete_association_membership(
     Ok(())
 }
 
+pub const PATH_GET_ASSOCIATION_MEMBERS_ONLY_INFO: &str =
+    "/account_api/association_members_only_info";
+
+/// Get association members-only info markdown text.
+#[utoipa::path(
+    get,
+    path = PATH_GET_ASSOCIATION_MEMBERS_ONLY_INFO,
+    responses(
+        (status = 200, description = "Successful", body = GetAssociationMembersOnlyInfo),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_association_members_only_info(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+) -> Result<Json<GetAssociationMembersOnlyInfo>, StatusCode> {
+    ACCOUNT.get_association_members_only_info.incr();
+
+    let config = GetConfig::config(&state)
+        .client_features_internal()
+        .association
+        .as_ref()
+        .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    if !config.user_can_view_existing_membership {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    let entry = state
+        .read()
+        .account()
+        .association()
+        .get_own_entry(account_id)
+        .await?;
+
+    if entry.is_none() {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    let info = state
+        .config()
+        .association_server()
+        .and_then(|c| c.members_only_info_markdown.clone())
+        .map(|v| v.into());
+
+    Ok(GetAssociationMembersOnlyInfo {
+        info_markdown: info,
+    }
+    .into())
+}
+
 create_open_api_router!(
     fn router_association,
     get_association_membership,
     post_association_membership,
     delete_association_membership,
+    get_association_members_only_info,
 );
 
 create_counters!(
@@ -180,4 +237,5 @@ create_counters!(
     get_association_membership,
     post_association_membership,
     delete_association_membership,
+    get_association_members_only_info,
 );
