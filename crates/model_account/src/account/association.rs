@@ -65,6 +65,30 @@ pub struct AssociationMembershipEntryInternal {
     pub membership_type: i16,
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct GetAssociationMembership {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub membership: Option<AssociationMembership>,
+}
+
+impl From<Option<AssociationMembership>> for GetAssociationMembership {
+    fn from(membership: Option<AssociationMembership>) -> Self {
+        Self { membership }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct GetAssociationMember {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub member: Option<AssociationMember>,
+}
+
+impl From<Option<AssociationMember>> for GetAssociationMember {
+    fn from(member: Option<AssociationMember>) -> Self {
+        Self { member }
+    }
+}
+
 /// Data export entry for association membership (no account IDs).
 #[derive(Serialize)]
 pub struct AssociationMembershipDataExportEntry {

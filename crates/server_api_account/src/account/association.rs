@@ -1,5 +1,5 @@
 use axum::{Extension, extract::State};
-use model_account::{AccountIdInternal, AssociationMembership, UpdateAssociationMembership};
+use model_account::{AccountIdInternal, GetAssociationMembership, UpdateAssociationMembership};
 use server_api::{
     S,
     app::{GetConfig, ReadData, WriteData},
@@ -17,7 +17,7 @@ const PATH_GET_ASSOCIATION_MEMBERSHIP: &str = "/account_api/association_membersh
     get,
     path = PATH_GET_ASSOCIATION_MEMBERSHIP,
     responses(
-        (status = 200, description = "Successful.", body = Option<AssociationMembership>),
+        (status = 200, description = "Successful.", body = GetAssociationMembership),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -26,7 +26,7 @@ const PATH_GET_ASSOCIATION_MEMBERSHIP: &str = "/account_api/association_membersh
 pub async fn get_association_membership(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
-) -> Result<Json<Option<AssociationMembership>>, StatusCode> {
+) -> Result<Json<GetAssociationMembership>, StatusCode> {
     ACCOUNT.get_association_membership.incr();
 
     let config = GetConfig::config(&state)
@@ -46,7 +46,7 @@ pub async fn get_association_membership(
         .get_own_entry(account_id)
         .await?;
 
-    Ok(entry.into())
+    Ok(GetAssociationMembership::from(entry).into())
 }
 
 const PATH_POST_ASSOCIATION_MEMBERSHIP: &str = "/account_api/association_membership";

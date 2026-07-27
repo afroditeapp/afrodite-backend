@@ -1,7 +1,7 @@
 use axum::{Extension, extract::State};
 use model::{AccountId, Permissions};
 use model_account::{
-    AssociationMember, AssociationMembersPage, GetAssociationMembersPage,
+    AssociationMembersPage, GetAssociationMember, GetAssociationMembersPage,
     ManualAssociationMembershipRegistry, ManualAssociationMembershipRegistryInput,
     UpdateAssociationMembershipType,
 };
@@ -247,7 +247,7 @@ const PATH_GET_ASSOCIATION_MEMBER: &str = "/account_api/association_member";
     path = PATH_GET_ASSOCIATION_MEMBER,
     request_body = AccountId,
     responses(
-        (status = 200, description = "Successful.", body = Option<AssociationMember>),
+        (status = 200, description = "Successful.", body = GetAssociationMember),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -257,7 +257,7 @@ pub async fn post_get_association_member(
     State(state): State<S>,
     Extension(permissions): Extension<Permissions>,
     Json(member): Json<AccountId>,
-) -> Result<Json<Option<AssociationMember>>, StatusCode> {
+) -> Result<Json<GetAssociationMember>, StatusCode> {
     ACCOUNT_ADMIN.post_get_association_member.incr();
 
     if !permissions.admin_view_association_membership {
@@ -273,7 +273,7 @@ pub async fn post_get_association_member(
         .get_entry(member)
         .await?;
 
-    Ok(entry.into())
+    Ok(GetAssociationMember::from(entry).into())
 }
 
 create_open_api_router!(
