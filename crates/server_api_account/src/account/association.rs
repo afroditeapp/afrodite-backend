@@ -52,6 +52,9 @@ pub async fn get_association_membership(
 const PATH_POST_ASSOCIATION_MEMBERSHIP: &str = "/account_api/association_membership";
 
 /// Create or update association membership.
+///
+/// When membership already exists, the full name
+/// and domicile fields are editable.
 #[utoipa::path(
     post,
     path = PATH_POST_ASSOCIATION_MEMBERSHIP,
@@ -102,6 +105,17 @@ pub async fn post_association_membership(
     if membership_type.admin_only {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
+
+    // When editing an existing membership, only allow updating
+    // full_name and domicile — keep the original membership_type.
+    let data = if let Some(existing) = existing {
+        UpdateAssociationMembership {
+            membership_type: existing.membership_type,
+            ..data
+        }
+    } else {
+        data
+    };
 
     db_write!(state, move |cmds| {
         cmds.account()
