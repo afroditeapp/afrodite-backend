@@ -1,7 +1,7 @@
 use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::Result;
-use model::{AccountIdInternal, UnixTime};
+use model::{AccountIdInternal, EmailLoginTokenRow, UnixTime};
 use model_account::AccountEmailSendingStateRaw;
 use simple_backend_utils::db::MyRunQueryDsl;
 
@@ -160,62 +160,6 @@ impl CurrentWriteAccountEmail<'_> {
         Ok(())
     }
 
-    pub fn set_email_login_token(
-        &mut self,
-        id: AccountIdInternal,
-        client_token_value: Vec<u8>,
-        email_token_value: Vec<u8>,
-        token_unix_time: UnixTime,
-    ) -> Result<(), DieselDatabaseError> {
-        {
-            use model::schema::account_email_login_token::dsl::*;
-
-            insert_into(account_email_login_token)
-                .values((
-                    account_id.eq(id.as_db_id()),
-                    client_token.eq(&client_token_value),
-                    email_token.eq(&email_token_value),
-                ))
-                .on_conflict(account_id)
-                .do_update()
-                .set((
-                    client_token.eq(&client_token_value),
-                    email_token.eq(&email_token_value),
-                ))
-                .execute_my_conn(self.conn())
-                .into_db_error(id)?;
-        }
-
-        {
-            use model::schema::account_email_login_token_time::dsl::*;
-
-            insert_into(account_email_login_token_time)
-                .values((account_id.eq(id.as_db_id()), unix_time.eq(token_unix_time)))
-                .on_conflict(account_id)
-                .do_update()
-                .set(unix_time.eq(token_unix_time))
-                .execute_my_conn(self.conn())
-                .into_db_error(id)?;
-        }
-
-        Ok(())
-    }
-
-    /// Does not clear email_login_token_time table's column unix_time, so that
-    /// email sending limit will work.
-    pub fn clear_email_login_tokens(
-        &mut self,
-        id: AccountIdInternal,
-    ) -> Result<(), DieselDatabaseError> {
-        use model::schema::account_email_login_token::dsl::*;
-
-        delete(account_email_login_token.find(id.as_db_id()))
-            .execute(self.conn())
-            .into_db_error(id)?;
-
-        Ok(())
-    }
-
     pub fn set_email_login_enabled(
         &mut self,
         id: AccountIdInternal,
@@ -226,6 +170,65 @@ impl CurrentWriteAccountEmail<'_> {
         update(account_email_address_state.find(id.as_db_id()))
             .set(email_login_enabled.eq(enabled))
             .execute(self.conn())
+            .into_db_error(id)?;
+
+        Ok(())
+    }
+
+    /// Replace all email login tokens in a single transaction.
+    /// Clears existing rows then inserts new ones.
+    /// Skips tokens for accounts that no longer exist (deleted accounts).
+    pub fn replace_all_email_login_tokens(
+        &mut self,
+        tokens: Vec<EmailLoginTokenRow>,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::{account_email_login_token::dsl as t, account_id::dsl as aid};
+
+        // Clear existing tokens
+        delete(t::account_email_login_token)
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        // Insert new tokens, skipping deleted accounts
+        for token in tokens {
+            let account_exists: Option<i64> = aid::account_id
+                .find(token.account_id.as_db_id())
+                .select(aid::id)
+                .first(self.conn())
+                .optional()
+                .into_db_error(())?;
+
+            if account_exists.is_none() {
+                continue;
+            }
+
+            insert_into(t::account_email_login_token)
+                .values((
+                    t::account_id.eq(token.account_id.as_db_id()),
+                    t::client_token.eq(&token.client_token),
+                    t::email_token.eq(&token.email_token),
+                    t::unix_time.eq(token.unix_time),
+                ))
+                .execute_my_conn(self.conn())
+                .into_db_error(token.account_id)?;
+        }
+
+        Ok(())
+    }
+
+    pub fn set_email_login_token_sent_time(
+        &mut self,
+        id: AccountIdInternal,
+        time: UnixTime,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::account_email_login_limits::dsl::*;
+
+        insert_into(account_email_login_limits)
+            .values((account_id.eq(id.as_db_id()), token_sent_unix_time.eq(time)))
+            .on_conflict(account_id)
+            .do_update()
+            .set(token_sent_unix_time.eq(time))
+            .execute_my_conn(self.conn())
             .into_db_error(id)?;
 
         Ok(())

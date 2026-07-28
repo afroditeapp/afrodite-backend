@@ -20,16 +20,17 @@ diesel::table! {
 }
 
 diesel::table! {
-    account_email_login_token (account_id) {
+    account_email_login_limits (account_id) {
         account_id -> Int8,
-        client_token -> Bytea,
-        email_token -> Bytea,
+        token_sent_unix_time -> Int8,
     }
 }
 
 diesel::table! {
-    account_email_login_token_time (account_id) {
+    account_email_login_token (account_id) {
         account_id -> Int8,
+        client_token -> Bytea,
+        email_token -> Bytea,
         unix_time -> Int8,
     }
 }
@@ -45,7 +46,6 @@ diesel::table! {
         account_deletion_remainder_third_state_number -> Int2,
         email_change_verification_state_number -> Int2,
         email_change_notification_state_number -> Int2,
-        email_login_state_number -> Int2,
     }
 }
 
@@ -986,8 +986,8 @@ diesel::table! {
 
 diesel::joinable!(account_app_notification_settings -> account_id (account_id));
 diesel::joinable!(account_email_address_state -> account_id (account_id));
+diesel::joinable!(account_email_login_limits -> account_id (account_id));
 diesel::joinable!(account_email_login_token -> account_id (account_id));
-diesel::joinable!(account_email_login_token_time -> account_id (account_id));
 diesel::joinable!(account_email_sending_state -> account_id (account_id));
 diesel::joinable!(account_email_verification_token -> account_id (account_id));
 diesel::joinable!(account_email_verification_token_time -> account_id (account_id));
@@ -1056,8 +1056,8 @@ diesel::joinable!(used_content_ids -> account_id (account_id));
 diesel::allow_tables_to_appear_in_same_query!(
     account_app_notification_settings,
     account_email_address_state,
+    account_email_login_limits,
     account_email_login_token,
-    account_email_login_token_time,
     account_email_sending_state,
     account_email_verification_token,
     account_email_verification_token_time,

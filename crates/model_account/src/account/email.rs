@@ -44,7 +44,6 @@ pub struct AccountEmailSendingStateRaw {
     pub account_deletion_remainder_third_state_number: EmailSendingState,
     pub email_change_verification_state_number: EmailSendingState,
     pub email_change_notification_state_number: EmailSendingState,
-    pub email_login_state_number: EmailSendingState,
 }
 
 impl AccountEmailSendingStateRaw {
@@ -64,7 +63,6 @@ impl AccountEmailSendingStateRaw {
             }
             EmailMessages::EmailChangeVerification => &self.email_change_verification_state_number,
             EmailMessages::EmailChangeNotification => &self.email_change_notification_state_number,
-            EmailMessages::EmailLoginToken => &self.email_login_state_number,
         }
     }
 
@@ -88,7 +86,6 @@ impl AccountEmailSendingStateRaw {
             EmailMessages::EmailChangeNotification => {
                 &mut self.email_change_notification_state_number
             }
-            EmailMessages::EmailLoginToken => &mut self.email_login_state_number,
         }
     }
 }

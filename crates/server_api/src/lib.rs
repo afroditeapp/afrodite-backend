@@ -22,6 +22,7 @@ pub use server_state::{
         AccountVerificationQueueAddError, AccountVerificationQueueRemoveNextError,
     },
     create_open_api_router, db_write, db_write_raw,
+    email_registration::TokenData,
 };
 
 pub mod app {

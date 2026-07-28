@@ -3,9 +3,7 @@ pub mod custom;
 use std::sync::Arc;
 
 use error_stack::ResultExt;
-use model::{
-    AccessToken, AccountIdInternal, EmailLoginToken, EmailMessages, EventToClientInternal, UnixTime,
-};
+use model::{AccessToken, AccountIdInternal, EmailMessages, EventToClientInternal, UnixTime};
 use server_api::{
     app::{GetConfig, ReadData, WriteData},
     db_write_raw,
@@ -280,10 +278,6 @@ impl EmailManager {
                 getter.email_change_verification(&token)
             }
             EmailMessages::EmailChangeNotification => getter.email_change_notification(),
-            EmailMessages::EmailLoginToken => {
-                let token = self.get_token_for_email_login(recipient).await?;
-                getter.email_login(&token)
-            }
         }
         .change_context(EmailError::GettingEmailDataFailed)?;
 
@@ -383,27 +377,6 @@ impl EmailManager {
         } else {
             Err(EmailError::GettingEmailDataFailed)
                 .attach_printable("No email change verification token found")
-        }
-    }
-
-    async fn get_token_for_email_login(
-        &self,
-        recipient: AccountIdInternal,
-    ) -> error_stack::Result<String, EmailError> {
-        let tokens = self
-            .state
-            .read()
-            .account()
-            .email_login_tokens(recipient)
-            .await
-            .map_err(|e| e.into_report())
-            .change_context(EmailError::GettingEmailDataFailed)?;
-
-        if let Some(token_bytes) = tokens.email_token {
-            let token = EmailLoginToken::from_bytes(&token_bytes);
-            Ok(token.into_string())
-        } else {
-            Err(EmailError::GettingEmailDataFailed).attach_printable("No email login token found")
         }
     }
 }

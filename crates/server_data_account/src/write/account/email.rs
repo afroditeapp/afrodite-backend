@@ -1,6 +1,6 @@
 use database::current::read::GetDbReadCommandsCommon;
 use database_account::current::{read::GetDbReadCommandsAccount, write::GetDbWriteCommandsAccount};
-use model::{EmailLoginToken, EventToClientInternal, UnixTime};
+use model::{EmailLoginTokenRow, EventToClientInternal, UnixTime};
 use model_account::{AccountIdInternal, EmailAddress, EmailMessages, EmailSendingState};
 use server_data::{
     DataError,
@@ -312,77 +312,27 @@ impl WriteCommandsAccountEmail<'_> {
         })
     }
 
-    pub async fn set_email_login_tokens_and_return_client_token(
+    /// Replace all email login tokens in a single DB transaction.
+    pub async fn replace_all_email_login_tokens(
+        &self,
+        tokens: Vec<EmailLoginTokenRow>,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.account()
+                .email()
+                .replace_all_email_login_tokens(tokens)
+        })
+    }
+
+    pub async fn set_email_login_token_sent_time(
         &self,
         id: AccountIdInternal,
-    ) -> Result<EmailLoginToken, DataError> {
-        let current_time = UnixTime::current_time();
-        let (client_token, client_token_bytes) = EmailLoginToken::generate_new_with_bytes();
-        let (_, email_token_bytes) = EmailLoginToken::generate_new_with_bytes();
-
+        time: UnixTime,
+    ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
-            cmds.account().email().set_email_login_token(
-                id,
-                client_token_bytes,
-                email_token_bytes,
-                current_time,
-            )
-        })?;
-
-        Ok(client_token)
-    }
-
-    pub fn send_email_login_token_high_priority(
-        &self,
-        id: AccountIdInternal,
-    ) -> Result<EmailSendingHandle, DataError> {
-        self.email_sender()
-            .send_high_priority(id, EmailMessages::EmailLoginToken)
-            .map_err(|_| DataError::EmailSendingFailed.report())
-    }
-
-    pub async fn verify_and_remove_email_login_tokens(
-        &self,
-        client_token: Vec<u8>,
-        email_token: Vec<u8>,
-    ) -> Result<Option<AccountIdInternal>, DataError> {
-        let token_validity_duration = self
-            .config()
-            .limits_account()
-            .email_login_token_validity_duration;
-
-        let account_id = self
-            .db_read(move |mut cmds| {
-                let token_info = cmds
-                    .account()
-                    .email()
-                    .find_account_by_email_login_token(client_token.clone(), email_token.clone())?;
-
-                let Some((account_id, token_unix_time)) = token_info else {
-                    return Ok(None);
-                };
-
-                if token_unix_time.duration_value_elapsed(token_validity_duration) {
-                    return Ok(None);
-                }
-
-                Ok(Some(account_id))
-            })
-            .await?;
-
-        if let Some(account_id) = account_id {
-            db_transaction!(self, move |mut cmds| {
-                cmds.account().email().clear_email_login_tokens(account_id)
-            })?;
-            Ok(Some(account_id))
-        } else {
-            Ok(None)
-        }
-    }
-
-    pub async fn clear_email_login_tokens(&self, id: AccountIdInternal) -> Result<(), DataError> {
-        db_transaction!(self, move |mut cmds| {
-            cmds.account().email().clear_email_login_tokens(id)
+            cmds.account()
+                .email()
+                .set_email_login_token_sent_time(id, time)
         })
     }
 

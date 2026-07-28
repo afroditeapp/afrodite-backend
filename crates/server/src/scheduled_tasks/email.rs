@@ -36,8 +36,6 @@ pub async fn handle_email_notifications(state: &S, id: AccountIdInternal) -> Res
 
     cancel_email_change_if_needed(state, id).await?;
 
-    remove_expired_email_login_tokens(state, id).await?;
-
     Ok(())
 }
 
@@ -312,30 +310,6 @@ async fn cancel_email_change_if_needed(state: &S, id: AccountIdInternal) -> Resu
             cmds.events()
                 .send_connected_event(id, EventToClientInternal::EmailAddressStateChanged)
                 .await?;
-            Ok(())
-        })
-        .await?;
-    }
-
-    Ok(())
-}
-
-async fn remove_expired_email_login_tokens(
-    state: &S,
-    id: AccountIdInternal,
-) -> Result<(), DataError> {
-    let token_time = state.read().account().email_login_token_time(id).await?;
-
-    let email_login_token_validity = state
-        .config()
-        .limits_account()
-        .email_login_token_validity_duration;
-
-    if let Some(token_time) = token_time
-        && token_time.duration_value_elapsed(email_login_token_validity)
-    {
-        db_write_raw!(state, move |cmds| {
-            cmds.account().email().clear_email_login_tokens(id).await?;
             Ok(())
         })
         .await?;

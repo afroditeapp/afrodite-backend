@@ -6,14 +6,14 @@ use axum::{
     response::Redirect,
 };
 use base64::Engine;
-use model::{AccountIdInternal, ClientType, EmailLoginToken};
+use model::{AccountIdInternal, ClientType, EmailLoginToken, UnixTime};
 use model_account::{
     AccessToken, AccountId, AppleAccountId, AuthPair, EmailAddress, EmailLogin, GoogleAccountId,
     LoginResult, RefreshToken, RequestEmailLoginToken, RequestEmailLoginTokenResult,
     SignInWithInfo, SignInWithLoginInfo,
 };
 use server_api::{
-    S,
+    S, TokenData,
     app::{GetConfig, GetDynamicServerConfig},
     db_write,
 };
@@ -458,48 +458,71 @@ async fn handle_login_token_sending(
         .account_id_from_email(request.email.clone())
         .await?;
     if let Some(account_id) = account_id {
-        db_write!(state, move |cmds| {
-            let internal = cmds
+        let internal = state
+            .read()
+            .account()
+            .email_address_state_internal(account_id)
+            .await?;
+
+        if !internal.email_login_enabled {
+            // Email login is disabled, but don't return error to prevent
+            // email enumeration.
+            return Ok(EmailLoginResultInternal::error_hidden());
+        }
+
+        let min_wait_duration = state
+            .config()
+            .limits_account()
+            .email_login_resend_min_wait_duration;
+
+        let error = db_write!(state, move |cmds| {
+            let sent_time = cmds
                 .read()
                 .account()
-                .email_address_state_internal(account_id)
+                .email()
+                .email_login_token_sent_time(account_id)
                 .await?;
 
-            if !internal.email_login_enabled {
-                // Email login is disabled, but don't return error to prevent
-                // email enumeration.
-                return Ok(EmailLoginResultInternal::error_hidden());
+            if let Some(sent_time) = sent_time
+                && !sent_time.duration_value_elapsed(min_wait_duration)
+            {
+                // Too soon to send another token, but don't return error
+                return Ok(Some(EmailLoginResultInternal::error_hidden()));
             }
 
-            let token_time = cmds
-                .read()
-                .account()
-                .email_login_token_time(account_id)
+            cmds.account()
+                .email()
+                .set_email_login_token_sent_time(account_id, UnixTime::current_time())
                 .await?;
 
-            if let Some(token_time) = token_time {
-                let min_wait_duration = GetConfig::config(&cmds)
+            Ok(None)
+        })?;
+
+        if let Some(error) = error {
+            return Ok(error);
+        }
+
+        let (client_token, email_token) = state
+            .email_registration_tokens()
+            .insert(
+                TokenData::Account(account_id),
+                state
+                    .config()
                     .limits_account()
-                    .email_login_resend_min_wait_duration;
-                if !token_time.duration_value_elapsed(min_wait_duration) {
-                    // Too soon to send another token, but don't return error
-                    return Ok(EmailLoginResultInternal::error_hidden());
-                }
-            }
+                    .email_login_token_validity_duration,
+            )
+            .await;
 
-            let client_token = cmds
-                .account()
-                .email()
-                .set_email_login_tokens_and_return_client_token(account_id)
-                .await?;
+        let Some(email) = internal.email else {
+            return Ok(EmailLoginResultInternal::error_hidden());
+        };
 
-            let handle = cmds
-                .account()
-                .email()
-                .send_email_login_token_high_priority(account_id)?;
+        let handle = state
+            .email_channel_sender()
+            .send_registration_login_token(email.0, email_token.into_string())
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-            Ok(EmailLoginResultInternal::successful(client_token, handle))
-        })
+        Ok(EmailLoginResultInternal::successful(client_token, handle))
     } else if request.login_only {
         Ok(EmailLoginResultInternal::error_hidden())
     } else {
@@ -565,13 +588,23 @@ async fn post_email_login_with_token_impl(
 
     let client_token_clone = client_token.clone();
     let email_token_clone = email_token.clone();
-    let account_id = db_write!(state, move |cmds| {
-        cmds.account()
-            .email()
-            .verify_and_remove_email_login_tokens(client_token_clone, email_token_clone)
-            .await
-    })
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    // First try login token from RAM store (existing account)
+    let account_id = match state
+        .email_registration_tokens()
+        .consume(
+            &client_token_clone,
+            &email_token_clone,
+            state
+                .config()
+                .limits_account()
+                .email_login_token_validity_duration,
+        )
+        .await
+    {
+        Some(TokenData::Account(id)) => Some(id),
+        _ => None,
+    };
 
     if let Some(account_id) = account_id {
         // Login token was valid

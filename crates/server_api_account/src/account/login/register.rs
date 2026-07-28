@@ -1,8 +1,7 @@
 use std::net::SocketAddr;
 
-use model::EmailLoginToken;
 use model_account::{LoginResult, RequestEmailLoginToken, SignInWithInfo};
-use server_api::{S, app::GetConfig, db_write};
+use server_api::{S, TokenData, app::GetConfig, db_write};
 use server_data::app::RegisterImplResult;
 use server_data_account::write::GetWriteCommandsAccount;
 
@@ -13,19 +12,10 @@ pub(super) async fn request_email_registration_token(
     state: &S,
     request: &RequestEmailLoginToken,
 ) -> Result<EmailLoginResultInternal, StatusCode> {
-    let (client_token, client_token_bytes) = EmailLoginToken::generate_new_with_bytes();
-    let (email_token, email_token_bytes) = EmailLoginToken::generate_new_with_bytes();
-
-    let unix_time = model::UnixTime::current_time();
-    let email = request.email.clone();
-
-    state
+    let (client_token, email_token) = state
         .email_registration_tokens()
         .insert(
-            client_token_bytes,
-            email_token_bytes.clone(),
-            email.clone(),
-            unix_time,
+            TokenData::Email(request.email.clone()),
             state
                 .config()
                 .limits_account()
@@ -46,7 +36,7 @@ pub(super) async fn email_registration_with_token_impl(
     client_token: Vec<u8>,
     email_token: Vec<u8>,
 ) -> Result<LoginResult, StatusCode> {
-    let email = state
+    let email = match state
         .email_registration_tokens()
         .consume(
             &client_token,
@@ -56,10 +46,10 @@ pub(super) async fn email_registration_with_token_impl(
                 .limits_account()
                 .email_registration_token_validity_duration,
         )
-        .await;
-
-    let Some(email) = email else {
-        return Ok(LoginResult::error_invalid_email_login_token());
+        .await
+    {
+        Some(TokenData::Email(email)) => email,
+        _ => return Ok(LoginResult::error_invalid_email_login_token()),
     };
 
     let id = match state

@@ -35,7 +35,7 @@ use crate::{
     admin_notifications::AdminNotificationManagerData,
     demo::DemoAccountManager,
     dynamic_config::DynamicConfigManagerData,
-    email_registration::{EmailRegistrationRateLimiter, EmailRegistrationTokenStore},
+    email_registration::{EmailRegistrationTokenStore, limit::EmailRegistrationRateLimiter},
     utils::ETagUtils,
 };
 

@@ -32,6 +32,7 @@ impl StartupTasks {
         Self::handle_client_features_file_changes(&self.state).await?;
         Self::handle_vapid_public_key_changes(&self.state).await?;
         Self::handle_custom_email_resume(&self.state, &email_sender).await?;
+        Self::load_email_login_tokens(&self.state).await?;
         Self::handle_account_specific_tasks(&self.state, &email_sender).await
     }
 
@@ -49,6 +50,27 @@ impl StartupTasks {
         for email_id in pending {
             email_sender.trigger_custom_email_sending(email_id.eid, None);
         }
+
+        Ok(())
+    }
+
+    /// Load persisted email login tokens from DB into the RAM store.
+    async fn load_email_login_tokens(state: &S) -> Result<(), DataError> {
+        let tokens = state
+            .read()
+            .account()
+            .email()
+            .all_email_login_tokens()
+            .await?;
+        let validity = state
+            .config()
+            .limits_account()
+            .email_login_token_validity_duration;
+
+        state
+            .email_registration_tokens()
+            .load_all_login_tokens(tokens, validity)
+            .await;
 
         Ok(())
     }

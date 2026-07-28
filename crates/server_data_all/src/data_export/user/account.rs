@@ -20,6 +20,7 @@ pub struct UserDataExportJsonAccount {
     account_notification_settings: AccountAppNotificationSettings,
     email_login_tokens: EmailLoginTokens,
     email_login_token_time: Option<UnixTime>,
+    email_login_token_sent_time: Option<UnixTime>,
     email_verification_token: Option<Vec<u8>>,
     email_verification_token_time: Option<UnixTime>,
     association_membership: Option<AssociationMembershipDataExportEntry>,
@@ -44,6 +45,10 @@ impl UserDataExportJsonAccount {
                 .app_notification_settings(id)?,
             email_login_tokens: current.account().email().email_login_tokens(id)?,
             email_login_token_time: current.account().email().email_login_token_time(id)?,
+            email_login_token_sent_time: current
+                .account()
+                .email()
+                .email_login_token_sent_time(id)?,
             email_verification_token,
             email_verification_token_time,
             association_membership: current.account().association().get_own_entry(id)?.map(|e| {

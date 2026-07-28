@@ -1,12 +1,19 @@
-use std::{collections::HashMap, net::IpAddr, sync::Arc};
+use std::collections::HashMap;
 
-use model::UnixTime;
+use model::{AccountIdInternal, EmailLoginToken, EmailLoginTokenRow, UnixTime};
 use model_server_data::EmailAddress;
 use simple_backend_utils::time::DurationValue;
 use tokio::sync::Mutex;
 
+pub mod limit;
+
+pub enum TokenData {
+    Email(EmailAddress),
+    Account(AccountIdInternal),
+}
+
 struct RegistrationToken {
-    email: EmailAddress,
+    data: TokenData,
     email_token: Vec<u8>,
     unix_time: UnixTime,
 }
@@ -21,6 +28,13 @@ impl StoreInner {
         let now = UnixTime::current_time().ut;
         self.tokens
             .retain(|_, token| now - token.unix_time.ut < max_age_seconds);
+    }
+
+    fn cleanup_if_needed(&mut self, validity: DurationValue) {
+        if self.last_cleanup.duration_value_elapsed(validity) {
+            self.remove_expired(validity.seconds as i64);
+            self.last_cleanup = UnixTime::current_time();
+        }
     }
 }
 
@@ -42,92 +56,97 @@ impl Default for EmailRegistrationTokenStore {
 impl EmailRegistrationTokenStore {
     pub async fn insert(
         &self,
-        client_token: Vec<u8>,
-        email_token: Vec<u8>,
-        email: EmailAddress,
-        unix_time: UnixTime,
+        data: TokenData,
         validity: DurationValue,
-    ) {
+    ) -> (EmailLoginToken, EmailLoginToken) {
         let mut lock = self.inner.lock().await;
-        if lock.last_cleanup.duration_value_elapsed(validity) {
-            lock.remove_expired(validity.seconds as i64);
-            lock.last_cleanup = UnixTime::current_time();
-        }
+        lock.cleanup_if_needed(validity);
+
+        let (client_token, client_token_bytes) = loop {
+            let (token, bytes) = EmailLoginToken::generate_new_with_bytes();
+            if !lock.tokens.contains_key(&bytes) {
+                break (token, bytes);
+            }
+        };
+        let (email_token, email_token_bytes) = EmailLoginToken::generate_new_with_bytes();
+        let unix_time = UnixTime::current_time();
+
         lock.tokens.insert(
-            client_token,
+            client_token_bytes,
             RegistrationToken {
-                email,
-                email_token,
+                data,
+                email_token: email_token_bytes,
                 unix_time,
             },
         );
+
+        (client_token, email_token)
     }
 
-    /// Consume a token pair. Returns the email if valid.
+    /// Consume a token pair. Returns the data if valid.
     /// Removes the entry regardless of validity.
     pub async fn consume(
         &self,
         client_token: &[u8],
         email_token: &[u8],
         validity: DurationValue,
-    ) -> Option<EmailAddress> {
+    ) -> Option<TokenData> {
         let mut lock = self.inner.lock().await;
         let entry = lock.tokens.remove(client_token)?;
         if entry.email_token == email_token && !entry.unix_time.duration_value_elapsed(validity) {
-            Some(entry.email)
+            Some(entry.data)
         } else {
             None
         }
     }
-}
 
-struct RateLimiterInner {
-    state: HashMap<IpAddr, u16>,
-    last_cleanup: UnixTime,
-}
-
-pub struct EmailRegistrationRateLimiter {
-    inner: Arc<Mutex<RateLimiterInner>>,
-}
-
-impl Default for EmailRegistrationRateLimiter {
-    fn default() -> Self {
-        Self {
-            inner: Arc::new(Mutex::new(RateLimiterInner {
-                state: HashMap::new(),
-                last_cleanup: UnixTime::current_time(),
-            })),
-        }
-    }
-}
-
-impl Clone for EmailRegistrationRateLimiter {
-    fn clone(&self) -> Self {
-        Self {
-            inner: self.inner.clone(),
-        }
-    }
-}
-
-impl EmailRegistrationRateLimiter {
-    /// Returns `true` if the limit has been exceeded (i.e. the IP
-    /// should be denied).
-    pub async fn check_and_increment(&self, ip: IpAddr, max_per_day: u16) -> bool {
+    /// Load all login tokens at once under a single lock.
+    pub async fn load_all_login_tokens(
+        &self,
+        tokens: Vec<EmailLoginTokenRow>,
+        validity: DurationValue,
+    ) {
         let mut lock = self.inner.lock().await;
-        if lock
-            .last_cleanup
-            .duration_value_elapsed(DurationValue::from_seconds(86400))
-        {
-            lock.state.clear();
-            lock.last_cleanup = UnixTime::current_time();
+        for token in tokens {
+            lock.tokens.insert(
+                token.client_token.clone(),
+                RegistrationToken {
+                    data: TokenData::Account(token.account_id),
+                    email_token: token.email_token,
+                    unix_time: token.unix_time,
+                },
+            );
         }
+        lock.cleanup_if_needed(validity);
+    }
 
-        let entry = lock.state.entry(ip).or_insert(0);
-        if *entry >= max_per_day {
-            true
-        } else {
-            *entry += 1;
-            false
-        }
+    /// Collect all valid login tokens and drain them from the store.
+    /// Used during shutdown to persist tokens to DB.
+    pub async fn drain_valid_login_tokens(
+        &self,
+        validity: DurationValue,
+    ) -> Vec<EmailLoginTokenRow> {
+        let mut lock = self.inner.lock().await;
+        let now = UnixTime::current_time().ut;
+        let max_age = validity.seconds as i64;
+
+        lock.tokens
+            .drain()
+            .filter(|(_, token)| {
+                matches!(token.data, TokenData::Account(_)) && now - token.unix_time.ut < max_age
+            })
+            .map(|(client_token_bytes, token)| {
+                let account_id = match token.data {
+                    TokenData::Account(id) => id,
+                    _ => unreachable!(),
+                };
+                EmailLoginTokenRow {
+                    account_id,
+                    client_token: client_token_bytes,
+                    email_token: token.email_token,
+                    unix_time: token.unix_time,
+                }
+            })
+            .collect()
     }
 }

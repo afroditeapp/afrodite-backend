@@ -472,6 +472,15 @@ impl EmailLoginToken {
     }
 }
 
+/// Persisted email login token used for DB read/write and RAM store.
+#[derive(Debug, Clone)]
+pub struct EmailLoginTokenRow {
+    pub account_id: AccountIdInternal,
+    pub client_token: Vec<u8>,
+    pub email_token: Vec<u8>,
+    pub unix_time: UnixTime,
+}
+
 /// Refresh token is long lived token used for getting new access tokens.
 ///
 /// Refresh token is 256 bit value which is Base64 encoded.
