@@ -1,7 +1,7 @@
 use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{insert_into, prelude::*};
 use error_stack::Result;
-use model::AccountIdInternal;
+use model::{AccountIdInternal, UnixTime};
 use simple_backend_utils::db::MyRunQueryDsl;
 
 use crate::IntoDatabaseError;
@@ -39,12 +39,18 @@ impl CurrentWriteAccountAssociationAdmin<'_> {
     pub fn update_membership_type(
         &mut self,
         member_id: AccountIdInternal,
+        editor_id: AccountIdInternal,
         new_type: i16,
+        now: UnixTime,
     ) -> Result<(), DieselDatabaseError> {
         use crate::schema::association_membership::dsl::*;
 
         diesel::update(association_membership.filter(account_id_member.eq(member_id.as_db_id())))
-            .set(membership_type.eq(new_type))
+            .set((
+                membership_type.eq(new_type),
+                account_id_editor.eq(editor_id.as_db_id()),
+                edit_unix_time.eq(now),
+            ))
             .execute(self.conn())
             .into_db_error(())?;
 

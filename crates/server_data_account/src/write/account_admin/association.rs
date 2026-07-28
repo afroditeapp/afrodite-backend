@@ -1,5 +1,5 @@
 use database_account::current::write::GetDbWriteCommandsAccount;
-use model::AccountIdInternal;
+use model::{AccountIdInternal, UnixTime};
 use server_data::{
     DataError, db_transaction, define_cmd_wrapper_write, result::Result, write::DbTransaction,
 };
@@ -24,12 +24,18 @@ impl WriteCommandsAccountAssociationAdmin<'_> {
     pub async fn update_membership_type(
         &self,
         member: AccountIdInternal,
+        editor: AccountIdInternal,
         membership_type: i16,
     ) -> Result<(), DataError> {
+        let now = UnixTime::current_time();
+
         db_transaction!(self, move |mut cmds| {
-            cmds.account_admin()
-                .association()
-                .update_membership_type(member, membership_type)
+            cmds.account_admin().association().update_membership_type(
+                member,
+                editor,
+                membership_type,
+                now,
+            )
         })
     }
 }

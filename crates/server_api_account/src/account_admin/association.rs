@@ -1,5 +1,5 @@
 use axum::{Extension, extract::State};
-use model::{AccountId, Permissions};
+use model::{AccountId, AccountIdInternal, Permissions};
 use model_account::{
     AssociationMembersPage, GetAssociationMember, GetAssociationMembersPage,
     ManualAssociationMembershipRegistry, ManualAssociationMembershipRegistryInput,
@@ -202,6 +202,7 @@ const PATH_POST_UPDATE_ASSOCIATION_MEMBERSHIP_TYPE: &str =
 pub async fn post_update_association_membership_type(
     State(state): State<S>,
     Extension(permissions): Extension<Permissions>,
+    Extension(account_id): Extension<AccountIdInternal>,
     Json(data): Json<UpdateAssociationMembershipType>,
 ) -> Result<(), StatusCode> {
     ACCOUNT_ADMIN.post_update_association_membership_type.incr();
@@ -228,7 +229,7 @@ pub async fn post_update_association_membership_type(
     db_write!(state, move |cmds| {
         cmds.account_admin()
             .association()
-            .update_membership_type(member, data.membership_type)
+            .update_membership_type(member, account_id, data.membership_type)
             .await
     })?;
 
