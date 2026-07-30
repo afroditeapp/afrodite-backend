@@ -20,7 +20,7 @@ use server_api_account::{
         ACCOUNT_CLIENT_FEATURES_COUNTERS_LIST, ACCOUNT_EMAIL_COUNTERS_LIST,
         ACCOUNT_LOGOUT_COUNTERS_LIST, ACCOUNT_NEWS_COUNTERS_LIST,
         ACCOUNT_NOTIFICATION_COUNTERS_LIST, ACCOUNT_REPORT_COUNTERS_LIST,
-        ACCOUNT_VERIFICATION_COUNTERS_LIST,
+        ACCOUNT_SIGN_IN_WITH_COUNTERS_LIST, ACCOUNT_VERIFICATION_COUNTERS_LIST,
     },
     account_admin::{
         ACCOUNT_ADMIN_ASSOCIATION_COUNTERS_LIST, ACCOUNT_ADMIN_BAN_COUNTERS_LIST,
@@ -124,6 +124,7 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
     &CounterCategory::new("account_logout", ACCOUNT_LOGOUT_COUNTERS_LIST),
     &CounterCategory::new("account_ban", ACCOUNT_BAN_COUNTERS_LIST),
     &CounterCategory::new("account_delete", ACCOUNT_DELETE_COUNTERS_LIST),
+    &CounterCategory::new("account_sign_in_with", ACCOUNT_SIGN_IN_WITH_COUNTERS_LIST),
     &CounterCategory::new("account_settings", ACCOUNT_SETTINGS_COUNTERS_LIST),
     &CounterCategory::new("account_state", ACCOUNT_STATE_COUNTERS_LIST),
     &CounterCategory::new("account_demo", ACCOUNT_DEMO_COUNTERS_LIST),

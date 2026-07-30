@@ -1,8 +1,8 @@
 use database::{DieselDatabaseError, define_current_write_commands};
-use diesel::{insert_into, prelude::*};
+use diesel::{insert_into, prelude::*, update};
 use error_stack::Result;
 use model::AccountIdInternal;
-use model_account::SignInWithInfo;
+use model_account::{AppleAccountId, GoogleAccountId, SignInWithInfo};
 
 use crate::IntoDatabaseError;
 
@@ -18,6 +18,36 @@ impl CurrentWriteAccountSignInWith<'_> {
 
         insert_into(sign_in_with_info)
             .values((account_id.eq(id.as_db_id()), data))
+            .execute(self.conn())
+            .into_db_error(id)?;
+
+        Ok(())
+    }
+
+    pub fn update_apple_account_id(
+        &mut self,
+        id: AccountIdInternal,
+        apple_id: Option<AppleAccountId>,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::sign_in_with_info::dsl::*;
+
+        update(sign_in_with_info.find(id.as_db_id()))
+            .set(apple_account_id.eq(apple_id))
+            .execute(self.conn())
+            .into_db_error(id)?;
+
+        Ok(())
+    }
+
+    pub fn update_google_account_id(
+        &mut self,
+        id: AccountIdInternal,
+        google_id: Option<GoogleAccountId>,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::sign_in_with_info::dsl::*;
+
+        update(sign_in_with_info.find(id.as_db_id()))
+            .set(google_account_id.eq(google_id))
             .execute(self.conn())
             .into_db_error(id)?;
 

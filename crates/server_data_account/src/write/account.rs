@@ -23,6 +23,7 @@ pub mod email;
 pub mod news;
 pub mod notification;
 pub mod report;
+pub mod sign_in_with;
 
 #[derive(Debug, Clone, Copy)]
 pub struct IncrementAdminAccessGrantedCount;
@@ -56,6 +57,10 @@ impl<'a> WriteCommandsAccount<'a> {
 
     pub fn notification(self) -> notification::WriteCommandsAccountNotification<'a> {
         notification::WriteCommandsAccountNotification::new(self.0)
+    }
+
+    pub fn sign_in_with(self) -> sign_in_with::WriteCommandsAccountSignInWith<'a> {
+        sign_in_with::WriteCommandsAccountSignInWith::new(self.0)
     }
 }
 

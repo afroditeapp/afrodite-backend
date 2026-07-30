@@ -66,6 +66,9 @@ impl ApiDoc {
                 server_api_account::account::router_verification(state.clone()).into_openapi(),
             )
             .merge_from(server_api_account::account::router_register(state.clone()).into_openapi())
+            .merge_from(
+                server_api_account::account::router_sign_in_with(state.clone()).into_openapi(),
+            )
             .merge_from(server_api_account::account::router_settings(state.clone()).into_openapi())
             .merge_from(server_api_account::account::router_state(state.clone()).into_openapi())
             .merge_from(

@@ -11,6 +11,7 @@ pub mod notification;
 pub mod register;
 pub mod report;
 pub mod settings;
+pub mod sign_in_with;
 pub mod state;
 pub mod verification;
 
@@ -27,5 +28,6 @@ pub use notification::*;
 pub use register::*;
 pub use report::*;
 pub use settings::*;
+pub use sign_in_with::*;
 pub use state::*;
 pub use verification::*;

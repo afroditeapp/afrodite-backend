@@ -352,6 +352,24 @@ pub struct SignInWithGoogleInfo {
     pub nonce: String,
 }
 
+#[derive(Deserialize, ToSchema)]
+pub struct PutSignInWithApple {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub apple: Option<SignInWithAppleInfo>,
+}
+
+#[derive(Deserialize, ToSchema)]
+pub struct PutSignInWithGoogle {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub google: Option<SignInWithGoogleInfo>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct SignInWithState {
+    pub apple: bool,
+    pub google: bool,
+}
+
 #[derive(Debug, Clone, PartialEq, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::sign_in_with_info)]
 #[diesel(check_for_backend(crate::Db))]
