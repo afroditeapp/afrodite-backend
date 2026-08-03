@@ -2,7 +2,8 @@ use database::current::read::GetDbReadCommandsCommon;
 use database_account::current::{read::GetDbReadCommandsAccount, write::GetDbWriteCommandsAccount};
 use model::{EmailLoginTokenRow, EventToClientInternal, UnixTime};
 use model_account::{
-    AccountIdInternal, EmailAddress, EmailLoginLimits, EmailMessages, EmailSendingState,
+    AccountIdInternal, EmailAddress, EmailChangeLimits, EmailLoginLimits, EmailMessages,
+    EmailSendingState,
 };
 use server_data::{
     DataError,
@@ -333,6 +334,18 @@ impl WriteCommandsAccountEmail<'_> {
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.account().email().upsert_email_login_limits(id, limits)
+        })
+    }
+
+    pub async fn upsert_email_change_limits(
+        &self,
+        id: AccountIdInternal,
+        limits: EmailChangeLimits,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.account()
+                .email()
+                .upsert_email_change_limits(id, limits)
         })
     }
 

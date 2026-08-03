@@ -403,6 +403,16 @@ CREATE TABLE IF NOT EXISTS account_email_verification_token_time(
             ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS account_email_change_limits(
+    account_id              INTEGER PRIMARY KEY NOT NULL,
+    monthly_email_count     SMALLINT           NOT NULL DEFAULT 0,
+    monthly_limit_reset_unix_time BIGINT,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 -- Only client_token needs to be UNIQUE and Rust's HashMap handles that
 CREATE TABLE IF NOT EXISTS account_email_login_token(
     account_id              INTEGER PRIMARY KEY NOT NULL,

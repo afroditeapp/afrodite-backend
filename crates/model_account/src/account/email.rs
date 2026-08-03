@@ -7,6 +7,15 @@ use utoipa::ToSchema;
 
 use crate::EmailMessages;
 
+#[derive(Debug, Default, Clone, Serialize, Queryable, Selectable, AsChangeset, Insertable)]
+#[diesel(table_name = crate::schema::account_email_change_limits)]
+#[diesel(check_for_backend(crate::Db))]
+#[diesel(treat_none_as_null = true)]
+pub struct EmailChangeLimits {
+    pub monthly_email_count: i16,
+    pub monthly_limit_reset_unix_time: Option<UnixTime>,
+}
+
 #[derive(
     Debug,
     Deserialize,

@@ -20,6 +20,14 @@ diesel::table! {
 }
 
 diesel::table! {
+    account_email_change_limits (account_id) {
+        account_id -> Int8,
+        monthly_email_count -> Int2,
+        monthly_limit_reset_unix_time -> Nullable<Int8>,
+    }
+}
+
+diesel::table! {
     account_email_login_limits (account_id) {
         account_id -> Int8,
         token_sent_unix_time -> Nullable<Int8>,
@@ -988,6 +996,7 @@ diesel::table! {
 
 diesel::joinable!(account_app_notification_settings -> account_id (account_id));
 diesel::joinable!(account_email_address_state -> account_id (account_id));
+diesel::joinable!(account_email_change_limits -> account_id (account_id));
 diesel::joinable!(account_email_login_limits -> account_id (account_id));
 diesel::joinable!(account_email_login_token -> account_id (account_id));
 diesel::joinable!(account_email_sending_state -> account_id (account_id));
@@ -1058,6 +1067,7 @@ diesel::joinable!(used_content_ids -> account_id (account_id));
 diesel::allow_tables_to_appear_in_same_query!(
     account_app_notification_settings,
     account_email_address_state,
+    account_email_change_limits,
     account_email_login_limits,
     account_email_login_token,
     account_email_sending_state,

@@ -3,7 +3,7 @@ use database_account::current::read::GetDbReadCommandsAccount;
 use model::UnixTime;
 use model_account::{
     AccountEmailSendingStateRaw, AccountStateTableRaw, AssociationMembershipDataExportEntry,
-    EmailAddressState, EmailLoginLimits, EmailLoginTokens,
+    EmailAddressState, EmailChangeLimits, EmailLoginLimits, EmailLoginTokens,
 };
 use model_chat::AccountAppNotificationSettings;
 use serde::Serialize;
@@ -21,6 +21,7 @@ pub struct UserDataExportJsonAccount {
     email_login_tokens: EmailLoginTokens,
     email_login_token_time: Option<UnixTime>,
     email_login_limits: Option<EmailLoginLimits>,
+    email_change_limits: Option<EmailChangeLimits>,
     email_verification_token: Option<Vec<u8>>,
     email_verification_token_time: Option<UnixTime>,
     association_membership: Option<AssociationMembershipDataExportEntry>,
@@ -46,6 +47,7 @@ impl UserDataExportJsonAccount {
             email_login_tokens: current.account().email().email_login_tokens(id)?,
             email_login_token_time: current.account().email().email_login_token_time(id)?,
             email_login_limits: current.account().email().email_login_limits(id)?,
+            email_change_limits: current.account().email().email_change_limits(id)?,
             email_verification_token,
             email_verification_token_time,
             association_membership: current.account().association().get_own_entry(id)?.map(|e| {

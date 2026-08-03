@@ -1,6 +1,6 @@
 use database_account::current::read::GetDbReadCommandsAccount;
 use model::{AccountIdInternal, EmailLoginTokenRow};
-use model_account::{AccountEmailSendingStateRaw, EmailLoginLimits};
+use model_account::{AccountEmailSendingStateRaw, EmailChangeLimits, EmailLoginLimits};
 use server_data::{
     DataError, IntoDataError, define_cmd_wrapper_read, read::DbRead, result::Result,
 };
@@ -39,6 +39,15 @@ impl ReadCommandsAccountEmail<'_> {
         id: AccountIdInternal,
     ) -> Result<Option<EmailLoginLimits>, DataError> {
         self.db_read(move |mut cmds| cmds.account().email().email_login_limits(id))
+            .await
+            .into_error()
+    }
+
+    pub async fn email_change_limits(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<Option<EmailChangeLimits>, DataError> {
+        self.db_read(move |mut cmds| cmds.account().email().email_change_limits(id))
             .await
             .into_error()
     }
