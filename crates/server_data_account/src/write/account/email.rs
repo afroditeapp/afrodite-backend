@@ -1,7 +1,9 @@
 use database::current::read::GetDbReadCommandsCommon;
 use database_account::current::{read::GetDbReadCommandsAccount, write::GetDbWriteCommandsAccount};
 use model::{EmailLoginTokenRow, EventToClientInternal, UnixTime};
-use model_account::{AccountIdInternal, EmailAddress, EmailMessages, EmailSendingState};
+use model_account::{
+    AccountIdInternal, EmailAddress, EmailLoginLimits, EmailMessages, EmailSendingState,
+};
 use server_data::{
     DataError,
     app::{EventManagerProvider, GetConfig, GetEmailSender},
@@ -324,15 +326,13 @@ impl WriteCommandsAccountEmail<'_> {
         })
     }
 
-    pub async fn set_email_login_token_sent_time(
+    pub async fn upsert_email_login_limits(
         &self,
         id: AccountIdInternal,
-        time: UnixTime,
+        limits: EmailLoginLimits,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
-            cmds.account()
-                .email()
-                .set_email_login_token_sent_time(id, time)
+            cmds.account().email().upsert_email_login_limits(id, limits)
         })
     }
 

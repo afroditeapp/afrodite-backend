@@ -62,6 +62,7 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # email_change_resend_min_wait_duration = "15m"
 # email_login_token_validity_duration = "15m"
 # email_login_resend_min_wait_duration = "15m"
+# email_login_emails_per_month = 10
 # email_registration_token_validity_duration = "15m"
 # email_registration_max_per_day_per_ip = 100
 # post_account_verification_queue_item_daily_max_count = 10
@@ -400,6 +401,7 @@ pub struct AccountLimitsConfig {
     pub email_change_resend_min_wait_duration: DurationValue,
     pub email_login_token_validity_duration: DurationValue,
     pub email_login_resend_min_wait_duration: DurationValue,
+    pub email_login_emails_per_month: u16,
     pub email_registration_token_validity_duration: DurationValue,
     pub email_registration_max_per_day_per_ip: u16,
     pub post_account_verification_queue_item_daily_max_count: u16,
@@ -420,6 +422,7 @@ impl Default for AccountLimitsConfig {
             email_change_resend_min_wait_duration: DurationValue::from_seconds(15 * 60),
             email_login_token_validity_duration: DurationValue::from_seconds(15 * 60),
             email_login_resend_min_wait_duration: DurationValue::from_seconds(15 * 60),
+            email_login_emails_per_month: 10,
             email_registration_token_validity_duration: DurationValue::from_seconds(15 * 60),
             email_registration_max_per_day_per_ip: 100,
             post_account_verification_queue_item_daily_max_count: 10,

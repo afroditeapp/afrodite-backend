@@ -428,6 +428,7 @@ pub async fn post_request_email_login_token(
                 .limits_account()
                 .email_login_resend_min_wait_duration
                 .seconds as i64,
+            state.config().limits_account().email_login_emails_per_month as i64,
         )))
     }
 }
@@ -474,25 +475,48 @@ async fn handle_login_token_sending(
             .config()
             .limits_account()
             .email_login_resend_min_wait_duration;
+        let emails_per_month =
+            TryInto::<i16>::try_into(state.config().limits_account().email_login_emails_per_month)
+                .unwrap_or(i16::MAX);
 
         let error = db_write!(state, move |cmds| {
-            let sent_time = cmds
+            let mut limits = cmds
                 .read()
                 .account()
                 .email()
-                .email_login_token_sent_time(account_id)
-                .await?;
+                .email_login_limits(account_id)
+                .await?
+                .unwrap_or_default();
 
-            if let Some(sent_time) = sent_time
+            let now = UnixTime::current_time();
+            const MONTH_SECONDS: i64 = 60 * 60 * 24 * 30;
+            let monthly_reset = limits
+                .monthly_limit_reset_unix_time
+                .map(|t| t.ut + MONTH_SECONDS)
+                .unwrap_or(0);
+            if monthly_reset <= now.ut {
+                limits.monthly_email_count = 0;
+                limits.monthly_limit_reset_unix_time = Some(now);
+            }
+
+            if let Some(sent_time) = limits.token_sent_unix_time
                 && !sent_time.duration_value_elapsed(min_wait_duration)
             {
                 // Too soon to send another token, but don't return error
                 return Ok(Some(EmailLoginResultInternal::error_hidden()));
             }
 
+            if limits.monthly_email_count >= emails_per_month {
+                // Monthly email limit reached, but don't return error
+                return Ok(Some(EmailLoginResultInternal::error_hidden()));
+            }
+
+            limits.token_sent_unix_time = Some(now);
+            limits.monthly_email_count += 1;
+
             cmds.account()
                 .email()
-                .set_email_login_token_sent_time(account_id, UnixTime::current_time())
+                .upsert_email_login_limits(account_id, limits)
                 .await?;
 
             Ok(None)

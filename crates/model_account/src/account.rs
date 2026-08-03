@@ -210,6 +210,8 @@ pub struct RequestEmailLoginTokenResult {
     token_validity_seconds: Option<i64>,
     /// Minimum wait duration between token requests in seconds
     resend_wait_seconds: Option<i64>,
+    /// Maximum number of email login tokens that can be sent per month.
+    email_login_emails_per_month: Option<i64>,
 
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
@@ -225,11 +227,13 @@ impl RequestEmailLoginTokenResult {
         client_token: EmailLoginToken,
         token_validity_seconds: i64,
         resend_wait_seconds: i64,
+        email_login_emails_per_month: i64,
     ) -> Self {
         Self {
             client_token: Some(client_token),
             token_validity_seconds: Some(token_validity_seconds),
             resend_wait_seconds: Some(resend_wait_seconds),
+            email_login_emails_per_month: Some(email_login_emails_per_month),
             ..Default::default()
         }
     }

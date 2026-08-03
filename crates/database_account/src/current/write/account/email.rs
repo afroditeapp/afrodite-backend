@@ -2,7 +2,7 @@ use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::Result;
 use model::{AccountIdInternal, EmailLoginTokenRow, UnixTime};
-use model_account::AccountEmailSendingStateRaw;
+use model_account::{AccountEmailSendingStateRaw, EmailLoginLimits};
 use simple_backend_utils::db::MyRunQueryDsl;
 
 use crate::{IntoDatabaseError, current::read::GetDbReadCommandsAccount};
@@ -216,18 +216,22 @@ impl CurrentWriteAccountEmail<'_> {
         Ok(())
     }
 
-    pub fn set_email_login_token_sent_time(
+    pub fn upsert_email_login_limits(
         &mut self,
         id: AccountIdInternal,
-        time: UnixTime,
+        limits: EmailLoginLimits,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::account_email_login_limits::dsl::*;
 
         insert_into(account_email_login_limits)
-            .values((account_id.eq(id.as_db_id()), token_sent_unix_time.eq(time)))
+            .values((account_id.eq(id.as_db_id()), limits.clone()))
             .on_conflict(account_id)
             .do_update()
-            .set(token_sent_unix_time.eq(time))
+            .set((
+                token_sent_unix_time.eq(limits.token_sent_unix_time),
+                monthly_email_count.eq(limits.monthly_email_count),
+                monthly_limit_reset_unix_time.eq(limits.monthly_limit_reset_unix_time),
+            ))
             .execute_my_conn(self.conn())
             .into_db_error(id)?;
 

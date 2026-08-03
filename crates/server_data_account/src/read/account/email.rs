@@ -1,6 +1,6 @@
 use database_account::current::read::GetDbReadCommandsAccount;
-use model::{AccountIdInternal, EmailLoginTokenRow, UnixTime};
-use model_account::AccountEmailSendingStateRaw;
+use model::{AccountIdInternal, EmailLoginTokenRow};
+use model_account::{AccountEmailSendingStateRaw, EmailLoginLimits};
 use server_data::{
     DataError, IntoDataError, define_cmd_wrapper_read, read::DbRead, result::Result,
 };
@@ -34,11 +34,11 @@ impl ReadCommandsAccountEmail<'_> {
             .into_error()
     }
 
-    pub async fn email_login_token_sent_time(
+    pub async fn email_login_limits(
         &self,
         id: AccountIdInternal,
-    ) -> Result<Option<UnixTime>, DataError> {
-        self.db_read(move |mut cmds| cmds.account().email().email_login_token_sent_time(id))
+    ) -> Result<Option<EmailLoginLimits>, DataError> {
+        self.db_read(move |mut cmds| cmds.account().email().email_login_limits(id))
             .await
             .into_error()
     }

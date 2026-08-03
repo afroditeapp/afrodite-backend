@@ -417,7 +417,9 @@ CREATE TABLE IF NOT EXISTS account_email_login_token(
 
 CREATE TABLE IF NOT EXISTS account_email_login_limits(
     account_id              INTEGER PRIMARY KEY NOT NULL,
-    token_sent_unix_time    BIGINT             NOT NULL,
+    token_sent_unix_time    BIGINT,
+    monthly_email_count     SMALLINT           NOT NULL DEFAULT 0,
+    monthly_limit_reset_unix_time BIGINT,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

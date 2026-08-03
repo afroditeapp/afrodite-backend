@@ -1,4 +1,5 @@
 use diesel::{prelude::*, sql_types::SmallInt};
+use model::UnixTime;
 use model_server_data::EmailAddress;
 use serde::{Deserialize, Serialize};
 use simple_backend_model::SimpleDieselEnum;
@@ -88,6 +89,16 @@ impl AccountEmailSendingStateRaw {
             }
         }
     }
+}
+
+#[derive(Debug, Default, Clone, Serialize, Queryable, Selectable, AsChangeset, Insertable)]
+#[diesel(table_name = crate::schema::account_email_login_limits)]
+#[diesel(check_for_backend(crate::Db))]
+#[diesel(treat_none_as_null = true)]
+pub struct EmailLoginLimits {
+    pub token_sent_unix_time: Option<UnixTime>,
+    pub monthly_email_count: i16,
+    pub monthly_limit_reset_unix_time: Option<UnixTime>,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]

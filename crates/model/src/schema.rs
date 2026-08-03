@@ -22,7 +22,9 @@ diesel::table! {
 diesel::table! {
     account_email_login_limits (account_id) {
         account_id -> Int8,
-        token_sent_unix_time -> Int8,
+        token_sent_unix_time -> Nullable<Int8>,
+        monthly_email_count -> Int2,
+        monthly_limit_reset_unix_time -> Nullable<Int8>,
     }
 }
 
@@ -241,13 +243,6 @@ diesel::table! {
         full_name -> Nullable<Text>,
         domicile -> Nullable<Text>,
         membership_type -> Int2,
-    }
-}
-
-diesel::table! {
-    manual_association_membership_registry (row_type) {
-        row_type -> Int4,
-        registry -> Text,
     }
 }
 
@@ -645,6 +640,13 @@ diesel::table! {
         access_token_ip_address -> Bytea,
         access_token_ip_address_previous -> Nullable<Bytea>,
         refresh_token -> Bytea,
+    }
+}
+
+diesel::table! {
+    manual_association_membership_registry (row_type) {
+        row_type -> Int4,
+        registry -> Text,
     }
 }
 
@@ -1073,7 +1075,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     api_usage_statistics_metric_value,
     api_usage_statistics_save_time,
     association_membership,
-    manual_association_membership_registry,
     bot_config,
     chat_app_notification_settings,
     chat_email_notification_settings,
@@ -1120,6 +1121,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     latest_seen_message,
     latest_seen_message_pending_delivery,
     login_session,
+    manual_association_membership_registry,
     media_app_notification_settings,
     media_content,
     media_report_profile_content,
