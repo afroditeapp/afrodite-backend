@@ -101,6 +101,15 @@ impl AccountEmailSendingStateRaw {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Queryable, Selectable, AsChangeset, Insertable)]
+#[diesel(table_name = crate::schema::account_email_verification_limits)]
+#[diesel(check_for_backend(crate::Db))]
+#[diesel(treat_none_as_null = true)]
+pub struct EmailVerificationLimits {
+    pub monthly_email_count: i16,
+    pub monthly_limit_reset_unix_time: Option<UnixTime>,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Queryable, Selectable, AsChangeset, Insertable)]
 #[diesel(table_name = crate::schema::account_email_login_limits)]
 #[diesel(check_for_backend(crate::Db))]
 #[diesel(treat_none_as_null = true)]

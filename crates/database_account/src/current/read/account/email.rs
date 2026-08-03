@@ -4,7 +4,7 @@ use error_stack::Result;
 use model::{AccountIdInternal, EmailLoginTokenRow, UnixTime};
 use model_account::{
     AccountEmailSendingStateRaw, EmailAddress, EmailChangeLimits, EmailLoginLimits,
-    EmailLoginTokens,
+    EmailLoginTokens, EmailVerificationLimits,
 };
 
 use crate::IntoDatabaseError;
@@ -213,6 +213,22 @@ impl CurrentReadAccountEmail<'_> {
         let data: Option<EmailChangeLimits> = account_email_change_limits
             .filter(account_id.eq(id.as_db_id()))
             .select(EmailChangeLimits::as_select())
+            .first(self.conn())
+            .optional()
+            .into_db_error(id)?;
+
+        Ok(data)
+    }
+
+    pub fn email_verification_limits(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<Option<EmailVerificationLimits>, DieselDatabaseError> {
+        use model::schema::account_email_verification_limits::dsl::*;
+
+        let data: Option<EmailVerificationLimits> = account_email_verification_limits
+            .filter(account_id.eq(id.as_db_id()))
+            .select(EmailVerificationLimits::as_select())
             .first(self.conn())
             .optional()
             .into_db_error(id)?;

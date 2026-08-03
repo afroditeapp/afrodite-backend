@@ -58,6 +58,7 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # init_deletion_for_inactive_accounts_wait_duration = "730d"
 # email_verification_token_validity_duration = "1d"
 # email_verification_resend_min_wait_duration = "15m"
+# email_verification_emails_per_month = 10
 # email_change_min_wait_duration = "3d"
 # email_change_resend_min_wait_duration = "15m"
 # email_change_emails_per_month = 10
@@ -395,6 +396,7 @@ pub struct AccountLimitsConfig {
     pub init_deletion_for_inactive_accounts_wait_duration: DurationValue,
     pub email_verification_token_validity_duration: DurationValue,
     pub email_verification_resend_min_wait_duration: DurationValue,
+    pub email_verification_emails_per_month: u16,
     /// After this time pending email address is changed to be
     /// current email address. The email change email
     /// verification token is valid during this [DurationValue].
@@ -420,6 +422,7 @@ impl Default for AccountLimitsConfig {
             init_deletion_for_inactive_accounts_wait_duration: DurationValue::from_days(365 * 2), // About 2 years
             email_verification_token_validity_duration: DurationValue::from_days(1),
             email_verification_resend_min_wait_duration: DurationValue::from_seconds(15 * 60),
+            email_verification_emails_per_month: 10,
             email_change_min_wait_duration: DurationValue::from_days(3),
             email_change_resend_min_wait_duration: DurationValue::from_seconds(15 * 60),
             email_change_emails_per_month: 10,

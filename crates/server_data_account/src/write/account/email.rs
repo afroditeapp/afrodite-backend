@@ -3,7 +3,7 @@ use database_account::current::{read::GetDbReadCommandsAccount, write::GetDbWrit
 use model::{EmailLoginTokenRow, EventToClientInternal, UnixTime};
 use model_account::{
     AccountIdInternal, EmailAddress, EmailChangeLimits, EmailLoginLimits, EmailMessages,
-    EmailSendingState,
+    EmailSendingState, EmailVerificationLimits,
 };
 use server_data::{
     DataError,
@@ -346,6 +346,18 @@ impl WriteCommandsAccountEmail<'_> {
             cmds.account()
                 .email()
                 .upsert_email_change_limits(id, limits)
+        })
+    }
+
+    pub async fn upsert_email_verification_limits(
+        &self,
+        id: AccountIdInternal,
+        limits: EmailVerificationLimits,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.account()
+                .email()
+                .upsert_email_verification_limits(id, limits)
         })
     }
 

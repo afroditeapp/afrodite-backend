@@ -267,6 +267,49 @@ pub async fn post_send_verify_email_message(
             }
         }
 
+        let emails_per_month = TryInto::<i16>::try_into(
+            cmds.config()
+                .limits_account()
+                .email_verification_emails_per_month,
+        )
+        .unwrap_or(i16::MAX);
+
+        let mut limits = cmds
+            .read()
+            .account()
+            .email()
+            .email_verification_limits(account_id)
+            .await?
+            .unwrap_or_default();
+
+        let now = UnixTime::current_time();
+        const MONTH_SECONDS: i64 = 60 * 60 * 24 * 30;
+        let monthly_reset = limits
+            .monthly_limit_reset_unix_time
+            .map(|t| t.ut + MONTH_SECONDS)
+            .unwrap_or(0);
+        if monthly_reset <= now.ut {
+            limits.monthly_email_count = 0;
+            limits.monthly_limit_reset_unix_time = Some(now);
+        }
+
+        if limits.monthly_email_count >= emails_per_month {
+            let seconds = limits
+                .monthly_limit_reset_unix_time
+                .map(|t| (t.ut + MONTH_SECONDS - now.ut).max(0))
+                .unwrap_or(MONTH_SECONDS);
+            return Ok(
+                SendVerifyEmailMessageResult::error_try_again_later_after_seconds(seconds as u32)
+                    .into(),
+            );
+        }
+
+        limits.monthly_email_count += 1;
+        cmds.account()
+            .email()
+            .upsert_email_verification_limits(account_id, limits)
+            .await?;
+
         let handle = cmds
             .account()
             .email()
