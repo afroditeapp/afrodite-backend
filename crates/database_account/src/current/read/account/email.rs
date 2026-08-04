@@ -99,15 +99,14 @@ impl CurrentReadAccountEmail<'_> {
         &mut self,
         token: Vec<u8>,
     ) -> Result<Option<(AccountIdInternal, UnixTime)>, DieselDatabaseError> {
-        use model::schema::{account_email_address_state, account_id};
+        use model::schema::{account_email_change, account_id};
 
-        let data = account_email_address_state::table
+        let data = account_email_change::table
             .inner_join(account_id::table)
-            .filter(account_email_address_state::email_change_verification_token.eq(Some(token)))
-            .filter(account_email_address_state::email_change_unix_time.is_not_null())
+            .filter(account_email_change::email_change_verification_token.eq(token))
             .select((
                 AccountIdInternal::as_select(),
-                account_email_address_state::email_change_unix_time.assume_not_null(),
+                account_email_change::email_change_unix_time,
             ))
             .first(self.conn())
             .optional()

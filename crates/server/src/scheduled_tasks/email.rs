@@ -218,23 +218,15 @@ async fn handle_account_deletion_email_notification(
 }
 
 async fn handle_email_change(state: &S, id: AccountIdInternal) -> Result<(), DataError> {
-    let internal = state
-        .read()
-        .account()
-        .email_address_state_internal(id)
-        .await?;
-
-    let change_time = match internal.email_change_unix_time {
-        Some(time) => time,
-        None => return Ok(()),
+    let Some(email_change) = state.read().account().email_change(id).await? else {
+        return Ok(());
     };
 
-    let new_email = match internal.email_change {
-        Some(email) => email,
-        None => return Ok(()),
-    };
+    let change_time = email_change.email_change_unix_time;
 
-    if !internal.email_change_verified {
+    let new_email = email_change.email_change;
+
+    if !email_change.email_change_verified {
         return Ok(());
     }
 
@@ -291,19 +283,18 @@ async fn remove_expired_email_verification_token(
 }
 
 async fn cancel_email_change_if_needed(state: &S, id: AccountIdInternal) -> Result<(), DataError> {
-    let internal = state
-        .read()
-        .account()
-        .email_address_state_internal(id)
-        .await?;
+    let Some(email_change) = state.read().account().email_change(id).await? else {
+        return Ok(());
+    };
 
     let email_change_token_validity = state
         .config()
         .limits_account()
         .email_change_min_wait_duration;
 
-    if let Some(change_time) = internal.email_change_unix_time
-        && change_time.duration_value_elapsed(email_change_token_validity)
+    if email_change
+        .email_change_unix_time
+        .duration_value_elapsed(email_change_token_validity)
     {
         db_write_raw!(state, move |cmds| {
             cmds.account().email().cancel_email_change(id).await?;

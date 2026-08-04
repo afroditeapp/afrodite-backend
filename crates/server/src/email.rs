@@ -362,17 +362,17 @@ impl EmailManager {
         &self,
         recipient: AccountIdInternal,
     ) -> error_stack::Result<String, EmailError> {
-        let internal = self
+        let email_change = self
             .state
             .read()
             .account()
-            .email_address_state_internal(recipient)
+            .email_change(recipient)
             .await
             .map_err(|e| e.into_report())
             .change_context(EmailError::GettingEmailDataFailed)?;
 
-        if let Some(token_bytes) = internal.email_change_verification_token {
-            let token = AccessToken::from_bytes(&token_bytes);
+        if let Some(email_change) = email_change {
+            let token = AccessToken::from_bytes(&email_change.email_change_verification_token);
             Ok(token.into_string())
         } else {
             Err(EmailError::GettingEmailDataFailed)

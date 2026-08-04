@@ -3,8 +3,8 @@ use database_account::current::read::GetDbReadCommandsAccount;
 use model::UnixTime;
 use model_account::{
     AccountGlobalState, AccountId, AccountIdInternal, AccountVerificationDataInternal,
-    AppleAccountId, BotAccount, EmailAddressState, EmailAddressStateInternal, EmailLoginTokens,
-    GetBotsResult, GoogleAccountId, SignInWithInfo,
+    AppleAccountId, BotAccount, EmailAddressState, EmailAddressStateInternal, EmailChange,
+    EmailLoginTokens, GetBotsResult, GoogleAccountId, SignInWithInfo,
 };
 use model_server_state::DemoAccountId;
 use server_data::{
@@ -75,6 +75,15 @@ impl ReadCommandsAccount<'_> {
         id: AccountIdInternal,
     ) -> Result<EmailAddressStateInternal, DataError> {
         self.db_read(move |mut cmds| cmds.account().data().email_address_state_internal(id))
+            .await
+            .into_error()
+    }
+
+    pub async fn email_change(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<Option<EmailChange>, DataError> {
+        self.db_read(move |mut cmds| cmds.account().data().email_change(id))
             .await
             .into_error()
     }

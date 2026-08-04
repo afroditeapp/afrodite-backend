@@ -364,21 +364,33 @@ CREATE TABLE IF NOT EXISTS sign_in_with_info(
 );
 
 CREATE TABLE IF NOT EXISTS account_email_address_state(
-    account_id   BIGINT PRIMARY KEY NOT NULL,
-    email        TEXT                                UNIQUE,
+    account_id          BIGINT PRIMARY KEY NOT NULL,
+    email               TEXT                        UNIQUE,
+    email_login_enabled BOOLEAN            NOT NULL DEFAULT TRUE,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+-- Pending email address change state.
+-- Row exists only while an email change is pending.
+-- Row is deleted when the change is cancelled, completed or the
+-- verification token expires.
+CREATE TABLE IF NOT EXISTS account_email_change(
+    account_id                      BIGINT PRIMARY KEY NOT NULL,
     -- Pending new email address
-    email_change TEXT,
+    email_change                    TEXT               NOT NULL,
     -- Time when pending new email address is set
-    email_change_unix_time BIGINT,
+    email_change_unix_time          BIGINT             NOT NULL,
     -- Verification token for pending new email address.
     -- email_change_unix_time tracks token validity.
     -- Verification request email is sent when email_change is set.
-    email_change_verification_token           BYTEA         UNIQUE,
+    email_change_verification_token BYTEA              NOT NULL UNIQUE,
     -- Verification status of email_change.
     -- This is required to be TRUE when server logic changes the pending
     -- email to account's email address.
-    email_change_verified           BOOLEAN   NOT NULL DEFAULT FALSE,
-    email_login_enabled             BOOLEAN   NOT NULL DEFAULT TRUE,
+    email_change_verified           BOOLEAN            NOT NULL DEFAULT FALSE,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

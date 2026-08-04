@@ -260,11 +260,17 @@ pub struct EmailLogin {
 #[diesel(treat_none_as_null = true)]
 pub struct EmailAddressStateInternal {
     pub email: Option<EmailAddress>,
-    pub email_change: Option<EmailAddress>,
-    pub email_change_unix_time: Option<UnixTime>,
-    pub email_change_verification_token: Option<Vec<u8>>,
-    pub email_change_verified: bool,
     pub email_login_enabled: bool,
+}
+
+#[derive(Debug, Clone, Queryable, Selectable)]
+#[diesel(table_name = crate::schema::account_email_change)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct EmailChange {
+    pub email_change: EmailAddress,
+    pub email_change_unix_time: UnixTime,
+    pub email_change_verification_token: Vec<u8>,
+    pub email_change_verified: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]

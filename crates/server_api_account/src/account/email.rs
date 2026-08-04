@@ -441,7 +441,9 @@ pub(crate) async fn init_email_change_impl(
             return Ok(InitEmailChangeResult::error_email_sending_failed().into());
         }
 
-        if let Some(change_time) = internal.email_change_unix_time {
+        let email_change = cmds.read().account().email_change(account_id).await?;
+
+        if let Some(change_time) = email_change.map(|v| v.email_change_unix_time) {
             let min_wait_duration = cmds
                 .config()
                 .limits_account()
@@ -718,13 +720,13 @@ pub async fn get_email_address_state(
         .email_address_state(api_caller_account_id)
         .await?;
 
-    let internal = state
+    let email_change = state
         .read()
         .account()
-        .email_address_state_internal(api_caller_account_id)
+        .email_change(api_caller_account_id)
         .await?;
 
-    if let Some(init_time) = internal.email_change_unix_time {
+    if let Some(init_time) = email_change.map(|v| v.email_change_unix_time) {
         let wait_duration_seconds = state
             .config()
             .limits_account()

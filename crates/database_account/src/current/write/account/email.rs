@@ -88,9 +88,9 @@ impl CurrentWriteAccountEmail<'_> {
         &mut self,
         id: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::account_email_address_state::dsl::*;
+        use model::schema::account_email_change::dsl::*;
 
-        update(account_email_address_state.find(id.as_db_id()))
+        update(account_email_change.find(id.as_db_id()))
             .set(email_change_verified.eq(true))
             .execute(self.conn())
             .into_db_error(id)?;
@@ -98,20 +98,13 @@ impl CurrentWriteAccountEmail<'_> {
         Ok(())
     }
 
-    /// Does not clear email_change_unix_time so that email
-    /// changing limit will work.
     pub fn clear_email_change_data(
         &mut self,
         id: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::account_email_address_state::dsl::*;
+        use model::schema::account_email_change::dsl::*;
 
-        update(account_email_address_state.find(id.as_db_id()))
-            .set((
-                email_change.eq(None::<String>),
-                email_change_verification_token.eq(None::<Vec<u8>>),
-                email_change_verified.eq(false),
-            ))
+        delete(account_email_change.find(id.as_db_id()))
             .execute(self.conn())
             .into_db_error(id)?;
 
@@ -125,39 +118,51 @@ impl CurrentWriteAccountEmail<'_> {
         current_time: UnixTime,
         verification_token: Vec<u8>,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::account_email_address_state::dsl::*;
+        use model::schema::account_email_change::dsl::*;
 
-        update(account_email_address_state.find(id.as_db_id()))
-            .set((
-                email_change.eq(Some(new_email)),
-                email_change_unix_time.eq(Some(current_time)),
-                email_change_verification_token.eq(Some(verification_token)),
+        insert_into(account_email_change)
+            .values((
+                account_id.eq(id.as_db_id()),
+                email_change.eq(new_email.clone()),
+                email_change_unix_time.eq(current_time),
+                email_change_verification_token.eq(verification_token.clone()),
                 email_change_verified.eq(false),
             ))
-            .execute(self.conn())
+            .on_conflict(account_id)
+            .do_update()
+            .set((
+                email_change.eq(new_email),
+                email_change_unix_time.eq(current_time),
+                email_change_verification_token.eq(verification_token),
+                email_change_verified.eq(false),
+            ))
+            .execute_my_conn(self.conn())
             .into_db_error(id)?;
 
         Ok(())
     }
 
-    /// Does not clear email_change_unix_time so that email
-    /// changing limit will work.
     pub fn complete_email_change(
         &mut self,
         id: AccountIdInternal,
         new_email: String,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::account_email_address_state::dsl::*;
+        {
+            use model::schema::account_email_address_state::dsl::*;
 
-        update(account_email_address_state.find(id.as_db_id()))
-            .set((
-                email.eq(Some(new_email)),
-                email_change.eq(None::<String>),
-                email_change_verification_token.eq(None::<Vec<u8>>),
-                email_change_verified.eq(false),
-            ))
-            .execute(self.conn())
-            .into_db_error(id)?;
+            update(account_email_address_state.find(id.as_db_id()))
+                .set(email.eq(Some(new_email)))
+                .execute(self.conn())
+                .into_db_error(id)?;
+        }
+
+        {
+            use model::schema::account_email_change::dsl::*;
+
+            delete(account_email_change.find(id.as_db_id()))
+                .execute(self.conn())
+                .into_db_error(id)?;
+        }
 
         Ok(())
     }
