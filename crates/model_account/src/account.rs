@@ -5,6 +5,7 @@ use model_server_data::{
 };
 use model_server_state::DemoAccountToken;
 use serde::{Deserialize, Serialize};
+use simple_backend_model::AppAttestation;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{AccountId, AccountIdDb, AccountVerificationErrorFlagsValue, VerificationMethod};
@@ -90,6 +91,18 @@ pub struct LoginResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     error_login_all_platforms_disabled: bool,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_app_attestation_failed: bool,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_app_attestation_device_integrity: bool,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_app_attestation_app_integrity: bool,
 }
 
 impl LoginResult {
@@ -174,15 +187,41 @@ impl LoginResult {
         }
     }
 
+    pub fn error_app_attestation_failed() -> Self {
+        Self {
+            error: true,
+            error_app_attestation_failed: true,
+            ..Default::default()
+        }
+    }
+
+    pub fn error_app_attestation_device_integrity() -> Self {
+        Self {
+            error: true,
+            error_app_attestation_device_integrity: true,
+            ..Default::default()
+        }
+    }
+
+    pub fn error_app_attestation_app_integrity() -> Self {
+        Self {
+            error: true,
+            error_app_attestation_app_integrity: true,
+            ..Default::default()
+        }
+    }
+
     pub fn aid(&self) -> Option<AccountId> {
         self.aid
     }
 }
 
-#[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, ToSchema)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, ToSchema)]
 pub struct ClientInfo {
     pub client_type: ClientType,
     pub client_version: ClientVersion,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub app_attestation: Option<AppAttestation>,
 }
 
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone)]

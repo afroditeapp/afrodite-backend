@@ -20,10 +20,11 @@ use server_data::{
 };
 use simple_backend::{
     app::{
-        FilePackageProvider, GetManagerApi, GetSimpleBackendConfig, GetTileMap,
-        IpCountryTrackerProvider, JitsiMeetUrlCreatorProvider, MaxMindDbDataProvider,
+        AppAttestationProvider, FilePackageProvider, GetManagerApi, GetSimpleBackendConfig,
+        GetTileMap, IpCountryTrackerProvider, JitsiMeetUrlCreatorProvider, MaxMindDbDataProvider,
         PerfCounterDataProvider, SignInWith,
     },
+    app_attestation::AppAttestationManager,
     file_package::FilePackageManager,
     ip_country::IpCountryTracker,
     jitsi_meet::JitsiMeetUrlCreator,
@@ -325,6 +326,12 @@ impl AdminBotStatusProvider for S {
 impl SignInWith for S {
     fn sign_in_with_manager(&self) -> &SignInWithManager {
         &self.state.simple_backend_state.sign_in_with
+    }
+}
+
+impl AppAttestationProvider for S {
+    fn app_attestation_manager(&self) -> &AppAttestationManager {
+        &self.state.simple_backend_state.app_attestation
     }
 }
 

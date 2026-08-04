@@ -22,7 +22,7 @@ use server_data_account::{
 };
 use simple_backend::create_counters;
 
-use super::login_impl;
+use super::{login::validate_app_attestation, login_impl};
 use crate::{
     app::WriteData,
     utils::{Json, StatusCode},
@@ -175,6 +175,11 @@ pub async fn post_demo_account_login_to_account(
         && !min_version.received_version_is_accepted(info.client_info.client_version)
     {
         return Ok(LoginResult::error_unsupported_client().into());
+    }
+
+    if let Err(error) = validate_app_attestation(&state, info.client_info.app_attestation.as_ref())
+    {
+        return Ok(error.into());
     }
 
     let accessible_accounts = state.demo().accessible_accounts(id).await?;

@@ -178,6 +178,7 @@ fn new_config(config: &TestMode, bot_api_port: u16) -> (ConfigFile, SimpleBacken
         email_sending: None,
         static_file_package_hosting: None,
         image_processing: None,
+        app_attestation: None,
         ip_info: IpInfoConfig::default(),
         video_calling: VideoCallingConfig::default(),
     };

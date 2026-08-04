@@ -170,6 +170,7 @@ pub struct SimpleBackendConfigFile {
 
     pub static_file_package_hosting: Option<StaticFilePackageHostingConfig>,
     pub image_processing: Option<ImageProcessingStaticConfig>,
+    pub app_attestation: Option<AppAttestationConfig>,
 
     #[serde(default)]
     pub ip_info: IpInfoConfig,
@@ -195,6 +196,7 @@ impl SimpleBackendConfigFile {
             manager: None,
             static_file_package_hosting: None,
             image_processing: None,
+            app_attestation: None,
             ip_info: IpInfoConfig::default(),
             video_calling: VideoCallingConfig::default(),
         }
@@ -664,6 +666,19 @@ impl NsfwDetectionConfig {
     pub fn debug_log_results(&self) -> bool {
         self.debug_log_results.unwrap_or_default()
     }
+}
+
+/// App attestation configuration. Each supported attestation API
+/// has its own table.
+#[derive(Debug, Default, Deserialize, Serialize, Clone)]
+pub struct AppAttestationConfig {
+    pub debug: Option<DebugAppAttestationConfig>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct DebugAppAttestationConfig {
+    pub require_device_integrity: bool,
+    pub require_app_integrity: bool,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]

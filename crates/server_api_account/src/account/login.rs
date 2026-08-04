@@ -23,10 +23,12 @@ use server_data::{
 };
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::{
-    app::SignInWith,
+    app::{AppAttestationProvider, SignInWith},
+    app_attestation::AppAttestationError,
     create_counters,
     sign_in_with::{apple::AppleAccountInfo, google::GoogleAccountInfo},
 };
+use simple_backend_model::AppAttestation;
 use tokio::time::{Duration, timeout};
 
 use crate::{
@@ -209,6 +211,26 @@ async fn validate_login_platform(state: &S, client_type: ClientType) -> Result<(
     }
 }
 
+/// Validate app attestation provided by the client against server config.
+///
+/// If app attestation is not configured, attestation is not required and
+/// this always succeeds.
+pub(super) fn validate_app_attestation(
+    state: &S,
+    attestation: Option<&AppAttestation>,
+) -> Result<(), LoginResult> {
+    state
+        .app_attestation_manager()
+        .validate(attestation)
+        .map_err(|error| match error {
+            AppAttestationError::Failed => LoginResult::error_app_attestation_failed(),
+            AppAttestationError::DeviceIntegrity => {
+                LoginResult::error_app_attestation_device_integrity()
+            }
+            AppAttestationError::AppIntegrity => LoginResult::error_app_attestation_app_integrity(),
+        })
+}
+
 /// Start new session with sign in with Apple or Google.
 ///
 /// Registers new account if it does not exist, when registration is enabled
@@ -237,6 +259,12 @@ pub async fn post_sign_in_with_login(
     }
 
     if let Err(error) = validate_login_platform(&state, tokens.client_info.client_type).await {
+        return Ok(error.into());
+    }
+
+    if let Err(error) =
+        validate_app_attestation(&state, tokens.client_info.app_attestation.as_ref())
+    {
         return Ok(error.into());
     }
 
@@ -599,6 +627,12 @@ async fn post_email_login_with_token_impl(
     }
 
     if let Err(error) = validate_login_platform(&state, request.client_info.client_type).await {
+        return Ok(error.into());
+    }
+
+    if let Err(error) =
+        validate_app_attestation(&state, request.client_info.app_attestation.as_ref())
+    {
         return Ok(error.into());
     }
 

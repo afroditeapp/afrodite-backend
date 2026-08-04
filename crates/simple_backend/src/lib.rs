@@ -10,6 +10,7 @@
 )]
 
 pub mod app;
+pub mod app_attestation;
 pub mod email;
 pub mod file_package;
 pub mod image;

@@ -7,9 +7,10 @@ use simple_backend_config::SimpleBackendConfig;
 
 use super::manager_client::ManagerApiClient;
 use crate::{
-    file_package::FilePackageManager, ip_country::IpCountryTracker,
-    jitsi_meet::JitsiMeetUrlCreator, map::TileMapManager, maxmind_db::MaxMindDbManagerData,
-    perf::PerfMetricsManagerData, sign_in_with::SignInWithManager,
+    app_attestation::AppAttestationManager, file_package::FilePackageManager,
+    ip_country::IpCountryTracker, jitsi_meet::JitsiMeetUrlCreator, map::TileMapManager,
+    maxmind_db::MaxMindDbManagerData, perf::PerfMetricsManagerData,
+    sign_in_with::SignInWithManager,
 };
 
 #[derive(thiserror::Error, Debug)]
@@ -24,6 +25,7 @@ pub struct SimpleBackendAppState {
     pub manager_api: Arc<ManagerApiClient>,
     pub config: Arc<SimpleBackendConfig>,
     pub sign_in_with: Arc<SignInWithManager>,
+    pub app_attestation: Arc<AppAttestationManager>,
     pub tile_map: Arc<TileMapManager>,
     pub perf_data: Arc<PerfMetricsManagerData>,
     pub file_packages: Arc<FilePackageManager>,
@@ -43,6 +45,7 @@ impl SimpleBackendAppState {
             reqwest_client: reqwest_client.clone(),
             tile_map: TileMapManager::new(&config).into(),
             sign_in_with: SignInWithManager::new(config.clone(), reqwest_client).into(),
+            app_attestation: AppAttestationManager::new(config.clone()).into(),
             file_packages: FilePackageManager::new(&config)
                 .await
                 .change_context(AppStateCreationError::FilePackageManagerError)?
@@ -58,6 +61,10 @@ impl SimpleBackendAppState {
 
 pub trait SignInWith {
     fn sign_in_with_manager(&self) -> &SignInWithManager;
+}
+
+pub trait AppAttestationProvider {
+    fn app_attestation_manager(&self) -> &AppAttestationManager;
 }
 
 pub trait GetManagerApi {

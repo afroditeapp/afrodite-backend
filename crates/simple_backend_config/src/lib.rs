@@ -28,8 +28,8 @@ use tokio_rustls::rustls::ServerConfig;
 use web_push::{PartialVapidSignatureBuilder, VapidSignatureBuilder};
 
 use self::file::{
-    ManagerConfig, PublicApiTlsConfig, SignInWithGoogleConfig, SimpleBackendConfigFile,
-    SocketConfig,
+    AppAttestationConfig, ManagerConfig, PublicApiTlsConfig, SignInWithGoogleConfig,
+    SimpleBackendConfigFile, SocketConfig,
 };
 use crate::file::{
     ApnsConfig, DatabaseConfig, FcmConfig, ImageProcessingStaticConfig, LetsEncryptConfig,
@@ -232,6 +232,10 @@ impl SimpleBackendConfig {
 
     pub fn email_sending(&self) -> Option<&file::EmailSendingConfig> {
         self.file.email_sending.as_ref()
+    }
+
+    pub fn app_attestation(&self) -> Option<&AppAttestationConfig> {
+        self.file.app_attestation.as_ref()
     }
 
     pub fn file_package(&self) -> Option<&file::StaticFilePackageHostingConfig> {
