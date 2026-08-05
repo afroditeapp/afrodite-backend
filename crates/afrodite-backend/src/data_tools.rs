@@ -9,7 +9,7 @@ use database::{
     current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon},
 };
 use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia};
-use error_stack::report;
+use error_stack::IntoReport;
 use model::{AccountId, BotConfig, DynamicServerConfig, ImageProcessingDynamicConfig};
 use model_server_data::ProfileAttributesSchemaExport;
 use server_data::{
@@ -31,38 +31,38 @@ pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
         match load_mode {
             DataLoadSubMode::BotConfig { file } => {
                 *file = abs_path_for_directory_or_file_which_might_not_exists(&*file)
-                    .map_err(|_| report!(GetConfigError::GetWorkingDir))?;
+                    .map_err(|_| GetConfigError::GetWorkingDir.into_report())?;
             }
             DataLoadSubMode::ImageProcessingConfig { file } => {
                 *file = abs_path_for_directory_or_file_which_might_not_exists(&*file)
-                    .map_err(|_| report!(GetConfigError::GetWorkingDir))?;
+                    .map_err(|_| GetConfigError::GetWorkingDir.into_report())?;
             }
             DataLoadSubMode::ProfileAttributes { file } => {
                 *file = abs_path_for_directory_or_file_which_might_not_exists(&*file)
-                    .map_err(|_| report!(GetConfigError::GetWorkingDir))?;
+                    .map_err(|_| GetConfigError::GetWorkingDir.into_report())?;
             }
             DataLoadSubMode::DynamicClientFeatures { file } => {
                 *file = abs_path_for_directory_or_file_which_might_not_exists(&*file)
-                    .map_err(|_| report!(GetConfigError::GetWorkingDir))?;
+                    .map_err(|_| GetConfigError::GetWorkingDir.into_report())?;
             }
             DataLoadSubMode::DynamicServerConfig { file } => {
                 *file = abs_path_for_directory_or_file_which_might_not_exists(&*file)
-                    .map_err(|_| report!(GetConfigError::GetWorkingDir))?;
+                    .map_err(|_| GetConfigError::GetWorkingDir.into_report())?;
             }
             DataLoadSubMode::ProfileAttributeValuesCsv { csv_file, .. } => {
                 *csv_file = abs_path_for_directory_or_file_which_might_not_exists(&*csv_file)
-                    .map_err(|_| report!(GetConfigError::GetWorkingDir))?;
+                    .map_err(|_| GetConfigError::GetWorkingDir.into_report())?;
             }
         }
     }
 
     if !mode.data_dir.exists() {
         eprintln!("Data directory '{:?}' not found", mode.data_dir);
-        return Err(report!(GetConfigError::SimpleBackendError));
+        return Err(GetConfigError::SimpleBackendError.into_report());
     }
     if !mode.config_dir.exists() {
         eprintln!("Config directory '{:?}' not found", mode.config_dir);
-        return Err(report!(GetConfigError::SimpleBackendError));
+        return Err(GetConfigError::SimpleBackendError.into_report());
     }
 
     let _lock = if matches!(
@@ -70,7 +70,7 @@ pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
         DataModeSubMode::Load { .. } | DataModeSubMode::Edit { .. }
     ) {
         let lock = process_lock::acquire_server_lock(&mode.data_dir)
-            .map_err(|e| report!(GetConfigError::LoadFileError).attach(e))?;
+            .map_err(|e| GetConfigError::LoadFileError.into_report().attach(e))?;
         Some(lock)
     } else {
         None
@@ -361,7 +361,7 @@ async fn handle_grant_admin_edit_permissions(
                 .account_ids_internal()?
                 .into_iter()
                 .find(|id| id.as_id() == account_id)
-                .ok_or_else(|| report!(database::DieselDatabaseError::NotFound))?;
+                .ok_or_else(|| database::DieselDatabaseError::NotFound.into_report())?;
 
             Ok(internal_id)
         })

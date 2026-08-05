@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use error_stack::report;
+use error_stack::IntoReport;
 use simple_backend_utils::Result;
 use test_mode_utils::client::TestError;
 use tokio::sync::{Mutex, mpsc};
@@ -99,7 +99,7 @@ impl<H: ModerationHandler> NotificationReceiver<H> {
             drop(pending);
             match self.notify_receiver.recv().await {
                 Some(()) => (),
-                None => return Err(report!(TestError::AdminBotInternalError)),
+                None => return Err(TestError::AdminBotInternalError.into_report()),
             }
         }
         Ok(())

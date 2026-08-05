@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 
 use database::ErrorContext;
-use error_stack::{Context, Report};
+use error_stack::{Context, IntoReport, Report};
 use model::markers::IsLoggingAllowed;
 use simple_backend_database::diesel_db::DieselDatabaseError;
 
@@ -133,7 +133,7 @@ impl<E: Context> WrappedContextExt<WrappedReport<Report<E>>> for E {
     #[track_caller]
     fn report(self) -> WrappedReport<Report<E>> {
         WrappedReport {
-            report: error_stack::report!(self),
+            report: self.into_report(),
         }
     }
 }

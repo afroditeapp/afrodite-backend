@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use error_stack::{ResultExt, report};
+use error_stack::{IntoReport, ResultExt};
 use manager_api::protocol::RequestSenderCmds;
 use manager_model::SecureStorageEncryptionKey;
 use simple_backend_utils::Result;
@@ -60,7 +60,7 @@ impl<'a> ApiManager<'a> {
         if let Some(timeout) = provider.key_download_timeout_seconds {
             tokio::select! {
                 _ = tokio::time::sleep(Duration::from_secs(timeout.into())) => {
-                    Err(report!(ApiError::RequestTimeout))
+                    Err(ApiError::RequestTimeout.into_report())
                 }
                 r = request => {
                     r.change_context(ApiError::ApiRequest)

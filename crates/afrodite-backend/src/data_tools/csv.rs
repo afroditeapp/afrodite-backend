@@ -4,6 +4,7 @@ use database::{
     DbReaderRaw, DbWriter, DieselDatabaseError,
     current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon},
 };
+use error_stack::IntoReport;
 use model::{Attribute, AttributeValue, Language, Translation};
 
 #[derive(Debug)]
@@ -52,7 +53,7 @@ pub(super) async fn handle_load_profile_attributes_values_from_csv(
                 .into_iter()
                 .find(|attr| attr.id.to_i16() == attr_id_i16)
                 .ok_or_else(|| {
-                    error_stack::report!(DieselDatabaseError::NotFound).attach(format!(
+                    DieselDatabaseError::NotFound.into_report().attach(format!(
                         "Attribute ID {} not found in database",
                         attr_id_i16
                     ))

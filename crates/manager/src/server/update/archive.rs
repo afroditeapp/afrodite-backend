@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use error_stack::{ResultExt, report};
+use error_stack::{IntoReport, ResultExt};
 use flate2::read::GzDecoder;
 use manager_config::file::SimplePatternPath;
 use simple_backend_utils::Result;
@@ -53,7 +53,7 @@ fn find_backend_binary_from_archive_sync(
 
         if matcher.is_match() {
             if let Some((_, previous_match)) = &matching_file {
-                return Err(report!(UpdateError::ArchiveMultipleMatchingFiles))
+                return Err(UpdateError::ArchiveMultipleMatchingFiles.into_report())
                     .attach(previous_match.clone())
                     .attach(path_string);
             } else {
@@ -65,7 +65,7 @@ fn find_backend_binary_from_archive_sync(
     if let Some((path, _)) = matching_file {
         Ok(path)
     } else {
-        Err(report!(UpdateError::ArchiveBackendNotFound))
+        Err(UpdateError::ArchiveBackendNotFound.into_report())
             .attach(format!("Available files: {found_files:#?}"))
     }
 }
@@ -99,7 +99,7 @@ fn extract_backend_binary_sync(
         return Ok(());
     }
 
-    Err(report!(UpdateError::ArchiveBackendNotFound))
+    Err(UpdateError::ArchiveBackendNotFound.into_report())
 }
 
 struct FileMatcher<'a> {

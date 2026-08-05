@@ -1,4 +1,4 @@
-use error_stack::report;
+use error_stack::IntoReport;
 pub use simple_backend::email::EmailError;
 use simple_backend_utils::consts::MIB_IN_BYTES;
 use tokio::sync::{
@@ -121,8 +121,8 @@ impl EmailChannelSender {
         };
         match self.high_priority_sender.try_send(cmd) {
             Ok(()) => (),
-            Err(TrySendError::Closed(_)) => return Err(report!(DataError::EmailSendingFailed)),
-            Err(TrySendError::Full(_)) => return Err(report!(DataError::EmailSendingFailed)),
+            Err(TrySendError::Closed(_)) => return Err(DataError::EmailSendingFailed.into_report()),
+            Err(TrySendError::Full(_)) => return Err(DataError::EmailSendingFailed.into_report()),
         }
 
         Ok(EmailSendingHandle { result_receiver })
@@ -141,8 +141,8 @@ impl EmailChannelSender {
         };
         match self.high_priority_sender.try_send(cmd) {
             Ok(()) => (),
-            Err(TrySendError::Closed(_)) => return Err(report!(DataError::EmailSendingFailed)),
-            Err(TrySendError::Full(_)) => return Err(report!(DataError::EmailSendingFailed)),
+            Err(TrySendError::Closed(_)) => return Err(DataError::EmailSendingFailed.into_report()),
+            Err(TrySendError::Full(_)) => return Err(DataError::EmailSendingFailed.into_report()),
         }
 
         Ok(EmailSendingHandle { result_receiver })

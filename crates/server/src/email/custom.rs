@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use config::file_email_content::EmailContent;
-use error_stack::{ResultExt, report};
+use error_stack::{IntoReport, ResultExt};
 use model::AccountIdInternal;
 use model_account::CustomEmailId;
 use server_api::{
@@ -203,7 +203,7 @@ impl CustomEmailHandler {
                     .email_content()
                     .email_body_content_type_is_html(),
             },
-            None => return Err(report!(EmailError::GettingEmailDataFailed)),
+            None => return Err(EmailError::GettingEmailDataFailed.into_report()),
         };
 
         let email_data = EmailData {

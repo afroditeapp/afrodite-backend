@@ -11,7 +11,7 @@ use std::{fmt::Debug, marker::PhantomData};
 
 use current::write::TransactionConnection;
 use diesel_migrations::{EmbeddedMigrations, embed_migrations};
-use error_stack::{Context, ResultExt};
+use error_stack::{Context, IntoReport, ResultExt};
 use model::markers::IsLoggingAllowed;
 pub use model::schema;
 use simple_backend_config::RUNNING_IN_DEBUG_MODE;
@@ -179,7 +179,8 @@ impl<E: std::error::Error> From<error_stack::Report<E>> for TransactionError {
 impl From<::diesel::result::Error> for TransactionError {
     fn from(value: ::diesel::result::Error) -> Self {
         TransactionError(
-            error_stack::report!(value)
+            value
+                .into_report()
                 .change_context(DieselDatabaseError::FromDieselErrorToTransactionError),
         )
     }

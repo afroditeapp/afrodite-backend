@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use error_stack::{ResultExt, report};
+use error_stack::{IntoReport, ResultExt};
 use futures::StreamExt;
 use manager_config::file::SoftwareUpdateConfig;
 use reqwest::{
@@ -63,7 +63,10 @@ impl GitHubApi<'_> {
                 .await
                 .change_context(UpdateError::GitHubApi)?;
 
-            return Err(report!(UpdateError::GitHubApi).attach(status).attach(text));
+            return Err(UpdateError::GitHubApi
+                .into_report()
+                .attach(status)
+                .attach(text));
         }
 
         let json: Value = response
@@ -84,14 +87,14 @@ impl GitHubApi<'_> {
                 .and_then(|v| v.get("name"))
                 .and_then(|v| v.as_str())
             else {
-                return Err(report!(UpdateError::GitHubApi));
+                return Err(UpdateError::GitHubApi.into_report());
             };
             let Some(id) = a
                 .as_object()
                 .and_then(|v| v.get("id"))
                 .and_then(|v| v.as_i64())
             else {
-                return Err(report!(UpdateError::GitHubApi));
+                return Err(UpdateError::GitHubApi.into_report());
             };
             let Some(uploader) = a
                 .as_object()
@@ -99,23 +102,24 @@ impl GitHubApi<'_> {
                 .and_then(|v| v.get("login"))
                 .and_then(|v| v.as_str())
             else {
-                return Err(report!(UpdateError::GitHubApi));
+                return Err(UpdateError::GitHubApi.into_report());
             };
 
             if name.ends_with(&config.github.file_name_ending) {
                 if let Some(selected) = selected_asset {
-                    return Err(report!(UpdateError::SotwareDownloadFailedAmbiguousFileName)
+                    return Err(UpdateError::SotwareDownloadFailedAmbiguousFileName
+                        .into_report()
                         .attach(selected.name.to_string())
                         .attach(name.to_string()));
                 } else {
                     if let Some(required_uploader) = &config.github.uploader
                         && uploader != required_uploader
                     {
-                        return Err(
-                            report!(UpdateError::SotwareDownloadFailedUnknownFileUploader).attach(
-                                format!("uploader: {uploader}, expected: {required_uploader}"),
-                            ),
-                        );
+                        return Err(UpdateError::SotwareDownloadFailedUnknownFileUploader
+                            .into_report()
+                            .attach(format!(
+                                "uploader: {uploader}, expected: {required_uploader}"
+                            )));
                     }
                     selected_asset = Some(ReleaseAsset {
                         name: name.to_string(),
@@ -163,7 +167,7 @@ impl GitHubApi<'_> {
 
         let status = response.status();
         if status != StatusCode::OK {
-            return Err(report!(UpdateError::GitHubApi).attach(status));
+            return Err(UpdateError::GitHubApi.into_report().attach(status));
         }
 
         let mut file = tokio::fs::File::create(download_location)

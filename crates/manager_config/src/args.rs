@@ -3,7 +3,7 @@
 use std::path::PathBuf;
 
 use clap::{Args, Parser};
-use error_stack::{ResultExt, report};
+use error_stack::{IntoReport, ResultExt};
 use manager_api::TlsConfig;
 use manager_model::ManagerInstanceName;
 use simple_backend_utils::{ContextExt, Result};
@@ -53,7 +53,7 @@ impl ManagerApiClientMode {
         let file_path_result = self
             .manager_config
             .clone()
-            .ok_or(report!(GetConfigError::LoadFileError));
+            .ok_or(GetConfigError::LoadFileError.into_report());
         let file_path = {
             let required_options = required_options.into();
             if let Some(required_options) = required_options {

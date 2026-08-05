@@ -8,7 +8,7 @@ use std::{
 
 use archive::extract_backend_binary;
 use backend::BackendUtils;
-use error_stack::{ResultExt, report};
+use error_stack::{IntoReport, ResultExt};
 use github::GitHubApi;
 use manager_config::{Config, file::SoftwareUpdateConfig};
 use manager_model::{
@@ -336,7 +336,7 @@ impl UpdateManagerInternal {
         };
 
         let Some(asset) = github_api.get_latest_release_asset().await? else {
-            return Err(report!(UpdateError::SoftwareDownloadFailedNoMatchingFile));
+            return Err(UpdateError::SoftwareDownloadFailedNoMatchingFile.into_report());
         };
 
         if let Some(downloaded) = self.update_dir().downloaded_backend_info().await?

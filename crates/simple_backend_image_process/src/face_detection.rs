@@ -1,4 +1,4 @@
-use error_stack::{ResultExt, report};
+use error_stack::{IntoReport, ResultExt};
 use image::GrayImage;
 use rustface::Model;
 use simple_backend_config::{file::SeetaFaceConfig, image_process::ImageProcessingConfig};
@@ -63,7 +63,9 @@ impl FaceDetector {
                     .downcast_ref::<&str>()
                     .map(|message| message.to_string())
                     .unwrap_or_default();
-                return Err(report!(ImageProcessError::FaceDetectionPanic).attach(error));
+                return Err(ImageProcessError::FaceDetectionPanic
+                    .into_report()
+                    .attach(error));
             }
         }
         .change_context(ImageProcessError::FaceDetection)?;

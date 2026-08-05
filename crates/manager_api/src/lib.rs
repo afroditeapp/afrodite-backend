@@ -6,7 +6,7 @@
 
 use std::{future::Future, path::Path, sync::Arc};
 
-use error_stack::{ResultExt, report};
+use error_stack::{IntoReport, ResultExt};
 use futures::FutureExt;
 use manager_model::{
     JsonRpcRequest, JsonRpcResponse, ManagerInstanceName, ManagerProtocolMode,
@@ -146,15 +146,15 @@ impl ManagerClient {
             .url
             .host_str()
             .map(|v| v.to_string())
-            .ok_or_else(|| report!(ClientError::UrlHostMissing))?;
+            .ok_or_else(|| ClientError::UrlHostMissing.into_report())?;
         let port = config
             .url
             .port()
-            .ok_or_else(|| report!(ClientError::UrlPortMissing))?;
+            .ok_or_else(|| ClientError::UrlPortMissing.into_report())?;
         match config.url.scheme() {
             "tcp" => Self::connect_tcp(config, (host, port)).await,
             "tls" => Self::connect_tls(config, (host, port)).await,
-            other => Err(report!(ClientError::UnsupportedScheme)).attach(other.to_string()),
+            other => Err(ClientError::UnsupportedScheme.into_report()).attach(other.to_string()),
         }
     }
 
@@ -177,7 +177,7 @@ impl ManagerClient {
             .change_context(ClientError::UrlHostInvalid)?;
 
         let Some(tls_config) = config.tls_config.clone() else {
-            return Err(report!(ClientError::RootCertificateIsNotConfigured));
+            return Err(ClientError::RootCertificateIsNotConfigured.into_report());
         };
 
         let stream = TcpStream::connect(host_and_port)
@@ -209,7 +209,7 @@ impl ManagerClient {
             .await
             .change_context(ClientError::Read)?;
         if result != 1 {
-            return Err(report!(ClientError::InvalidApiKey));
+            return Err(ClientError::InvalidApiKey.into_report());
         }
 
         let (reader, writer) = tokio::io::split(stream);
@@ -294,7 +294,7 @@ impl ManagerClient {
             .await
             .change_context(ClientError::Read)?;
         if result != 1 {
-            return Err(report!(ClientError::InvalidLogin));
+            return Err(ClientError::InvalidLogin.into_report());
         }
 
         Ok((self.reader, self.writer))
@@ -324,7 +324,7 @@ impl ManagerClient {
             .await
             .change_context(ClientError::Read)?;
         if result != 1 {
-            return Err(report!(ClientError::InvalidLogin));
+            return Err(ClientError::InvalidLogin.into_report());
         }
 
         Ok((self.reader, self.writer))

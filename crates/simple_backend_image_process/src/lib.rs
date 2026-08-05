@@ -1,6 +1,6 @@
 use std::{io, path::PathBuf};
 
-use error_stack::{ResultExt, report};
+use error_stack::{IntoReport, ResultExt};
 use face_detection::FaceDetector;
 use image::{DynamicImage, EncodableLayout, ImageDecoder, ImageReader};
 use nsfw_detection::NsfwDetector;
@@ -138,7 +138,8 @@ pub fn run_image_processing_loop() -> Result<(), ImageProcessError> {
     let mut config = match message {
         ImageProcessMessage::ChangeSettings { change_settings } => change_settings.settings,
         ImageProcessMessage::ProcessImage { .. } => {
-            return Err(report!(ImageProcessError::ReadCommand)
+            return Err(ImageProcessError::ReadCommand
+                .into_report()
                 .attach("Expected initial ChangeSettings message, got ProcessImage"));
         }
     };
@@ -184,7 +185,7 @@ fn handle_image(
     if img.width() < SOURCE_IMG_MIN_WIDTH_AND_HEIGHT
         || img.height() < SOURCE_IMG_MIN_WIDTH_AND_HEIGHT
     {
-        return Err(report!(ImageProcessError::SourceImageTooSmall));
+        return Err(ImageProcessError::SourceImageTooSmall.into_report());
     }
 
     let mut oriented = img;
@@ -266,7 +267,7 @@ fn encode_and_save_jpeg(
                 .downcast_ref::<&str>()
                 .map(|message| message.to_string())
                 .unwrap_or_default();
-            return Err(report!(ImageProcessError::MozjpegPanic).attach(error));
+            return Err(ImageProcessError::MozjpegPanic.into_report().attach(error));
         }
     }
     .change_context(ImageProcessError::EncodingError)?;

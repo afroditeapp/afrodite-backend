@@ -1,4 +1,5 @@
 use diesel::prelude::*;
+use error_stack::IntoReport;
 use model::profile::{Attribute, AttributeOrderMode};
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_utils::Result;
@@ -20,7 +21,8 @@ impl CurrentReadCommonProfileAttributes<'_> {
         let mut attributes = Vec::with_capacity(rows.len());
         for (attr_id, json) in rows {
             let attr: Attribute = serde_json::from_str(&json).map_err(|e| {
-                error_stack::report!(DieselDatabaseError::SerdeDeserialize)
+                DieselDatabaseError::SerdeDeserialize
+                    .into_report()
                     .attach(format!("Failed to deserialize attribute {attr_id}: {e}"))
             })?;
             attributes.push(attr);

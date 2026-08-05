@@ -1,3 +1,4 @@
+use error_stack::IntoReport;
 use simple_backend_utils::ComponentError;
 
 impl ComponentError for CacheError {
@@ -22,11 +23,11 @@ pub enum CacheError {
 impl CacheError {
     #[track_caller]
     pub fn report(self) -> error_stack::Report<Self> {
-        error_stack::report!(self)
+        self.into_report()
     }
 
     #[track_caller]
     pub fn error<Ok>(self) -> simple_backend_utils::Result<Ok, Self> {
-        Err(error_stack::report!(self))
+        Err(self.into_report())
     }
 }

@@ -1,4 +1,4 @@
-use error_stack::{ResultExt, report};
+use error_stack::{IntoReport, ResultExt};
 use manager_model::{JsonRpcResponse, ManagerInstanceName};
 use simple_backend_utils::Result;
 
@@ -15,7 +15,7 @@ pub trait RpcSecureStorage: GetConfig {
             .encryption_keys()
             .iter()
             .find(|s| s.manager_name == name)
-            .ok_or_else(|| report!(JsonRpcError::SecureStorageEncryptionKeyNotFound))?;
+            .ok_or_else(|| JsonRpcError::SecureStorageEncryptionKeyNotFound.into_report())?;
 
         let key = key
             .read_encryption_key()

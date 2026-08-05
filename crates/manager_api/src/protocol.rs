@@ -1,4 +1,4 @@
-use error_stack::{ResultExt, report};
+use error_stack::{IntoReport, ResultExt};
 use manager_model::{
     BackupMessage, BackupMessageHeader, BackupMessageType, JsonRpcLinkHeader, JsonRpcLinkMessage,
     JsonRpcLinkMessageType, JsonRpcRequest, JsonRpcRequestType, JsonRpcResponse,
@@ -46,7 +46,8 @@ pub trait ConnectionUtilsRead: tokio::io::AsyncRead + Unpin {
         } else if size == 1 {
             Ok(Some(buf[0]))
         } else {
-            Err(report!(ClientError::Read)).attach(format!("Unknown reading result size {size}"))
+            Err(ClientError::Read.into_report())
+                .attach(format!("Unknown reading result size {size}"))
         }
     }
 
@@ -283,7 +284,7 @@ pub trait RequestSenderCmds: Sized {
         if let JsonRpcResponseType::ManagerInstanceNames(info) = response.into_response() {
             Ok(info)
         } else {
-            Err(report!(ClientError::InvalidResponse))
+            Err(ClientError::InvalidResponse.into_report())
         }
     }
 
@@ -299,7 +300,7 @@ pub trait RequestSenderCmds: Sized {
         if let JsonRpcResponseType::SecureStorageEncryptionKey(key) = response.into_response() {
             Ok(key)
         } else {
-            Err(report!(ClientError::InvalidResponse))
+            Err(ClientError::InvalidResponse.into_report())
         }
     }
 
@@ -312,7 +313,7 @@ pub trait RequestSenderCmds: Sized {
         if let JsonRpcResponseType::SystemInfo(info) = response.into_response() {
             Ok(info)
         } else {
-            Err(report!(ClientError::InvalidResponse))
+            Err(ClientError::InvalidResponse.into_report())
         }
     }
 
@@ -325,7 +326,7 @@ pub trait RequestSenderCmds: Sized {
         if let JsonRpcResponseType::SoftwareUpdateStatus(status) = response.into_response() {
             Ok(status)
         } else {
-            Err(report!(ClientError::InvalidResponse))
+            Err(ClientError::InvalidResponse.into_report())
         }
     }
 
@@ -359,7 +360,7 @@ pub trait RequestSenderCmds: Sized {
         if let JsonRpcResponseType::ScheduledTasksStatus(status) = response.into_response() {
             Ok(status)
         } else {
-            Err(report!(ClientError::InvalidResponse))
+            Err(ClientError::InvalidResponse.into_report())
         }
     }
 
@@ -393,7 +394,7 @@ impl RpcResponseExtensions for JsonRpcResponse {
         if let JsonRpcResponseType::Successful = self.into_response() {
             Ok(())
         } else {
-            Err(report!(ClientError::InvalidResponse))
+            Err(ClientError::InvalidResponse.into_report())
         }
     }
 }

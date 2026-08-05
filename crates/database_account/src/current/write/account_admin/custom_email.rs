@@ -1,5 +1,6 @@
 use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{insert_into, prelude::*, update, upsert::excluded};
+use error_stack::IntoReport;
 use model::{AccountIdInternal, CustomEmailSendingLimits, UnixTime};
 use model_account::{CustomEmailId, UpdateCustomEmail};
 use simple_backend_utils::{Result, db::MyRunQueryDsl};
@@ -38,7 +39,7 @@ impl CurrentWriteAccountCustomEmailAdmin<'_> {
                 .into_db_error(())?
                 .is_some()
             {
-                return Err(error_stack::report!(DieselDatabaseError::NotAllowed));
+                return Err(DieselDatabaseError::NotAllowed.into_report());
             }
         }
 

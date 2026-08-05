@@ -5,7 +5,7 @@
 
 use std::fmt::Display;
 
-use error_stack::{Context, Report, ResultExt};
+use error_stack::{Context, IntoReport, Report, ResultExt};
 
 pub mod byte;
 pub mod consts;
@@ -47,7 +47,7 @@ impl<Ok, Err: Display> IntoReportFromString for std::result::Result<Ok, Err> {
 pub trait ContextExt: Context + Sized {
     #[track_caller]
     fn report(self) -> Report<Self> {
-        error_stack::report!(self)
+        self.into_report()
     }
 }
 
