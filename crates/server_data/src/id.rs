@@ -1,6 +1,6 @@
-use error_stack::Result;
 use model::{AccountId, AccountIdInternal};
 use server_common::data::cache::CacheError;
+use simple_backend_utils::Result;
 
 use crate::db_manager::InternalReading;
 

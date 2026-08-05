@@ -3,7 +3,7 @@ use std::time::Duration;
 use aes_gcm::{AeadCore, Aes128Gcm, KeyInit, aead::Aead};
 use base64::Engine;
 use config::Config;
-use error_stack::{Report, Result, ResultExt};
+use error_stack::{Report, ResultExt};
 use fcm::{
     FcmClient,
     message::{AndroidConfig, AndroidMessagePriority, Message, Target},
@@ -13,6 +13,7 @@ use model::{PushNotification, PushNotificationDeviceToken, PushNotificationSendi
 use rand::{Rng, rngs::OsRng};
 use serde_json::Value;
 use simple_backend::ServerQuitWatcher;
+use simple_backend_utils::Result;
 use tokio::{sync::mpsc::Receiver, task::JoinHandle};
 use tracing::{error, info, warn};
 

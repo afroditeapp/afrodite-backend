@@ -1,7 +1,6 @@
 use diesel::{insert_into, prelude::*, update};
-use error_stack::Result;
 use model::UnixTime;
-use simple_backend_utils::db::MyRunQueryDsl;
+use simple_backend_utils::{Result, db::MyRunQueryDsl};
 
 use crate::{DieselDatabaseError, IntoDatabaseError, define_current_write_commands};
 

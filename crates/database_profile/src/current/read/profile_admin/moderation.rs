@@ -1,10 +1,10 @@
 use database::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
-use error_stack::Result;
 use model_profile::{
     ProfileStringModerationContentType, ProfileStringModerationQueuePage,
     ProfileStringModerationQueueType, ProfileStringModerationState, ProfileStringPendingModeration,
 };
+use simple_backend_utils::Result;
 
 define_current_read_commands!(CurrentReadProfileModeration);
 

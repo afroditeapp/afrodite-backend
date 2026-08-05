@@ -9,7 +9,8 @@ use std::{collections::HashSet, fmt::Debug, time::Duration};
 use account::AccountState;
 use api_client::models::{Account, Location, Profile};
 use async_trait::async_trait;
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
+use simple_backend_utils::Result;
 use test_mode_utils::client::TestError;
 
 use self::{

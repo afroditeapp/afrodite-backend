@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
-use error_stack::{Result, report};
+use error_stack::report;
+use simple_backend_utils::Result;
 use test_mode_utils::client::TestError;
 use tokio::sync::{Mutex, mpsc};
 use tracing::error;

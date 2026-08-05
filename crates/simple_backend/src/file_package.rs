@@ -43,7 +43,7 @@ impl StaticFile {
         mime_types: &ExtraMimeTypes,
         path_string: String,
         data: Vec<u8>,
-    ) -> error_stack::Result<(String, Self), FilePackageError> {
+    ) -> simple_backend_utils::Result<(String, Self), FilePackageError> {
         if let Some(path_string) = path_string.strip_suffix(".gz").map(ToString::to_string) {
             let static_file = Self {
                 content_type: FilePackageManager::path_string_to_content_type(
@@ -81,7 +81,9 @@ impl FilePackageManager {
         }
     }
 
-    pub async fn new(config: &SimpleBackendConfig) -> error_stack::Result<Self, FilePackageError> {
+    pub async fn new(
+        config: &SimpleBackendConfig,
+    ) -> simple_backend_utils::Result<Self, FilePackageError> {
         let mime_types = ExtraMimeTypes::new().change_context(FilePackageError::InvalidMimeType)?;
         let package_config = if let Some(c) = config.file_package() {
             c.clone()
@@ -89,7 +91,7 @@ impl FilePackageManager {
             return Ok(Self::new_empty());
         };
 
-        let result: error_stack::Result<Self, FilePackageError> =
+        let result: simple_backend_utils::Result<Self, FilePackageError> =
             tokio::task::spawn_blocking(move || {
                 let mut manager = Self::new_empty();
 
@@ -111,7 +113,7 @@ impl FilePackageManager {
         &mut self,
         mime_types: &ExtraMimeTypes,
         package_path: &Path,
-    ) -> error_stack::Result<(), FilePackageError> {
+    ) -> simple_backend_utils::Result<(), FilePackageError> {
         if !package_path.exists() {
             warn!(
                 "Static file hosting package does not exist at location {}",
@@ -127,7 +129,7 @@ impl FilePackageManager {
         &mut self,
         mime_types: &ExtraMimeTypes,
         package_dir: &Path,
-    ) -> error_stack::Result<(), FilePackageError> {
+    ) -> simple_backend_utils::Result<(), FilePackageError> {
         if !package_dir.exists() {
             warn!(
                 "Static file hosting package dir does not exist at location {}",
@@ -154,7 +156,7 @@ impl FilePackageManager {
         mime_types: &ExtraMimeTypes,
         package_path: &Path,
         find_index_html: bool,
-    ) -> error_stack::Result<(), FilePackageError> {
+    ) -> simple_backend_utils::Result<(), FilePackageError> {
         if !package_path.to_string_lossy().ends_with(".tar.gz") {
             return Err(FilePackageError::PackageLoading.report())
                 .attach_printable("File name does not end with '.tar.gz'")
@@ -195,7 +197,7 @@ impl FilePackageManager {
 
     fn get_path_string(
         e: &tar::Entry<GzDecoder<File>>,
-    ) -> error_stack::Result<Option<String>, FilePackageError> {
+    ) -> simple_backend_utils::Result<Option<String>, FilePackageError> {
         if e.header().entry_type() == EntryType::Directory {
             return Ok(None);
         }
@@ -219,7 +221,7 @@ impl FilePackageManager {
     fn path_string_to_content_type(
         mime_types: &ExtraMimeTypes,
         path: &str,
-    ) -> error_stack::Result<ContentType, FilePackageError> {
+    ) -> simple_backend_utils::Result<ContentType, FilePackageError> {
         let content_type = if path.ends_with(".html") {
             ContentType::html()
         } else if path.ends_with(".js") || path.ends_with(".mjs") {
@@ -279,7 +281,7 @@ struct PackageDirManager {
 }
 
 impl PackageDirManager {
-    fn new(dir: ReadDir) -> error_stack::Result<Self, FilePackageError> {
+    fn new(dir: ReadDir) -> simple_backend_utils::Result<Self, FilePackageError> {
         let regex = Regex::new(r"v\d+\.\d+\.\d+").unwrap();
 
         let mut packages = HashMap::new();

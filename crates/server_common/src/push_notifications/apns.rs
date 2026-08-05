@@ -10,10 +10,11 @@ use aes_gcm::{
 };
 use base64::Engine;
 use config::Config;
-use error_stack::{Report, Result, ResultExt};
+use error_stack::{Report, ResultExt};
 use model::{PushNotification, PushNotificationDeviceToken, PushNotificationSendingInfo};
 use simple_backend::ServerQuitWatcher;
 use simple_backend_config::file::ApnsConfig;
+use simple_backend_utils::Result;
 use tokio::{sync::mpsc::Receiver, task::JoinHandle};
 use tracing::{error, info, warn};
 

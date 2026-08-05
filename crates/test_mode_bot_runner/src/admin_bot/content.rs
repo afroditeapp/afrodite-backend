@@ -1,5 +1,5 @@
 use config::bot_config_file::internal::ContentModerationConfigInternal;
-use error_stack::Result;
+use simple_backend_utils::Result;
 use test_mode_bot::actions::admin::content::{
     AdminBotContentModerationLogic, ContentModerationState,
 };

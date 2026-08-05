@@ -1,8 +1,8 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
-use error_stack::Result;
 use model::{AccountId, AccountIdInternal};
 use model_server_state::DemoAccountId;
+use simple_backend_utils::Result;
 
 use crate::{IntoDatabaseError, schema::demo_account_owned_accounts::dsl::*};
 

@@ -5,7 +5,7 @@ use database_account::current::read::GetDbReadCommandsAccount;
 use database_chat::current::read::GetDbReadCommandsChat;
 use database_media::current::read::GetDbReadCommandsMedia;
 use database_profile::current::read::GetDbReadCommandsProfile;
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use futures::stream::{self, StreamExt};
 use model::{Account, AccountIdInternal};
 use server_common::data::WithInfo;
@@ -17,6 +17,7 @@ use server_data::{
     },
     index::{LocationIndexIteratorHandle, LocationIndexManager, LocationIndexWriteHandle},
 };
+use simple_backend_utils::Result;
 use tokio::sync::Mutex;
 use tracing::info;
 
@@ -295,14 +296,14 @@ impl<'a> DbReaderAll<'a> {
     }
 
     pub async fn db_read<
-        T: FnOnce(database::DbReadMode<'_>) -> error_stack::Result<R, DieselDatabaseError>
+        T: FnOnce(database::DbReadMode<'_>) -> simple_backend_utils::Result<R, DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
     >(
         &self,
         cmd: T,
-    ) -> error_stack::Result<R, CacheError> {
+    ) -> simple_backend_utils::Result<R, CacheError> {
         self.db_reader
             .db_read(cmd)
             .await

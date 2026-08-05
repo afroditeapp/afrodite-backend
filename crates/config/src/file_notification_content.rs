@@ -1,8 +1,9 @@
 use std::{io::Write, path::Path};
 
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use model::StringResourceInternal;
 use serde::Deserialize;
+use simple_backend_utils::Result;
 
 use crate::file::ConfigFileError;
 

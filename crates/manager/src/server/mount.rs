@@ -6,10 +6,10 @@ use std::{
     sync::Arc,
 };
 
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use manager_config::{Config, file::SecureStorageConfig};
 use manager_model::SecureStorageEncryptionKey;
-use simple_backend_utils::ContextExt;
+use simple_backend_utils::{ContextExt, Result};
 use tokio::{io::AsyncWriteExt, process::Command};
 use tracing::{error, info, warn};
 

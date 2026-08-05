@@ -1,5 +1,6 @@
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use manager_model::{JsonRpcResponse, ManagerApiScheduledTaskType};
+use simple_backend_utils::Result;
 
 use super::JsonRpcError;
 use crate::{

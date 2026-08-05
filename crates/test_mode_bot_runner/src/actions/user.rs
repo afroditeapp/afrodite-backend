@@ -19,8 +19,8 @@ use api_client::{
     },
 };
 use async_trait::async_trait;
-use error_stack::{Result, ResultExt};
-use simple_backend_utils::UuidBase64Url;
+use error_stack::ResultExt;
+use simple_backend_utils::{Result, UuidBase64Url};
 use test_mode_bot::{
     BotState, action_array,
     actions::{

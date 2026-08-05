@@ -1,6 +1,6 @@
 use diesel::{RunQueryDsl, sql_query, sql_types::Text};
-use error_stack::Result;
 use simple_backend_database::diesel_db::DieselDatabaseError;
+use simple_backend_utils::Result;
 
 use crate::{IntoDatabaseError, define_history_read_commands};
 

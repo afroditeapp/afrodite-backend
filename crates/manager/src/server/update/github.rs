@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use error_stack::{Result, ResultExt, report};
+use error_stack::{ResultExt, report};
 use futures::StreamExt;
 use manager_config::file::SoftwareUpdateConfig;
 use reqwest::{
@@ -8,6 +8,7 @@ use reqwest::{
     header::{ACCEPT, USER_AGENT},
 };
 use serde_json::Value;
+use simple_backend_utils::Result;
 use tokio::io::AsyncWriteExt;
 
 use super::UpdateError;

@@ -1,9 +1,8 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::{alias, prelude::*};
-use error_stack::Result;
 use model::{AccountId, AccountIdDb, AccountIdInternal, UnixTime};
 use model_account::{AssociationMember, AssociationMembersPage, GetAssociationMembersPage};
-use simple_backend_utils::string::NonEmptyString;
+use simple_backend_utils::{Result, string::NonEmptyString};
 
 use crate::IntoDatabaseError;
 

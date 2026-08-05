@@ -3,12 +3,13 @@ use diesel::{
     prelude::*,
     sql_types::{Bool, Integer},
 };
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use model::{
     AccountIdInternal, AdminNotification, AdminNotificationSettings, DayTimestamp,
     SelectedWeekdays, WeekdayFlags,
 };
 use simple_backend_database::diesel_db::DieselDatabaseError;
+use simple_backend_utils::Result;
 
 use crate::{IntoDatabaseError, define_current_read_commands};
 

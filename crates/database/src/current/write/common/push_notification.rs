@@ -1,10 +1,9 @@
 use diesel::{insert_into, prelude::*, update};
-use error_stack::Result;
 use model::{
     AccountIdInternal, PushNotificationDeviceToken, PushNotificationEncryptionKey,
     PushNotificationFlagsDb, SyncVersion, UnixTime,
 };
-use simple_backend_utils::db::MyRunQueryDsl;
+use simple_backend_utils::{Result, db::MyRunQueryDsl};
 
 use crate::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands};
 

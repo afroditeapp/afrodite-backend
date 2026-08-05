@@ -12,8 +12,9 @@ use diesel_db::{
     DieselReadCloseHandle, DieselReadHandle, DieselWriteCloseHandle, DieselWriteHandle,
 };
 use diesel_migrations::EmbeddedMigrations;
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use simple_backend_config::{Database, SimpleBackendConfig};
+use simple_backend_utils::Result;
 
 pub type PoolObject = diesel_db::PoolObject;
 

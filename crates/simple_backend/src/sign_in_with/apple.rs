@@ -4,7 +4,7 @@ use std::{
 };
 
 use base64::Engine;
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use futures::lock::Mutex;
 use jsonwebtoken::{
     DecodingKey, Validation,
@@ -13,7 +13,7 @@ use jsonwebtoken::{
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use simple_backend_config::SimpleBackendConfig;
-use simple_backend_utils::ContextExt;
+use simple_backend_utils::{ContextExt, Result};
 
 const APPLE_JWT_ISS_VALUE: &str = "https://appleid.apple.com";
 

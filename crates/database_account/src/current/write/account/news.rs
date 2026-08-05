@@ -1,7 +1,7 @@
 use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{prelude::*, update};
-use error_stack::Result;
 use model::{AccountIdInternal, NewsSyncVersion, SyncVersion, UnreadNewsCount};
+use simple_backend_utils::Result;
 
 use crate::IntoDatabaseError;
 

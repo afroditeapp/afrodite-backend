@@ -6,8 +6,6 @@ edition = "2024"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-error-stack = { workspace = true }
-
 tracing = { workspace = true }
 
 model = { path = "../model" }
@@ -18,3 +16,5 @@ server_data = { path = "../server_data" }
 
 database = { path = "../database" }
 database_account = { path = "../database_account" }
+
+simple_backend_utils = { path = "../simple_backend_utils" }

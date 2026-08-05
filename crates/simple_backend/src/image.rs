@@ -9,13 +9,13 @@ use std::{
     time::Duration,
 };
 
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use simple_backend_config::{SimpleBackendConfig, image_process::ImageProcessingConfig};
 use simple_backend_image_process::{
     ChangeSettingsCommand, ImageProcessMessage, ImageProcessingInfo, ProcessImageCommand,
 };
 use simple_backend_model::ImageProcessingDynamicConfig;
-use simple_backend_utils::ContextExt;
+use simple_backend_utils::{ContextExt, Result};
 use tokio::{
     io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader},
     process::{Child, ChildStdin, ChildStdout},

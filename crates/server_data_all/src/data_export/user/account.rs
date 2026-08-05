@@ -34,7 +34,7 @@ impl UserDataExportJsonAccount {
     pub fn query(
         current: &mut DbReadMode,
         id: SourceAccount,
-    ) -> error_stack::Result<Self, DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<Self, DieselDatabaseError> {
         let id = id.0;
         let (email_verification_token, email_verification_token_time) =
             current.account().email().email_verification_token(id)?;

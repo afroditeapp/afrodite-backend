@@ -1,7 +1,7 @@
 use std::{num::NonZeroU32, str::FromStr, time::Duration};
 
 use data::EmailLimitStateStorage;
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use lettre::{
     Address, AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
     message::{Mailbox, header::ContentType},
@@ -9,7 +9,7 @@ use lettre::{
 };
 use simple_backend_config::{SimpleBackendConfig, file::EmailSendingConfig};
 use simple_backend_model::UnixTime;
-use simple_backend_utils::ContextExt;
+use simple_backend_utils::{ContextExt, Result};
 use tokio::sync::Mutex;
 use tracing::{error, info};
 

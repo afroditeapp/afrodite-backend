@@ -3,9 +3,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use error_stack::{Result, ResultExt, report};
+use error_stack::{ResultExt, report};
 use flate2::read::GzDecoder;
 use manager_config::file::SimplePatternPath;
+use simple_backend_utils::Result;
 use tar::Archive;
 use tracing::info;
 

@@ -4,7 +4,7 @@ use database::{
     DieselDatabaseError, current::read::GetDbReadCommandsCommon, define_current_read_commands,
 };
 use diesel::prelude::*;
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use model_profile::{
     AccountIdInternal, AttributeId, GetMyProfileResult, GetProfileFilters, InitialProfileAge,
     LastSeenUnixTime, Location, Profile, ProfileAge, ProfileAttributeFilterValue,
@@ -12,6 +12,7 @@ use model_profile::{
     ProfileStringModerationContentType, ProfileTextModerationState, ProfileVerificationStatusFlags,
     UnixTime,
 };
+use simple_backend_utils::Result;
 
 use crate::current::read::GetDbReadCommandsProfile;
 

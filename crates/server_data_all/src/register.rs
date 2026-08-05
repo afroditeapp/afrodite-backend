@@ -62,7 +62,7 @@ impl RegisterAccount<'_> {
         sign_in_with_info: SignInWithInfo,
         email: Option<EmailAddress>,
         mut current: DbWriteMode,
-    ) -> error_stack::Result<AccountIdInternal, DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<AccountIdInternal, DieselDatabaseError> {
         // Common
         current.common().insert_account_id(id)?;
         current

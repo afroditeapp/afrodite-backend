@@ -5180,12 +5180,12 @@ version = "0.0.0"
 dependencies = [
  "database",
  "database_account",
- "error-stack",
  "model",
  "model_account",
  "model_server_state",
  "server_common",
  "server_data",
+ "simple_backend_utils",
  "tracing",
 ]
 
@@ -5218,6 +5218,7 @@ dependencies = [
  "server_data_profile",
  "simple_backend",
  "simple_backend_model",
+ "simple_backend_utils",
  "tokio",
  "tracing",
  "utils",
@@ -5249,6 +5250,7 @@ dependencies = [
  "model_media",
  "server_common",
  "server_data",
+ "simple_backend_utils",
 ]
 
 [[package]]
@@ -5257,12 +5259,12 @@ version = "0.0.0"
 dependencies = [
  "database",
  "database_profile",
- "error-stack",
  "model_profile",
  "server_common",
  "server_data",
  "simple_backend",
  "simple_backend_model",
+ "simple_backend_utils",
 ]
 
 [[package]]
@@ -5539,6 +5541,7 @@ dependencies = [
  "serde_json",
  "simple_backend_config",
  "simple_backend_model",
+ "simple_backend_utils",
  "thiserror 2.0.17",
 ]
 
@@ -5930,6 +5933,7 @@ dependencies = [
  "error-stack",
  "inventory",
  "reqwest",
+ "simple_backend_utils",
  "test_mode_bot",
  "test_mode_test_macro",
  "test_mode_utils",

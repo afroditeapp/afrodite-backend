@@ -1,5 +1,6 @@
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use manager_model::{JsonRpcResponse, ManagerApiManualTaskType};
+use simple_backend_utils::Result;
 use tracing::warn;
 
 use super::JsonRpcError;

@@ -8,10 +8,10 @@ use std::{
 
 use base64::Engine;
 use chrono::{Datelike, Utc};
-use error_stack::{Report, Result, ResultExt};
+use error_stack::{Report, ResultExt};
 use manager_model::ManagerInstanceName;
 use serde::{Deserialize, Deserializer, Serialize};
-use simple_backend_utils::{ContextExt, byte::ByteCount, time::DurationValue};
+use simple_backend_utils::{ContextExt, Result, byte::ByteCount, time::DurationValue};
 use url::Url;
 
 pub const CONFIG_FILE_NAME: &str = "simple_backend.toml";

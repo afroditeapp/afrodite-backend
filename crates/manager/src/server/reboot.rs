@@ -2,10 +2,10 @@
 
 use std::{path::Path, time::Duration};
 
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use manager_config::Config;
 use manager_model::ManagerApiScheduledTaskType;
-use simple_backend_utils::time::sleep_until_current_time_is_at;
+use simple_backend_utils::{Result, time::sleep_until_current_time_is_at};
 use tokio::{task::JoinHandle, time::sleep};
 use tracing::{error, info, warn};
 

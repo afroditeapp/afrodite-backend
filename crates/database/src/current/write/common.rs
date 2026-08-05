@@ -1,7 +1,7 @@
 use diesel::{ExpressionMethods, RunQueryDsl, insert_into};
-use error_stack::Result;
 use model::AccountIdInternal;
 use simple_backend_database::diesel_db::DieselDatabaseError;
+use simple_backend_utils::Result;
 
 use crate::{IntoDatabaseError, define_current_write_commands};
 

@@ -12,7 +12,7 @@ impl AdminDataExportJsonCommon {
     pub fn query(
         current: &mut DbReadMode,
         id: SourceAccount,
-    ) -> error_stack::Result<Self, DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<Self, DieselDatabaseError> {
         let id = id.0;
         let data = Self {
             sent_reports: DataExportReport::query(current, id)?,
@@ -28,7 +28,7 @@ impl DataExportReport {
     fn query(
         current: &mut DbReadMode,
         id: AccountIdInternal,
-    ) -> error_stack::Result<Vec<ReportDetailed>, DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<Vec<ReportDetailed>, DieselDatabaseError> {
         let mut data_export_reports = vec![];
         let mut query = ReportIteratorQueryInternal {
             start_position: UnixTime::default(),

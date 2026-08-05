@@ -119,7 +119,7 @@ pub trait IntoDataError<Ok, Err: Context>: Sized {
 }
 
 impl<Ok> IntoDataError<Ok, simple_backend_database::SimpleDatabaseError>
-    for error_stack::Result<Ok, simple_backend_database::SimpleDatabaseError>
+    for simple_backend_utils::Result<Ok, simple_backend_database::SimpleDatabaseError>
 {
     #[track_caller]
     fn into_data_error_without_context(
@@ -133,17 +133,9 @@ impl<Ok> IntoDataError<Ok, simple_backend_database::SimpleDatabaseError>
     }
 }
 
-impl<Ok> IntoDataError<Ok, DataError> for error_stack::Result<Ok, crate::data::file::FileError> {
-    #[track_caller]
-    fn into_data_error_without_context(
-        self,
-    ) -> std::result::Result<Ok, WrappedReport<error_stack::Report<DataError>>> {
-        let value = self?;
-        Ok(value)
-    }
-}
-
-impl<Ok> IntoDataError<Ok, DataError> for error_stack::Result<Ok, crate::data::cache::CacheError> {
+impl<Ok> IntoDataError<Ok, DataError>
+    for simple_backend_utils::Result<Ok, crate::data::file::FileError>
+{
     #[track_caller]
     fn into_data_error_without_context(
         self,
@@ -154,7 +146,19 @@ impl<Ok> IntoDataError<Ok, DataError> for error_stack::Result<Ok, crate::data::c
 }
 
 impl<Ok> IntoDataError<Ok, DataError>
-    for error_stack::Result<Ok, simple_backend_database::diesel_db::DieselDatabaseError>
+    for simple_backend_utils::Result<Ok, crate::data::cache::CacheError>
+{
+    #[track_caller]
+    fn into_data_error_without_context(
+        self,
+    ) -> std::result::Result<Ok, WrappedReport<error_stack::Report<DataError>>> {
+        let value = self?;
+        Ok(value)
+    }
+}
+
+impl<Ok> IntoDataError<Ok, DataError>
+    for simple_backend_utils::Result<Ok, simple_backend_database::diesel_db::DieselDatabaseError>
 {
     #[track_caller]
     fn into_data_error_without_context(

@@ -26,7 +26,7 @@ impl CacheError {
     }
 
     #[track_caller]
-    pub fn error<Ok>(self) -> error_stack::Result<Ok, Self> {
+    pub fn error<Ok>(self) -> simple_backend_utils::Result<Ok, Self> {
         Err(error_stack::report!(self))
     }
 }

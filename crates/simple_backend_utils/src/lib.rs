@@ -5,7 +5,7 @@
 
 use std::fmt::Display;
 
-use error_stack::{Context, Report, Result, ResultExt};
+use error_stack::{Context, Report, ResultExt};
 
 pub mod byte;
 pub mod consts;
@@ -18,6 +18,8 @@ pub mod time;
 mod uuid;
 
 pub use uuid::{UuidBase64Url, UuidBase64UrlToml};
+
+pub type Result<T, C> = std::result::Result<T, Report<C>>;
 
 pub trait IntoReportFromString {
     type Ok;

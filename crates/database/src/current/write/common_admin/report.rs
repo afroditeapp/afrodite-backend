@@ -1,6 +1,6 @@
 use diesel::{ExpressionMethods, prelude::*, update};
-use error_stack::Result;
 use model::{AccountIdInternal, ReportIdDb, ReportProcessingState, UnixTime};
+use simple_backend_utils::Result;
 
 use crate::{
     DieselDatabaseError, IntoDatabaseError, current::read::GetDbReadCommandsCommon,

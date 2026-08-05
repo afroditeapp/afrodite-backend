@@ -11,7 +11,8 @@ use base64::display::Base64Display;
 use config::bot_config_file::internal::{
     AcceptOrReject, AccountVerificationConfigInternal, SecurityContentVerificationConfigInternal,
 };
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
+use simple_backend_utils::Result;
 use test_mode_utils::{
     AccountVerificationErrorFlags,
     client::{ApiClient, TestError},

@@ -1,7 +1,8 @@
 //! Slippy map tile server logic.
 
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use simple_backend_config::{SimpleBackendConfig, file::TileMapConfig};
+use simple_backend_utils::Result;
 use tokio_util::io::ReaderStream;
 
 #[derive(thiserror::Error, Debug)]

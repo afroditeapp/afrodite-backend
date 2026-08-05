@@ -1,12 +1,11 @@
 use diesel::{insert_into, prelude::*, update};
-use error_stack::Result;
 use model::{
     Account, AccountIdInternal, AccountStateContainer, AccountStateRelatedSharedState,
     AccountSyncVersion, BotAccountType, InitialSetupCompletedTime, Permissions, ProfileVisibility,
     SharedStateRaw, SyncVersionUtils,
 };
 use simple_backend_database::diesel_db::DieselDatabaseError;
-use simple_backend_utils::ContextExt;
+use simple_backend_utils::{ContextExt, Result};
 
 use crate::{
     IntoDatabaseError, current::read::GetDbReadCommandsCommon, define_current_write_commands,
@@ -135,7 +134,9 @@ impl CurrentWriteCommonState<'_> {
         &mut self,
         id: AccountIdInternal,
         account: Account,
-        modify_action: impl FnOnce(&mut AccountUpdate) -> error_stack::Result<(), DieselDatabaseError>
+        modify_action: impl FnOnce(
+            &mut AccountUpdate,
+        ) -> simple_backend_utils::Result<(), DieselDatabaseError>
         + Send
         + 'static,
     ) -> Result<CacheUpdateAccount, DieselDatabaseError> {

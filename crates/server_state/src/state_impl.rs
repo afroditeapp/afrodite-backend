@@ -56,7 +56,7 @@ impl GetAccounts for S {
     async fn get_internal_id(
         &self,
         id: AccountId,
-    ) -> error_stack::Result<AccountIdInternal, DataError> {
+    ) -> simple_backend_utils::Result<AccountIdInternal, DataError> {
         self.state
             .database
             .account_id_manager()
@@ -123,7 +123,7 @@ impl server_data::app::GetDynamicServerConfig for S {
 }
 
 impl ReadDynamicConfig for S {
-    async fn read_config(&self) -> error_stack::Result<BotConfig, ConfigFileError> {
+    async fn read_config(&self) -> simple_backend_utils::Result<BotConfig, ConfigFileError> {
         let config = self
             .read()
             .common()
@@ -144,7 +144,10 @@ impl ReadDynamicConfig for S {
 }
 
 impl WriteDynamicConfig for S {
-    async fn write_config(&self, config: BotConfig) -> error_stack::Result<(), ConfigFileError> {
+    async fn write_config(
+        &self,
+        config: BotConfig,
+    ) -> simple_backend_utils::Result<(), ConfigFileError> {
         use server_data::write::GetWriteCommandsCommon;
 
         self.write(move |cmds| async move {

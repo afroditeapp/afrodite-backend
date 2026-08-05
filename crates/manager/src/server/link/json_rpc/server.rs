@@ -1,10 +1,10 @@
 use std::{collections::HashMap, num::Wrapping, time::Duration};
 
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use manager_model::{
     JsonRpcLinkHeader, JsonRpcLinkMessage, JsonRpcLinkMessageType, JsonRpcRequest, JsonRpcResponse,
 };
-use simple_backend_utils::ContextExt;
+use simple_backend_utils::{ContextExt, Result};
 use tokio::{
     sync::{mpsc, oneshot},
     task::JoinHandle,

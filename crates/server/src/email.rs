@@ -129,7 +129,7 @@ impl EmailManager {
         &self,
         recipient: AccountIdInternal,
         message: EmailMessages,
-    ) -> error_stack::Result<(), EmailError> {
+    ) -> simple_backend_utils::Result<(), EmailError> {
         let Some(info) = self.get_email_data(recipient, message).await? else {
             // Email disabled for the email recipient
             return Ok(());
@@ -152,7 +152,7 @@ impl EmailManager {
         &self,
         email: &str,
         token: &str,
-    ) -> error_stack::Result<(), EmailError> {
+    ) -> simple_backend_utils::Result<(), EmailError> {
         if email.ends_with("@example.com") {
             return Ok(());
         }
@@ -178,7 +178,7 @@ impl EmailManager {
         &self,
         recipient: AccountIdInternal,
         message: EmailMessages,
-    ) -> error_stack::Result<Option<EmailData>, EmailError> {
+    ) -> simple_backend_utils::Result<Option<EmailData>, EmailError> {
         let email_address = if message == EmailMessages::EmailChangeVerification {
             // For email change verification, use the new email address
             self.state
@@ -299,7 +299,7 @@ impl EmailManager {
         &self,
         recipient: AccountIdInternal,
         message: EmailMessages,
-    ) -> error_stack::Result<(), EmailError> {
+    ) -> simple_backend_utils::Result<(), EmailError> {
         db_write_raw!(self.state, move |cmds| {
             cmds.account()
                 .email()
@@ -316,7 +316,7 @@ impl EmailManager {
     async fn generate_token_for_email_verification(
         &self,
         recipient: AccountIdInternal,
-    ) -> error_stack::Result<String, EmailError> {
+    ) -> simple_backend_utils::Result<String, EmailError> {
         let token_and_time = self
             .state
             .read()
@@ -365,7 +365,7 @@ impl EmailManager {
     async fn get_token_for_email_change_verification(
         &self,
         recipient: AccountIdInternal,
-    ) -> error_stack::Result<String, EmailError> {
+    ) -> simple_backend_utils::Result<String, EmailError> {
         let email_change = self
             .state
             .read()

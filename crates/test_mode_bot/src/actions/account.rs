@@ -12,10 +12,11 @@ use api_client::{
 };
 use async_trait::async_trait;
 use base64::Engine;
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use futures::SinkExt;
 use headers::HeaderValue;
 use simple_backend_model::VersionNumber;
+use simple_backend_utils::Result;
 use test_mode_utils::{
     client::{ApiClient, TestError},
     websocket_protocol::parse_server_event_to_client_for_test_mode,

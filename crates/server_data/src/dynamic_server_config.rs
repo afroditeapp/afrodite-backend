@@ -30,7 +30,7 @@ impl DynamicServerConfigManager {
 
 pub async fn load_dynamic_server_config_from_db(
     reader: &DbReaderRaw<'_>,
-) -> error_stack::Result<DynamicServerConfigManager, DataError> {
+) -> simple_backend_utils::Result<DynamicServerConfigManager, DataError> {
     let value = reader
         .db_read(move |mut mode| mode.common().client_config().dynamic_server_config())
         .await

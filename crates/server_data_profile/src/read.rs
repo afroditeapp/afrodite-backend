@@ -31,28 +31,28 @@ pub trait DbReadProfileHistory {
     async fn db_read_history<
         T: FnOnce(
                 database::DbReadModeHistory<'_>,
-            ) -> error_stack::Result<R, server_data::DieselDatabaseError>
+            ) -> simple_backend_utils::Result<R, server_data::DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
     >(
         &self,
         cmd: T,
-    ) -> error_stack::Result<R, server_data::DieselDatabaseError>;
+    ) -> simple_backend_utils::Result<R, server_data::DieselDatabaseError>;
 }
 
 impl<I: InternalReading> DbReadProfileHistory for I {
     async fn db_read_history<
         T: FnOnce(
                 database::DbReadModeHistory<'_>,
-            ) -> error_stack::Result<R, server_data::DieselDatabaseError>
+            ) -> simple_backend_utils::Result<R, server_data::DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
     >(
         &self,
         cmd: T,
-    ) -> error_stack::Result<R, server_data::DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<R, server_data::DieselDatabaseError> {
         self.db_read_history_raw(cmd).await
     }
 }

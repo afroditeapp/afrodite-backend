@@ -8,14 +8,14 @@ use std::{
 
 use archive::extract_backend_binary;
 use backend::BackendUtils;
-use error_stack::{Result, ResultExt, report};
+use error_stack::{ResultExt, report};
 use github::GitHubApi;
 use manager_config::{Config, file::SoftwareUpdateConfig};
 use manager_model::{
     SoftwareInfo, SoftwareUpdateState, SoftwareUpdateStatus, SoftwareUpdateTaskType,
 };
 use sha2::Digest;
-use simple_backend_utils::ContextExt;
+use simple_backend_utils::{ContextExt, Result};
 use tokio::{sync::Mutex, task::JoinHandle};
 use tracing::{error, info, warn};
 

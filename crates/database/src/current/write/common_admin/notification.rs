@@ -1,8 +1,7 @@
 use diesel::{insert_into, prelude::*};
-use error_stack::Result;
 use model::{AccountIdInternal, AdminNotification, AdminNotificationSettings};
 use simple_backend_database::diesel_db::DieselDatabaseError;
-use simple_backend_utils::db::MyRunQueryDsl;
+use simple_backend_utils::{Result, db::MyRunQueryDsl};
 
 use crate::{IntoDatabaseError, define_current_write_commands};
 

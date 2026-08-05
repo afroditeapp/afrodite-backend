@@ -1,5 +1,5 @@
 use config::bot_config_file::internal::FaceVerificationConfigInternal;
-use error_stack::Result;
+use simple_backend_utils::Result;
 use test_mode_bot::actions::admin::face_verification::{
     AdminBotFaceVerificationLogic, FaceVerificationState,
 };

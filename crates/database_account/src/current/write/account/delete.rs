@@ -1,7 +1,7 @@
 use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{delete, prelude::*, update};
-use error_stack::Result;
 use model::{AccountIdInternal, UnixTime};
+use simple_backend_utils::Result;
 
 use crate::IntoDatabaseError;
 

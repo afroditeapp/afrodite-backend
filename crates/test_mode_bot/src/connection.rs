@@ -3,7 +3,7 @@ use std::sync::{
     atomic::{AtomicBool, Ordering},
 };
 
-use error_stack::Result;
+use simple_backend_utils::Result;
 use test_mode_utils::{client::TestError, websocket_protocol::EventToClient};
 use tokio::{
     net::TcpStream,

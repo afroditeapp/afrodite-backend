@@ -1,8 +1,8 @@
 use std::time::Duration;
 
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use manager_model::{BackupMessageType, SourceToTargetMessage, TargetToSourceMessage};
-use simple_backend_utils::{ContextExt, IntoReportFromString};
+use simple_backend_utils::{ContextExt, IntoReportFromString, Result};
 
 use crate::{
     ClientError,

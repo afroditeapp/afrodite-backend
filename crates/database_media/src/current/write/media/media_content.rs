@@ -2,14 +2,14 @@ use database::{
     DieselDatabaseError, current::read::GetDbReadCommandsCommon, define_current_write_commands,
 };
 use diesel::{delete, insert_into, prelude::*, update};
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use model::{ContentIdInternal, SyncVersion, UnixTime};
 use model_media::{
     AccountIdInternal, ContentId, ContentIdDb, ContentModerationState, ContentSlot,
     MediaContentRaw, MediaContentType, NewContentParams, ProfileContentModificationMetadata,
     SetProfileContent,
 };
-use simple_backend_utils::ContextExt;
+use simple_backend_utils::{ContextExt, Result};
 
 use super::DeletedSomething;
 use crate::{

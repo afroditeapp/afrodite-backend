@@ -10,7 +10,7 @@ use std::{
     vec,
 };
 
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use file::{
     AutomaticSystemRebootConfig, BackupLinkConfig, ControlBackendConfig, JsonRpcLinkConfig,
     ManagerInstance, ScheduledTasksConfig,
@@ -18,6 +18,7 @@ use file::{
 use manager_api::{RootCertStore, TlsConfig};
 use manager_model::ManagerInstanceName;
 use rustls_pemfile::certs;
+use simple_backend_utils::Result;
 use tokio_rustls::rustls::{
     ServerConfig,
     pki_types::{CertificateDer, pem::PemObject},

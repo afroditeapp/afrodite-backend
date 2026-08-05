@@ -74,13 +74,16 @@ pub trait AdminBotStatusProvider {
 }
 
 pub trait ReadDynamicConfig {
-    async fn read_config(&self) -> error_stack::Result<BotConfig, ConfigFileError>;
+    async fn read_config(&self) -> simple_backend_utils::Result<BotConfig, ConfigFileError>;
 
     fn is_remote_bot_login_enabled(&self) -> bool;
 }
 
 pub trait WriteDynamicConfig {
-    async fn write_config(&self, config: BotConfig) -> error_stack::Result<(), ConfigFileError>;
+    async fn write_config(
+        &self,
+        config: BotConfig,
+    ) -> simple_backend_utils::Result<(), ConfigFileError>;
 
     fn set_remote_bot_login_enabled(&self, value: bool);
 

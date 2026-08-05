@@ -1,11 +1,11 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
-use error_stack::Result;
 use model::AccountIdInternal;
 use model_account::{
     AccountGlobalState, AccountStateTableRaw, EmailAddress, EmailAddressState,
     EmailAddressStateInternal, EmailChange,
 };
+use simple_backend_utils::Result;
 
 use crate::IntoDatabaseError;
 

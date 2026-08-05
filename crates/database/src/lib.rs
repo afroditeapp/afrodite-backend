@@ -11,11 +11,12 @@ use std::{fmt::Debug, marker::PhantomData};
 
 use current::write::TransactionConnection;
 use diesel_migrations::{EmbeddedMigrations, embed_migrations};
-use error_stack::{Context, Result, ResultExt};
+use error_stack::{Context, ResultExt};
 use model::markers::IsLoggingAllowed;
 pub use model::schema;
 use simple_backend_config::RUNNING_IN_DEBUG_MODE;
 use simple_backend_database::{DbReadHandle, DbWriteHandle, diesel_db::ObjectExtensions};
+use simple_backend_utils::Result;
 
 pub const DIESEL_SQLITE_MIGRATIONS: EmbeddedMigrations =
     embed_migrations!("../../migrations/sqlite");
@@ -244,19 +245,21 @@ impl<'a> DbReaderRaw<'a> {
     fn transaction<F: FnOnce(DbReadMode<'_>) -> std::result::Result<T, TransactionError>, T>(
         conn: &mut DieselConnection,
         transaction_actions: F,
-    ) -> error_stack::Result<T, DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<T, DieselDatabaseError> {
         use diesel::prelude::*;
         conn.transaction(|conn| transaction_actions(DbReadMode(conn)))
             .map_err(|e| e.into_report())
     }
 
     pub async fn db_read<
-        T: FnOnce(DbReadMode<'_>) -> error_stack::Result<R, DieselDatabaseError> + Send + 'static,
+        T: FnOnce(DbReadMode<'_>) -> simple_backend_utils::Result<R, DieselDatabaseError>
+            + Send
+            + 'static,
         R: Send + 'static,
     >(
         &self,
         cmd: T,
-    ) -> error_stack::Result<R, DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<R, DieselDatabaseError> {
         let conn = self
             .db
             .0
@@ -273,12 +276,14 @@ impl<'a> DbReaderRaw<'a> {
     }
 
     pub async fn db_read_no_transaction<
-        T: FnOnce(DbReadMode<'_>) -> error_stack::Result<R, DieselDatabaseError> + Send + 'static,
+        T: FnOnce(DbReadMode<'_>) -> simple_backend_utils::Result<R, DieselDatabaseError>
+            + Send
+            + 'static,
         R: Send + 'static,
     >(
         &self,
         cmd: T,
-    ) -> error_stack::Result<R, DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<R, DieselDatabaseError> {
         let conn = self
             .db
             .0
@@ -307,21 +312,21 @@ impl<'a> DbReaderHistoryRaw<'a> {
     >(
         conn: &mut DieselConnection,
         transaction_actions: F,
-    ) -> error_stack::Result<T, DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<T, DieselDatabaseError> {
         use diesel::prelude::*;
         conn.transaction(|conn| transaction_actions(DbReadModeHistory(conn)))
             .map_err(|e| e.into_report())
     }
 
     pub async fn db_read_history<
-        T: FnOnce(DbReadModeHistory<'_>) -> error_stack::Result<R, DieselDatabaseError>
+        T: FnOnce(DbReadModeHistory<'_>) -> simple_backend_utils::Result<R, DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
     >(
         &self,
         cmd: T,
-    ) -> error_stack::Result<R, DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<R, DieselDatabaseError> {
         let conn = self
             .db
             .0
@@ -338,14 +343,14 @@ impl<'a> DbReaderHistoryRaw<'a> {
     }
 
     pub async fn db_read_history_no_transaction<
-        T: FnOnce(DbReadModeHistory<'_>) -> error_stack::Result<R, DieselDatabaseError>
+        T: FnOnce(DbReadModeHistory<'_>) -> simple_backend_utils::Result<R, DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
     >(
         &self,
         cmd: T,
-    ) -> error_stack::Result<R, DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<R, DieselDatabaseError> {
         let conn = self
             .db
             .0
@@ -372,19 +377,21 @@ impl<'a> DbWriter<'a> {
     fn transaction<F: FnOnce(DbWriteMode<'_>) -> std::result::Result<T, TransactionError>, T>(
         conn: &mut DieselConnection,
         transaction_actions: F,
-    ) -> error_stack::Result<T, DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<T, DieselDatabaseError> {
         use diesel::prelude::*;
         conn.transaction(|conn| transaction_actions(DbWriteMode(conn)))
             .map_err(|e| e.into_report())
     }
 
     pub async fn db_transaction_raw<
-        T: FnOnce(DbWriteMode<'_>) -> error_stack::Result<R, DieselDatabaseError> + Send + 'static,
+        T: FnOnce(DbWriteMode<'_>) -> simple_backend_utils::Result<R, DieselDatabaseError>
+            + Send
+            + 'static,
         R: Send + 'static,
     >(
         &self,
         cmd: T,
-    ) -> error_stack::Result<R, DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<R, DieselDatabaseError> {
         let conn = self
             .db
             .0
@@ -416,21 +423,21 @@ impl<'a> DbWriterHistory<'a> {
     >(
         conn: &mut DieselConnection,
         transaction_actions: F,
-    ) -> error_stack::Result<T, DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<T, DieselDatabaseError> {
         use diesel::prelude::*;
         conn.transaction(|conn| transaction_actions(DbWriteModeHistory(conn)))
             .map_err(|e| e.into_report())
     }
 
     pub async fn db_transaction_raw<
-        T: FnOnce(DbWriteModeHistory<'_>) -> error_stack::Result<R, DieselDatabaseError>
+        T: FnOnce(DbWriteModeHistory<'_>) -> simple_backend_utils::Result<R, DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
     >(
         &self,
         cmd: T,
-    ) -> error_stack::Result<R, DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<R, DieselDatabaseError> {
         let conn = self
             .db
             .0
@@ -463,7 +470,7 @@ impl<'a> DbWriterWithHistory<'a> {
     >(
         conn: &mut DieselConnection,
         transaction_actions: F,
-    ) -> error_stack::Result<T, DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<T, DieselDatabaseError> {
         use diesel::prelude::*;
         conn.transaction(transaction_actions)
             .map_err(|e| e.into_report())
@@ -472,7 +479,7 @@ impl<'a> DbWriterWithHistory<'a> {
     pub async fn db_transaction_with_history<T, R: Send + 'static>(
         &self,
         cmd: T,
-    ) -> error_stack::Result<R, DieselDatabaseError>
+    ) -> simple_backend_utils::Result<R, DieselDatabaseError>
     where
         T: FnOnce(
                 TransactionConnection<'_>,

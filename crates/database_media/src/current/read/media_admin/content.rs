@@ -1,6 +1,5 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
-use error_stack::Result;
 use model::ContentId;
 use model_media::{
     AccountIdInternal, ContentModerationState, GetMediaContentFaceVerifiedNullList,
@@ -8,6 +7,7 @@ use model_media::{
     MediaContentModerationQueueType, MediaContentModerationType, MediaContentPendingModeration,
     MediaContentRaw, MediaContentType,
 };
+use simple_backend_utils::Result;
 
 use crate::IntoDatabaseError;
 

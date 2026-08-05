@@ -1,9 +1,9 @@
-use error_stack::Result;
 use model::AccountId;
 use server_data::{
     cache::{CacheError, media::CacheMedia},
     db_manager::InternalWriting,
 };
+use simple_backend_utils::Result;
 
 pub trait CacheReadMedia {
     async fn read_cache_media<T, Id: Into<AccountId>>(

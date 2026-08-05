@@ -1,9 +1,8 @@
 use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{insert_into, prelude::*, update};
-use error_stack::Result;
 use model::ReceivedLikeId;
 use model_chat::{AccountIdInternal, AccountInteractionInternal};
-use simple_backend_utils::db::MyDbConnection;
+use simple_backend_utils::{Result, db::MyDbConnection};
 
 use crate::{IntoDatabaseError, current::read::GetDbReadCommandsChat};
 

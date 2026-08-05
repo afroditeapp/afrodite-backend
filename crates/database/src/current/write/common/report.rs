@@ -1,7 +1,6 @@
 use diesel::{delete, insert_into, prelude::*};
-use error_stack::Result;
 use model::{AccountIdInternal, ReportIdDb, ReportProcessingState, ReportTypeInternal, UnixTime};
-use simple_backend_utils::current_unix_time;
+use simple_backend_utils::{Result, current_unix_time};
 
 use crate::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands};
 

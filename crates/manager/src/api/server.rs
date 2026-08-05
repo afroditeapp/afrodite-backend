@@ -81,14 +81,14 @@
 
 use std::net::SocketAddr;
 
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use json_rpc::handle_json_rpc;
 use link::{backup::handle_backup_link, json_rpc::handle_json_rpc_link};
 use manager_api::protocol::{
     ClientConnectionReadWrite, ClientConnectionWrite, ConnectionUtilsRead, ConnectionUtilsWrite,
 };
 use manager_model::{ManagerProtocolMode, ManagerProtocolVersion, ServerEvent};
-use simple_backend_utils::ContextExt;
+use simple_backend_utils::{ContextExt, Result};
 use tokio::io::AsyncReadExt;
 use tracing::info;
 

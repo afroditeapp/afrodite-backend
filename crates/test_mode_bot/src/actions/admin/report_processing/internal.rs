@@ -5,7 +5,8 @@ use api_client::{
     models::{AccountId, ChatMessageReport, GetChatMessageReports, ReportDetailed},
 };
 use base64::Engine;
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
+use simple_backend_utils::Result;
 use test_mode_utils::client::{ApiClient, TestError};
 
 use crate::actions::admin::report_processing::message::message_bytes_to_text;

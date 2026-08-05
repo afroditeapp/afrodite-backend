@@ -1,12 +1,13 @@
 use std::collections::HashMap;
 
 use diesel::prelude::*;
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use model::{
     GetIpCountryStatisticsResult, GetIpCountryStatisticsSettings, IpCountryStatistics,
     IpCountryStatisticsType, IpCountryStatisticsValue, UnixTime,
 };
 use simple_backend_database::diesel_db::DieselDatabaseError;
+use simple_backend_utils::Result;
 
 use crate::define_history_read_commands;
 

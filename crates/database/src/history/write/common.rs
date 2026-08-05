@@ -1,11 +1,10 @@
 use std::collections::HashMap;
 
 use diesel::{ExpressionMethods, insert_into};
-use error_stack::Result;
 use model::{StatisticsSaveTimeId, UnixTime};
 use simple_backend_database::diesel_db::DieselDatabaseError;
 use simple_backend_model::{IpCountryCounters, IpCountryKey, MetricKey, PerfMetricValueArea};
-use simple_backend_utils::db::MyRunQueryDsl;
+use simple_backend_utils::{Result, db::MyRunQueryDsl};
 
 use crate::{IntoDatabaseError, define_history_write_commands};
 

@@ -8,7 +8,8 @@ use api_client::{
     models::{AccountId, MediaContentModerationType, ProfileUpdate, SearchAgeRange, SearchGroups},
 };
 use config::{args::TestMode, bot_config_file::BotConfigFile};
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
+use simple_backend_utils::Result;
 use test_mode_bot::{
     BotState, action_array,
     actions::{

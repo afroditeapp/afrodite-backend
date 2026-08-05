@@ -3,10 +3,10 @@
 use std::path::PathBuf;
 
 use clap::{Args, Parser};
-use error_stack::{Result, ResultExt, report};
+use error_stack::{ResultExt, report};
 use manager_api::TlsConfig;
 use manager_model::ManagerInstanceName;
-use simple_backend_utils::ContextExt;
+use simple_backend_utils::{ContextExt, Result};
 use url::Url;
 
 use super::{GetConfigError, file::ConfigFile};

@@ -2,8 +2,9 @@
 
 use std::process::ExitStatus;
 
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use manager_config::file::ControlBackendConfig;
+use simple_backend_utils::Result;
 use tokio::{
     process::Command,
     sync::{mpsc, oneshot},

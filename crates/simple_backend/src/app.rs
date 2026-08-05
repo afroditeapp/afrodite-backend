@@ -40,7 +40,7 @@ impl SimpleBackendAppState {
         perf_data: Arc<PerfMetricsManagerData>,
         manager_api: Arc<ManagerApiClient>,
         maxmind_db: Arc<MaxMindDbManagerData>,
-    ) -> error_stack::Result<Self, AppStateCreationError> {
+    ) -> simple_backend_utils::Result<Self, AppStateCreationError> {
         Ok(SimpleBackendAppState {
             reqwest_client: reqwest_client.clone(),
             tile_map: TileMapManager::new(&config).into(),
@@ -72,14 +72,14 @@ pub trait GetManagerApi {
 
     async fn manager_request(
         &self,
-    ) -> error_stack::Result<ManagerClientWithRequestRecipient, ClientError> {
+    ) -> simple_backend_utils::Result<ManagerClientWithRequestRecipient, ClientError> {
         self.manager_api_client().new_request().await
     }
 
     async fn manager_request_to(
         &self,
         name: ManagerInstanceNameValue,
-    ) -> error_stack::Result<ManagerClientWithRequestRecipient, ClientError> {
+    ) -> simple_backend_utils::Result<ManagerClientWithRequestRecipient, ClientError> {
         self.manager_api_client()
             .new_request_to_instance(name.manager_name)
             .await

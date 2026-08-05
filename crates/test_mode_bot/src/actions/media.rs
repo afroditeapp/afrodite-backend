@@ -9,7 +9,8 @@ use api_client::{
 };
 use async_trait::async_trait;
 use config::bot_config_file::{BaseBotConfig, BotConfigFile, Gender};
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
+use simple_backend_utils::Result;
 use test_mode_utils::client::TestError;
 
 use super::{BotAction, BotState};

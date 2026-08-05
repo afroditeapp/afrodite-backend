@@ -2,9 +2,9 @@ use std::{fmt, path::PathBuf};
 
 use diesel::{QueryableByName, RunQueryDsl, sql_types::BigInt};
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness};
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use simple_backend_config::{Database, SimpleBackendConfig};
-use simple_backend_utils::{ContextExt, IntoReportFromString};
+use simple_backend_utils::{ContextExt, IntoReportFromString, Result};
 use tracing::error;
 
 mod connection;

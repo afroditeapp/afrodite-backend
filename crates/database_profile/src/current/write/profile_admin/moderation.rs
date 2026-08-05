@@ -2,14 +2,13 @@ use database::{
     DieselDatabaseError, current::read::GetDbReadCommandsCommon, define_current_write_commands,
 };
 use diesel::{ExpressionMethods, delete, insert_into, prelude::*, update};
-use error_stack::Result;
 use model_profile::{
     AccountIdInternal, ProfileStringModerationContentType,
     ProfileStringModerationRejectedReasonCategory, ProfileStringModerationRejectedReasonDetails,
     ProfileStringModerationState,
 };
 use simple_backend_model::NonEmptyString;
-use simple_backend_utils::db::MyRunQueryDsl;
+use simple_backend_utils::{Result, db::MyRunQueryDsl};
 
 use crate::IntoDatabaseError;
 

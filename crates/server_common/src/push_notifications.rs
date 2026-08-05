@@ -1,12 +1,12 @@
 use std::{future::Future, sync::Arc};
 
 use config::Config;
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use model::{
     AccountIdInternal, ClientType, PushNotificationSendingInfo, PushNotificationsToMarkAsSent,
 };
 use simple_backend::ServerQuitWatcher;
-use simple_backend_utils::{ContextExt, consts::MIB_IN_BYTES};
+use simple_backend_utils::{ContextExt, Result, consts::MIB_IN_BYTES};
 use tokio::{
     sync::mpsc::{Receiver, Sender, error::TrySendError},
     task::JoinHandle,

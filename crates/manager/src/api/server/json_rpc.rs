@@ -1,6 +1,6 @@
 use std::net::SocketAddr;
 
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use manager_api::{
     ClientConfig, ManagerClient,
     protocol::{ConnectionUtilsRead, ConnectionUtilsWrite},
@@ -8,6 +8,7 @@ use manager_api::{
 use manager_model::{JsonRpcRequest, JsonRpcRequestType, JsonRpcResponse};
 use scheduled_task::RpcScheduledTask;
 use secure_storage::RpcSecureStorage;
+use simple_backend_utils::Result;
 use software::RpcSoftware;
 use system_info::RpcSystemInfo;
 use task::RpcTask;

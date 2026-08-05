@@ -1,6 +1,7 @@
 use diesel::prelude::*;
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use model::{AccountIdInternal, PushNotificationDbState, PushNotificationInfoSyncVersion};
+use simple_backend_utils::Result;
 
 use crate::{DieselDatabaseError, define_current_read_commands};
 

@@ -1,11 +1,10 @@
 use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{delete, insert_into, prelude::*, update};
-use error_stack::Result;
 use model::{AccountIdInternal, EmailLoginTokenRow, UnixTime};
 use model_account::{
     AccountEmailSendingStateRaw, EmailChangeLimits, EmailLoginLimits, EmailVerificationLimits,
 };
-use simple_backend_utils::db::MyRunQueryDsl;
+use simple_backend_utils::{Result, db::MyRunQueryDsl};
 
 use crate::{IntoDatabaseError, current::read::GetDbReadCommandsAccount};
 

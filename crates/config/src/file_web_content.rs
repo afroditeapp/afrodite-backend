@@ -1,10 +1,11 @@
 use std::{collections::HashMap, io::Write, path::Path};
 
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use handlebars::Handlebars;
 use model::StringResourceInternal;
 use serde::Deserialize;
 use serde_json::json;
+use simple_backend_utils::Result;
 use toml::map::Map;
 
 use crate::file::ConfigFileError;

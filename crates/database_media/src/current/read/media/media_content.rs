@@ -1,11 +1,11 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
-use error_stack::Result;
 use model::ContentIdInternal;
 use model_media::{
     AccountIdInternal, ContentId, ContentIdDb, ContentModerationState, ContentSlot,
     CurrentAccountMediaInternal, CurrentAccountMediaRaw, MediaContentRaw,
 };
+use simple_backend_utils::Result;
 
 use crate::IntoDatabaseError;
 

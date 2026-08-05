@@ -24,7 +24,7 @@ impl UserDataExportJsonMedia {
     pub fn query(
         current: &mut DbReadMode,
         id: SourceAccount,
-    ) -> error_stack::Result<Self, DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<Self, DieselDatabaseError> {
         let id = id.0;
         let current_media = current.media().media_content().current_account_media(id)?;
         let media_content_raw = current

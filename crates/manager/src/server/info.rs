@@ -2,9 +2,10 @@
 
 use std::process::ExitStatus;
 
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use manager_config::Config;
 use manager_model::{CommandOutput, SystemInfo};
+use simple_backend_utils::Result;
 use tokio::process::Command;
 
 #[derive(thiserror::Error, Debug)]

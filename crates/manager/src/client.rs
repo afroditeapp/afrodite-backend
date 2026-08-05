@@ -1,10 +1,11 @@
 //! CLI API client
 //!
 
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use manager_api::{ClientConfig, ClientError, ManagerClient, protocol::RequestSenderCmds};
 use manager_config::args::{ApiCommand, ManagerApiClientMode};
 use manager_model::{ManagerInstanceName, SoftwareInfo, SoftwareUpdateTaskType};
+use simple_backend_utils::Result;
 
 pub async fn handle_api_client_mode(args: ManagerApiClientMode) -> Result<(), ClientError> {
     let api_key = args

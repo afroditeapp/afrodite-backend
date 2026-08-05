@@ -1,8 +1,8 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::{prelude::*, update};
-use error_stack::Result;
 use model::{AccountIdInternal, UnixTime};
 use model_account::{AccountBanReasonCategory, AccountBanReasonDetails, AccountBannedAdminType};
+use simple_backend_utils::Result;
 
 use crate::IntoDatabaseError;
 

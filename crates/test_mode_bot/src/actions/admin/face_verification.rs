@@ -17,8 +17,9 @@ use base64::display::Base64Display;
 use config::bot_config_file::internal::{
     AcceptOrReject, FaceVerificationConfigInternal, FaceVerificationLlmConfigInternal,
 };
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use futures::{StreamExt, stream};
+use simple_backend_utils::Result;
 use test_mode_utils::client::{ApiClient, TestError};
 use tracing::info;
 

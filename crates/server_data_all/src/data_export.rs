@@ -54,7 +54,7 @@ fn db_data_export(
     file_dir: FileDir,
     zip_main_directory_name: String,
     cmd: DataExportCmd,
-) -> error_stack::Result<(), DieselDatabaseError> {
+) -> simple_backend_utils::Result<(), DieselDatabaseError> {
     let archive = file_dir.tmp_dir(cmd.target().0.into()).data_export();
     archive
         .create_parent_dirs_blocking()
@@ -134,7 +134,7 @@ impl DataExportArchiveWriter {
         dir_name: &str,
         json_name: &str,
         json: &T,
-    ) -> error_stack::Result<(), DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<(), DieselDatabaseError> {
         let zip_main_directory_name = &self.zip_main_directory_name;
         let file_name = format!("{zip_main_directory_name}/{dir_name}/{json_name}.json");
         let json = serde_json::to_string_pretty(&json)
@@ -152,7 +152,7 @@ impl DataExportArchiveWriter {
         &mut self,
         json_name: &str,
         json: &T,
-    ) -> error_stack::Result<(), DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<(), DieselDatabaseError> {
         self.write_json_file_internal("user", json_name, json)
     }
 
@@ -160,7 +160,7 @@ impl DataExportArchiveWriter {
         &mut self,
         json_name: &str,
         json: &T,
-    ) -> error_stack::Result<(), DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<(), DieselDatabaseError> {
         self.write_json_file_internal("admin", json_name, json)
     }
 
@@ -169,7 +169,7 @@ impl DataExportArchiveWriter {
         content_id: ContentId,
         variant: ContentQualityVariant,
         data: &[u8],
-    ) -> error_stack::Result<(), DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<(), DieselDatabaseError> {
         let zip_main_directory_name = &self.zip_main_directory_name;
         let file_name = format!(
             "{zip_main_directory_name}/media/{}.jpg",

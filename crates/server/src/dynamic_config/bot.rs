@@ -8,8 +8,9 @@ use std::{
 };
 
 use config::Config;
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use nix::{sys::signal::Signal, unistd::Pid};
+use simple_backend_utils::Result;
 use tokio::{
     io::{AsyncBufReadExt, AsyncRead},
     process::Child,

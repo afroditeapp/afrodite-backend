@@ -2,13 +2,14 @@ use std::{collections::HashMap, sync::Arc};
 
 use config::Config;
 use diesel::prelude::*;
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use model::{
     AccountIdInternal, ApiUsageCount, ApiUsageStatistics, GetApiUsageStatisticsResult,
     GetApiUsageStatisticsSettings, GetIpAddressStatisticsResult, IpAddressInfo,
     IpAddressInfoInternal, UnixTime,
 };
 use simple_backend::maxmind_db::IpDb;
+use simple_backend_utils::Result;
 
 use crate::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands};
 

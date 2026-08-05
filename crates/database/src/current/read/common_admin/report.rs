@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
 use diesel::{alias, prelude::*, sql_types::Bool};
-use error_stack::Result;
 use model::{
     AccountId, AccountIdDb, GetChatMessageReportsInternal, GetReportList,
     ReportDetailedInfoInternal, ReportIdDb, ReportInternal, ReportIteratorMode,
     ReportIteratorQueryInternal, ReportProcessingState, ReportQueueType, ReportTypeInternal,
     UnixTime,
 };
+use simple_backend_utils::Result;
 
 use crate::{
     DieselDatabaseError, IntoDatabaseError, current::read::GetDbReadCommandsCommon,

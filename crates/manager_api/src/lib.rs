@@ -6,7 +6,7 @@
 
 use std::{future::Future, path::Path, sync::Arc};
 
-use error_stack::{Result, ResultExt, report};
+use error_stack::{ResultExt, report};
 use futures::FutureExt;
 use manager_model::{
     JsonRpcRequest, JsonRpcResponse, ManagerInstanceName, ManagerProtocolMode,
@@ -16,6 +16,7 @@ use protocol::{
     ClientConnectionReadSend, ClientConnectionReadWriteSend, ClientConnectionWriteSend,
     ConnectionUtilsRead, ConnectionUtilsWrite,
 };
+use simple_backend_utils::Result;
 use tokio::net::TcpStream;
 use tokio_rustls::{
     TlsConnector,

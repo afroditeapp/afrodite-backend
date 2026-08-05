@@ -1,7 +1,9 @@
 use std::path::Path;
 
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use tokio::io::AsyncWriteExt;
+
+use crate::Result;
 
 #[derive(thiserror::Error, Debug)]
 pub enum OverwriteFileError {

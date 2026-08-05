@@ -1,7 +1,7 @@
 use diesel::{delete, insert_into, prelude::*, upsert::excluded};
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use model::{AccountIdInternal, LoginSession};
-use simple_backend_utils::db::MyRunQueryDsl;
+use simple_backend_utils::{Result, db::MyRunQueryDsl};
 
 use crate::{DieselDatabaseError, IntoDatabaseError, define_current_write_commands};
 

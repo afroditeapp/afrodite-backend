@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use api_client::models::AccountId;
 use config::{args::TestMode, bot_config_file::BotConfigFile};
-use error_stack::Result;
+use simple_backend_utils::Result;
 use test_mode_bot::{
     BotState, action_array,
     actions::{

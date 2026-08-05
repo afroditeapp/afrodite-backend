@@ -1,9 +1,9 @@
 use std::path::PathBuf;
 
 use diesel::{Connection, prelude::*};
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use simple_backend_config::{Database, SimpleBackendConfig};
-use simple_backend_utils::{ContextExt, db::MyDbConnection};
+use simple_backend_utils::{ContextExt, Result, db::MyDbConnection};
 
 use super::DieselDatabaseError;
 

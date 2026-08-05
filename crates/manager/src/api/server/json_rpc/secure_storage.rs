@@ -1,5 +1,6 @@
-use error_stack::{Result, ResultExt, report};
+use error_stack::{ResultExt, report};
 use manager_model::{JsonRpcResponse, ManagerInstanceName};
+use simple_backend_utils::Result;
 
 use super::JsonRpcError;
 use crate::api::GetConfig;

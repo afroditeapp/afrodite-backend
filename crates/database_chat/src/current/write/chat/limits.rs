@@ -1,7 +1,7 @@
 use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{ExpressionMethods, insert_into, prelude::*, update};
-use error_stack::Result;
 use model::{AccountIdInternal, SyncVersion, UnixTime};
+use simple_backend_utils::Result;
 
 use crate::IntoDatabaseError;
 

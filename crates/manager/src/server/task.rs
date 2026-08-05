@@ -2,8 +2,9 @@
 
 use std::{process::ExitStatus, sync::Arc};
 
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use manager_model::ManagerApiManualTaskType;
+use simple_backend_utils::Result;
 use tokio::{process::Command, sync::mpsc, task::JoinHandle};
 use tracing::{info, warn};
 

@@ -1,9 +1,8 @@
 use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{insert_into, prelude::*, update, upsert::excluded};
-use error_stack::Result;
 use model::{AccountIdInternal, CustomEmailSendingLimits, UnixTime};
 use model_account::{CustomEmailId, UpdateCustomEmail};
-use simple_backend_utils::db::MyRunQueryDsl;
+use simple_backend_utils::{Result, db::MyRunQueryDsl};
 
 use crate::IntoDatabaseError;
 

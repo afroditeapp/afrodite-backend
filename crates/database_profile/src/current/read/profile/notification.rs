@@ -1,8 +1,8 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
-use error_stack::Result;
 use model::AccountIdInternal;
 use model_profile::ProfileAppNotificationSettings;
+use simple_backend_utils::Result;
 
 use crate::IntoDatabaseError;
 

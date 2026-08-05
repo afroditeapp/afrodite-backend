@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use apple::AppleAccountInfo;
-use error_stack::Result;
 use simple_backend_config::SimpleBackendConfig;
+use simple_backend_utils::Result;
 
 use self::{
     apple::{SignInWithAppleError, SignInWithAppleManager},

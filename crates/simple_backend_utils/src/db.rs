@@ -1,7 +1,7 @@
 use diesel::{Connection, RunQueryDsl, prelude::*};
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 
-use crate::ComponentError;
+use crate::{ComponentError, Result};
 
 impl ComponentError for DieselDatabaseError {
     const COMPONENT_NAME: &'static str = "Diesel";

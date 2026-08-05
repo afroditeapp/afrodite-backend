@@ -1,9 +1,9 @@
 use diesel::prelude::*;
-use error_stack::Result;
 use model::{
     AccessToken, AccessTokenUnixTime, AccountIdInternal, IpAddressInternal, LoginSession,
     RefreshToken,
 };
+use simple_backend_utils::Result;
 
 use crate::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands};
 

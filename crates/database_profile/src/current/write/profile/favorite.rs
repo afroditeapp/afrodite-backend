@@ -1,9 +1,8 @@
 use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, delete, insert_into};
-use error_stack::Result;
 use model::AccountIdInternal;
 use model_profile::AddFavoriteProfileResult;
-use simple_backend_utils::current_unix_time;
+use simple_backend_utils::{Result, current_unix_time};
 
 use crate::IntoDatabaseError;
 

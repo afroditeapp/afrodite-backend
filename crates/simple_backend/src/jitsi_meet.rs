@@ -1,10 +1,11 @@
 use base64::Engine;
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use jsonwebtoken::{EncodingKey, Header};
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 use simple_backend_config::SimpleBackendConfig;
 use simple_backend_model::UnixTime;
+use simple_backend_utils::Result;
 
 pub struct VideoCallUserInfo {
     pub id: String,

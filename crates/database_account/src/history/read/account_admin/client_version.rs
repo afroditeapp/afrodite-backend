@@ -2,12 +2,13 @@ use std::collections::HashMap;
 
 use database::{DieselDatabaseError, define_history_read_commands};
 use diesel::prelude::*;
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use model::{ClientVersion, UnixTime};
 use model_account::{
     ClientVersionCount, ClientVersionStatistics, GetClientVersionStatisticsResult,
     GetClientVersionStatisticsSettings,
 };
+use simple_backend_utils::Result;
 
 define_history_read_commands!(HistoryReadAccountClientVersion);
 

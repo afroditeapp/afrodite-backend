@@ -28,7 +28,7 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
     async fn get_and_reset_push_notifications(
         &self,
         account_id: AccountIdInternal,
-    ) -> error_stack::Result<PushNotificationSendingInfo, PushNotificationError> {
+    ) -> simple_backend_utils::Result<PushNotificationSendingInfo, PushNotificationError> {
         let db_state = self
             .state
             .read()
@@ -64,7 +64,7 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
     async fn remove_device_token(
         &self,
         account_id: AccountIdInternal,
-    ) -> error_stack::Result<(), PushNotificationError> {
+    ) -> simple_backend_utils::Result<(), PushNotificationError> {
         db_write_raw!(self.state, move |cmds| {
             cmds.common()
                 .push_notification()
@@ -80,7 +80,7 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
         &self,
         account_id: AccountIdInternal,
         notifications_to_mark_as_sent: PushNotificationsToMarkAsSent,
-    ) -> error_stack::Result<(), PushNotificationError> {
+    ) -> simple_backend_utils::Result<(), PushNotificationError> {
         let PushNotificationsToMarkAsSent {
             pending_app_notifications,
             new_message_notifications,
@@ -104,7 +104,7 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
 
     async fn save_current_notification_flags_to_database_if_needed(
         &self,
-    ) -> error_stack::Result<(), PushNotificationError> {
+    ) -> simple_backend_utils::Result<(), PushNotificationError> {
         let account_ids = self
             .state
             .read()
@@ -132,7 +132,7 @@ impl PushNotificationStateProvider for ServerPushNotificationStateProvider {
     async fn client_type(
         &self,
         account_id: AccountIdInternal,
-    ) -> error_stack::Result<Option<ClientType>, PushNotificationError> {
+    ) -> simple_backend_utils::Result<Option<ClientType>, PushNotificationError> {
         self.state
             .read()
             .common()

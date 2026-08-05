@@ -1,11 +1,11 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::{dsl::exists, prelude::*};
-use error_stack::Result;
 use model::{NewMessagePushNotification, NewMessagePushNotificationList, UnixTime};
 use model_chat::{
     AccountIdInternal, ChatAppNotificationSettings, ChatEmailNotificationSettings,
     PendingChatNotification,
 };
+use simple_backend_utils::Result;
 
 use crate::IntoDatabaseError;
 

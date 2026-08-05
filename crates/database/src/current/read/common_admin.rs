@@ -1,7 +1,6 @@
 use diesel::prelude::*;
-use error_stack::Result;
 use model::{AccountIdInternal, BotAccountType};
-use simple_backend_utils::db::DieselDatabaseError;
+use simple_backend_utils::{Result, db::DieselDatabaseError};
 
 use crate::{IntoDatabaseError, define_current_read_commands};
 

@@ -44,7 +44,7 @@ impl ProfileAttributesSchemaManager {
 /// If no attributes are found in the database, returns an empty ProfileAttributesInternal.
 pub async fn load_profile_attributes_from_db(
     reader: &database::DbReaderRaw<'_>,
-) -> error_stack::Result<ProfileAttributesSchemaManager, DataError> {
+) -> simple_backend_utils::Result<ProfileAttributesSchemaManager, DataError> {
     let (attributes, order_mode): (Vec<Attribute>, Option<model::profile::AttributeOrderMode>) =
         reader
             .db_read(|mut mode| {

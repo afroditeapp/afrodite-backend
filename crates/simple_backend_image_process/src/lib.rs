@@ -1,11 +1,12 @@
 use std::{io, path::PathBuf};
 
-use error_stack::{Result, ResultExt, report};
+use error_stack::{ResultExt, report};
 use face_detection::FaceDetector;
 use image::{DynamicImage, EncodableLayout, ImageDecoder, ImageReader};
 use nsfw_detection::NsfwDetector;
 use serde::{Deserialize, Serialize};
 use simple_backend_config::image_process::ImageProcessingConfig;
+use simple_backend_utils::Result;
 
 mod face_detection;
 mod nsfw_detection;

@@ -4,10 +4,9 @@ use diesel::{
     ExpressionMethods, OptionalExtension, RunQueryDsl, insert_into,
     query_dsl::methods::{FindDsl, SelectDsl},
 };
-use error_stack::Result;
 use model::{AccountIdDb, ApiUsage, IpAddressStorage, UnixTime};
 use simple_backend_database::diesel_db::DieselDatabaseError;
-use simple_backend_utils::db::MyRunQueryDsl;
+use simple_backend_utils::{Result, db::MyRunQueryDsl};
 
 use crate::{IntoDatabaseError, define_current_write_commands};
 

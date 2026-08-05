@@ -3,9 +3,9 @@ use diesel::{
     ExpressionMethods, RunQueryDsl,
     query_dsl::methods::{FilterDsl, SelectDsl},
 };
-use error_stack::Result;
 use model::AccountIdInternal;
 use model_account::ProfileNameAndAge;
+use simple_backend_utils::Result;
 
 define_current_read_commands!(CurrentReadProfileUtils);
 

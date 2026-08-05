@@ -22,11 +22,12 @@ use config::bot_config_file::internal::{
     ContentModerationConfigInternal, ContentModerationLlmConfigInternal, ModerationAction,
     NsfwDetectionConfigInternal,
 };
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use futures::stream::{self, StreamExt};
 use image::DynamicImage;
 use nsfw::model::Metric;
 use simple_backend_model::NsfwDetectionThresholds;
+use simple_backend_utils::Result;
 use test_mode_utils::client::{ApiClient, TestError};
 use tracing::info;
 

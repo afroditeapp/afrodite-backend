@@ -1,9 +1,8 @@
 use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{delete, insert_into, prelude::*, update};
-use error_stack::Result;
 use model::{AccountCreatedTime, AccountId, AccountIdInternal};
 use model_account::{AccountGlobalState, EmailAddress, EmailAddressStateInternal};
-use simple_backend_utils::db::MyRunQueryDsl;
+use simple_backend_utils::{Result, db::MyRunQueryDsl};
 
 use crate::IntoDatabaseError;
 

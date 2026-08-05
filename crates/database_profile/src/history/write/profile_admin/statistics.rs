@@ -3,9 +3,9 @@ use database::{
     history::write::GetDbHistoryWriteCommandsCommon,
 };
 use diesel::{insert_into, prelude::*};
-use error_stack::Result;
 use model::{StatisticsSaveTimeId, UnixTime};
 use model_profile::ProfileStatisticsInternal;
+use simple_backend_utils::Result;
 
 define_history_write_commands!(HistoryWriteProfileAdminStatistics);
 

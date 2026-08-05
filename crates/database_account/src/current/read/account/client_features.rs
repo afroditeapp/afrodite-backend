@@ -1,6 +1,7 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
+use simple_backend_utils::Result;
 
 define_current_read_commands!(CurrentReadAccountClientFeatures);
 

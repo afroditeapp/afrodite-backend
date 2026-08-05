@@ -1,11 +1,12 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::{ExpressionMethods, prelude::*};
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use model::AccountIdInternal;
 use model_account::{
     CustomEmail, CustomEmailId, CustomEmailInternal, CustomEmailTranslation,
     CustomEmailTranslationInternal,
 };
+use simple_backend_utils::Result;
 
 use crate::IntoDatabaseError;
 

@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use error_stack::{FutureExt, Result, ResultExt};
+use error_stack::{FutureExt, ResultExt};
 use manager_api::{
     ClientConfig, ManagerClient,
     protocol::{
@@ -12,7 +12,7 @@ use manager_config::file::JsonRpcLinkConfigClient;
 use manager_model::{
     JsonRpcLinkHeader, JsonRpcLinkMessage, JsonRpcLinkMessageType, JsonRpcRequest,
 };
-use simple_backend_utils::ContextExt;
+use simple_backend_utils::{ContextExt, Result};
 use tokio::{sync::mpsc, task::JoinHandle};
 use tracing::{error, info, warn};
 

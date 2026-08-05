@@ -1,10 +1,10 @@
 use std::path::Path;
 
 use diesel::RunQueryDsl;
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use nix::sys::statvfs::statvfs;
 use simple_backend_config::file::SqliteVacuumConfig;
-use simple_backend_utils::{consts::MIB_IN_BYTES, db::DieselDatabaseError};
+use simple_backend_utils::{Result, consts::MIB_IN_BYTES, db::DieselDatabaseError};
 use tracing::{error, info};
 
 use super::MyDbConnection;

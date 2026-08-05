@@ -7,9 +7,9 @@ use std::{
 
 use api_client::apis::configuration::Configuration;
 use config::args::PublicApiUrl;
-use error_stack::Result;
 use hyper::StatusCode;
 use reqwest::{Client, Url};
+use simple_backend_utils::Result;
 use tracing::info;
 
 #[derive(thiserror::Error, Debug)]

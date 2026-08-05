@@ -1,9 +1,9 @@
-use error_stack::Result;
 use model::AccountId;
 use server_data::{
     cache::{CacheError, chat::CacheChat},
     db_manager::InternalWriting,
 };
+use simple_backend_utils::Result;
 
 pub trait CacheReadChat {
     async fn read_cache_chat<T, Id: Into<AccountId>>(

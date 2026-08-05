@@ -1,8 +1,9 @@
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use serde::{Deserialize, Serialize};
 use simple_backend_config::SimpleBackendConfig;
 use simple_backend_database::data::create_dirs_and_get_simple_backend_dir_path;
 use simple_backend_model::UnixTime;
+use simple_backend_utils::Result;
 use tokio::io::AsyncWriteExt;
 
 use super::EmailError;

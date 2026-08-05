@@ -2,7 +2,7 @@
 
 use std::{process::ExitStatus, sync::Arc, time::Duration};
 
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use futures::lock::Mutex;
 use manager_config::file::ScheduledTasksConfig;
 use manager_model::{
@@ -10,8 +10,9 @@ use manager_model::{
     ManagerApiScheduledTaskStatus, ManagerApiScheduledTaskType,
 };
 use simple_backend_model::UnixTime;
-use simple_backend_utils::time::{
-    next_possible_utc_date_time_value_using_current_time, sleep_until_current_time_is_at,
+use simple_backend_utils::{
+    Result,
+    time::{next_possible_utc_date_time_value_using_current_time, sleep_until_current_time_is_at},
 };
 use tokio::{sync::mpsc, task::JoinHandle, time::sleep};
 use tracing::{info, warn};

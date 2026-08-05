@@ -30,54 +30,54 @@ pub trait DbRead {
     async fn db_read<
         T: FnOnce(
                 database::DbReadMode<'_>,
-            ) -> error_stack::Result<R, database::DieselDatabaseError>
+            ) -> simple_backend_utils::Result<R, database::DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
     >(
         &self,
         cmd: T,
-    ) -> error_stack::Result<R, database::DieselDatabaseError>;
+    ) -> simple_backend_utils::Result<R, database::DieselDatabaseError>;
 
     async fn db_read_history<
         T: FnOnce(
                 database::DbReadModeHistory<'_>,
-            ) -> error_stack::Result<R, database::DieselDatabaseError>
+            ) -> simple_backend_utils::Result<R, database::DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
     >(
         &self,
         cmd: T,
-    ) -> error_stack::Result<R, database::DieselDatabaseError>;
+    ) -> simple_backend_utils::Result<R, database::DieselDatabaseError>;
 }
 
 impl<I: InternalReading> DbRead for I {
     async fn db_read<
         T: FnOnce(
                 database::DbReadMode<'_>,
-            ) -> error_stack::Result<R, database::DieselDatabaseError>
+            ) -> simple_backend_utils::Result<R, database::DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
     >(
         &self,
         cmd: T,
-    ) -> error_stack::Result<R, database::DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<R, database::DieselDatabaseError> {
         self.db_read_raw(cmd).await
     }
 
     async fn db_read_history<
         T: FnOnce(
                 database::DbReadModeHistory<'_>,
-            ) -> error_stack::Result<R, database::DieselDatabaseError>
+            ) -> simple_backend_utils::Result<R, database::DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
     >(
         &self,
         cmd: T,
-    ) -> error_stack::Result<R, database::DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<R, database::DieselDatabaseError> {
         self.db_read_history_raw(cmd).await
     }
 }

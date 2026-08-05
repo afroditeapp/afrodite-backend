@@ -65,7 +65,7 @@ impl CustomEmailHandler {
     async fn send_unsent_custom_emails(
         &self,
         email_id: CustomEmailId,
-    ) -> error_stack::Result<(), EmailError> {
+    ) -> simple_backend_utils::Result<(), EmailError> {
         let unsent = self
             .state
             .read()
@@ -98,7 +98,7 @@ impl CustomEmailHandler {
         &self,
         recipient: AccountIdInternal,
         email_id: i64,
-    ) -> error_stack::Result<(), EmailError> {
+    ) -> simple_backend_utils::Result<(), EmailError> {
         let Some(info) = self.get_custom_email_data(recipient, email_id).await? else {
             // Email disabled for the email recipient
             return Ok(());
@@ -121,7 +121,7 @@ impl CustomEmailHandler {
         &self,
         recipient: AccountIdInternal,
         email_id: i64,
-    ) -> error_stack::Result<(), EmailError> {
+    ) -> simple_backend_utils::Result<(), EmailError> {
         let Some(info) = self.get_custom_email_data(recipient, email_id).await? else {
             // Email disabled for the email recipient
             return Ok(());
@@ -146,7 +146,7 @@ impl CustomEmailHandler {
         &self,
         recipient: AccountIdInternal,
         message: i64,
-    ) -> error_stack::Result<Option<EmailData>, EmailError> {
+    ) -> simple_backend_utils::Result<Option<EmailData>, EmailError> {
         let email = self
             .state
             .read()
@@ -220,7 +220,7 @@ impl CustomEmailHandler {
         &self,
         recipient: AccountIdInternal,
         message: i64,
-    ) -> error_stack::Result<(), EmailError> {
+    ) -> simple_backend_utils::Result<(), EmailError> {
         db_write_raw!(self.state, move |cmds| {
             cmds.account_admin()
                 .custom_email()

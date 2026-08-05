@@ -50,7 +50,7 @@ impl DynamicClientFeaturesManager {
 
 pub async fn load_dynamic_client_features_from_db(
     reader: &DbReaderRaw<'_>,
-) -> error_stack::Result<DynamicClientFeaturesManager, DataError> {
+) -> simple_backend_utils::Result<DynamicClientFeaturesManager, DataError> {
     let value = reader
         .db_read(move |mut mode| mode.common().client_config().dynamic_client_features())
         .await

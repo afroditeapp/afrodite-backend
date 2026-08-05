@@ -21,7 +21,7 @@ impl UserDataExportJsonChat {
     pub fn query(
         current: &mut DbReadMode,
         id: SourceAccount,
-    ) -> error_stack::Result<Self, DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<Self, DieselDatabaseError> {
         let id = id.0;
         let data = Self {
             chat_state: current.chat().chat_state(id)?,

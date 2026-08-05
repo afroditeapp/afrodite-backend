@@ -1,10 +1,11 @@
 use database::{DieselDatabaseError, define_history_read_commands};
 use diesel::prelude::*;
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use model_profile::{
     GetProfileStatisticsHistoryResult, ProfileStatisticsHistoryValue,
     ProfileStatisticsHistoryValueTypeInternal, StatisticsGender,
 };
+use simple_backend_utils::Result;
 
 define_history_read_commands!(HistoryReadProfileAdminStatistics);
 

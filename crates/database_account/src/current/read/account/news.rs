@@ -1,11 +1,11 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::{alias, prelude::*};
-use error_stack::Result;
 use model::{AccountId, AccountIdInternal, NewsSyncVersion, UnreadNewsCount};
 use model_account::{
     NewsId, NewsItem, NewsItemInternal, NewsItemSimple, NewsLocale, NewsTranslationInternal,
     PublicationId, RequireNewsLocale,
 };
+use simple_backend_utils::Result;
 
 use crate::IntoDatabaseError;
 

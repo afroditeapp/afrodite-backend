@@ -1,9 +1,10 @@
 use std::net::SocketAddr;
 
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use manager_api::protocol::{
     ClientConnectionRead, ClientConnectionWrite, ConnectionUtilsRead, ConnectionUtilsWrite,
 };
+use simple_backend_utils::Result;
 use tracing::info;
 
 use super::super::{ClientConnectionReadWrite, ServerError};

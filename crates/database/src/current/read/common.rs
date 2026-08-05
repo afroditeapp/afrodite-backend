@@ -1,7 +1,7 @@
 use diesel::{SelectableHelper, prelude::*, sql_query, sql_types::Text};
-use error_stack::Result;
 use model::{Account, AccountId, AccountIdDb, AccountIdInternal, Permissions};
 use simple_backend_database::diesel_db::DieselDatabaseError;
+use simple_backend_utils::Result;
 
 use crate::{
     IntoDatabaseError, current::read::GetDbReadCommandsCommon, define_current_read_commands,

@@ -8,7 +8,6 @@ use std::{
 use account::CacheAccount;
 use chat::CacheChat;
 use common::CacheCommon;
-use error_stack::Result;
 use media::CacheMedia;
 use model::{
     AccessToken, AccessTokenType, AccountId, AccountIdInternal, AccountState,
@@ -18,6 +17,7 @@ use model::{
 use model_server_data::{AuthPair, LocationIndexProfileData};
 use profile::CacheProfile;
 pub use server_common::data::cache::CacheError;
+use simple_backend_utils::Result;
 use tokio::sync::RwLock;
 
 use crate::{

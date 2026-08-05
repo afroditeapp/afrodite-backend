@@ -16,7 +16,8 @@ use api_client::{
 use async_trait::async_trait;
 use chrono::{DateTime, NaiveTime, Utc};
 use config::{bot_config_file::Gender, file::LocationConfig};
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
+use simple_backend_utils::Result;
 use test_mode_utils::{
     client::TestError,
     websocket_protocol::{ResponseNextProfilePage, ResponseResetProfilePaging},

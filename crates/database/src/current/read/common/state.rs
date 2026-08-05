@@ -1,7 +1,7 @@
 use diesel::prelude::*;
-use error_stack::Result;
 use model::{AccountIdInternal, AccountStateRelatedSharedState, OtherSharedState, Permissions};
 use simple_backend_database::diesel_db::DieselDatabaseError;
+use simple_backend_utils::Result;
 
 use crate::{IntoDatabaseError, define_current_read_commands};
 

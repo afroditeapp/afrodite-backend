@@ -1,6 +1,5 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
-use error_stack::Result;
 use model::{
     AccountId, AdminDataExportPendingMessage, ConversationId, DataExportLatestSeenMessage,
     DataExportPendingMessage, MessageId, MessageNumber, PendingMessageInfo, PendingMessageRaw,
@@ -10,6 +9,7 @@ use model_chat::{
     AccountIdInternal, DataExportMessageDeliveryInfo, DeliveryInfoType, GetSentMessage,
     LatestSeenMessageInfo, MessageDeliveryInfo, PendingMessageInternal,
 };
+use simple_backend_utils::Result;
 
 use crate::IntoDatabaseError;
 

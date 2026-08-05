@@ -1,8 +1,8 @@
 use std::{path::Path, process::ExitStatus};
 
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use manager_config::file::SoftwareUpdateConfig;
-use simple_backend_utils::ContextExt;
+use simple_backend_utils::{ContextExt, Result};
 use tokio::process::Command;
 use tracing::info;
 

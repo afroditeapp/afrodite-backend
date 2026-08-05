@@ -244,28 +244,32 @@ pub trait InternalWriting {
     }
 
     async fn db_transaction_raw<
-        T: FnOnce(database::DbWriteMode<'_>) -> error_stack::Result<R, DieselDatabaseError>
+        T: FnOnce(
+                database::DbWriteMode<'_>,
+            ) -> simple_backend_utils::Result<R, DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
     >(
         &self,
         cmd: T,
-    ) -> error_stack::Result<R, DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<R, DieselDatabaseError> {
         DbWriter::new(self.current_write_handle())
             .db_transaction_raw(cmd)
             .await
     }
 
     async fn db_transaction_history_raw<
-        T: FnOnce(database::DbWriteModeHistory<'_>) -> error_stack::Result<R, DieselDatabaseError>
+        T: FnOnce(
+                database::DbWriteModeHistory<'_>,
+            ) -> simple_backend_utils::Result<R, DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
     >(
         &self,
         cmd: T,
-    ) -> error_stack::Result<R, DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<R, DieselDatabaseError> {
         DbWriterHistory::new(self.history_write_handle())
             .db_transaction_raw(cmd)
             .await
@@ -274,7 +278,7 @@ pub trait InternalWriting {
     async fn db_transaction_with_history<T, R: Send + 'static>(
         &self,
         cmd: T,
-    ) -> error_stack::Result<R, DieselDatabaseError>
+    ) -> simple_backend_utils::Result<R, DieselDatabaseError>
     where
         T: FnOnce(
                 TransactionConnection<'_>,
@@ -289,14 +293,14 @@ pub trait InternalWriting {
     }
 
     async fn db_read_raw<
-        T: FnOnce(database::DbReadMode<'_>) -> error_stack::Result<R, DieselDatabaseError>
+        T: FnOnce(database::DbReadMode<'_>) -> simple_backend_utils::Result<R, DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
     >(
         &self,
         cmd: T,
-    ) -> error_stack::Result<R, DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<R, DieselDatabaseError> {
         DbReaderRaw::new(self.current_read_handle())
             .db_read(cmd)
             .await
@@ -525,14 +529,14 @@ pub trait InternalReading {
     fn dynamic_server_config(&self) -> &DynamicServerConfigManager;
 
     async fn db_read_raw<
-        T: FnOnce(database::DbReadMode<'_>) -> error_stack::Result<R, DieselDatabaseError>
+        T: FnOnce(database::DbReadMode<'_>) -> simple_backend_utils::Result<R, DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
     >(
         &self,
         cmd: T,
-    ) -> error_stack::Result<R, DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<R, DieselDatabaseError> {
         DbReaderRaw::new(self.current_read_handle())
             .db_read(cmd)
             .await
@@ -540,28 +544,30 @@ pub trait InternalReading {
 
     /// Use only for database backups
     async fn db_read_raw_no_transaction<
-        T: FnOnce(database::DbReadMode<'_>) -> error_stack::Result<R, DieselDatabaseError>
+        T: FnOnce(database::DbReadMode<'_>) -> simple_backend_utils::Result<R, DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
     >(
         &self,
         cmd: T,
-    ) -> error_stack::Result<R, DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<R, DieselDatabaseError> {
         DbReaderRaw::new(self.current_read_handle())
             .db_read_no_transaction(cmd)
             .await
     }
 
     async fn db_read_history_raw<
-        T: FnOnce(database::DbReadModeHistory<'_>) -> error_stack::Result<R, DieselDatabaseError>
+        T: FnOnce(
+                database::DbReadModeHistory<'_>,
+            ) -> simple_backend_utils::Result<R, DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
     >(
         &self,
         cmd: T,
-    ) -> error_stack::Result<R, DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<R, DieselDatabaseError> {
         DbReaderHistoryRaw::new(self.history_read_handle())
             .db_read_history(cmd)
             .await
@@ -569,14 +575,16 @@ pub trait InternalReading {
 
     /// Use only for database backups
     async fn db_read_history_raw_no_transaction<
-        T: FnOnce(database::DbReadModeHistory<'_>) -> error_stack::Result<R, DieselDatabaseError>
+        T: FnOnce(
+                database::DbReadModeHistory<'_>,
+            ) -> simple_backend_utils::Result<R, DieselDatabaseError>
             + Send
             + 'static,
         R: Send + 'static,
     >(
         &self,
         cmd: T,
-    ) -> error_stack::Result<R, DieselDatabaseError> {
+    ) -> simple_backend_utils::Result<R, DieselDatabaseError> {
         DbReaderHistoryRaw::new(self.history_read_handle())
             .db_read_history_no_transaction(cmd)
             .await

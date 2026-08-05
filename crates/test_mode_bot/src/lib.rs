@@ -16,9 +16,9 @@ use config::{
     args::{PublicApiUrl, TestMode},
     bot_config_file::{BaseBotConfig, BotConfigFile},
 };
-use error_stack::Result;
 use rand::SeedableRng;
 use rand_xoshiro::Xoshiro256PlusPlus;
+use simple_backend_utils::Result;
 use test_mode_utils::{
     client::{ApiClient, TestError},
     state::{BotEncryptionKeys, BotPersistentState},

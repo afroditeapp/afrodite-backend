@@ -1,8 +1,7 @@
 use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{insert_into, prelude::*};
-use error_stack::Result;
 use model::{AccountIdInternal, UnixTime};
-use simple_backend_utils::db::MyRunQueryDsl;
+use simple_backend_utils::{Result, db::MyRunQueryDsl};
 
 use crate::IntoDatabaseError;
 

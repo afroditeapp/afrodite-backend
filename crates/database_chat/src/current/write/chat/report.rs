@@ -2,9 +2,9 @@ use database::{
     DieselDatabaseError, current::write::GetDbWriteCommandsCommon, define_current_write_commands,
 };
 use diesel::{ExpressionMethods, insert_into, prelude::*};
-use error_stack::Result;
 use model::{AccountIdInternal, ReportProcessingState, ReportTypeInternal};
 use model_chat::NewChatMessageReportInternal;
+use simple_backend_utils::Result;
 
 use crate::IntoDatabaseError;
 

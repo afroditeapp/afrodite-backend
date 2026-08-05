@@ -1,11 +1,12 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use model::{AccountIdDb, AccountIdInternal};
 use model_profile::{
     AccountIdDbValue, ProfileInternal, ProfileIteratorPage, ProfileIteratorPageValue,
     ProfileIteratorSettings,
 };
+use simple_backend_utils::Result;
 
 define_current_read_commands!(CurrentReadProfileIterator);
 

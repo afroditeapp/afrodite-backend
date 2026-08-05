@@ -328,8 +328,8 @@ impl<'a> WriteCommandsConcurrent<'a> {
         let (location, query_maker_filters, iterator_id_current) = self
             .cache
             .read_cache_blocking(id.as_id(), |e| {
-                let p = &e.profile;
-                error_stack::Result::<_, CacheError>::Ok((
+                let p: &crate::cache::profile::CacheProfile = &e.profile;
+                simple_backend_utils::Result::<_, CacheError>::Ok((
                     p.location.clone(),
                     p.filters(),
                     p.profile_iterator_session_id,
@@ -415,7 +415,7 @@ impl<'a> WriteCommandsConcurrent<'a> {
             .cache
             .read_cache_blocking(id.as_id(), |e| {
                 let p = &e.profile;
-                error_stack::Result::<_, CacheError>::Ok((
+                simple_backend_utils::Result::<_, CacheError>::Ok((
                     p.automatic_profile_search.current_iterator.clone(),
                     p.automatic_profile_search_filters(),
                     p.automatic_profile_search.iterator_session_id,

@@ -1,7 +1,8 @@
 use std::{fs, path::PathBuf};
 
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use simple_backend_config::{Database, SimpleBackendConfig};
+use simple_backend_utils::Result;
 
 use crate::SimpleDatabaseError;
 

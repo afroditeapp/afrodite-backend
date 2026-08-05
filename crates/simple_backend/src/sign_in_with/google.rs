@@ -1,7 +1,7 @@
 use std::{sync::Arc, time::Instant};
 
 use base64::Engine;
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use headers::{CacheControl, HeaderMapExt};
 use jsonwebtoken::{
     DecodingKey, TokenData, Validation,
@@ -10,7 +10,7 @@ use jsonwebtoken::{
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use simple_backend_config::SimpleBackendConfig;
-use simple_backend_utils::ContextExt;
+use simple_backend_utils::{ContextExt, Result};
 use tokio::sync::Mutex;
 
 /// Possible Google ID token (from client) iss field (issuer) values.

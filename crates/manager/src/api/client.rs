@@ -1,6 +1,7 @@
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use manager_api::{ClientError, protocol::RequestSenderCmds};
 use manager_model::{JsonRpcRequest, JsonRpcResponse, ManagerInstanceName};
+use simple_backend_utils::Result;
 
 use super::server::json_rpc::handle_rpc_request;
 use crate::server::app::S;

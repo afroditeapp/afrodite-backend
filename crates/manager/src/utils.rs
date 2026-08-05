@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use error_stack::{Result, ResultExt};
-use simple_backend_utils::ContextExt;
+use error_stack::ResultExt;
+use simple_backend_utils::{ContextExt, Result};
 use tokio::sync::{Mutex, OwnedMutexGuard};
 
 #[derive(thiserror::Error, Debug)]

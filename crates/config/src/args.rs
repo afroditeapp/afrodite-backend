@@ -94,7 +94,7 @@ pub struct RemoteBotMode {
 }
 
 impl RemoteBotMode {
-    pub fn to_test_mode(&self) -> error_stack::Result<TestMode, ConfigFileError> {
+    pub fn to_test_mode(&self) -> simple_backend_utils::Result<TestMode, ConfigFileError> {
         let bot_config_path_abs =
             abs_path_for_directory_or_file_which_might_not_exists(&self.bot_config)
                 .change_context(ConfigFileError::LoadConfig)?;

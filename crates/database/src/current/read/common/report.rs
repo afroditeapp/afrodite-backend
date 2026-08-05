@@ -1,6 +1,5 @@
 use base64::Engine;
 use diesel::{alias, prelude::*};
-use error_stack::Result;
 use model::{
     AccountId, AccountIdDb, AccountIdInternal, AccountInteractionInternal, ChatMessageReport,
     ContentId, MessageNumber, ReportAccountInfo, ReportChatInfo, ReportChatInfoInteractionState,
@@ -9,6 +8,7 @@ use model::{
     UnixTime,
 };
 use simple_backend_model::NonEmptyString;
+use simple_backend_utils::Result;
 
 use crate::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands};
 

@@ -1,5 +1,6 @@
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use manager_model::BackupMessage;
+use simple_backend_utils::Result;
 use tokio::{
     sync::{mpsc, oneshot},
     task::JoinHandle,

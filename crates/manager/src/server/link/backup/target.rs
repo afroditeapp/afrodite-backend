@@ -1,7 +1,7 @@
 use std::{collections::HashSet, sync::Arc, time::Duration};
 
 use backup::{DeleteOldFileBackups, SaveContentBackup, SaveFileBackup};
-use error_stack::{FutureExt, Result, ResultExt};
+use error_stack::{FutureExt, ResultExt};
 use manager_api::{
     ClientConfig, ManagerClient,
     protocol::{
@@ -15,7 +15,7 @@ use manager_model::{
     SourceToTargetMessage, TargetToSourceMessage,
 };
 use simple_backend_model::ContentQualityVariant;
-use simple_backend_utils::{ContextExt, IntoReportFromString};
+use simple_backend_utils::{ContextExt, IntoReportFromString, Result};
 use tokio::{sync::mpsc, task::JoinHandle};
 use tracing::{error, info, warn};
 

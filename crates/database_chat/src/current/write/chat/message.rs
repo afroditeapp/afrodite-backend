@@ -2,13 +2,13 @@ use std::{collections::HashMap, sync::Arc};
 
 use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{delete, insert_into, prelude::*, update};
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use model::{PendingMessageInfo, PublicKeyId};
 use model_chat::{
     AccountIdInternal, AccountInteractionState, DeliveryInfoType, MessageId, SignedMessageData,
     UnixTime,
 };
-use simple_backend_utils::db::MyRunQueryDsl;
+use simple_backend_utils::{Result, db::MyRunQueryDsl};
 use utils::encrypt::ParsedKeys;
 
 use super::RecipientBlockedSender;

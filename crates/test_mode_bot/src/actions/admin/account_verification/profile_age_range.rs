@@ -1,6 +1,6 @@
 use api_client::models::EditVerificationProfileAgeRange;
 use config::bot_config_file::internal::AccountVerificationConfigInternal;
-use error_stack::Result;
+use simple_backend_utils::Result;
 use test_mode_utils::{AccountVerificationErrorFlags, client::TestError};
 
 use super::{LazyProfileAgeAndName, VerificationMethodAction};

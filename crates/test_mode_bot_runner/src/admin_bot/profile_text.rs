@@ -1,6 +1,6 @@
 use api_client::models::ProfileStringModerationContentType;
 use config::bot_config_file::internal::ProfileStringModerationConfigInternal;
-use error_stack::Result;
+use simple_backend_utils::Result;
 use test_mode_bot::actions::admin::profile_string::{
     AdminBotProfileStringModerationLogic, ProfileStringModerationState,
 };

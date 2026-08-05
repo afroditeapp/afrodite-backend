@@ -3,9 +3,9 @@ use std::{
     net::{IpAddr, Ipv4Addr},
 };
 
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use ipnet::{IpAddrRange, IpNet, Ipv4AddrRange};
-use simple_backend_utils::ContextExt;
+use simple_backend_utils::{ContextExt, Result};
 
 use crate::{GetConfigError, file::IpListConfig};
 

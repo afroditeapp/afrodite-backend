@@ -112,7 +112,7 @@ impl EmailChannelSender {
         &self,
         recipient: model::AccountIdInternal,
         message: model::EmailMessages,
-    ) -> error_stack::Result<EmailSendingHandle, DataError> {
+    ) -> simple_backend_utils::Result<EmailSendingHandle, DataError> {
         let (result_sender, result_receiver) = oneshot::channel();
         let cmd = HighPriorityEmailMsg::Normal {
             recipient,
@@ -132,7 +132,7 @@ impl EmailChannelSender {
         &self,
         email: String,
         token: String,
-    ) -> error_stack::Result<EmailSendingHandle, DataError> {
+    ) -> simple_backend_utils::Result<EmailSendingHandle, DataError> {
         let (result_sender, result_receiver) = oneshot::channel();
         let cmd = HighPriorityEmailMsg::RegistrationToken {
             email,

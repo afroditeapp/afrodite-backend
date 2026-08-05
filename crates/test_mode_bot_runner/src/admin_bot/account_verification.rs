@@ -1,5 +1,5 @@
 use config::bot_config_file::internal::AccountVerificationConfigInternal;
-use error_stack::Result;
+use simple_backend_utils::Result;
 use test_mode_bot::actions::admin::account_verification::{
     AccountVerificationState, AdminBotAccountVerificationLogic,
 };

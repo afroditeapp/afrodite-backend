@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use error_stack::Result;
 use manager_api::{
     ClientConfig, ClientError, ManagerClient, ManagerClientWithRequestRecipient,
     ServerEventListerner, TlsConfig, backup::BackupSourceClient,
@@ -11,7 +10,7 @@ use simple_backend_config::{
     file::{BackupConfig, BackupEncryptionKey},
 };
 use simple_backend_model::{ScheduledMaintenanceStatus, UnixTime};
-use simple_backend_utils::ContextExt;
+use simple_backend_utils::{ContextExt, Result};
 use tokio::{sync::RwLock, task::JoinHandle};
 use tracing::{error, info, warn};
 

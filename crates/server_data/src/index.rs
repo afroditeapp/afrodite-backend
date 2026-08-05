@@ -229,7 +229,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
         account_id: AccountId,
         previous_key: LocationIndexKey,
         new_key: LocationIndexKey,
-    ) -> error_stack::Result<(), IndexError> {
+    ) -> simple_backend_utils::Result<(), IndexError> {
         if previous_key == new_key {
             // No update needed. If return would not be here then
             // if new_size == 0 check would make profile disappear.
@@ -297,7 +297,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
         account_id: AccountId,
         profile_data: LocationIndexProfileData,
         key: LocationIndexKey,
-    ) -> error_stack::Result<(), IndexError> {
+    ) -> simple_backend_utils::Result<(), IndexError> {
         let mut profiles = self.profiles.write().await;
         match profiles.get_mut(&key) {
             Some(some_other_profiles_also) => {
@@ -328,7 +328,7 @@ impl<'a> LocationIndexWriteHandle<'a> {
         &self,
         account_id: AccountId,
         key: LocationIndexKey,
-    ) -> error_stack::Result<(), IndexError> {
+    ) -> simple_backend_utils::Result<(), IndexError> {
         let mut profiles = self.profiles.write().await;
         if let Some(some_other_profiles_also) = profiles.get_mut(&key) {
             let removed = some_other_profiles_also.remove(&account_id);

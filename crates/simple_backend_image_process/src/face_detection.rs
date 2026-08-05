@@ -1,7 +1,8 @@
-use error_stack::{Result, ResultExt, report};
+use error_stack::{ResultExt, report};
 use image::GrayImage;
 use rustface::Model;
 use simple_backend_config::{file::SeetaFaceConfig, image_process::ImageProcessingConfig};
+use simple_backend_utils::Result;
 
 use crate::ImageProcessError;
 

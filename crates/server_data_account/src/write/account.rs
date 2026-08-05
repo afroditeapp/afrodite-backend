@@ -72,7 +72,9 @@ impl WriteCommandsAccount<'_> {
     pub async fn update_syncable_account_data(
         &self,
         id: AccountIdInternal,
-        modify_action: impl FnOnce(&mut AccountUpdate) -> error_stack::Result<(), DieselDatabaseError>
+        modify_action: impl FnOnce(
+            &mut AccountUpdate,
+        ) -> simple_backend_utils::Result<(), DieselDatabaseError>
         + Send
         + 'static,
     ) -> Result<(), DataError> {
@@ -85,7 +87,9 @@ impl WriteCommandsAccount<'_> {
         &self,
         id: AccountIdInternal,
         increment_admin_access_granted_count: Option<IncrementAdminAccessGrantedCount>,
-        modify_action: impl FnOnce(&mut AccountUpdate) -> error_stack::Result<(), DieselDatabaseError>
+        modify_action: impl FnOnce(
+            &mut AccountUpdate,
+        ) -> simple_backend_utils::Result<(), DieselDatabaseError>
         + Send
         + 'static,
     ) -> Result<(), DataError> {

@@ -1,12 +1,11 @@
 use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{dsl::not, insert_into, prelude::*, update};
-use error_stack::Result;
 use model::{AccountIdDb, ConversationId, UnixTime};
 use model_chat::{
     AccountIdInternal, CHAT_GLOBAL_STATE_ROW_TYPE, ChatStateRaw, MatchId, NewReceivedLikesCount,
     PublicKeyId, ReceivedLikesSyncVersion, SyncVersionUtils,
 };
-use simple_backend_utils::{ContextExt, db::MyRunQueryDsl};
+use simple_backend_utils::{ContextExt, Result, db::MyRunQueryDsl};
 
 use crate::{IntoDatabaseError, current::read::GetDbReadCommandsChat};
 

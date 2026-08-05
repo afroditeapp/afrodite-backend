@@ -1,7 +1,7 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::{SelectableHelper, prelude::*};
-use error_stack::Result;
 use model_chat::{AccountIdInternal, CHAT_GLOBAL_STATE_ROW_TYPE, ChatGlobalState, ChatStateRaw};
+use simple_backend_utils::Result;
 
 use crate::IntoDatabaseError;
 

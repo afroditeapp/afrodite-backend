@@ -1,4 +1,4 @@
-use error_stack::{Result, ResultExt, report};
+use error_stack::{ResultExt, report};
 use manager_model::{
     BackupMessage, BackupMessageHeader, BackupMessageType, JsonRpcLinkHeader, JsonRpcLinkMessage,
     JsonRpcLinkMessageType, JsonRpcRequest, JsonRpcRequestType, JsonRpcResponse,
@@ -8,6 +8,7 @@ use manager_model::{
     SecureStorageEncryptionKey, ServerEvent, SoftwareUpdateStatus, SoftwareUpdateTaskType,
     SystemInfo,
 };
+use simple_backend_utils::Result;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 use crate::{ClientError, ManagerClient};

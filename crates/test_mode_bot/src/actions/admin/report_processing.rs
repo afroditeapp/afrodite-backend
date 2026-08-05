@@ -25,9 +25,10 @@ use config::bot_config_file::internal::{
     ReportProcessingConfigInternal, ReportProcessingMessagesConfigInternal,
     ReportProcessingProfileContentConfigInternal, ReportProcessingProfileStringConfigInternal,
 };
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use futures::{StreamExt, stream};
 use internal::{MessageInternal, ReportInternal};
+use simple_backend_utils::Result;
 use test_mode_utils::client::{ApiClient, TestError};
 use tracing::info;
 

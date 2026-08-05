@@ -1,10 +1,10 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::{alias, prelude::*};
-use error_stack::Result;
 use model::AccountId;
 use model_account::{
     NewsId, NewsItem, NewsItemInternal, NewsTranslationInternal, NewsTranslations, PublicationId,
 };
+use simple_backend_utils::Result;
 
 use crate::IntoDatabaseError;
 

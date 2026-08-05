@@ -2,12 +2,12 @@ use database::{
     DieselDatabaseError, current::read::GetDbReadCommandsCommon, define_current_write_commands,
 };
 use diesel::{prelude::*, update};
-use error_stack::Result;
 use model::{AccountIdInternal, ContentIdInternal};
 use model_media::{
     ContentModerationState, MediaContentModerationRejectedReasonCategory,
     MediaContentModerationRejectedReasonDetails,
 };
+use simple_backend_utils::Result;
 
 use crate::IntoDatabaseError;
 

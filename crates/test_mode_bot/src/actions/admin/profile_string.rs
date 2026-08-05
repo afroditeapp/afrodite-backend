@@ -16,8 +16,9 @@ use config::bot_config_file::internal::{
     ModerationAction, ProfileStringModerationConfigInternal,
     ProfileStringModerationLlmConfigInternal,
 };
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use futures::{StreamExt, stream};
+use simple_backend_utils::Result;
 use test_mode_utils::client::{ApiClient, TestError};
 use tracing::info;
 use unicode_segmentation::UnicodeSegmentation;

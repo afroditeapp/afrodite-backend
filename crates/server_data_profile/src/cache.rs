@@ -1,9 +1,9 @@
-use error_stack::Result;
 use model_profile::AccountId;
 use server_data::{
     cache::{CacheError, common::CacheCommon, profile::CacheProfile},
     db_manager::{InternalReading, InternalWriting},
 };
+use simple_backend_utils::Result;
 
 pub trait CacheReadProfile {
     async fn read_cache_profile_and_common<T, Id: Into<AccountId>>(

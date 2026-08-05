@@ -9,7 +9,8 @@ use api_client::{
 };
 use async_openai::{Client, config::OpenAIConfig};
 use config::bot_config_file::internal::AccountVerificationConfigInternal;
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
+use simple_backend_utils::Result;
 use test_mode_utils::{
     AccountVerificationErrorFlags,
     client::{ApiClient, TestError},

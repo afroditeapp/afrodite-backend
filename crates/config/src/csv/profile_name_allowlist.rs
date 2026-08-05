@@ -1,5 +1,5 @@
-use error_stack::{Result, ResultExt};
-use simple_backend_utils::ContextExt;
+use error_stack::ResultExt;
+use simple_backend_utils::{ContextExt, Result};
 
 use super::CsvFileError;
 use crate::file::ProfiletNameAllowlistConfig;

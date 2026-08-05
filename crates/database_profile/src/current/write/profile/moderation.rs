@@ -1,12 +1,11 @@
 use config::csv::profile_name_allowlist::ProfileNameAllowlistData;
 use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{ExpressionMethods, delete, insert_into, prelude::*, upsert::excluded};
-use error_stack::Result;
 use model_profile::{
     AccountIdDb, AccountIdInternal, ProfileNameModerationState, ProfileStringModerationContentType,
     ProfileStringModerationState, ProfileTextModerationState, UnixTime,
 };
-use simple_backend_utils::db::MyRunQueryDsl;
+use simple_backend_utils::{Result, db::MyRunQueryDsl};
 
 use crate::{IntoDatabaseError, current::read::GetDbReadCommandsProfile};
 

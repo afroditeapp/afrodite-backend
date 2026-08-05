@@ -1,8 +1,9 @@
-use error_stack::{Result, ResultExt, report};
+use error_stack::{ResultExt, report};
 use image::RgbaImage;
 use nsfw::{Model, model::Metric};
 use simple_backend_config::{file::NsfwDetectionConfig, image_process::ImageProcessingConfig};
 use simple_backend_model::NsfwDetectionThresholds;
+use simple_backend_utils::Result;
 
 use crate::ImageProcessError;
 

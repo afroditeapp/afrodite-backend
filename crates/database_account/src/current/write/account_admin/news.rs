@@ -2,10 +2,9 @@ use database::{
     DieselDatabaseError, current::write::GetDbWriteCommandsCommon, define_current_write_commands,
 };
 use diesel::{delete, insert_into, prelude::*, update, upsert::excluded};
-use error_stack::Result;
 use model::{AccountIdInternal, PendingAppNotificationInternal, SyncVersion, UnixTime};
 use model_account::{AccountGlobalState, NewsId, NewsLocale, PublicationId, UpdateNewsTranslation};
-use simple_backend_utils::db::MyRunQueryDsl;
+use simple_backend_utils::{Result, db::MyRunQueryDsl};
 
 use crate::{IntoDatabaseError, current::read::GetDbReadCommandsAccount};
 

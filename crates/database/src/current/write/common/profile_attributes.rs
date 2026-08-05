@@ -1,8 +1,7 @@
 use diesel::{ExpressionMethods, RunQueryDsl, insert_into};
-use error_stack::Result;
 use model::profile::{Attribute, AttributeOrderMode};
 use simple_backend_database::diesel_db::DieselDatabaseError;
-use simple_backend_utils::db::MyRunQueryDsl;
+use simple_backend_utils::{Result, db::MyRunQueryDsl};
 
 use crate::{IntoDatabaseError, define_current_write_commands};
 

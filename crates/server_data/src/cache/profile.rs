@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use error_stack::{Result, ResultExt};
+use error_stack::ResultExt;
 use model::{
     AccountId, AccountIdInternal, LastSeenUnixTime, NextNumberStorage, ProfileVersion, UnixTime,
 };
@@ -15,6 +15,7 @@ use model_server_data::{
 };
 use server_common::data::DataError;
 use simple_backend_model::NonEmptyString;
+use simple_backend_utils::Result;
 
 use crate::{
     db_manager::InternalWriting,

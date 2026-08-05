@@ -1,5 +1,5 @@
-use error_stack::Result;
 use model::{AccountId, AccountIdInternal, ServerVersion};
+use simple_backend_utils::Result;
 
 use crate::data::DataError;
 

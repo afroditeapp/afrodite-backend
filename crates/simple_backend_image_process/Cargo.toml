@@ -19,3 +19,4 @@ error-stack = { workspace = true }
 
 simple_backend_config = { path = "../simple_backend_config" }
 simple_backend_model = { path = "../simple_backend_model" }
+simple_backend_utils = { path = "../simple_backend_utils" }

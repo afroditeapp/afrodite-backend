@@ -10,7 +10,7 @@ use config::{
     args::{SelectedBenchmark, TestMode},
     bot_config_file::BotConfigFile,
 };
-use error_stack::Result;
+use simple_backend_utils::Result;
 use test_mode_bot::{
     BotState,
     actions::{
