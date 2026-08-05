@@ -4,6 +4,7 @@
 #![warn(unused_crate_dependencies)]
 
 pub use model::AccountVerificationErrorFlags;
+use simple_backend_utils::Context;
 
 use crate::client::TestError;
 
@@ -41,7 +42,7 @@ impl From<error_stack::Report<crate::client::TestError>> for ServerTestError {
 
 impl<T> From<api_client::apis::Error<T>> for ServerTestError
 where
-    api_client::apis::Error<T>: error_stack::Context,
+    api_client::apis::Error<T>: Context,
 {
     #[track_caller]
     fn from(error: api_client::apis::Error<T>) -> Self {

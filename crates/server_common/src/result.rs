@@ -1,9 +1,10 @@
 use std::fmt::Debug;
 
 use database::ErrorContext;
-use error_stack::{Context, IntoReport, Report};
+use error_stack::{IntoReport, Report};
 use model::markers::IsLoggingAllowed;
 use simple_backend_database::diesel_db::DieselDatabaseError;
+use simple_backend_utils::Context;
 
 use crate::data::{DataError, cache::CacheError, file::FileError, index::IndexError};
 
@@ -21,7 +22,7 @@ impl<E> WrappedReport<Report<E>> {
     }
 
     #[track_caller]
-    pub fn change_context<C: error_stack::Context>(self, context: C) -> WrappedReport<Report<C>> {
+    pub fn change_context<C: Context>(self, context: C) -> WrappedReport<Report<C>> {
         WrappedReport {
             report: self.report.change_context(context),
         }

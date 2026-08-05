@@ -11,12 +11,12 @@ use std::{fmt::Debug, marker::PhantomData};
 
 use current::write::TransactionConnection;
 use diesel_migrations::{EmbeddedMigrations, embed_migrations};
-use error_stack::{Context, IntoReport, ResultExt};
+use error_stack::{IntoReport, ResultExt};
 use model::markers::IsLoggingAllowed;
 pub use model::schema;
 use simple_backend_config::RUNNING_IN_DEBUG_MODE;
 use simple_backend_database::{DbReadHandle, DbWriteHandle, diesel_db::ObjectExtensions};
-use simple_backend_utils::Result;
+use simple_backend_utils::{Context, Result};
 
 pub const DIESEL_SQLITE_MIGRATIONS: EmbeddedMigrations =
     embed_migrations!("../../migrations/sqlite");

@@ -1,8 +1,8 @@
 use std::fmt::Debug;
 
 use database::ErrorContext;
-use error_stack::Context;
 use model::markers::IsLoggingAllowed;
+use simple_backend_utils::Context;
 
 use crate::result::WrappedReport;
 

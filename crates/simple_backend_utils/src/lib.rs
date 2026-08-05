@@ -3,9 +3,9 @@
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
 
-use std::fmt::Display;
+use std::{error::Error, fmt::Display};
 
-use error_stack::{Context, IntoReport, Report, ResultExt};
+use error_stack::{IntoReport, Report, ResultExt};
 
 pub mod byte;
 pub mod consts;
@@ -20,6 +20,10 @@ mod uuid;
 pub use uuid::{UuidBase64Url, UuidBase64UrlToml};
 
 pub type Result<T, C> = std::result::Result<T, Report<C>>;
+
+pub trait Context: Error + Sized + Send + Sync + 'static {}
+
+impl<C: Error + Sized + Send + Sync + 'static> Context for C {}
 
 pub trait IntoReportFromString {
     type Ok;
@@ -44,7 +48,7 @@ impl<Ok, Err: Display> IntoReportFromString for std::result::Result<Ok, Err> {
     }
 }
 
-pub trait ContextExt: Context + Sized {
+pub trait ContextExt: Context + 'static {
     #[track_caller]
     fn report(self) -> Report<Self> {
         self.into_report()
