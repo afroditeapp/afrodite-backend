@@ -179,23 +179,27 @@ impl EmailManager {
         recipient: AccountIdInternal,
         message: EmailMessages,
     ) -> error_stack::Result<Option<EmailData>, EmailError> {
-        let data = self
-            .state
-            .read()
-            .account()
-            .email_address_state(recipient)
-            .await
-            .map_err(|e| e.into_report())
-            .change_context(EmailError::GettingEmailDataFailed)?;
-
-        // For email change verification, use the new email address
-        let email_to_use = if message == EmailMessages::EmailChangeVerification {
-            data.email_change.clone()
+        let email_address = if message == EmailMessages::EmailChangeVerification {
+            // For email change verification, use the new email address
+            self.state
+                .read()
+                .account()
+                .email_change(recipient)
+                .await
+                .map_err(|e| e.into_report())
+                .change_context(EmailError::GettingEmailDataFailed)?
+                .map(|v| v.email_change)
         } else {
-            data.email.clone()
+            self.state
+                .read()
+                .account()
+                .email_address(recipient)
+                .await
+                .map_err(|e| e.into_report())
+                .change_context(EmailError::GettingEmailDataFailed)?
         };
 
-        let email = if let Some(email) = email_to_use {
+        let email = if let Some(email) = email_address {
             if email.0.ends_with("@example.com") {
                 let is_bot = async || {
                     self.state

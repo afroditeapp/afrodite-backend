@@ -296,6 +296,20 @@ pub struct EmailAddressState {
     pub email_login_enabled: bool,
 }
 
+impl EmailAddressState {
+    pub fn new(internal: EmailAddressStateInternal, email_change: Option<EmailChange>) -> Self {
+        Self {
+            email: internal.email,
+            email_change: email_change.as_ref().map(|v| v.email_change.clone()),
+            email_change_verified: email_change
+                .map(|v| v.email_change_verified)
+                .unwrap_or(false),
+            email_change_completion_time: None,
+            email_login_enabled: internal.email_login_enabled,
+        }
+    }
+}
+
 fn default_true() -> bool {
     true
 }

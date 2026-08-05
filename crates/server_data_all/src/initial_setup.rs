@@ -23,13 +23,12 @@ pub async fn complete_initial_setup(
     write_handle: &WriteCommandRunnerHandle,
     id: AccountIdInternal,
 ) -> server_common::result::Result<(), server_common::data::DataError> {
-    let email_address_state = read_handle.account().email_address_state(id).await?;
+    let email = read_handle.account().email_address(id).await?;
     let sign_in_with_info = read_handle.account().account_sign_in_with_info(id).await?;
     let (matches_with_grant_admin_access_config, grant_admin_access_more_than_once) =
-        if let (Some(grant_admin_access_config), Some(email)) = (
-            config.grant_admin_access_config(),
-            email_address_state.email.as_ref(),
-        ) {
+        if let (Some(grant_admin_access_config), Some(email)) =
+            (config.grant_admin_access_config(), email.as_ref())
+        {
             let matches = if grant_admin_access_config.debug_match_only_email_domain {
                 let mut wanted_email_iter = grant_admin_access_config.email.0.split('@');
                 let mut email_iter = email.0.split('@');
@@ -87,7 +86,7 @@ pub async fn complete_initial_setup(
 
             if enable_all_permissions.is_some()
                 && cmds.read().common().is_bot(id).await?
-                && email_address_state.email.as_ref().map(|v| v.as_str()) == Some(ADMIN_BOT_EMAIL)
+                && email.as_ref().map(|v| v.as_str()) == Some(ADMIN_BOT_EMAIL)
             {
                 cmds.common()
                     .set_bot_account_type_number(id, BotAccountType::Admin)

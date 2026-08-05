@@ -3,8 +3,8 @@ use diesel::prelude::*;
 use error_stack::Result;
 use model::AccountIdInternal;
 use model_account::{
-    AccountGlobalState, AccountStateTableRaw, EmailAddressState, EmailAddressStateInternal,
-    EmailChange,
+    AccountGlobalState, AccountStateTableRaw, EmailAddress, EmailAddressState,
+    EmailAddressStateInternal, EmailChange,
 };
 
 use crate::IntoDatabaseError;
@@ -12,6 +12,21 @@ use crate::IntoDatabaseError;
 define_current_read_commands!(CurrentReadAccountData);
 
 impl CurrentReadAccountData<'_> {
+    pub fn email_address(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<Option<EmailAddress>, DieselDatabaseError> {
+        use crate::schema::account_email_address_state::dsl::*;
+
+        let email_value: Option<EmailAddress> = account_email_address_state
+            .filter(account_id.eq(id.as_db_id()))
+            .select(email)
+            .first(self.conn())
+            .into_db_error(id)?;
+
+        Ok(email_value)
+    }
+
     pub fn email_address_state(
         &mut self,
         id: AccountIdInternal,
@@ -26,15 +41,7 @@ impl CurrentReadAccountData<'_> {
 
         let email_change = self.email_change(id)?;
 
-        Ok(EmailAddressState {
-            email: internal.email,
-            email_change: email_change.as_ref().map(|v| v.email_change.clone()),
-            email_change_verified: email_change
-                .map(|v| v.email_change_verified)
-                .unwrap_or(false),
-            email_change_completion_time: None,
-            email_login_enabled: internal.email_login_enabled,
-        })
+        Ok(EmailAddressState::new(internal, email_change))
     }
 
     pub fn email_address_state_internal(

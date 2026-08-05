@@ -147,16 +147,16 @@ impl CustomEmailHandler {
         recipient: AccountIdInternal,
         message: i64,
     ) -> error_stack::Result<Option<EmailData>, EmailError> {
-        let data = self
+        let email = self
             .state
             .read()
             .account()
-            .email_address_state(recipient)
+            .email_address(recipient)
             .await
             .map_err(|e| e.into_report())
             .change_context(EmailError::GettingEmailDataFailed)?;
 
-        let email = if let Some(email) = data.email {
+        let email = if let Some(email) = email {
             if email.0.ends_with("@example.com") {
                 return Ok(None);
             } else {

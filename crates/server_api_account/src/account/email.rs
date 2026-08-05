@@ -714,10 +714,11 @@ pub async fn get_email_address_state(
     Extension(api_caller_account_id): Extension<AccountIdInternal>,
 ) -> Result<Json<EmailAddressState>, crate::utils::StatusCode> {
     ACCOUNT.get_email_address_state.incr();
-    let mut data = state
+
+    let internal = state
         .read()
         .account()
-        .email_address_state(api_caller_account_id)
+        .email_address_state_internal(api_caller_account_id)
         .await?;
 
     let email_change = state
@@ -726,26 +727,32 @@ pub async fn get_email_address_state(
         .email_change(api_caller_account_id)
         .await?;
 
-    if let Some(init_time) = email_change.map(|v| v.email_change_unix_time) {
-        let wait_duration_seconds = state
-            .config()
-            .limits_account()
-            .email_change_min_wait_duration
-            .seconds;
+    let completion_time = match email_change.as_ref().map(|v| v.email_change_unix_time) {
+        Some(init_time) => {
+            let wait_duration_seconds = state
+                .config()
+                .limits_account()
+                .email_change_min_wait_duration
+                .seconds;
 
-        let scheduled_tasks_config = state.config().scheduled_tasks();
-        let next_scheduled_tasks_run =
-            seconds_until_current_time_is_at(scheduled_tasks_config.daily_start_time)
+            let scheduled_tasks_config = state.config().scheduled_tasks();
+            let next_scheduled_tasks_run =
+                seconds_until_current_time_is_at(scheduled_tasks_config.daily_start_time)
+                    .map_err(|_| crate::utils::StatusCode::INTERNAL_SERVER_ERROR)?;
+            let next_scheduled_tasks_run = TryInto::<u32>::try_into(next_scheduled_tasks_run)
                 .map_err(|_| crate::utils::StatusCode::INTERNAL_SERVER_ERROR)?;
-        let next_scheduled_tasks_run = TryInto::<u32>::try_into(next_scheduled_tasks_run)
-            .map_err(|_| crate::utils::StatusCode::INTERNAL_SERVER_ERROR)?;
 
-        data.email_change_completion_time = Some(
-            init_time
-                .add_seconds(wait_duration_seconds)
-                .add_seconds(next_scheduled_tasks_run),
-        );
-    }
+            Some(
+                init_time
+                    .add_seconds(wait_duration_seconds)
+                    .add_seconds(next_scheduled_tasks_run),
+            )
+        }
+        None => None,
+    };
+
+    let mut data = EmailAddressState::new(internal, email_change);
+    data.email_change_completion_time = completion_time;
 
     Ok(data.into())
 }

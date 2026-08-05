@@ -54,7 +54,7 @@ pub async fn login_impl(
         return Ok(LoginResult::error_account_locked());
     }
 
-    let email = state.read().account().email_address_state(id).await?;
+    let email = state.read().account().email_address(id).await?;
 
     let access = AccessToken::generate_new();
     let refresh = RefreshToken::generate_new();
@@ -74,7 +74,7 @@ pub async fn login_impl(
         Ok(())
     })?;
 
-    Ok(LoginResult::ok(tokens, id.as_id(), email.email))
+    Ok(LoginResult::ok(tokens, id.as_id(), email))
 }
 
 pub const PATH_SIGN_IN_WITH_LOGIN: &str = "/account_api/sign_in_with_login";
