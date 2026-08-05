@@ -240,7 +240,7 @@ pub fn get_config(
 
     if public_api_tls_config.is_none() && !file_config.general.debug() {
         return Err(GetConfigError::TlsConfigMissing)
-            .attach_printable("TLS must be configured when debug mode is false");
+            .attach("TLS must be configured when debug mode is false");
     }
 
     let script_locations =
@@ -289,7 +289,7 @@ fn check_script_locations(
             systemctl_access,
         })
     } else {
-        Err(GetConfigError::ScriptLocationError).attach_printable(errors.join("\n"))
+        Err(GetConfigError::ScriptLocationError).attach(errors.join("\n"))
     }
 }
 
@@ -321,11 +321,11 @@ fn generate_server_config(
     let key = if let Some(key) = key_iter.next() {
         key
     } else {
-        return Err(GetConfigError::CreateTlsConfig).attach_printable("No key found");
+        return Err(GetConfigError::CreateTlsConfig).attach("No key found");
     };
 
     if key_iter.next().is_some() {
-        return Err(GetConfigError::CreateTlsConfig).attach_printable("Only one key supported");
+        return Err(GetConfigError::CreateTlsConfig).attach("Only one key supported");
     }
 
     let mut cert_reader = BufReader::new(
@@ -339,11 +339,11 @@ fn generate_server_config(
     let cert = if let Some(cert) = cert_iter.next() {
         cert.change_context(GetConfigError::CreateTlsConfig)?
     } else {
-        return Err(GetConfigError::CreateTlsConfig).attach_printable("No cert found");
+        return Err(GetConfigError::CreateTlsConfig).attach("No cert found");
     };
 
     if cert_iter.next().is_some() {
-        return Err(GetConfigError::CreateTlsConfig).attach_printable("Only one cert supported");
+        return Err(GetConfigError::CreateTlsConfig).attach("Only one cert supported");
     }
 
     let config = ServerConfig::builder()

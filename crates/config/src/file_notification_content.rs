@@ -130,7 +130,7 @@ impl NotificationContentFile {
             toml::from_str(&config_content).change_context(ConfigFileError::LoadConfig)?;
 
         if let Some(key) = config.other.keys().next() {
-            return Err(ConfigFileError::InvalidConfig).attach_printable(format!(
+            return Err(ConfigFileError::InvalidConfig).attach(format!(
                 "Notification content config file error. Unknown string resource '{key}'."
             ));
         }
@@ -152,7 +152,7 @@ impl NotificationContentFile {
         for resource in no_args_titles.iter().filter_map(|v| v.as_ref()) {
             for value in resource.title.values() {
                 if value.contains("{}") {
-                    return Err(ConfigFileError::InvalidConfig).attach_printable(format!(
+                    return Err(ConfigFileError::InvalidConfig).attach(format!(
                         "Notification content config file error. String does not support format arguments. Remove format arguments from '{value}'."
                     ));
                 }
@@ -163,14 +163,14 @@ impl NotificationContentFile {
         if let Some(resource) = &config.media_content_deleted {
             for value in resource.title.values() {
                 if value.contains("{}") {
-                    return Err(ConfigFileError::InvalidConfig).attach_printable(format!(
+                    return Err(ConfigFileError::InvalidConfig).attach(format!(
                         "Notification content config file error. String does not support format arguments. Remove format arguments from '{value}'."
                     ));
                 }
             }
             for value in resource.body.values() {
                 if value.contains("{}") {
-                    return Err(ConfigFileError::InvalidConfig).attach_printable(format!(
+                    return Err(ConfigFileError::InvalidConfig).attach(format!(
                         "Notification content config file error. String does not support format arguments. Remove format arguments from '{value}'."
                     ));
                 }
@@ -187,7 +187,7 @@ impl NotificationContentFile {
         for resource in one_arg_titles.iter().filter_map(|v| v.as_ref()) {
             for value in resource.title.values() {
                 if !value.contains("{}") || (value.replacen("{}", "", 1).contains("{}")) {
-                    return Err(ConfigFileError::InvalidConfig).attach_printable(format!(
+                    return Err(ConfigFileError::InvalidConfig).attach(format!(
                         "Notification content config file error. String requires exactly one placeholder string '{{}}'. Add that to string '{value}'."
                     ));
                 }

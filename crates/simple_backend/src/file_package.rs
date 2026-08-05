@@ -159,8 +159,8 @@ impl FilePackageManager {
     ) -> simple_backend_utils::Result<(), FilePackageError> {
         if !package_path.to_string_lossy().ends_with(".tar.gz") {
             return Err(FilePackageError::PackageLoading.report())
-                .attach_printable("File name does not end with '.tar.gz'")
-                .attach_printable(package_path.display().to_string());
+                .attach("File name does not end with '.tar.gz'")
+                .attach(package_path.display().to_string());
         }
         let file = File::open(package_path).change_context(FilePackageError::PackageLoading)?;
         let decoder = GzDecoder::new(file);
@@ -181,7 +181,7 @@ impl FilePackageManager {
             if path_string.ends_with("/index.html") {
                 if index_html_detected {
                     return Err(FilePackageError::MultipleIndexHtmlFiles.report())
-                        .attach_printable(package_path.display().to_string());
+                        .attach(package_path.display().to_string());
                 } else {
                     index_html_detected = true;
                     if find_index_html {
@@ -247,7 +247,7 @@ impl FilePackageManager {
         } else {
             return Err(FilePackageError::PackageContainsUnknonwFileType
                 .report()
-                .attach_printable(path.to_string()));
+                .attach(path.to_string()));
         };
 
         Ok(content_type)

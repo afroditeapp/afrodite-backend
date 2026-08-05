@@ -19,7 +19,7 @@ impl ReadCommandsProfileAdminAttributeSchema<'_> {
         let schema = ProfileAttributesInternal::from_db_data(attributes, order).map_err(|e| {
             DataError::NotAllowed
                 .report()
-                .attach_printable(format!("Profile attributes validation error: {e}"))
+                .attach(format!("Profile attributes validation error: {e}"))
         })?;
 
         Ok(schema.export())

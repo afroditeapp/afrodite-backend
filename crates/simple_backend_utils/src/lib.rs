@@ -39,7 +39,7 @@ impl<Ok, Err: Display> IntoReportFromString for std::result::Result<Ok, Err> {
     ) -> Result<<Self as IntoReportFromString>::Ok, C> {
         match self {
             Ok(ok) => Ok(ok),
-            Err(err) => Err(context.report()).attach_printable(err.to_string()),
+            Err(err) => Err(context.report()).attach(err.to_string()),
         }
     }
 }

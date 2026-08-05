@@ -284,7 +284,7 @@ pub fn get_config(
             args_config.config_dir.clone()
         } else {
             return Err(GetConfigError::InvalidConfiguration)
-                .attach_printable("Config directory does not exist");
+                .attach("Config directory does not exist");
         }
     } else {
         args_config.config_dir.clone()
@@ -305,14 +305,13 @@ pub fn get_config(
         && !config.service_account_key_path.exists()
     {
         return Err(GetConfigError::InvalidConfiguration)
-            .attach_printable("Firebase Cloud Messaging service account key file does not exist");
+            .attach("Firebase Cloud Messaging service account key file does not exist");
     }
 
     if let Some(config) = file_config.push_notifications.apns.as_ref()
         && !config.key_path.exists()
     {
-        return Err(GetConfigError::InvalidConfiguration)
-            .attach_printable("APNs key file does not exist");
+        return Err(GetConfigError::InvalidConfiguration).attach("APNs key file does not exist");
     }
 
     let public_api_tls_config = match &file_config.tls.public_api {
@@ -339,7 +338,7 @@ pub fn get_config(
         && !file_config.general.debug
         && !tls_disabled
     {
-        return Err(GetConfigError::TlsConfigMissing).attach_printable(
+        return Err(GetConfigError::TlsConfigMissing).attach(
             "TLS certificate or Let's Encrypt must be configured if public API is enabled and TLS is not disabled and debug mode is false",
         );
     }
@@ -349,21 +348,20 @@ pub fn get_config(
         if !cache_dir.exists() {
             fs::create_dir_all(&cache_dir).change_context(GetConfigError::DirCreationError)?
         } else if !cache_dir.is_dir() {
-            return Err(GetConfigError::InvalidConfiguration).attach_printable(
-                "Let's Encrypt cache directory config does not point to a directory",
-            );
+            return Err(GetConfigError::InvalidConfiguration)
+                .attach("Let's Encrypt cache directory config does not point to a directory");
         }
 
         for d in &lets_encrypt_config.domains {
             if d.trim().is_empty() {
                 return Err(GetConfigError::InvalidConfiguration)
-                    .attach_printable("Let's Encrypt domain list contains empty domain");
+                    .attach("Let's Encrypt domain list contains empty domain");
             }
         }
 
         if lets_encrypt_config.email.trim().is_empty() {
             return Err(GetConfigError::InvalidConfiguration)
-                .attach_printable("Let's Encrypt email is empty");
+                .attach("Let's Encrypt email is empty");
         }
     }
 
@@ -372,7 +370,7 @@ pub fn get_config(
             true
         } else {
             return Err(GetConfigError::SqliteInRamNotAllowed)
-                .attach_printable("SQLite in RAM mode is not allowed when debug mode is off");
+                .attach("SQLite in RAM mode is not allowed when debug mode is off");
         }
     } else {
         false
@@ -391,11 +389,11 @@ pub fn get_config(
     {
         if !template.contains("{room}") {
             return Err(GetConfigError::InvalidConfiguration)
-                .attach_printable("{room} is missing from Jitsi Meet custom URL config");
+                .attach("{room} is missing from Jitsi Meet custom URL config");
         }
         if !template.contains("{jwt}") {
             return Err(GetConfigError::InvalidConfiguration)
-                .attach_printable("{jwt} is missing from Jitsi Meet custom URL config");
+                .attach("{jwt} is missing from Jitsi Meet custom URL config");
         }
     }
 
@@ -471,11 +469,11 @@ fn generate_server_config(
     let key = if let Some(key) = key_iter.next() {
         key
     } else {
-        return Err(GetConfigError::CreateTlsConfig).attach_printable("No key found");
+        return Err(GetConfigError::CreateTlsConfig).attach("No key found");
     };
 
     if key_iter.next().is_some() {
-        return Err(GetConfigError::CreateTlsConfig).attach_printable("Only one key supported");
+        return Err(GetConfigError::CreateTlsConfig).attach("Only one key supported");
     }
 
     let mut cert_reader = BufReader::new(
@@ -488,11 +486,11 @@ fn generate_server_config(
     let cert = if let Some(cert) = cert_iter.next() {
         cert.change_context(GetConfigError::CreateTlsConfig)?
     } else {
-        return Err(GetConfigError::CreateTlsConfig).attach_printable("No cert found");
+        return Err(GetConfigError::CreateTlsConfig).attach("No cert found");
     };
 
     if cert_iter.next().is_some() {
-        return Err(GetConfigError::CreateTlsConfig).attach_printable("Only one cert supported");
+        return Err(GetConfigError::CreateTlsConfig).attach("Only one cert supported");
     }
 
     let mut config = ServerConfig::builder()

@@ -63,9 +63,7 @@ impl GitHubApi<'_> {
                 .await
                 .change_context(UpdateError::GitHubApi)?;
 
-            return Err(report!(UpdateError::GitHubApi)
-                .attach_printable(status)
-                .attach_printable(text));
+            return Err(report!(UpdateError::GitHubApi).attach(status).attach(text));
         }
 
         let json: Value = response
@@ -107,17 +105,16 @@ impl GitHubApi<'_> {
             if name.ends_with(&config.github.file_name_ending) {
                 if let Some(selected) = selected_asset {
                     return Err(report!(UpdateError::SotwareDownloadFailedAmbiguousFileName)
-                        .attach_printable(selected.name.to_string())
-                        .attach_printable(name.to_string()));
+                        .attach(selected.name.to_string())
+                        .attach(name.to_string()));
                 } else {
                     if let Some(required_uploader) = &config.github.uploader
                         && uploader != required_uploader
                     {
                         return Err(
-                            report!(UpdateError::SotwareDownloadFailedUnknownFileUploader)
-                                .attach_printable(format!(
-                                    "uploader: {uploader}, expected: {required_uploader}"
-                                )),
+                            report!(UpdateError::SotwareDownloadFailedUnknownFileUploader).attach(
+                                format!("uploader: {uploader}, expected: {required_uploader}"),
+                            ),
                         );
                     }
                     selected_asset = Some(ReleaseAsset {
@@ -166,7 +163,7 @@ impl GitHubApi<'_> {
 
         let status = response.status();
         if status != StatusCode::OK {
-            return Err(report!(UpdateError::GitHubApi).attach_printable(status));
+            return Err(report!(UpdateError::GitHubApi).attach(status));
         }
 
         let mut file = tokio::fs::File::create(download_location)

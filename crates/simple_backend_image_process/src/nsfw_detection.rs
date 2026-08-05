@@ -25,9 +25,8 @@ impl NsfwDetector {
 
         let file = std::fs::File::open(&config.model_file)
             .change_context(ImageProcessError::NsfwDetectionError)?;
-        let model = nsfw::create_model(file).map_err(|e| {
-            report!(ImageProcessError::NsfwDetectionError).attach_printable(e.to_string())
-        })?;
+        let model = nsfw::create_model(file)
+            .map_err(|e| report!(ImageProcessError::NsfwDetectionError).attach(e.to_string()))?;
 
         Ok(Self {
             state: Some(State {
@@ -43,9 +42,8 @@ impl NsfwDetector {
             return Ok(false);
         };
 
-        let results = nsfw::examine(&state.model, &img).map_err(|e| {
-            report!(ImageProcessError::NsfwDetectionError).attach_printable(e.to_string())
-        })?;
+        let results = nsfw::examine(&state.model, &img)
+            .map_err(|e| report!(ImageProcessError::NsfwDetectionError).attach(e.to_string()))?;
 
         if state.config.debug_log_results() {
             eprintln!("NSFW detection results: {results:?}");

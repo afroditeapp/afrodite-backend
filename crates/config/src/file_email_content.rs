@@ -180,7 +180,7 @@ impl EmailContentFile {
             toml::from_str(&config_content).change_context(ConfigFileError::LoadConfig)?;
 
         if let Some(key) = config.other.keys().next() {
-            return Err(ConfigFileError::InvalidConfig).attach_printable(format!(
+            return Err(ConfigFileError::InvalidConfig).attach(format!(
                 "Email content config file error. Unknown string resource '{key}'."
             ));
         }
@@ -192,7 +192,7 @@ impl EmailContentFile {
             &mut std::io::sink(),
         ) {
             return Err(ConfigFileError::InvalidConfig)
-                .attach_printable(format!("Template parsing error: {e}"));
+                .attach(format!("Template parsing error: {e}"));
         }
 
         // Find all variable references in the template
@@ -214,7 +214,7 @@ impl EmailContentFile {
         // Check if all custom keys are referenced in the template
         for custom_key in config.custom_keys.keys() {
             if !referenced_keys.contains(custom_key) {
-                return Err(ConfigFileError::InvalidConfig).attach_printable(format!(
+                return Err(ConfigFileError::InvalidConfig).attach(format!(
                     "Custom key '{custom_key}' is defined but not referenced in the template",
                 ));
             }
@@ -223,9 +223,8 @@ impl EmailContentFile {
         if let Some(email_verification) = &config.email_verification
             && !email_verification.body.all_strings_contain("{{token}}")
         {
-            return Err(ConfigFileError::InvalidConfig).attach_printable(
-                "'{{token}}' is missing from email_verification body text".to_string(),
-            );
+            return Err(ConfigFileError::InvalidConfig)
+                .attach("'{{token}}' is missing from email_verification body text".to_string());
         }
 
         Ok(config)
@@ -282,7 +281,7 @@ impl<'a> EmailStringGetter<'a> {
         let rendered_body = Handlebars::new()
             .render_template(&body, &body_data)
             .change_context(ConfigFileError::InvalidConfig)
-            .attach_printable_lazy(|| "Template rendering error".to_string())?;
+            .attach_lazy(|| "Template rendering error".to_string())?;
 
         let mut data = json!({
             "subject": subject,
@@ -301,7 +300,7 @@ impl<'a> EmailStringGetter<'a> {
         let rendered = Handlebars::new()
             .render_template(&self.config.email_body_template, &data)
             .change_context(ConfigFileError::InvalidConfig)
-            .attach_printable_lazy(|| "Template rendering error".to_string())?;
+            .attach_lazy(|| "Template rendering error".to_string())?;
 
         Ok(EmailContent {
             subject,

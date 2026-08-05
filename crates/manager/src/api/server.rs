@@ -146,7 +146,7 @@ pub async fn handle_connection_to_server<T: ClientConnectionReadWrite>(
     match handle_connection_to_server_with_error(connection, address, state).await {
         Ok(()) => (),
         Err(e) => {
-            let e = e.attach_printable(address);
+            let e = e.attach(address);
             tracing::error!("{:?}", e);
         }
     }

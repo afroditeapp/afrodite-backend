@@ -21,7 +21,7 @@ impl CurrentReadCommonProfileAttributes<'_> {
         for (attr_id, json) in rows {
             let attr: Attribute = serde_json::from_str(&json).map_err(|e| {
                 error_stack::report!(DieselDatabaseError::SerdeDeserialize)
-                    .attach_printable(format!("Failed to deserialize attribute {attr_id}: {e}"))
+                    .attach(format!("Failed to deserialize attribute {attr_id}: {e}"))
             })?;
             attributes.push(attr);
         }

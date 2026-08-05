@@ -668,16 +668,14 @@ impl AdminBotReportProcessingLogic {
                 Some(response) => response,
                 None => {
                     return Err(TestError::LlmError)
-                        .attach_printable(format!("{log_label} error: no response content"));
+                        .attach(format!("{log_label} error: no response content"));
                 }
             },
             Ok(None) => {
-                return Err(TestError::LlmError)
-                    .attach_printable(format!("{log_label} error: no response"));
+                return Err(TestError::LlmError).attach(format!("{log_label} error: no response"));
             }
             Err(e) => {
-                return Err(TestError::LlmError)
-                    .attach_printable(format!("{log_label} failed: {e}"));
+                return Err(TestError::LlmError).attach(format!("{log_label} failed: {e}"));
             }
         };
 

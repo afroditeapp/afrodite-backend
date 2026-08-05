@@ -225,16 +225,15 @@ impl AdminBotFaceVerificationLogic {
                 Some(response) => response,
                 None => {
                     return Err(TestError::LlmError)
-                        .attach_printable("LLM face verification error: no response content");
+                        .attach("LLM face verification error: no response content");
                 }
             },
             Ok(None) => {
-                return Err(TestError::LlmError)
-                    .attach_printable("LLM face verification error: no response");
+                return Err(TestError::LlmError).attach("LLM face verification error: no response");
             }
             Err(e) => {
                 return Err(TestError::LlmError)
-                    .attach_printable(format!("LLM face verification failed: {e}"));
+                    .attach(format!("LLM face verification failed: {e}"));
             }
         };
 

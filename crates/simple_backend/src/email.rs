@@ -219,7 +219,7 @@ impl EmailSendingLogic {
             );
             Err(EmailError::EmailSendingResponseNotPositive
                 .report()
-                .attach_printable(error))
+                .attach(error))
         }
     }
 }

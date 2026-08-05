@@ -447,9 +447,9 @@ impl BackupSessionTaskTarget {
                 for &variant in needed {
                     let count = v.iter().filter(|item| item.0 == variant).count();
                     if count != 1 {
-                        return Err(BackupTargetError::Protocol.report().attach_printable(
-                            format!("{:?}, count: {}, expected 1", variant, count),
-                        ));
+                        return Err(BackupTargetError::Protocol
+                            .report()
+                            .attach(format!("{:?}, count: {}, expected 1", variant, count)));
                     }
                 }
 

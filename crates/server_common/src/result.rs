@@ -27,12 +27,12 @@ impl<E> WrappedReport<Report<E>> {
         }
     }
 
-    pub fn attach_printable<A: std::fmt::Display + std::fmt::Debug + Send + Sync + 'static>(
+    pub fn attach<A: std::fmt::Display + std::fmt::Debug + Send + Sync + 'static>(
         self,
         attachment: A,
     ) -> WrappedReport<Report<E>> {
         WrappedReport {
-            report: self.report.attach_printable(attachment),
+            report: self.report.attach(attachment),
         }
     }
 
@@ -187,7 +187,7 @@ impl<Ok, InContext: Context, OutContext: Context>
     ) -> std::result::Result<Ok, WrappedReport<Report<OutContext>>> {
         match self.change_context(context) {
             Ok(ok) => Ok(ok),
-            Err(err) => Err(err.attach_printable(ErrorContext::<T, Ok>::new(info).printable())),
+            Err(err) => Err(err.attach(ErrorContext::<T, Ok>::new(info).printable())),
         }
     }
 }
@@ -222,7 +222,7 @@ impl<Ok, InContext: Context, OutContext: Context>
     ) -> std::result::Result<Ok, WrappedReport<Report<OutContext>>> {
         match self.change_context(context) {
             Ok(ok) => Ok(ok),
-            Err(err) => Err(err.attach_printable(ErrorContext::<T, Ok>::new(info).printable())),
+            Err(err) => Err(err.attach(ErrorContext::<T, Ok>::new(info).printable())),
         }
     }
 }
@@ -252,7 +252,7 @@ impl<Ok, InContext: Context, OutContext: Context>
     ) -> std::result::Result<Ok, WrappedReport<Report<OutContext>>> {
         match self.change_context(context) {
             Ok(ok) => Ok(ok),
-            Err(err) => Err(err.attach_printable(ErrorContext::<T, Ok>::new(info).printable())),
+            Err(err) => Err(err.attach(ErrorContext::<T, Ok>::new(info).printable())),
         }
     }
 }

@@ -45,17 +45,18 @@ pub(super) async fn handle_load_profile_attributes_values_from_csv(
     let attr_id_i16 = attribute_id as i16;
     let mut attribute: Attribute = reader
         .db_read(move |mut cmds| {
-            let attr =
-                cmds.common()
-                    .profile_attributes()
-                    .all_profile_attributes()?
-                    .into_iter()
-                    .find(|attr| attr.id.to_i16() == attr_id_i16)
-                    .ok_or_else(|| {
-                        error_stack::report!(DieselDatabaseError::NotFound).attach_printable(
-                            format!("Attribute ID {} not found in database", attr_id_i16),
-                        )
-                    })?;
+            let attr = cmds
+                .common()
+                .profile_attributes()
+                .all_profile_attributes()?
+                .into_iter()
+                .find(|attr| attr.id.to_i16() == attr_id_i16)
+                .ok_or_else(|| {
+                    error_stack::report!(DieselDatabaseError::NotFound).attach(format!(
+                        "Attribute ID {} not found in database",
+                        attr_id_i16
+                    ))
+                })?;
             Ok(attr)
         })
         .await

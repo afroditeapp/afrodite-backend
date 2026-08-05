@@ -56,7 +56,7 @@ impl BackendUtils<'_> {
             .change_context(BackendUtilsError::ProcessWaitFailed)?;
         if !status.success() {
             return Err(BackendUtilsError::CommandFailed(status))
-                .attach_printable("Changing binary permissions failed");
+                .attach("Changing binary permissions failed");
         }
 
         Ok(())
@@ -66,7 +66,7 @@ impl BackendUtils<'_> {
 pub async fn reset_backend_data(backend_reset_data_dir: &Path) -> Result<(), BackendUtilsError> {
     if !backend_reset_data_dir.is_dir() {
         return Err(BackendUtilsError::ResetDataDirectoryWasNotDirectory)
-            .attach_printable(backend_reset_data_dir.display().to_string());
+            .attach(backend_reset_data_dir.display().to_string());
     }
 
     let mut old_dir_name = backend_reset_data_dir
@@ -84,7 +84,7 @@ pub async fn reset_backend_data(backend_reset_data_dir: &Path) -> Result<(), Bac
         tokio::fs::remove_dir_all(&old_data_dir)
             .await
             .change_context(BackendUtilsError::FileRemovingFailed)
-            .attach_printable(old_data_dir.display().to_string())?;
+            .attach(old_data_dir.display().to_string())?;
     }
 
     info!(
@@ -95,7 +95,7 @@ pub async fn reset_backend_data(backend_reset_data_dir: &Path) -> Result<(), Bac
     tokio::fs::rename(&backend_reset_data_dir, &old_data_dir)
         .await
         .change_context(BackendUtilsError::FileMovingFailed)
-        .attach_printable(format!(
+        .attach(format!(
             "{} -> {}",
             backend_reset_data_dir.display(),
             old_data_dir.display()

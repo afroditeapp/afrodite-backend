@@ -223,12 +223,12 @@ impl SimpleBackendConfigFile {
 
         if let Some(config) = &config.static_file_package_hosting {
             if config.package.is_some() && config.package_dir.is_some() {
-                return Err(ConfigFileError::InvalidConfig.report().attach_printable(
+                return Err(ConfigFileError::InvalidConfig.report().attach(
                     "static_file_package_hosting: both package and package_dir are configured",
                 ));
             }
             if config.package.is_none() && config.package_dir.is_none() {
-                return Err(ConfigFileError::InvalidConfig.report().attach_printable(
+                return Err(ConfigFileError::InvalidConfig.report().attach(
                     "static_file_package_hosting: package or package_dir must be configured",
                 ));
             }
@@ -237,13 +237,13 @@ impl SimpleBackendConfigFile {
         if config.database.sqlite.is_some() && config.database.postgres.is_some() {
             return Err(ConfigFileError::InvalidConfig
                 .report()
-                .attach_printable("database: both sqlite and postgres cannot be enabled"));
+                .attach("database: both sqlite and postgres cannot be enabled"));
         }
 
         if config.database.sqlite.is_none() && config.database.postgres.is_none() {
             return Err(ConfigFileError::InvalidConfig
                 .report()
-                .attach_printable("database: both sqlite and postgres cannot be disabled"));
+                .attach("database: both sqlite and postgres cannot be disabled"));
         }
 
         Ok(config)

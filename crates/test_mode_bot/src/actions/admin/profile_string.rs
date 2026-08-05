@@ -213,18 +213,18 @@ impl AdminBotProfileStringModerationLogic {
             Ok(Some(r)) => match r.message.content {
                 Some(response) => response,
                 None => {
-                    return Err(TestError::LlmError).attach_printable(format!(
+                    return Err(TestError::LlmError).attach(format!(
                         "LLM {content_type} moderation error: no response content"
                     ));
                 }
             },
             Ok(None) => {
                 return Err(TestError::LlmError)
-                    .attach_printable(format!("LLM {content_type} moderation error: no response"));
+                    .attach(format!("LLM {content_type} moderation error: no response"));
             }
             Err(e) => {
                 return Err(TestError::LlmError)
-                    .attach_printable(format!("LLM {content_type} moderation failed: {e}"));
+                    .attach(format!("LLM {content_type} moderation failed: {e}"));
             }
         };
 

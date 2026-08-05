@@ -63,7 +63,7 @@ impl FaceDetector {
                     .downcast_ref::<&str>()
                     .map(|message| message.to_string())
                     .unwrap_or_default();
-                return Err(report!(ImageProcessError::FaceDetectionPanic).attach_printable(error));
+                return Err(report!(ImageProcessError::FaceDetectionPanic).attach(error));
             }
         }
         .change_context(ImageProcessError::FaceDetection)?;

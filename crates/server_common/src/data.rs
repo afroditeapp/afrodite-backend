@@ -53,9 +53,8 @@ pub trait WithInfo<Ok, Err: Context>: Sized {
         self,
         request_context: T,
     ) -> std::result::Result<Ok, error_stack::Report<Err>> {
-        self.into_error_without_context().map_err(|e| {
-            e.attach_printable(ErrorContext::<T, Ok>::new(request_context).printable())
-        })
+        self.into_error_without_context()
+            .map_err(|e| e.attach(ErrorContext::<T, Ok>::new(request_context).printable()))
     }
 }
 
@@ -79,9 +78,8 @@ pub trait WrappedWithInfo<Ok, Err: Context>: Sized {
         self,
         request_context: T,
     ) -> std::result::Result<Ok, WrappedReport<error_stack::Report<Err>>> {
-        self.into_error_without_context().map_err(|e| {
-            e.attach_printable(ErrorContext::<T, Ok>::new(request_context).printable())
-        })
+        self.into_error_without_context()
+            .map_err(|e| e.attach(ErrorContext::<T, Ok>::new(request_context).printable()))
     }
 }
 
@@ -107,9 +105,8 @@ pub trait IntoDataError<Ok, Err: Context>: Sized {
         self,
         request_context: T,
     ) -> std::result::Result<Ok, WrappedReport<error_stack::Report<Err>>> {
-        self.into_data_error_without_context().map_err(|e| {
-            e.attach_printable(ErrorContext::<T, Ok>::new(request_context).printable())
-        })
+        self.into_data_error_without_context()
+            .map_err(|e| e.attach(ErrorContext::<T, Ok>::new(request_context).printable()))
     }
 
     #[track_caller]

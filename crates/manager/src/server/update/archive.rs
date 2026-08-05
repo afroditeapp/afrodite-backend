@@ -54,8 +54,8 @@ fn find_backend_binary_from_archive_sync(
         if matcher.is_match() {
             if let Some((_, previous_match)) = &matching_file {
                 return Err(report!(UpdateError::ArchiveMultipleMatchingFiles))
-                    .attach_printable(previous_match.clone())
-                    .attach_printable(path_string);
+                    .attach(previous_match.clone())
+                    .attach(path_string);
             } else {
                 matching_file = Some((path.to_path_buf(), path_string));
             }
@@ -66,7 +66,7 @@ fn find_backend_binary_from_archive_sync(
         Ok(path)
     } else {
         Err(report!(UpdateError::ArchiveBackendNotFound))
-            .attach_printable(format!("Available files: {found_files:#?}"))
+            .attach(format!("Available files: {found_files:#?}"))
     }
 }
 

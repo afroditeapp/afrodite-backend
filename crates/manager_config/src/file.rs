@@ -173,7 +173,7 @@ impl ConfigFile {
             .map(|v| v.allow_system_reboot)
             .unwrap_or_default();
         if file.automatic_system_reboot.is_some() && !system_reboot_scheduled_tasks_enabled {
-            return Err(ConfigFileError::InvalidConfig.report()).attach_printable(
+            return Err(ConfigFileError::InvalidConfig.report()).attach(
                 "Automatic system reboot requires enabling scheduled tasks with system reboot",
             );
         }

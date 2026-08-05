@@ -214,7 +214,7 @@ impl<T: PushNotificationStateProvider + Send + Sync + 'static> FcmManager<T> {
             .encrypt(&nonce, content_json.as_bytes())
             .map_err(|_| {
                 Report::new(PushNotificationError::EncryptionFailed)
-                    .attach_printable("Failed to encrypt notification content")
+                    .attach("Failed to encrypt notification content")
             })?;
 
         let encrypted_base64 = base64::engine::general_purpose::STANDARD.encode(&encrypted);

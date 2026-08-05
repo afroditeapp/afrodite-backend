@@ -76,7 +76,7 @@ impl BotConfigFile {
             let mut server_config_path = bot_config_abs_path;
             server_config_path.pop();
             server_config_path.push(ConfigFile::CONFIG_FILE_NAME);
-            let server_config = ConfigFile::load(server_config_path).attach_printable(
+            let server_config = ConfigFile::load(server_config_path).attach(
                 "Bot config does not have [location] and server config could not be loaded. Try adding [location] to bot config.",
             )?;
             bot_config.location = server_config.location;
@@ -117,7 +117,7 @@ impl BotConfigFile {
                 && (age < 18 || age > 99)
             {
                 return Err(ConfigFileError::InvalidConfig)
-                    .attach_printable(format!("{error_location} Age must be between 18 and 99"));
+                    .attach(format!("{error_location} Age must be between 18 and 99"));
             }
 
             if bot.image.is_some() {
@@ -125,19 +125,19 @@ impl BotConfigFile {
                     Gender::Man => {
                         if config.image_dir.man.is_none() {
                             return Err(ConfigFileError::InvalidConfig)
-                                .attach_printable(format!("{error_location} Image file name configured but man image directory is not configured"));
+                                .attach(format!("{error_location} Image file name configured but man image directory is not configured"));
                         }
                     }
                     Gender::Woman => {
                         if config.image_dir.woman.is_none() {
                             return Err(ConfigFileError::InvalidConfig)
-                                .attach_printable(format!("{error_location} Image file name configured but woman image directory is not configured"));
+                                .attach(format!("{error_location} Image file name configured but woman image directory is not configured"));
                         }
                     }
                 }
 
                 if bot.random_color_image.is_some() {
-                    return Err(ConfigFileError::InvalidConfig).attach_printable(format!(
+                    return Err(ConfigFileError::InvalidConfig).attach(format!(
                         "{error_location} Image and random color image can't be both set"
                     ));
                 }
@@ -156,7 +156,7 @@ impl BotConfigFile {
 
             if ids.contains(&bot.id) {
                 return Err(ConfigFileError::InvalidConfig)
-                    .attach_printable(format!("Bot ID {} is defined more than once", bot.id));
+                    .attach(format!("Bot ID {} is defined more than once", bot.id));
             }
 
             ids.insert(bot.id);
@@ -173,7 +173,7 @@ impl BotConfigFile {
         if let Some(config) = &config.content_moderation.nsfw_detection
             && !config.model_file.exists()
         {
-            return Err(ConfigFileError::InvalidConfig).attach_printable(format!(
+            return Err(ConfigFileError::InvalidConfig).attach(format!(
                 "NSFW model file {} does not exists",
                 config.model_file.display()
             ));
@@ -248,7 +248,7 @@ fn check_imgs_exist(
             let img_path = img_dir.join(img);
             if !img_path.is_file() {
                 return Err(ConfigFileError::InvalidConfig)
-                    .attach_printable(format!("Image file {img_path:?} does not exist"));
+                    .attach(format!("Image file {img_path:?} does not exist"));
             }
         }
     }

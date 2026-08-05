@@ -146,7 +146,7 @@ impl WebContentFile {
             toml::from_str(&config_content).change_context(ConfigFileError::LoadConfig)?;
 
         if let Some(key) = config.other.keys().next() {
-            return Err(ConfigFileError::InvalidConfig).attach_printable(format!(
+            return Err(ConfigFileError::InvalidConfig).attach(format!(
                 "Page content config file error. Unknown string resource '{key}'."
             ));
         }
@@ -158,14 +158,14 @@ impl WebContentFile {
             &mut std::io::sink(),
         ) {
             return Err(ConfigFileError::InvalidConfig)
-                .attach_printable(format!("Template parsing error: {e}"));
+                .attach(format!("Template parsing error: {e}"));
         }
 
         // Validate email_verification template contains {{token}}
         if let Some(ref v) = config.email_verification
             && !v.web_page_template.contains("{{token}}")
         {
-            return Err(ConfigFileError::InvalidConfig).attach_printable(
+            return Err(ConfigFileError::InvalidConfig).attach(
                 "email_verification.web_page_template must contain '{{token}}'".to_string(),
             );
         }
@@ -220,7 +220,7 @@ impl<'a> WebStringGetter<'a> {
         let rendered_body = Handlebars::new()
             .render_template(&body, &body_data)
             .change_context(ConfigFileError::InvalidConfig)
-            .attach_printable_lazy(|| "Body template rendering error".to_string())?;
+            .attach_lazy(|| "Body template rendering error".to_string())?;
 
         let data = json!({
             "title": title,
@@ -230,7 +230,7 @@ impl<'a> WebStringGetter<'a> {
         let rendered = Handlebars::new()
             .render_template(&self.config.web_page_template, &data)
             .change_context(ConfigFileError::InvalidConfig)
-            .attach_printable_lazy(|| "Template rendering error".to_string())?;
+            .attach_lazy(|| "Template rendering error".to_string())?;
 
         Ok(WebContent {
             content: rendered,
@@ -288,7 +288,7 @@ impl<'a> WebStringGetter<'a> {
         let rendered = Handlebars::new()
             .render_template(template, &data)
             .change_context(ConfigFileError::InvalidConfig)
-            .attach_printable_lazy(|| "Template rendering error".to_string())?;
+            .attach_lazy(|| "Template rendering error".to_string())?;
 
         Ok(WebContent {
             content: rendered,

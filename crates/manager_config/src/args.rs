@@ -57,7 +57,7 @@ impl ManagerApiClientMode {
         let file_path = {
             let required_options = required_options.into();
             if let Some(required_options) = required_options {
-                file_path_result.attach_printable_lazy(|| {
+                file_path_result.attach_lazy(|| {
                     format!(
                         "Set '--manager-config' or the following options: {}",
                         required_options
@@ -99,7 +99,7 @@ impl ManagerApiClientMode {
             format!("{}://localhost:{}", scheme, addr.port())
         } else {
             return Err(GetConfigError::LoadConfig.report())
-                .attach_printable("No manager API server enabled from config file");
+                .attach("No manager API server enabled from config file");
         };
 
         Url::parse(&url).change_context(GetConfigError::InvalidConstant)

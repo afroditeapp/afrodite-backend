@@ -269,7 +269,7 @@ impl ImageProcess {
                     Ok(parent.join(file_name))
                 } else {
                     Err(ImageProcessError::ImageProcessingCommandCreationFailed.report())
-                        .attach_printable(format!("Output path {path:?} has no parent"))
+                        .attach(format!("Output path {path:?} has no parent"))
                 }
             }
         };

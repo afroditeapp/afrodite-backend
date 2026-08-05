@@ -101,7 +101,7 @@ impl RemoteBotMode {
         let config = BotConfigFile::load(&bot_config_path_abs, false)?;
         let Some(remote_bot_mode_config) = config.remote_bot_mode else {
             return Err(ConfigFileError::InvalidConfig.report())
-                .attach_printable("Remote bot mode config not found");
+                .attach("Remote bot mode config not found");
         };
 
         Ok(TestMode {

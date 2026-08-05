@@ -345,7 +345,7 @@ pub fn get_config(
         }
         let features = std::fs::read_to_string(path)
             .change_context(GetConfigError::LoadFileError)
-            .attach_printable_lazy(|| path.to_string_lossy().to_string())?;
+            .attach_lazy(|| path.to_string_lossy().to_string())?;
         let sha256 = format!("{:x}", Sha256::digest(features.as_bytes()));
         let features_internal: ClientFeaturesConfigInternal =
             toml::from_str(&features).change_context(GetConfigError::InvalidConfiguration)?;

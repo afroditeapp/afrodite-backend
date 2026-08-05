@@ -28,7 +28,7 @@ async fn load_schema(
     ProfileAttributesInternal::from_db_data(attributes, order).map_err(|e| {
         DataError::NotAllowed
             .report()
-            .attach_printable(format!("Profile attributes validation error: {e}"))
+            .attach(format!("Profile attributes validation error: {e}"))
     })
 }
 
@@ -153,12 +153,12 @@ impl WriteCommandsProfileAdminAttributeSchema<'_> {
         let current_state = request.current_state.validate().map_err(|e| {
             DataError::NotAllowed
                 .report()
-                .attach_printable(format!("current_state schema validation error: {e}"))
+                .attach(format!("current_state schema validation error: {e}"))
         })?;
         let new_state = request.new_state.validate().map_err(|e| {
             DataError::NotAllowed
                 .report()
-                .attach_printable(format!("new_state schema validation error: {e}"))
+                .attach(format!("new_state schema validation error: {e}"))
         })?;
 
         let db_schema = load_schema(self).await?;

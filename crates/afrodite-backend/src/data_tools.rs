@@ -70,7 +70,7 @@ pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
         DataModeSubMode::Load { .. } | DataModeSubMode::Edit { .. }
     ) {
         let lock = process_lock::acquire_server_lock(&mode.data_dir)
-            .map_err(|e| report!(GetConfigError::LoadFileError).attach_printable(e))?;
+            .map_err(|e| report!(GetConfigError::LoadFileError).attach(e))?;
         Some(lock)
     } else {
         None

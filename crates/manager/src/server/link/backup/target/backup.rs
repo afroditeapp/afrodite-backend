@@ -211,7 +211,7 @@ impl SaveContentBackup {
             tokio::fs::remove_dir(&dir)
                 .await
                 .change_context(BackupTargetError::RemoveDir)
-                .attach_printable_lazy(move || dir.to_string_lossy().to_string())?;
+                .attach_lazy(move || dir.to_string_lossy().to_string())?;
         }
 
         Ok(())
@@ -321,7 +321,7 @@ impl SaveFileBackup {
 
         if target_path.exists() {
             return Err(BackupTargetError::FileBackupAlreadyExists.report())
-                .attach_printable(target_file_name);
+                .attach(target_file_name);
         }
 
         let target_checksum_path =

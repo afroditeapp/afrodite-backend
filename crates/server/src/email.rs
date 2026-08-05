@@ -380,7 +380,7 @@ impl EmailManager {
             Ok(token.into_string())
         } else {
             Err(EmailError::GettingEmailDataFailed)
-                .attach_printable("No email change verification token found")
+                .attach("No email change verification token found")
         }
     }
 }

@@ -65,7 +65,7 @@ impl ContentModerationState {
                 let model = nsfw::create_model(file).map_err(|e| {
                     TestError::ContentModerationFailed
                         .report()
-                        .attach_printable(e.to_string())
+                        .attach(e.to_string())
                 })?;
                 Ok::<_, error_stack::Report<TestError>>(model)
             })
@@ -165,7 +165,7 @@ impl BotAction for ModerateContentModerationRequest {
                 // when GetProfileList benchmark was running.
                 // When the error was noticed there was multiple
                 // admin bots moderating.
-                .attach_printable_lazy(|| {
+                .attach_lazy(|| {
                     format!(
                         "Request creator: {}, Content ID: {}",
                         request.account_id, request.content_id,
@@ -387,7 +387,7 @@ impl AdminBotContentModerationLogic {
         let results = nsfw::examine(&nsfw.model, &img).map_err(|e| {
             TestError::ContentModerationFailed
                 .report()
-                .attach_printable(e.to_string())
+                .attach(e.to_string())
         })?;
 
         if nsfw.config.debug_log_results {
@@ -491,18 +491,17 @@ impl AdminBotContentModerationLogic {
             Ok(Some(r)) => match r.message.content {
                 Some(response) => response,
                 None => {
-                    return Err(TestError::LlmError).attach_printable(
-                        "LLM image moderation error: no response content".to_string(),
-                    );
+                    return Err(TestError::LlmError)
+                        .attach("LLM image moderation error: no response content".to_string());
                 }
             },
             Ok(None) => {
                 return Err(TestError::LlmError)
-                    .attach_printable("LLM image moderation error: no response".to_string());
+                    .attach("LLM image moderation error: no response".to_string());
             }
             Err(e) => {
                 return Err(TestError::LlmError)
-                    .attach_printable(format!("LLM image moderation failed: {e}"));
+                    .attach(format!("LLM image moderation failed: {e}"));
             }
         };
 

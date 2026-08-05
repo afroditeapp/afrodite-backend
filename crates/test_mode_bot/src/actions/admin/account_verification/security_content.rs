@@ -225,18 +225,17 @@ async fn llm_security_content_verification(
         Ok(Some(r)) => match r.message.content {
             Some(response) => response,
             None => {
-                return Err(TestError::LlmError).attach_printable(
-                    "LLM security content verification error: no response content",
-                );
+                return Err(TestError::LlmError)
+                    .attach("LLM security content verification error: no response content");
             }
         },
         Ok(None) => {
             return Err(TestError::LlmError)
-                .attach_printable("LLM security content verification error: no response");
+                .attach("LLM security content verification error: no response");
         }
         Err(e) => {
             return Err(TestError::LlmError)
-                .attach_printable(format!("LLM security content verification failed: {e}"));
+                .attach(format!("LLM security content verification failed: {e}"));
         }
     };
 

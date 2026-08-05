@@ -60,7 +60,7 @@ impl BotClient {
         {
             SocketAddr::new(Ipv4Addr::LOCALHOST.into(), port)
         } else {
-            return Err(BotClientError::LaunchCommand).attach_printable("Bot API must be enabled");
+            return Err(BotClientError::LaunchCommand).attach("Bot API must be enabled");
         };
 
         let bot_data_dir = config.simple_backend().data_dir().join(BOT_DATA_DIR_NAME);

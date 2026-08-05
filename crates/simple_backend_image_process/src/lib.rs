@@ -139,7 +139,7 @@ pub fn run_image_processing_loop() -> Result<(), ImageProcessError> {
         ImageProcessMessage::ChangeSettings { change_settings } => change_settings.settings,
         ImageProcessMessage::ProcessImage { .. } => {
             return Err(report!(ImageProcessError::ReadCommand)
-                .attach_printable("Expected initial ChangeSettings message, got ProcessImage"));
+                .attach("Expected initial ChangeSettings message, got ProcessImage"));
         }
     };
 
@@ -266,7 +266,7 @@ fn encode_and_save_jpeg(
                 .downcast_ref::<&str>()
                 .map(|message| message.to_string())
                 .unwrap_or_default();
-            return Err(report!(ImageProcessError::MozjpegPanic).attach_printable(error));
+            return Err(report!(ImageProcessError::MozjpegPanic).attach(error));
         }
     }
     .change_context(ImageProcessError::EncodingError)?;

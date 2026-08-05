@@ -46,8 +46,7 @@ pub trait ConnectionUtilsRead: tokio::io::AsyncRead + Unpin {
         } else if size == 1 {
             Ok(Some(buf[0]))
         } else {
-            Err(report!(ClientError::Read))
-                .attach_printable(format!("Unknown reading result size {size}"))
+            Err(report!(ClientError::Read)).attach(format!("Unknown reading result size {size}"))
         }
     }
 

@@ -154,9 +154,7 @@ impl ManagerClient {
         match config.url.scheme() {
             "tcp" => Self::connect_tcp(config, (host, port)).await,
             "tls" => Self::connect_tls(config, (host, port)).await,
-            other => {
-                Err(report!(ClientError::UnsupportedScheme)).attach_printable(other.to_string())
-            }
+            other => Err(report!(ClientError::UnsupportedScheme)).attach(other.to_string()),
         }
     }
 

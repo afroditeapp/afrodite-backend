@@ -29,7 +29,7 @@ pub async fn create_connection(
         for c in name.chars() {
             if !c.is_ascii_alphanumeric() {
                 return Err(DieselDatabaseError::Connect.report())
-                    .attach_printable("Database name is not ASCII alphanumeric");
+                    .attach("Database name is not ASCII alphanumeric");
             }
         }
         format!("file:{name}?mode=memory&cache=shared")

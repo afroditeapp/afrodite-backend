@@ -117,11 +117,11 @@ impl SetBotPublicKey {
             .change_context(TestError::ApiRequest)?;
 
         if r.error_too_many_public_keys.unwrap_or_default() {
-            return Err(TestError::ApiRequest.report()).attach_printable("Too many public keys");
+            return Err(TestError::ApiRequest.report()).attach("Too many public keys");
         }
 
         let Some(public_key_id) = r.key_id.flatten().map(|v| v.id) else {
-            return Err(TestError::ApiRequest.report()).attach_printable("Public key ID not found");
+            return Err(TestError::ApiRequest.report()).attach("Public key ID not found");
         };
 
         let keys = BotEncryptionKeys {

@@ -67,7 +67,7 @@ pub async fn convert_to_report_internal(
             }
             _ => {
                 return Err(TestError::InvalidValue.report())
-                    .attach_printable(format!("Unknown report type: {t}"));
+                    .attach(format!("Unknown report type: {t}"));
             }
         }
     }
@@ -105,7 +105,7 @@ pub async fn convert_to_report_internal(
                     report,
                 });
             } else {
-                return Err(TestError::InvalidValue.report()).attach_printable(format!(
+                return Err(TestError::InvalidValue.report()).attach(format!(
                     "Unknown report type {} from post_get_chat_message_reports API",
                     report.info.report_type.t
                 ));

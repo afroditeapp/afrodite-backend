@@ -26,7 +26,7 @@ impl WriteCommandsAccountReport<'_> {
     ) -> Result<UpdateReportResult, DataError> {
         let custom_report_type_number = custom_report_id
             .to_report_type_value()
-            .map_err(|e| DataError::NotAllowed.report().attach_printable(e))?;
+            .map_err(|e| DataError::NotAllowed.report().attach(e))?;
 
         let custom_report_type = self
             .config()
