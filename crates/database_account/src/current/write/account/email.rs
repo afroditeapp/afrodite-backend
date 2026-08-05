@@ -286,4 +286,28 @@ impl CurrentWriteAccountEmail<'_> {
 
         Ok(())
     }
+
+    pub fn upsert_email_registration_limits(
+        &mut self,
+        limits: model::EmailRegistrationLimits,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::email_registration_limits::dsl::*;
+
+        insert_into(email_registration_limits)
+            .values((
+                row_type.eq(0),
+                daily_email_count.eq(limits.daily_email_count),
+                daily_limit_reset_unix_time.eq(limits.daily_limit_reset_unix_time),
+            ))
+            .on_conflict(row_type)
+            .do_update()
+            .set((
+                daily_email_count.eq(limits.daily_email_count),
+                daily_limit_reset_unix_time.eq(limits.daily_limit_reset_unix_time),
+            ))
+            .execute_my_conn(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
 }

@@ -458,6 +458,13 @@ CREATE TABLE IF NOT EXISTS account_email_login_limits(
             ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS email_registration_limits(
+    -- 0 = email registration limits
+    row_type                    INTEGER PRIMARY KEY NOT NULL,
+    daily_email_count           INTEGER             NOT NULL DEFAULT 0,
+    daily_limit_reset_unix_time BIGINT
+);
+
 -- Account related email sending state
 -- State numbers have these values
 -- 0 - Not sent

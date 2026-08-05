@@ -377,6 +377,7 @@ struct EmailLoginResultInternal {
     token: EmailLoginToken,
     handle: Option<EmailSendingHandle>,
     error_registration_ip_address_limit_reached: bool,
+    error_email_registration_limit_reached: bool,
 }
 
 impl EmailLoginResultInternal {
@@ -385,6 +386,7 @@ impl EmailLoginResultInternal {
             token,
             handle: Some(handle),
             error_registration_ip_address_limit_reached: false,
+            error_email_registration_limit_reached: false,
         }
     }
 
@@ -393,6 +395,7 @@ impl EmailLoginResultInternal {
             token: EmailLoginToken::generate_new(),
             handle: None,
             error_registration_ip_address_limit_reached: false,
+            error_email_registration_limit_reached: false,
         }
     }
 
@@ -401,6 +404,16 @@ impl EmailLoginResultInternal {
             token: EmailLoginToken::generate_new(),
             handle: None,
             error_registration_ip_address_limit_reached: true,
+            error_email_registration_limit_reached: false,
+        }
+    }
+
+    fn error_email_registration_limit_reached() -> Self {
+        Self {
+            token: EmailLoginToken::generate_new(),
+            handle: None,
+            error_registration_ip_address_limit_reached: false,
+            error_email_registration_limit_reached: true,
         }
     }
 }
@@ -443,6 +456,10 @@ pub async fn post_request_email_login_token(
         Ok(Json(
             RequestEmailLoginTokenResult::error_email_registration_ip_address_limit_reached(),
         ))
+    } else if r.error_email_registration_limit_reached {
+        Ok(Json(
+            RequestEmailLoginTokenResult::error_email_registration_limit_reached(),
+        ))
     } else {
         Ok(Json(RequestEmailLoginTokenResult::successful(
             r.token,
@@ -467,16 +484,60 @@ async fn handle_login_token_sending(
     request: RequestEmailLoginToken,
 ) -> Result<EmailLoginResultInternal, StatusCode> {
     if !request.login_only {
-        let max_per_day = state
+        let max_per_day_per_ip = state
             .config()
             .limits_account()
             .email_registration_max_per_day_per_ip;
         if state
             .email_registration_rate_limiter()
-            .check_and_increment(address.ip(), max_per_day)
+            .check_and_increment(address.ip(), max_per_day_per_ip)
             .await
         {
             return Ok(EmailLoginResultInternal::error_registration_ip_address_limit_reached());
+        }
+
+        let max_per_day = state
+            .config()
+            .limits_account()
+            .email_registration_max_per_day;
+
+        let result = db_write!(state, move |cmds| {
+            let mut limits = cmds
+                .read()
+                .account()
+                .email()
+                .email_registration_limits()
+                .await?
+                .unwrap_or_default();
+
+            let now = UnixTime::current_time();
+            const DAY_SECONDS: i64 = 60 * 60 * 24;
+            let previous_reset_unix_time = limits
+                .daily_limit_reset_unix_time
+                .map(|t| t.ut)
+                .unwrap_or_default();
+            if previous_reset_unix_time + DAY_SECONDS <= now.ut {
+                limits.daily_email_count = 0;
+                limits.daily_limit_reset_unix_time = Some(now);
+            }
+
+            if limits.daily_email_count >= max_per_day.into() {
+                return Ok(Some(
+                    EmailLoginResultInternal::error_email_registration_limit_reached(),
+                ));
+            }
+
+            limits.daily_email_count += 1;
+            cmds.account()
+                .email()
+                .upsert_email_registration_limits(limits)
+                .await?;
+
+            Ok(None)
+        })?;
+
+        if let Some(result) = result {
+            return Ok(result);
         }
     }
 

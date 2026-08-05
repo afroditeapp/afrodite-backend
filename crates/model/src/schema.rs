@@ -464,6 +464,14 @@ diesel::table! {
 }
 
 diesel::table! {
+    email_registration_limits (row_type) {
+        row_type -> Int4,
+        daily_email_count -> Int4,
+        daily_limit_reset_unix_time -> Nullable<Int8>,
+    }
+}
+
+diesel::table! {
     favorite_profile (account_id, favorite_account_id) {
         account_id -> Int8,
         favorite_account_id -> Int8,
@@ -1124,6 +1132,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     demo_account_owned_accounts,
     dynamic_client_features_config,
     dynamic_server_config,
+    email_registration_limits,
     favorite_profile,
     history_client_version_statistics,
     history_client_version_statistics_version_number,

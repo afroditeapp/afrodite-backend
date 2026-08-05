@@ -370,4 +370,15 @@ impl WriteCommandsAccountEmail<'_> {
             cmds.account().email().set_email_login_enabled(id, enabled)
         })
     }
+
+    pub async fn upsert_email_registration_limits(
+        &self,
+        limits: model::EmailRegistrationLimits,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.account()
+                .email()
+                .upsert_email_registration_limits(limits)
+        })
+    }
 }

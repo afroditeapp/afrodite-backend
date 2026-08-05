@@ -641,6 +641,15 @@ pub struct CustomEmailSendingLimits {
     pub reset_unix_time: UnixTime,
 }
 
+#[derive(Debug, Clone, Default, Queryable, Selectable)]
+#[diesel(table_name = crate::schema::email_registration_limits)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct EmailRegistrationLimits {
+    pub row_type: i32,
+    pub daily_email_count: i32,
+    pub daily_limit_reset_unix_time: Option<UnixTime>,
+}
+
 impl AccountStateRelatedSharedState {
     pub fn is_profile_visible(&self) -> bool {
         self.account_state_initial_setup_completed

@@ -251,4 +251,17 @@ impl CurrentReadAccountEmail<'_> {
 
         Ok(found_account)
     }
+
+    pub fn email_registration_limits(
+        &mut self,
+    ) -> Result<Option<model::EmailRegistrationLimits>, DieselDatabaseError> {
+        use crate::schema::email_registration_limits::dsl::*;
+
+        email_registration_limits
+            .filter(row_type.eq(0))
+            .select(model::EmailRegistrationLimits::as_select())
+            .first(self.conn())
+            .optional()
+            .into_db_error(())
+    }
 }

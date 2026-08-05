@@ -62,4 +62,12 @@ impl ReadCommandsAccountEmail<'_> {
             .await
             .into_error()
     }
+
+    pub async fn email_registration_limits(
+        &self,
+    ) -> Result<Option<model::EmailRegistrationLimits>, DataError> {
+        self.db_read(move |mut cmds| cmds.account().email().email_registration_limits())
+            .await
+            .into_error()
+    }
 }

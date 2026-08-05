@@ -259,6 +259,13 @@ pub struct RequestEmailLoginTokenResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     error_email_registration_ip_address_limit_reached: bool,
+
+    /// This is true when the daily email registration limit has been
+    /// reached. The client should guide the user to wait 24 hours or use
+    /// another login method for account registration.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_email_registration_limit_reached: bool,
 }
 
 impl RequestEmailLoginTokenResult {
@@ -281,6 +288,14 @@ impl RequestEmailLoginTokenResult {
         Self {
             error: true,
             error_email_registration_ip_address_limit_reached: true,
+            ..Default::default()
+        }
+    }
+
+    pub fn error_email_registration_limit_reached() -> Self {
+        Self {
+            error: true,
+            error_email_registration_limit_reached: true,
             ..Default::default()
         }
     }
