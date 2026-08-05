@@ -1,27 +1,22 @@
-use vergen_gitcl::{CargoBuilder, Emitter, GitclBuilder, RustcBuilder};
+use vergen_gitcl::{Cargo, Emitter, Gitcl, Rustc};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     Emitter::default()
         .add_instructions(
-            &CargoBuilder::default()
+            &Cargo::builder()
                 .target_triple(true)
                 .debug(true)
                 .features(true)
                 .opt_level(true)
-                .build()?,
+                .build(),
         )?
+        .add_instructions(&Rustc::builder().semver(true).host_triple(true).build())?
         .add_instructions(
-            &RustcBuilder::default()
-                .semver(true)
-                .host_triple(true)
-                .build()?,
-        )?
-        .add_instructions(
-            &GitclBuilder::default()
+            &Gitcl::builder()
                 .branch(true)
                 .describe(true, true, None)
                 .sha(false)
-                .build()?,
+                .build(),
         )?
         .fail_on_error()
         .emit()?;
