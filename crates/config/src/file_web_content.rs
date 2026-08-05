@@ -220,7 +220,7 @@ impl<'a> WebStringGetter<'a> {
         let rendered_body = Handlebars::new()
             .render_template(&body, &body_data)
             .change_context(ConfigFileError::InvalidConfig)
-            .attach_lazy(|| "Body template rendering error".to_string())?;
+            .attach_opaque_with(|| "Body template rendering error".to_string())?;
 
         let data = json!({
             "title": title,
@@ -230,7 +230,7 @@ impl<'a> WebStringGetter<'a> {
         let rendered = Handlebars::new()
             .render_template(&self.config.web_page_template, &data)
             .change_context(ConfigFileError::InvalidConfig)
-            .attach_lazy(|| "Template rendering error".to_string())?;
+            .attach_opaque_with(|| "Template rendering error".to_string())?;
 
         Ok(WebContent {
             content: rendered,
@@ -288,7 +288,7 @@ impl<'a> WebStringGetter<'a> {
         let rendered = Handlebars::new()
             .render_template(template, &data)
             .change_context(ConfigFileError::InvalidConfig)
-            .attach_lazy(|| "Template rendering error".to_string())?;
+            .attach_opaque_with(|| "Template rendering error".to_string())?;
 
         Ok(WebContent {
             content: rendered,

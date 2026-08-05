@@ -46,11 +46,11 @@ impl IpList {
                 let first = iter
                     .next()
                     .ok_or(GetConfigError::LoadFileError.report())
-                    .attach_lazy(|| format!("Invalid IP range: {l}"))?;
+                    .attach_opaque_with(|| format!("Invalid IP range: {l}"))?;
                 let second = iter
                     .next()
                     .ok_or(GetConfigError::LoadFileError.report())
-                    .attach_lazy(|| format!("Invalid IP range: {l}"))?;
+                    .attach_opaque_with(|| format!("Invalid IP range: {l}"))?;
                 let range: IpAddrRange = Ipv4AddrRange::new(
                     first
                         .parse::<Ipv4Addr>()

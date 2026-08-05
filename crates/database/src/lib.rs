@@ -121,7 +121,7 @@ pub trait IntoDatabaseError<Err: Context>: ResultExt + Sized {
         request_context: T,
     ) -> Result<Self::Ok, Self::NewError> {
         self.change_context(Self::DEFAULT_NEW_ERROR)
-            .attach_lazy(move || {
+            .attach_opaque_with(move || {
                 let context = ErrorContext::<T, Self::Ok>::new(request_context);
 
                 format!("{context:#?}")
@@ -135,7 +135,7 @@ pub trait IntoDatabaseErrorExt<Err: Context>: ResultExt + Sized {
         self,
         request_context: T,
     ) -> Result<Self::Ok, <Self as ResultExt>::Context> {
-        self.attach_lazy(move || {
+        self.attach_opaque_with(move || {
             let context = ErrorContext::<T, Self::Ok>::new(request_context);
 
             format!("{context:#?}")

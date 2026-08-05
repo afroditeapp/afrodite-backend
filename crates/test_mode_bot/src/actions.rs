@@ -81,7 +81,7 @@ pub trait BotAction: Debug + Send + Sync {
     async fn excecute(&self, state: &mut BotState) -> Result<(), TestError> {
         self.excecute_impl(state)
             .await
-            .attach_lazy(|| format!("{__self:?}"))
+            .attach_opaque_with(|| format!("{__self:?}"))
     }
 
     async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError>;

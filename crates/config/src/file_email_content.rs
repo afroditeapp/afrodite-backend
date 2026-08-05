@@ -281,7 +281,7 @@ impl<'a> EmailStringGetter<'a> {
         let rendered_body = Handlebars::new()
             .render_template(&body, &body_data)
             .change_context(ConfigFileError::InvalidConfig)
-            .attach_lazy(|| "Template rendering error".to_string())?;
+            .attach_opaque_with(|| "Template rendering error".to_string())?;
 
         let mut data = json!({
             "subject": subject,
@@ -300,7 +300,7 @@ impl<'a> EmailStringGetter<'a> {
         let rendered = Handlebars::new()
             .render_template(&self.config.email_body_template, &data)
             .change_context(ConfigFileError::InvalidConfig)
-            .attach_lazy(|| "Template rendering error".to_string())?;
+            .attach_opaque_with(|| "Template rendering error".to_string())?;
 
         Ok(EmailContent {
             subject,

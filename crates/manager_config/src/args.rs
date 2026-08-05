@@ -57,7 +57,7 @@ impl ManagerApiClientMode {
         let file_path = {
             let required_options = required_options.into();
             if let Some(required_options) = required_options {
-                file_path_result.attach_lazy(|| {
+                file_path_result.attach_opaque_with(|| {
                     format!(
                         "Set '--manager-config' or the following options: {}",
                         required_options

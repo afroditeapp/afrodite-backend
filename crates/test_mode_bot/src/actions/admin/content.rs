@@ -165,7 +165,7 @@ impl BotAction for ModerateContentModerationRequest {
                 // when GetProfileList benchmark was running.
                 // When the error was noticed there was multiple
                 // admin bots moderating.
-                .attach_lazy(|| {
+                .attach_opaque_with(|| {
                     format!(
                         "Request creator: {}, Content ID: {}",
                         request.account_id, request.content_id,

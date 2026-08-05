@@ -211,7 +211,7 @@ impl SaveContentBackup {
             tokio::fs::remove_dir(&dir)
                 .await
                 .change_context(BackupTargetError::RemoveDir)
-                .attach_lazy(move || dir.to_string_lossy().to_string())?;
+                .attach_opaque_with(move || dir.to_string_lossy().to_string())?;
         }
 
         Ok(())
