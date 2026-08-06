@@ -327,7 +327,7 @@ impl AdminBotReportProcessingLogic {
             match report {
                 ReportInternal::ProfileName(r) => {
                     let cfg = config.profile_name.as_ref();
-                    if let Some(text) = r.content.profile_name.as_ref()
+                    if let Some(Some(text)) = r.content.profile_name.as_ref()
                         && let Some(llm) = profile_name_llm
                     {
                         let (a, s) = Self::llm_profile_string_decision(text, llm).await?;
@@ -338,7 +338,7 @@ impl AdminBotReportProcessingLogic {
                 }
                 ReportInternal::ProfileText(r) => {
                     let cfg = config.profile_text.as_ref();
-                    if let Some(text) = r.content.profile_text.as_ref()
+                    if let Some(Some(text)) = r.content.profile_text.as_ref()
                         && let Some(llm) = profile_text_llm
                     {
                         let (a, s) = Self::llm_profile_string_decision(text, llm).await?;

@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 pub struct DailyLikesConfig {
     #[serde(rename = "daily_likes")]
     pub daily_likes: i32,
-    /// UTC time value
+    /// UTC time with \"hh:mm\" format.
     #[serde(rename = "reset_time")]
     pub reset_time: String,
 }

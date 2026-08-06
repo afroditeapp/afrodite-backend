@@ -13,10 +13,10 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct EmailAddressStateAdmin {
-    #[serde(rename = "email", skip_serializing_if = "Option::is_none")]
-    pub email: Option<String>,
-    #[serde(rename = "email_change", skip_serializing_if = "Option::is_none")]
-    pub email_change: Option<String>,
+    #[serde(rename = "email", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub email: Option<Option<String>>,
+    #[serde(rename = "email_change", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub email_change: Option<Option<String>>,
     #[serde(rename = "email_change_verified", skip_serializing_if = "Option::is_none")]
     pub email_change_verified: Option<bool>,
     #[serde(rename = "email_login_enabled", skip_serializing_if = "Option::is_none")]

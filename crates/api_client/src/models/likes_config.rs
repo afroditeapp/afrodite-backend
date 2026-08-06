@@ -15,9 +15,9 @@ use serde::{Deserialize, Serialize};
 pub struct LikesConfig {
     #[serde(rename = "daily", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub daily: Option<Option<Box<models::DailyLikesConfig>>>,
-    /// UTC time value
-    #[serde(rename = "unlimited_likes_disabling_time", skip_serializing_if = "Option::is_none")]
-    pub unlimited_likes_disabling_time: Option<String>,
+    /// UTC time with \"hh:mm\" format.
+    #[serde(rename = "unlimited_likes_disabling_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub unlimited_likes_disabling_time: Option<Option<String>>,
 }
 
 impl LikesConfig {

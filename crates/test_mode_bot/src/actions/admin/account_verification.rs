@@ -87,7 +87,7 @@ impl<'a> LazyProfileAgeAndName<'a> {
     }
 
     async fn name(&mut self) -> Result<Option<String>, TestError> {
-        Ok(self.get().await?.name.clone())
+        Ok(self.get().await?.name.clone().flatten())
     }
 }
 

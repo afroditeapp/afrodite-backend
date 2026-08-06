@@ -19,6 +19,7 @@ pub struct Attribute {
     /// Icon for the attribute.
     #[serde(rename = "icon", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub icon: Option<Option<String>>,
+    /// Numeric unique identifier for the attribute.
     #[serde(rename = "id")]
     pub id: i32,
     /// String unique identifier for the attribute.

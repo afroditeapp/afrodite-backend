@@ -16,8 +16,9 @@ pub struct LoginResult {
     /// Account ID of current account. If `None`, the client is unsupported.
     #[serde(rename = "aid", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub aid: Option<Option<Box<models::AccountId>>>,
-    #[serde(rename = "email", skip_serializing_if = "Option::is_none")]
-    pub email: Option<String>,
+    /// Current email of current account. If `None`, if email address is not set or the client version is unsupported.
+    #[serde(rename = "email", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub email: Option<Option<String>>,
     #[serde(rename = "error", skip_serializing_if = "Option::is_none")]
     pub error: Option<bool>,
     #[serde(rename = "error_account_locked", skip_serializing_if = "Option::is_none")]

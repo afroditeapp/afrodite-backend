@@ -17,7 +17,7 @@ async fn updating_profile_works(mut context: TestContext) -> TestResult {
     };
     post_profile(&account.api(), profile).await?;
     assert_eq(
-        Some(name),
+        Some(Some(name)),
         get_profile(&account.api(), &account.account_id_string(), None, None)
             .await?
             .profile

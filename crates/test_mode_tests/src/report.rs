@@ -131,7 +131,7 @@ async fn auto_ban_spam_reporters_threshold_1_accepted_and_rejected_reports_do_no
     let report_result = post_report_profile_name(
         &reporter.api(),
         UpdateProfileNameReport::new(
-            target_profile.profile.name.unwrap_or_default(),
+            target_profile.profile.name.flatten().unwrap_or_default(),
             target.account_id(),
         ),
     )

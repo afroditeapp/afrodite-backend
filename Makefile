@@ -92,6 +92,8 @@ update-api-bindings-step-generate-bindings:
 	--global-property apiDocs=false,modelDocs=false
 # Workarounds for generator bugs
 # Command output is redirected as macOS sed doesn't support normal -i
+	sed -e 's/models::models::StatisticsProfileVisibility/models::StatisticsProfileVisibility/g' crates/api_client/src/apis/profile_api.rs > $(TMP_FILE)
+	cp $(TMP_FILE) crates/api_client/src/apis/profile_api.rs
 	sed -e 's/body: std::path::PathBuf/body: Vec<u8>/g' -e 's/TokioFile::open(p_body_body).await?/std::io::Cursor::new(p_body_body)/g' crates/api_client/src/apis/media_api.rs > $(TMP_FILE)
 	cp $(TMP_FILE) crates/api_client/src/apis/media_api.rs
 	sed -e 's/body: std::path::PathBuf/body: Vec<u8>/g' -e 's/TokioFile::open(p_body_body).await?/std::io::Cursor::new(p_body_body)/g' crates/api_client/src/apis/chat_api.rs > $(TMP_FILE)

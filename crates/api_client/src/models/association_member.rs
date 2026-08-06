@@ -23,16 +23,16 @@ pub struct AssociationMember {
     #[serde(rename = "creation_unix_time")]
     pub creation_unix_time: Box<models::UnixTime>,
     /// A string wrapper that ensures the string is not empty. This type is used for TEXT columns that should not allow empty strings. In the database, these columns are NULL when there is no value, and this type represents non-NULL values that must be non-empty.
-    #[serde(rename = "domicile", skip_serializing_if = "Option::is_none")]
-    pub domicile: Option<String>,
+    #[serde(rename = "domicile", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub domicile: Option<Option<String>>,
     #[serde(rename = "edit_unix_time")]
     pub edit_unix_time: Box<models::UnixTime>,
     /// A string wrapper that ensures the string is not empty. This type is used for TEXT columns that should not allow empty strings. In the database, these columns are NULL when there is no value, and this type represents non-NULL values that must be non-empty.
-    #[serde(rename = "email", skip_serializing_if = "Option::is_none")]
-    pub email: Option<String>,
+    #[serde(rename = "email", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub email: Option<Option<String>>,
     /// A string wrapper that ensures the string is not empty. This type is used for TEXT columns that should not allow empty strings. In the database, these columns are NULL when there is no value, and this type represents non-NULL values that must be non-empty.
-    #[serde(rename = "full_name", skip_serializing_if = "Option::is_none")]
-    pub full_name: Option<String>,
+    #[serde(rename = "full_name", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub full_name: Option<Option<String>>,
     #[serde(rename = "membership_type")]
     pub membership_type: i32,
 }

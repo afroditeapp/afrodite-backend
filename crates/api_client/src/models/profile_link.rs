@@ -18,8 +18,8 @@ pub struct ProfileLink {
     #[serde(rename = "c")]
     pub c: Box<models::ProfileContentVersion>,
     /// Account's most recent disconnect time.  If the last seen time is not None, then it is Unix timestamp or -1 if the profile is currently online.
-    #[serde(rename = "l", skip_serializing_if = "Option::is_none")]
-    pub l: Option<i64>,
+    #[serde(rename = "l", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub l: Option<Option<i64>>,
     #[serde(rename = "p")]
     pub p: Box<models::ProfileVersion>,
 }

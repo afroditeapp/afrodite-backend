@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 pub struct ProfileAttributeFilterValue {
     #[serde(rename = "accept_missing_attribute")]
     pub accept_missing_attribute: bool,
+    /// Attribute ID
     #[serde(rename = "id")]
     pub id: i32,
     /// Same as [Self::wanted] but for unwanted values.  The unwanted values are checked always with AND operator.

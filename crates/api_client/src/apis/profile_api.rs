@@ -498,7 +498,7 @@ pub async fn get_profile(configuration: &configuration::Configuration, aid: &str
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
     if let Some(ref param_value) = p_query_v {
-        req_builder = req_builder.query(&[("v", &param_value.to_string())]);
+        req_builder = req_builder.query(&[("v", &serde_json::to_string(param_value)?)]);
     }
     if let Some(ref param_value) = p_query_is_match {
         req_builder = req_builder.query(&[("is_match", &param_value.to_string())]);
@@ -583,7 +583,7 @@ pub async fn get_profile_binary(configuration: &configuration::Configuration, ai
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
     if let Some(ref param_value) = p_query_v {
-        req_builder = req_builder.query(&[("v", &param_value.to_string())]);
+        req_builder = req_builder.query(&[("v", &serde_json::to_string(param_value)?)]);
     }
     if let Some(ref param_value) = p_query_is_match {
         req_builder = req_builder.query(&[("is_match", &param_value.to_string())]);
