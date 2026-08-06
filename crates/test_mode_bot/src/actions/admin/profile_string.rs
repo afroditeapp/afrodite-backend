@@ -10,7 +10,7 @@ use api_client::{
 use async_openai::{
     Client,
     config::OpenAIConfig,
-    types::{ChatCompletionRequestMessage, CreateChatCompletionRequest},
+    types::chat::{ChatCompletionRequestMessage, CreateChatCompletionRequest},
 };
 use config::bot_config_file::internal::{
     ModerationAction, ProfileStringModerationConfigInternal,

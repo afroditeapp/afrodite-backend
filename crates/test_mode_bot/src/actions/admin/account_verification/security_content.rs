@@ -2,7 +2,7 @@ use api_client::{
     apis::{media_admin_api, media_api},
     models::{AccountId, ContentId, EditVerificationSecurityContent},
 };
-use async_openai::types::{
+use async_openai::types::chat::{
     ChatCompletionRequestMessage, ChatCompletionRequestMessageContentPartImage,
     ChatCompletionRequestUserMessage, ChatCompletionRequestUserMessageContent,
     CreateChatCompletionRequest, ImageUrl,

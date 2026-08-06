@@ -10,7 +10,7 @@ use api_client::{
 use async_openai::{
     Client,
     config::OpenAIConfig,
-    types::{
+    types::chat::{
         ChatCompletionRequestMessage, ChatCompletionRequestMessageContentPartImage,
         ChatCompletionRequestUserMessage, ChatCompletionRequestUserMessageContent,
         CreateChatCompletionRequest, ImageUrl,

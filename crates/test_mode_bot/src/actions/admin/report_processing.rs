@@ -13,7 +13,7 @@ use api_client::{
 use async_openai::{
     Client,
     config::OpenAIConfig,
-    types::{
+    types::chat::{
         ChatCompletionRequestMessage, ChatCompletionRequestMessageContentPartImage,
         ChatCompletionRequestUserMessage, ChatCompletionRequestUserMessageContent,
         CreateChatCompletionRequest, ImageUrl,
@@ -656,7 +656,7 @@ impl AdminBotReportProcessingLogic {
 
     async fn parse_llm_response(
         r: std::result::Result<
-            async_openai::types::CreateChatCompletionResponse,
+            async_openai::types::chat::CreateChatCompletionResponse,
             async_openai::error::OpenAIError,
         >,
         expected_response_lowercase: String,
