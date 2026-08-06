@@ -15,6 +15,7 @@ diesel = { workspace = true }
 
 sha2 = { workspace = true }
 base64 = { workspace = true }
+base16ct = { workspace = true }
 bitflags = { workspace = true }
 chrono = { workspace = true }
 num_enum = { workspace = true }

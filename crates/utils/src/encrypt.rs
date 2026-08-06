@@ -5,8 +5,9 @@ use std::{error::Error, fmt::Display, io::Read};
 use pgp::{
     bytes::Bytes,
     composed::{
-        ArmorOptions, Deserializable, KeyType, Message, MessageBuilder, PlainSessionKey,
-        SecretKeyParamsBuilder, SignedPublicKey, SignedSecretKey, SubkeyParamsBuilder,
+        ArmorOptions, Deserializable, EncryptionCaps, KeyType, Message, MessageBuilder,
+        PlainSessionKey, SecretKeyParamsBuilder, SignedPublicKey, SignedSecretKey,
+        SubkeyParamsBuilder,
     },
     crypto::{
         aead::{AeadAlgorithm, ChunkSize},
@@ -104,7 +105,7 @@ pub fn encrypt_data(
 pub fn generate_keys(primary_user_id: String) -> Result<GeneratedKeys, MessageEncryptionError> {
     let params = SecretKeyParamsBuilder::default()
         .key_type(KeyType::Ed25519)
-        .can_encrypt(false)
+        .can_encrypt(EncryptionCaps::None)
         .can_certify(false)
         .can_sign(true)
         .primary_user_id(primary_user_id)
@@ -115,7 +116,7 @@ pub fn generate_keys(primary_user_id: String) -> Result<GeneratedKeys, MessageEn
             SubkeyParamsBuilder::default()
                 .key_type(KeyType::X25519)
                 .can_authenticate(false)
-                .can_encrypt(true)
+                .can_encrypt(EncryptionCaps::Communication)
                 .can_sign(false)
                 .build()
                 .map_err(|_| MessageEncryptionError::GenerateKeysPrivateKeySubKeyParams)?,
@@ -125,15 +126,11 @@ pub fn generate_keys(primary_user_id: String) -> Result<GeneratedKeys, MessageEn
     let private_key = params
         .generate(OsRng)
         .map_err(|_| MessageEncryptionError::GenerateKeysPrivateKeyGenerate)?;
-    let signed_private_key = private_key
-        .sign(OsRng, &Password::empty())
-        .map_err(|_| MessageEncryptionError::GenerateKeysPrivateKeySign)?;
-    let private = signed_private_key
+    let private = private_key
         .to_armored_string(ArmorOptions::default())
         .map_err(|_| MessageEncryptionError::GenerateKeysPrivateKeyArmor)?;
-
-    let signed_public_key = signed_private_key.signed_public_key();
-    let public = signed_public_key
+    let public_key = private_key.to_public_key();
+    let public = public_key
         .to_armored_string(ArmorOptions::default())
         .map_err(|_| MessageEncryptionError::GenerateKeysPublicKeyArmor)?;
 

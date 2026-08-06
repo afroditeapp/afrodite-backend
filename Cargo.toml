@@ -72,100 +72,101 @@ members = [
 vergen-gitcl = { version = "10.0.2", features = ["build", "cargo", "rustc"] }
 
 error-stack = "0.8.0"
-thiserror = "2.0.12"
+thiserror = "2.0.19"
 
-# rand 0.9 is available but pgp uses rand 0.8
-rand = "0.8.5"
+# rand 0.10 is available but pgp uses rand 0.8
+rand = "0.8.7"
 rand_xoshiro = "0.6.0"
-chrono = { version = "0.4.41", features = ["serde"] }
-uuid = { version = "1.17.0", features = ["v4", "serde"] }
-base64 = "0.22.1"
-base16ct = { version = "0.2.0", features = ["alloc"] }
-nalgebra = "0.33.2"
+chrono = { version = "0.4.45", features = ["serde"] }
+uuid = { version = "1.24.0", features = ["v4", "serde"] }
+base64 = "0.23.1"
+base16ct = { version = "1.0.0", features = ["alloc"] }
+nalgebra = "0.35.0"
 num_cpus = "1.17.0"
-nix = { version = "0.30.1", default-features = false, features = ["signal", "fs"] }
-image = { version = "0.25.6", default-features = false, features = ["jpeg", "png"] }
+nix = { version = "0.31.3", default-features = false, features = ["signal", "fs"] }
+image = { version = "0.25.10", default-features = false, features = ["jpeg", "png"] }
 mozjpeg = "0.10.13"
-bitflags = "2.9.1"
-num_enum = "0.7.4"
-sha1 = "0.10.6"
-sha2 = "0.10.9"
-sysinfo = { version = "0.35.2", default-features = false, features = ["system"] }
-ipnet = "2.11.0"
-maxminddb = "0.26.0"
-zip = "4.3.0"
-regex = "1.11.1"
+bitflags = "2.13.1"
+num_enum = "0.7.6"
+sha1 = "0.11.0"
+sha2 = "0.11.0"
+sysinfo = { version = "0.39.6", default-features = false, features = ["system"] }
+ipnet = "2.12.1"
+maxminddb = "0.30.0"
+zip = "8.6.0"
+regex = "1.13.1"
 aes-gcm = "0.10.3"
-handlebars = "6.3.2"
+handlebars = "6.4.3"
 
-clap = { version = "4.5.40", features = ["cargo", "derive"] }
+clap = { version = "4.6.5", features = ["cargo", "derive"] }
 
-tracing = "0.1.41"
-tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 # For tokio-console debugging. Disabled currently.
 # If you want to enable this uncomment also .cargo
 # console-subscriber = "0.4.1"
 
-serde = { version = "1.0.219", features = ["derive"] }
-serde_json = "1.0.140"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
 serde_urlencoded = "0.7.1"
-toml = "0.8.23"
-csv = "1.3.1"
+toml = "1.1.4"
+csv = "1.4.0"
 
-diesel = { version = "2.2.11", features = ["postgres", "sqlite", "returning_clauses_for_sqlite_3_35", "chrono", "64-column-tables"] }
-diesel_migrations = "2.2.0"
-deadpool = { version = "0.12.2" }
+diesel = { version = "2.3.11", features = ["postgres", "sqlite", "returning_clauses_for_sqlite_3_35", "chrono", "64-column-tables"] }
+diesel_migrations = "2.3.2"
+deadpool = { version = "0.13.0" }
 
-futures = "0.3.31"
-tokio = { version = "1.45.1", features = ["full"] }
-tokio-stream = { version = "0.1.17", features = ["sync", "fs"] }
-tokio-util = { version = "0.7.15", features = ["io"]}
-async-trait = "0.1.88"
+futures = "0.3.33"
+tokio = { version = "1.53.1", features = ["full"] }
+tokio-stream = { version = "0.1.19", features = ["sync", "fs"] }
+tokio-util = { version = "0.7.19", features = ["io"]}
+async-trait = "0.1.91"
 
 # tls_client_rustls and tls_client_rustls configures TLS
-reqwest = { version = "0.12.20", default-features = false, features = ["json", "charset", "http2", "macos-system-configuration"] }
-utoipa = { version = "5.4.0", features = ["axum_extras", "uuid", "chrono"] }
+reqwest = { version = "0.12.28", default-features = false, features = ["json", "charset", "http2", "macos-system-configuration"] }
+utoipa = { version = "5.5.0", features = ["axum_extras", "uuid", "chrono"] }
 utoipa-axum = { version = "0.2.0" }
 utoipa-swagger-ui = { version = "9.0.2", features = ["axum", "vendored"] }
-url = { version = "2.5.4", features = ["serde"] }
-http = "1.3.1"
+url = { version = "2.5.8", features = ["serde"] }
+http = "1.5.0"
 headers = "0.4.1"
-jsonwebtoken = "9.3.1"
-hyper = { version = "1.6.0", features = ["full"] }
-hyper-util = { version = "0.1.14", features = ["full"] }
-axum = { version = "0.8.4", features = ["ws", "macros", "http2"] }
-axum-extra = { version = "0.10.1", features = ["typed-header"] }
-tower = "0.5.2"
-tower-http = { version = "0.6.6", features = ["trace", "compression-br", "compression-gzip", "compression-zstd"] }
+jsonwebtoken = { version = "11.0.0", features = ["aws_lc_rs"] }
+hyper = { version = "1.11.0", features = ["full"] }
+hyper-util = { version = "0.1.20", features = ["full"] }
+axum = { version = "0.8.9", features = ["ws", "macros", "http2"] }
+axum-extra = { version = "0.12.6", features = ["typed-header"] }
+tower = "0.5.3"
+tower-http = { version = "0.6.11", features = ["trace", "compression-br", "compression-gzip", "compression-zstd"] }
 
 # Email sending, tls_client_rustls and tls_client_rustls configures TLS
-lettre = { version = "0.11.17", default-features = false, features = ["smtp-transport", "pool", "hostname", "builder"] }
+lettre = { version = "0.11.23", default-features = false, features = ["smtp-transport", "pool", "hostname", "builder"] }
 
 # File hosting package extracting
-flate2 = "1.1.2"
-tar = "0.4.44"
+flate2 = "1.1.9"
+tar = "0.4.46"
 mime = "0.3.17"
 
 # Server TLS
-tokio-rustls = { version = "0.26.2", default-features = false, features = ["logging", "tls12", "ring"] }
-tokio-rustls-acme = { version = "0.9.0", default-features = false }
+tokio-rustls = { version = "0.26.4", default-features = false, features = ["logging", "tls12", "ring"] }
+tokio-rustls-acme = { version = "0.9.1", default-features = false }
 rustls-pemfile = "2.2.0"
-rustls-platform-verifier = "0.6.0"
+rustls-platform-verifier = "0.7.0"
 
 # Procedural macros
-syn = { version = "2.0.104", features = ["full"] }
-quote = "1.0.40"
+syn = { version = "3.0.3", features = ["full"] }
+quote = "1.0.47"
 
 # Test mode
-inventory = "0.3.20"
+inventory = "0.3.24"
 # tls_client_rustls and tls_client_rustls configures TLS.
 # tokio-tungstenite 0.27 is available but axum uses 0.26.
-tokio-tungstenite = { version = "0.26.1", features = ["url"] }
-pgp = { version = "0.18.0", default-features = false }
-smallvec = "1.15.1"
+tokio-tungstenite = { version = "0.29.0", features = ["url"] }
+pgp = { version = "0.20.0", default-features = false }
+smallvec = "1.15.2"
+# tls_client_rustls and tls_client_rustls configures TLS.
 async-openai = { version = "0.28.3", default-features = false }
-unicode-segmentation = "1.12.0"
-icu_properties = "2.1.2"
+unicode-segmentation = "1.13.3"
+icu_properties = "2.2.0"
 nsfw = { version = "0.2.0", default-features = false }
 
 # Firebase cloud messaging, tls_client_rustls and tls_client_rustls configures TLS

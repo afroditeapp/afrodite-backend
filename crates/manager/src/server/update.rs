@@ -1,6 +1,7 @@
 //! Handle software updates
 
 use std::{
+    io::Read,
     path::{Path, PathBuf},
     process::ExitStatus,
     sync::Arc,
@@ -532,7 +533,16 @@ impl UpdateDirUtils<'_> {
             let mut file =
                 std::fs::File::open(file).change_context(UpdateError::FileReadingFailed)?;
             let mut hasher = sha2::Sha256::new();
-            std::io::copy(&mut file, &mut hasher).change_context(UpdateError::FileReadingFailed)?;
+            let mut buf = vec![0u8; 1024 * 1024];
+            loop {
+                let n = file
+                    .read(&mut buf)
+                    .change_context(UpdateError::FileReadingFailed)?;
+                if n == 0 {
+                    break;
+                }
+                hasher.update(&buf[..n]);
+            }
             let hash = hasher.finalize();
             let hash_string = base16ct::lower::encode_string(&hash);
             Ok(hash_string)

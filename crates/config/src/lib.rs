@@ -4,6 +4,7 @@
 #![warn(unused_crate_dependencies)]
 #![allow(clippy::large_enum_variant, clippy::manual_range_contains)]
 
+use base16ct::HexDisplay;
 use regex::Regex;
 // Ignore unused depenency warning
 use tls_client as _;
@@ -328,7 +329,10 @@ pub fn get_config(
         }
         let custom_reports =
             std::fs::read_to_string(path).change_context(GetConfigError::LoadFileError)?;
-        let custom_reports_sha256 = format!("{:x}", Sha256::digest(custom_reports.as_bytes()));
+        let custom_reports_sha256 = format!(
+            "{}",
+            HexDisplay(Sha256::digest(custom_reports.as_bytes()).as_slice())
+        );
         let mut custom_reports: CustomReportsConfig =
             toml::from_str(&custom_reports).change_context(GetConfigError::InvalidConfiguration)?;
         custom_reports
@@ -346,7 +350,10 @@ pub fn get_config(
         let features = std::fs::read_to_string(path)
             .change_context(GetConfigError::LoadFileError)
             .attach_opaque_with(|| path.to_string_lossy().to_string())?;
-        let sha256 = format!("{:x}", Sha256::digest(features.as_bytes()));
+        let sha256 = format!(
+            "{}",
+            HexDisplay(Sha256::digest(features.as_bytes()).as_slice())
+        );
         let features_internal: ClientFeaturesConfigInternal =
             toml::from_str(&features).change_context(GetConfigError::InvalidConfiguration)?;
         let features = features_internal

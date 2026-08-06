@@ -79,10 +79,12 @@ impl IpDb {
     }
 
     pub fn get_country_ref(&self, ip: IpAddr) -> Option<IpCountryKeyRef<'_>> {
-        match self.db.lookup::<maxminddb::geoip2::Country>(ip) {
-            Ok(v) => v
-                .and_then(|v| v.country)
-                .and_then(|v| v.iso_code)
+        match self.db.lookup(ip) {
+            Ok(result) => result
+                .decode::<maxminddb::geoip2::Country>()
+                .ok()
+                .flatten()
+                .and_then(|v| v.country.iso_code)
                 .map(IpCountryKeyRef::new),
             Err(e) => {
                 error!("MaxMind DB error: {}", e);

@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 
+use base16ct::HexDisplay;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use simple_backend_utils::time::UtcTimeValue;
@@ -33,7 +34,7 @@ pub struct DynamicClientFeaturesConfigHash {
 impl DynamicClientFeaturesConfigHash {
     pub fn from_json_string(json: &str) -> Self {
         Self {
-            h: format!("{:x}", Sha256::digest(json.as_bytes())),
+            h: format!("{}", HexDisplay(Sha256::digest(json.as_bytes()).as_slice())),
         }
     }
 

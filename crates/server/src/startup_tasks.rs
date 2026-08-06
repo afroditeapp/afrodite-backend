@@ -1,3 +1,4 @@
+use base16ct::HexDisplay;
 use futures::stream::{self, StreamExt};
 use model::{AccountIdInternal, PushNotificationStateInfoWithFlags};
 use model_account::{EmailMessages, EmailSendingState};
@@ -105,7 +106,7 @@ impl StartupTasks {
             .simple_backend()
             .web_push_config()
             .map(|(_, key)| Sha256::digest(key.get_public_key()))
-            .map(|hash| format!("{hash:x}"))
+            .map(|hash| format!("{}", HexDisplay(hash.as_slice())))
             .unwrap_or_default();
 
         db_write_raw!(state, move |cmds| {

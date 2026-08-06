@@ -22,6 +22,7 @@ error-stack = { workspace = true }
 
 nix = { workspace = true, default-features = false, features = ["signal"] }
 sha2 = { workspace = true }
+base16ct = { workspace = true }
 chrono = { workspace = true }
 num_cpus = { workspace = true }
 
