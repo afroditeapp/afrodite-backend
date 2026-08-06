@@ -13,23 +13,37 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct RequestEmailLoginTokenResult {
-    /// Client token to be used together with the email token. Always returned to prevent email enumeration attacks.
-    #[serde(rename = "client_token")]
-    pub client_token: Box<models::EmailLoginToken>,
+    /// Client token to be used together with the email token.
+    #[serde(rename = "client_token", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub client_token: Option<Option<Box<models::EmailLoginToken>>>,
+    /// Maximum number of email login tokens that can be sent per month.
+    #[serde(rename = "email_login_emails_per_month", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub email_login_emails_per_month: Option<Option<i64>>,
+    #[serde(rename = "error", skip_serializing_if = "Option::is_none")]
+    pub error: Option<bool>,
+    #[serde(rename = "error_email_registration_ip_address_limit_reached", skip_serializing_if = "Option::is_none")]
+    pub error_email_registration_ip_address_limit_reached: Option<bool>,
+    /// This is true when the daily email registration limit has been reached. The client should guide the user to wait 24 hours or use another login method for account registration.
+    #[serde(rename = "error_email_registration_limit_reached", skip_serializing_if = "Option::is_none")]
+    pub error_email_registration_limit_reached: Option<bool>,
     /// Minimum wait duration between token requests in seconds
-    #[serde(rename = "resend_wait_seconds")]
-    pub resend_wait_seconds: i64,
+    #[serde(rename = "resend_wait_seconds", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub resend_wait_seconds: Option<Option<i64>>,
     /// Token validity duration in seconds
-    #[serde(rename = "token_validity_seconds")]
-    pub token_validity_seconds: i64,
+    #[serde(rename = "token_validity_seconds", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub token_validity_seconds: Option<Option<i64>>,
 }
 
 impl RequestEmailLoginTokenResult {
-    pub fn new(client_token: models::EmailLoginToken, resend_wait_seconds: i64, token_validity_seconds: i64) -> RequestEmailLoginTokenResult {
+    pub fn new() -> RequestEmailLoginTokenResult {
         RequestEmailLoginTokenResult {
-            client_token: Box::new(client_token),
-            resend_wait_seconds,
-            token_validity_seconds,
+            client_token: None,
+            email_login_emails_per_month: None,
+            error: None,
+            error_email_registration_ip_address_limit_reached: None,
+            error_email_registration_limit_reached: None,
+            resend_wait_seconds: None,
+            token_validity_seconds: None,
         }
     }
 }

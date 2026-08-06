@@ -540,6 +540,7 @@ impl AdminBotReportProcessingLogic {
             &target.aid,
             &content_id.cid,
             Some(false),
+            None,
         )
         .await
         .map_err(|_| TestError::ApiRequest)?

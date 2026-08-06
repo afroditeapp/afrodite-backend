@@ -102,13 +102,14 @@ async fn handle_check_image_method(
     cid: &ContentId,
     verification_image: &[u8],
 ) -> Result<bool, TestError> {
-    let security_content = media_api::get_content(&api.api(), &aid.aid, &cid.cid, Some(false))
-        .await
-        .change_context(TestError::ApiRequest)?
-        .bytes()
-        .await
-        .change_context(TestError::ApiRequest)?
-        .to_vec();
+    let security_content =
+        media_api::get_content(&api.api(), &aid.aid, &cid.cid, Some(false), None)
+            .await
+            .change_context(TestError::ApiRequest)?
+            .bytes()
+            .await
+            .change_context(TestError::ApiRequest)?
+            .to_vec();
 
     let result = if let Some(llm) = state.llm.clone() {
         llm_security_content_verification_and_retry(&security_content, verification_image, llm)

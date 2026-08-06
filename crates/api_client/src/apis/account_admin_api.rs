@@ -105,6 +105,15 @@ pub enum GetEmailAddressStateAdminError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`get_manual_association_membership_registry`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetManualAssociationMembershipRegistryError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_permissions`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -177,10 +186,46 @@ pub enum PostDeleteAccountError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`post_delete_association_membership`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostDeleteAssociationMembershipError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_get_association_member`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostGetAssociationMemberError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_get_association_members_page`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostGetAssociationMembersPageError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`post_get_client_version_statistics`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PostGetClientVersionStatisticsError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_manual_association_membership_registry`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostManualAssociationMembershipRegistryError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -246,6 +291,15 @@ pub enum PostSetNewsPublicityError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PostSetPermissionsError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_update_association_membership_type`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostUpdateAssociationMembershipTypeError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -640,6 +694,44 @@ pub async fn get_email_address_state_admin(configuration: &configuration::Config
     }
 }
 
+/// # Access  Permission [model::Permissions::admin_view_association_membership] is required.
+pub async fn get_manual_association_membership_registry(configuration: &configuration::Configuration, ) -> Result<models::ManualAssociationMembershipRegistry, Error<GetManualAssociationMembershipRegistryError>> {
+
+    let uri_str = format!("{}/account_api/manual_association_membership_registry", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::ManualAssociationMembershipRegistry`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::ManualAssociationMembershipRegistry`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetManualAssociationMembershipRegistryError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 /// # Access  Permission [model::Permissions::admin_view_permissions] is required.
 pub async fn get_permissions(configuration: &configuration::Configuration, aid: &str) -> Result<models::Permissions, Error<GetPermissionsError>> {
     // add a prefix to parameters to efficiently prevent name collisions
@@ -912,6 +1004,118 @@ pub async fn post_delete_account(configuration: &configuration::Configuration, a
     }
 }
 
+/// # Access  Permission [model::Permissions::admin_edit_association_membership] is required.
+pub async fn post_delete_association_membership(configuration: &configuration::Configuration, account_id: models::AccountId) -> Result<(), Error<PostDeleteAssociationMembershipError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_account_id = account_id;
+
+    let uri_str = format!("{}/account_api/delete_association_membership", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_account_id);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostDeleteAssociationMembershipError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// # Access  Permission [model::Permissions::admin_view_association_membership] is required.
+pub async fn post_get_association_member(configuration: &configuration::Configuration, account_id: models::AccountId) -> Result<models::GetAssociationMember, Error<PostGetAssociationMemberError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_account_id = account_id;
+
+    let uri_str = format!("{}/account_api/association_member", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_account_id);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::GetAssociationMember`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::GetAssociationMember`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostGetAssociationMemberError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// # Access  Permission [model::Permissions::admin_view_association_membership] is required.
+pub async fn post_get_association_members_page(configuration: &configuration::Configuration, get_association_members_page: models::GetAssociationMembersPage) -> Result<models::AssociationMembersPage, Error<PostGetAssociationMembersPageError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_get_association_members_page = get_association_members_page;
+
+    let uri_str = format!("{}/account_api/association_members_page", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_get_association_members_page);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::AssociationMembersPage`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::AssociationMembersPage`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostGetAssociationMembersPageError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 /// HTTP method is POST to allow JSON request body.  # Permissions Requires admin_server_view_info.
 pub async fn post_get_client_version_statistics(configuration: &configuration::Configuration, get_client_version_statistics_settings: models::GetClientVersionStatisticsSettings) -> Result<models::GetClientVersionStatisticsResult, Error<PostGetClientVersionStatisticsError>> {
     // add a prefix to parameters to efficiently prevent name collisions
@@ -949,6 +1153,36 @@ pub async fn post_get_client_version_statistics(configuration: &configuration::C
     } else {
         let content = resp.text().await?;
         let entity: Option<PostGetClientVersionStatisticsError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// # Access  Permission [model::Permissions::admin_edit_association_membership] is required.
+pub async fn post_manual_association_membership_registry(configuration: &configuration::Configuration, manual_association_membership_registry_input: models::ManualAssociationMembershipRegistryInput) -> Result<(), Error<PostManualAssociationMembershipRegistryError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_manual_association_membership_registry_input = manual_association_membership_registry_input;
+
+    let uri_str = format!("{}/account_api/manual_association_membership_registry", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_manual_association_membership_registry_input);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostManualAssociationMembershipRegistryError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -1159,6 +1393,36 @@ pub async fn post_set_permissions(configuration: &configuration::Configuration, 
     } else {
         let content = resp.text().await?;
         let entity: Option<PostSetPermissionsError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// # Access  Permission [model::Permissions::admin_edit_association_membership] is required.
+pub async fn post_update_association_membership_type(configuration: &configuration::Configuration, update_association_membership_type: models::UpdateAssociationMembershipType) -> Result<(), Error<PostUpdateAssociationMembershipTypeError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_update_association_membership_type = update_association_membership_type;
+
+    let uri_str = format!("{}/account_api/update_association_membership_type", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_update_association_membership_type);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostUpdateAssociationMembershipTypeError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

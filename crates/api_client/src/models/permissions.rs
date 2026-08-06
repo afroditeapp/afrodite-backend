@@ -23,6 +23,8 @@ pub struct Permissions {
     pub admin_delete_account: Option<bool>,
     #[serde(rename = "admin_delete_media_content", skip_serializing_if = "Option::is_none")]
     pub admin_delete_media_content: Option<bool>,
+    #[serde(rename = "admin_edit_association_membership", skip_serializing_if = "Option::is_none")]
+    pub admin_edit_association_membership: Option<bool>,
     #[serde(rename = "admin_edit_login", skip_serializing_if = "Option::is_none")]
     pub admin_edit_login: Option<bool>,
     #[serde(rename = "admin_edit_media_content_face_detected_value", skip_serializing_if = "Option::is_none")]
@@ -110,6 +112,8 @@ pub struct Permissions {
     /// View public and private profiles.
     #[serde(rename = "admin_view_all_profiles", skip_serializing_if = "Option::is_none")]
     pub admin_view_all_profiles: Option<bool>,
+    #[serde(rename = "admin_view_association_membership", skip_serializing_if = "Option::is_none")]
+    pub admin_view_association_membership: Option<bool>,
     #[serde(rename = "admin_view_email_address", skip_serializing_if = "Option::is_none")]
     pub admin_view_email_address: Option<bool>,
     #[serde(rename = "admin_view_permissions", skip_serializing_if = "Option::is_none")]
@@ -126,6 +130,7 @@ impl Permissions {
             admin_custom_email: None,
             admin_delete_account: None,
             admin_delete_media_content: None,
+            admin_edit_association_membership: None,
             admin_edit_login: None,
             admin_edit_media_content_face_detected_value: None,
             admin_edit_media_content_face_verified_value: None,
@@ -168,6 +173,7 @@ impl Permissions {
             admin_view_account_ip_address_usage: None,
             admin_view_account_state: None,
             admin_view_all_profiles: None,
+            admin_view_association_membership: None,
             admin_view_email_address: None,
             admin_view_permissions: None,
             admin_view_profile_history: None,

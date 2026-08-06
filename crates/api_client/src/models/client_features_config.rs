@@ -17,6 +17,8 @@ pub struct ClientFeaturesConfig {
     pub account_verification: Option<Option<Box<models::AccountVerificationConfig>>>,
     #[serde(rename = "age_verification", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub age_verification: Option<Option<Box<models::AgeVerificationConfig>>>,
+    #[serde(rename = "association", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub association: Option<Option<Box<models::AssociationConfig>>>,
     #[serde(rename = "attribution", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub attribution: Option<Option<Box<models::AttributionConfig>>>,
     #[serde(rename = "chat", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -38,6 +40,7 @@ impl ClientFeaturesConfig {
         ClientFeaturesConfig {
             account_verification: None,
             age_verification: None,
+            association: None,
             attribution: None,
             chat: None,
             features: None,

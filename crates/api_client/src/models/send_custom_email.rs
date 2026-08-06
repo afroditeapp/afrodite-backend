@@ -15,12 +15,15 @@ use serde::{Deserialize, Serialize};
 pub struct SendCustomEmail {
     #[serde(rename = "email_id")]
     pub email_id: Box<models::CustomEmailId>,
+    #[serde(rename = "target_group")]
+    pub target_group: models::CustomEmailTargetGroup,
 }
 
 impl SendCustomEmail {
-    pub fn new(email_id: models::CustomEmailId) -> SendCustomEmail {
+    pub fn new(email_id: models::CustomEmailId, target_group: models::CustomEmailTargetGroup) -> SendCustomEmail {
         SendCustomEmail {
             email_id: Box::new(email_id),
+            target_group,
         }
     }
 }

@@ -73,6 +73,11 @@ src/models/age_verification_methods_config.rs
 src/models/age_verification_platforms.rs
 src/models/api_usage_count.rs
 src/models/api_usage_statistics.rs
+src/models/app_attestation.rs
+src/models/association_config.rs
+src/models/association_member.rs
+src/models/association_members_page.rs
+src/models/association_membership.rs
 src/models/attribute.rs
 src/models/attribute_hash.rs
 src/models/attribute_mode.rs
@@ -125,6 +130,7 @@ src/models/conversation_id.rs
 src/models/current_account_interaction_state.rs
 src/models/custom_email.rs
 src/models/custom_email_id.rs
+src/models/custom_email_target_group.rs
 src/models/custom_email_translation.rs
 src/models/custom_report.rs
 src/models/custom_report_language.rs
@@ -140,6 +146,7 @@ src/models/data_export_name.rs
 src/models/data_export_state.rs
 src/models/data_export_state_type.rs
 src/models/data_export_type.rs
+src/models/debug_app_attestation.rs
 src/models/delivery_info_type.rs
 src/models/demo_account_login_credentials.rs
 src/models/demo_account_login_result.rs
@@ -167,6 +174,10 @@ src/models/get_account_verification_queue_next_item_result.rs
 src/models/get_all_admins_result.rs
 src/models/get_api_usage_statistics_result.rs
 src/models/get_api_usage_statistics_settings.rs
+src/models/get_association_member.rs
+src/models/get_association_members_only_info.rs
+src/models/get_association_members_page.rs
+src/models/get_association_membership.rs
 src/models/get_bots_result.rs
 src/models/get_chat_message_reports.rs
 src/models/get_client_features_config_result.rs
@@ -224,6 +235,8 @@ src/models/location.rs
 src/models/login_result.rs
 src/models/maintenance_task.rs
 src/models/manager_instance_name_list.rs
+src/models/manual_association_membership_registry.rs
+src/models/manual_association_membership_registry_input.rs
 src/models/manual_server_maintenance_info_for_another_server.rs
 src/models/map_bounds.rs
 src/models/map_config.rs
@@ -246,6 +259,7 @@ src/models/media_content_sync_version.rs
 src/models/media_content_type.rs
 src/models/media_content_upload_type.rs
 src/models/media_verification_status.rs
+src/models/membership_type.rs
 src/models/message_delivery_info.rs
 src/models/message_delivery_info_id_list.rs
 src/models/message_delivery_info_list.rs
@@ -347,6 +361,8 @@ src/models/push_notification_device_token.rs
 src/models/push_notification_encryption_key.rs
 src/models/push_notification_info_sync_version.rs
 src/models/put_content_to_content_slot_result.rs
+src/models/put_sign_in_with_apple.rs
+src/models/put_sign_in_with_google.rs
 src/models/received_like_id.rs
 src/models/received_likes_iterator_state.rs
 src/models/received_likes_page.rs
@@ -397,6 +413,7 @@ src/models/set_profile_name.rs
 src/models/sign_in_with_apple_info.rs
 src/models/sign_in_with_google_info.rs
 src/models/sign_in_with_login_info.rs
+src/models/sign_in_with_state.rs
 src/models/software_info.rs
 src/models/software_update_state.rs
 src/models/software_update_status.rs
@@ -411,6 +428,8 @@ src/models/typing_indicator_config.rs
 src/models/unix_time.rs
 src/models/unread_news_count.rs
 src/models/unread_news_count_result.rs
+src/models/update_association_membership.rs
+src/models/update_association_membership_type.rs
 src/models/update_chat_message_reports.rs
 src/models/update_custom_email.rs
 src/models/update_custom_report_empty.rs

@@ -15,12 +15,16 @@ use serde::{Deserialize, Serialize};
 pub struct RequestEmailLoginToken {
     #[serde(rename = "email")]
     pub email: String,
+    /// Use this to bypass [LoginResult::error_email_registration_ip_address_limit_reached] when user wants to login to existing account.
+    #[serde(rename = "login_only", skip_serializing_if = "Option::is_none")]
+    pub login_only: Option<bool>,
 }
 
 impl RequestEmailLoginToken {
     pub fn new(email: String) -> RequestEmailLoginToken {
         RequestEmailLoginToken {
             email,
+            login_only: None,
         }
     }
 }

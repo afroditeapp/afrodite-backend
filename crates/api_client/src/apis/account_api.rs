@@ -15,6 +15,15 @@ use crate::{apis::ResponseContent, models};
 use super::{Error, configuration, ContentType};
 
 
+/// struct for typed errors of method [`delete_association_membership`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum DeleteAssociationMembershipError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_account_app_notification_settings`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -60,6 +69,24 @@ pub enum GetAccountVerificationQueueStatusError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`get_association_members_only_info`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetAssociationMembersOnlyInfoError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`get_association_membership`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetAssociationMembershipError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_email_address_state`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -73,6 +100,15 @@ pub enum GetEmailAddressStateError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetNewsItemError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`get_sign_in_with_info`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetSignInWithInfoError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -119,6 +155,15 @@ pub enum PostAccountVerificationQueueItemError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PostAgeVerificationError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_association_membership`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostAssociationMembershipError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -278,6 +323,7 @@ pub enum PostLogoutError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PostRequestEmailLoginTokenError {
+    Status500(),
     UnknownValue(serde_json::Value),
 }
 
@@ -325,6 +371,24 @@ pub enum PostSignInWithLoginError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`post_verify_email`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostVerifyEmailError {
+    Status400(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_verify_new_email`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostVerifyNewEmailError {
+    Status400(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`put_setting_profile_visiblity`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -344,6 +408,50 @@ pub enum PutSettingUnlimitedLikesError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`put_sign_in_with_apple`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PutSignInWithAppleError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`put_sign_in_with_google`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PutSignInWithGoogleError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+
+pub async fn delete_association_membership(configuration: &configuration::Configuration, ) -> Result<(), Error<DeleteAssociationMembershipError>> {
+
+    let uri_str = format!("{}/account_api/association_membership", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::DELETE, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<DeleteAssociationMembershipError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
 
 pub async fn get_account_app_notification_settings(configuration: &configuration::Configuration, ) -> Result<models::AccountAppNotificationSettings, Error<GetAccountAppNotificationSettingsError>> {
 
@@ -536,6 +644,80 @@ pub async fn get_account_verification_queue_status(configuration: &configuration
     }
 }
 
+pub async fn get_association_members_only_info(configuration: &configuration::Configuration, ) -> Result<models::GetAssociationMembersOnlyInfo, Error<GetAssociationMembersOnlyInfoError>> {
+
+    let uri_str = format!("{}/account_api/association_members_only_info", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::GetAssociationMembersOnlyInfo`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::GetAssociationMembersOnlyInfo`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetAssociationMembersOnlyInfoError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn get_association_membership(configuration: &configuration::Configuration, ) -> Result<models::GetAssociationMembership, Error<GetAssociationMembershipError>> {
+
+    let uri_str = format!("{}/account_api/association_membership", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::GetAssociationMembership`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::GetAssociationMembership`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetAssociationMembershipError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 pub async fn get_email_address_state(configuration: &configuration::Configuration, ) -> Result<models::EmailAddressState, Error<GetEmailAddressStateError>> {
 
     let uri_str = format!("{}/account_api/email_address_state", configuration.base_path);
@@ -619,12 +801,46 @@ pub async fn get_news_item(configuration: &configuration::Configuration, nid: i6
     }
 }
 
-/// This modifies server state even if the HTTP method is GET.  Returns plain text response indicating success or failure.
-pub async fn get_verify_email(configuration: &configuration::Configuration, token: &str) -> Result<(), Error<GetVerifyEmailError>> {
-    // add a prefix to parameters to efficiently prevent name collisions
-    let p_path_token = token;
+pub async fn get_sign_in_with_info(configuration: &configuration::Configuration, ) -> Result<models::SignInWithState, Error<GetSignInWithInfoError>> {
 
-    let uri_str = format!("{}/account_api/verify_email/{token}", configuration.base_path, token=crate::apis::urlencode(p_path_token));
+    let uri_str = format!("{}/account_api/sign_in_with_info", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::SignInWithState`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::SignInWithState`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetSignInWithInfoError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn get_verify_email(configuration: &configuration::Configuration, ) -> Result<(), Error<GetVerifyEmailError>> {
+
+    let uri_str = format!("{}/verify_email", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -645,12 +861,9 @@ pub async fn get_verify_email(configuration: &configuration::Configuration, toke
     }
 }
 
-/// This modifies server state even if the HTTP method is GET.  Returns plain text response indicating success or failure.
-pub async fn get_verify_new_email(configuration: &configuration::Configuration, token: &str) -> Result<(), Error<GetVerifyNewEmailError>> {
-    // add a prefix to parameters to efficiently prevent name collisions
-    let p_path_token = token;
+pub async fn get_verify_new_email(configuration: &configuration::Configuration, ) -> Result<(), Error<GetVerifyNewEmailError>> {
 
-    let uri_str = format!("{}/account_api/verify_new_email/{token}", configuration.base_path, token=crate::apis::urlencode(p_path_token));
+    let uri_str = format!("{}/verify_new_email", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -777,6 +990,36 @@ pub async fn post_age_verification(configuration: &configuration::Configuration,
     } else {
         let content = resp.text().await?;
         let entity: Option<PostAgeVerificationError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// When membership already exists, the full name and domicile fields are editable.
+pub async fn post_association_membership(configuration: &configuration::Configuration, update_association_membership: models::UpdateAssociationMembership) -> Result<(), Error<PostAssociationMembershipError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_update_association_membership = update_association_membership;
+
+    let uri_str = format!("{}/account_api/association_membership", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_update_association_membership);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostAssociationMembershipError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -1328,6 +1571,7 @@ pub async fn post_init_email_change(configuration: &configuration::Configuration
     }
 }
 
+/// Does nothing if the provided email address is the same as the current email address.
 pub async fn post_initial_email(configuration: &configuration::Configuration, set_initial_email: models::SetInitialEmail) -> Result<(), Error<PostInitialEmailError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_set_initial_email = set_initial_email;
@@ -1383,7 +1627,7 @@ pub async fn post_logout(configuration: &configuration::Configuration, ) -> Resu
     }
 }
 
-/// The route always takes at least 5 seconds to complete to prevent timing attacks that could be used to enumerate existing email addresses.  No error is returned to prevent attackers from discovering which email addresses exist in the system.
+/// The route always takes at least 5 seconds to complete to prevent timing attacks that could be used to enumerate existing email addresses.
 pub async fn post_request_email_login_token(configuration: &configuration::Configuration, request_email_login_token: models::RequestEmailLoginToken) -> Result<models::RequestEmailLoginTokenResult, Error<PostRequestEmailLoginTokenError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_request_email_login_token = request_email_login_token;
@@ -1594,6 +1838,52 @@ pub async fn post_sign_in_with_login(configuration: &configuration::Configuratio
     }
 }
 
+pub async fn post_verify_email(configuration: &configuration::Configuration, ) -> Result<(), Error<PostVerifyEmailError>> {
+
+    let uri_str = format!("{}/verify_email", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostVerifyEmailError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn post_verify_new_email(configuration: &configuration::Configuration, ) -> Result<(), Error<PostVerifyNewEmailError>> {
+
+    let uri_str = format!("{}/verify_new_email", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostVerifyNewEmailError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 /// NOTE: Client uses this in initial setup.  # Limits - When [AccountState::Banned], the visiblity can only be set to private.
 pub async fn put_setting_profile_visiblity(configuration: &configuration::Configuration, boolean_setting: models::BooleanSetting) -> Result<(), Error<PutSettingProfileVisiblityError>> {
     // add a prefix to parameters to efficiently prevent name collisions
@@ -1649,6 +1939,64 @@ pub async fn put_setting_unlimited_likes(configuration: &configuration::Configur
     } else {
         let content = resp.text().await?;
         let entity: Option<PutSettingUnlimitedLikesError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn put_sign_in_with_apple(configuration: &configuration::Configuration, put_sign_in_with_apple: models::PutSignInWithApple) -> Result<(), Error<PutSignInWithAppleError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_put_sign_in_with_apple = put_sign_in_with_apple;
+
+    let uri_str = format!("{}/account_api/sign_in_with_apple", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::PUT, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_put_sign_in_with_apple);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PutSignInWithAppleError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn put_sign_in_with_google(configuration: &configuration::Configuration, put_sign_in_with_google: models::PutSignInWithGoogle) -> Result<(), Error<PutSignInWithGoogleError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_put_sign_in_with_google = put_sign_in_with_google;
+
+    let uri_str = format!("{}/account_api/sign_in_with_google", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::PUT, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_put_sign_in_with_google);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PutSignInWithGoogleError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

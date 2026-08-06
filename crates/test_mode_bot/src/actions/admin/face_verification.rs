@@ -97,6 +97,7 @@ impl AdminBotFaceVerificationLogic {
             &values_by_account.account_id.aid,
             &values_by_account.security_content.cid,
             Some(false),
+            None,
         )
         .await
         .change_context(TestError::ApiRequest)?
@@ -113,6 +114,7 @@ impl AdminBotFaceVerificationLogic {
                 &values_by_account.account_id.aid,
                 &content_id.cid,
                 Some(false),
+                None,
             )
             .await
             .change_context(TestError::ApiRequest)?

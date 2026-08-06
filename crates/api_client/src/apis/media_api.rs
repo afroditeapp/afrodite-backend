@@ -220,18 +220,22 @@ pub async fn get_all_account_media_content(configuration: &configuration::Config
     }
 }
 
-/// # Access  ## Own content Unrestricted access.  ## Public other content Normal account state required. Only accepted content can be accessed.  ## Private other content If owner of the requested content is a match and the requested content is in current profile content, then the requested content can be accessed if query parameter `is_match` is set to `true`.  Only accepted content can be accessed.  ## Admin access - [Permissions::admin_view_all_profiles] - [Permissions::admin_moderate_media_content] - [Permissions::admin_edit_media_content_face_verified_value] - [Permissions::admin_edit_security_content_verified_value] - [Permissions::admin_process_reports]  
-pub async fn get_content(configuration: &configuration::Configuration, aid: &str, cid: &str, is_match: Option<bool>) -> Result<reqwest::Response, Error<GetContentError>> {
+/// # Access  ## Own content Unrestricted access.  ## Public other content Normal account state required. Only accepted content can be accessed.  ## Private other content If owner of the requested content is a match and the requested content is in current profile content, then the requested content can be accessed if query parameter `is_match` is set to `true`.  Only accepted content can be accessed.  ## Admin access - [Permissions::admin_view_all_profiles] - [Permissions::admin_moderate_media_content] - [Permissions::admin_edit_media_content_face_verified_value] - [Permissions::admin_edit_security_content_verified_value] - [Permissions::admin_process_reports]  # Content quality  When content owner or admins requests content, high quality version is returned even if lower quality version is requested.  For any other case preferred quality is used if API has not too much concurrent access.  
+pub async fn get_content(configuration: &configuration::Configuration, aid: &str, cid: &str, is_match: Option<bool>, q: Option<&str>) -> Result<reqwest::Response, Error<GetContentError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_aid = aid;
     let p_path_cid = cid;
     let p_query_is_match = is_match;
+    let p_query_q = q;
 
     let uri_str = format!("{}/media_api/content/{aid}/{cid}", configuration.base_path, aid=crate::apis::urlencode(p_path_aid), cid=crate::apis::urlencode(p_path_cid));
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
     if let Some(ref param_value) = p_query_is_match {
         req_builder = req_builder.query(&[("is_match", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_q {
+        req_builder = req_builder.query(&[("q", &param_value.to_string())]);
     }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());

@@ -13,6 +13,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ClientInfo {
+    #[serde(rename = "app_attestation", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub app_attestation: Option<Option<Box<models::AppAttestation>>>,
     #[serde(rename = "client_type")]
     pub client_type: models::ClientType,
     #[serde(rename = "client_version")]
@@ -22,6 +24,7 @@ pub struct ClientInfo {
 impl ClientInfo {
     pub fn new(client_type: models::ClientType, client_version: models::ClientVersion) -> ClientInfo {
         ClientInfo {
+            app_attestation: None,
             client_type,
             client_version: Box::new(client_version),
         }

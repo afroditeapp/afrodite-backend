@@ -22,6 +22,12 @@ pub struct LoginResult {
     pub error: Option<bool>,
     #[serde(rename = "error_account_locked", skip_serializing_if = "Option::is_none")]
     pub error_account_locked: Option<bool>,
+    #[serde(rename = "error_app_attestation_app_integrity", skip_serializing_if = "Option::is_none")]
+    pub error_app_attestation_app_integrity: Option<bool>,
+    #[serde(rename = "error_app_attestation_device_integrity", skip_serializing_if = "Option::is_none")]
+    pub error_app_attestation_device_integrity: Option<bool>,
+    #[serde(rename = "error_app_attestation_failed", skip_serializing_if = "Option::is_none")]
+    pub error_app_attestation_failed: Option<bool>,
     /// This might be true, when registering new account using sign in with login method.
     #[serde(rename = "error_email_already_used", skip_serializing_if = "Option::is_none")]
     pub error_email_already_used: Option<bool>,
@@ -51,6 +57,9 @@ impl LoginResult {
             email: None,
             error: None,
             error_account_locked: None,
+            error_app_attestation_app_integrity: None,
+            error_app_attestation_device_integrity: None,
+            error_app_attestation_failed: None,
             error_email_already_used: None,
             error_invalid_email_login_token: None,
             error_login_all_platforms_disabled: None,

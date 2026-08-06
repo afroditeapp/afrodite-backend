@@ -26,18 +26,23 @@ All URIs are relative to *http://localhost*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
+*AccountApi* | [**delete_association_membership**](docs/AccountApi.md#delete_association_membership) | **DELETE** /account_api/association_membership | Remove association membership.
 *AccountApi* | [**get_account_app_notification_settings**](docs/AccountApi.md#get_account_app_notification_settings) | **GET** /account_api/get_account_app_notification_settings | 
 *AccountApi* | [**get_account_ban_time**](docs/AccountApi.md#get_account_ban_time) | **GET** /account_api/account_ban_time/{aid} | Get account ban time
 *AccountApi* | [**get_account_deletion_request_state**](docs/AccountApi.md#get_account_deletion_request_state) | **GET** /account_api/get_account_deletion_request_state/{aid} | Get account deletion request state
 *AccountApi* | [**get_account_state**](docs/AccountApi.md#get_account_state) | **GET** /account_api/state | Get current account state.
 *AccountApi* | [**get_account_verification_queue_status**](docs/AccountApi.md#get_account_verification_queue_status) | **GET** /account_api/account_verification_queue | Get account verification queue status for current account.
+*AccountApi* | [**get_association_members_only_info**](docs/AccountApi.md#get_association_members_only_info) | **GET** /account_api/association_members_only_info | Get association members-only info markdown text.
+*AccountApi* | [**get_association_membership**](docs/AccountApi.md#get_association_membership) | **GET** /account_api/association_membership | Get current association membership.
 *AccountApi* | [**get_email_address_state**](docs/AccountApi.md#get_email_address_state) | **GET** /account_api/email_address_state | 
 *AccountApi* | [**get_news_item**](docs/AccountApi.md#get_news_item) | **GET** /account_api/news_item/{nid} | Get news item content using specific locale and fallback to locale \"en\" if news translation is not found.
-*AccountApi* | [**get_verify_email**](docs/AccountApi.md#get_verify_email) | **GET** /account_api/verify_email/{token} | Verify email address using the token sent via email. This endpoint is meant to be accessed via a link in the verification email. To workaround email security scanning related link accessing, the link can be opened multiple times.
-*AccountApi* | [**get_verify_new_email**](docs/AccountApi.md#get_verify_new_email) | **GET** /account_api/verify_new_email/{token} | Verify new email address using the token sent via email. This endpoint is meant to be accessed via a link in the verification email. To workaround email security scanning related link accessing, the link can be opened multiple times.
+*AccountApi* | [**get_sign_in_with_info**](docs/AccountApi.md#get_sign_in_with_info) | **GET** /account_api/sign_in_with_info | Get current sign in with Apple and Google state.
+*AccountApi* | [**get_verify_email**](docs/AccountApi.md#get_verify_email) | **GET** /verify_email | Show email verification form page. Token is passed via query parameter to prevent email scanners from accidentally verifying the email.
+*AccountApi* | [**get_verify_new_email**](docs/AccountApi.md#get_verify_new_email) | **GET** /verify_new_email | Show email change verification form page. Token is passed via query parameter to prevent email scanners from accidentally verifying the new email.
 *AccountApi* | [**post_account_app_notification_settings**](docs/AccountApi.md#post_account_app_notification_settings) | **POST** /account_api/post_account_app_notification_settings | 
 *AccountApi* | [**post_account_verification_queue_item**](docs/AccountApi.md#post_account_verification_queue_item) | **POST** /account_api/account_verification_queue | Add account verification request to queue for current account.
 *AccountApi* | [**post_age_verification**](docs/AccountApi.md#post_age_verification) | **POST** /account_api/age_verification | Verify user's age once for current account.
+*AccountApi* | [**post_association_membership**](docs/AccountApi.md#post_association_membership) | **POST** /account_api/association_membership | Create or update association membership.
 *AccountApi* | [**post_cancel_email_change**](docs/AccountApi.md#post_cancel_email_change) | **POST** /account_api/cancel_email_change | Cancel email changing process
 *AccountApi* | [**post_complete_setup**](docs/AccountApi.md#post_complete_setup) | **POST** /account_api/complete_setup | Complete initial setup.
 *AccountApi* | [**post_custom_report_empty**](docs/AccountApi.md#post_custom_report_empty) | **POST** /account_api/custom_report_empty | Send custom report without any content
@@ -53,7 +58,7 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**post_get_news_page**](docs/AccountApi.md#post_get_news_page) | **POST** /account_api/news_page | 
 *AccountApi* | [**post_get_unread_news_count**](docs/AccountApi.md#post_get_unread_news_count) | **POST** /account_api/news_count | The unread news count for public news.
 *AccountApi* | [**post_init_email_change**](docs/AccountApi.md#post_init_email_change) | **POST** /account_api/init_email_change | Initiate email change process by providing a new email address.
-*AccountApi* | [**post_initial_email**](docs/AccountApi.md#post_initial_email) | **POST** /account_api/initial_email | Set initial email when initial setup is ongoing
+*AccountApi* | [**post_initial_email**](docs/AccountApi.md#post_initial_email) | **POST** /account_api/initial_email | Set initial email address for bots and accounts owned by demo account when initial setup is ongoing.
 *AccountApi* | [**post_logout**](docs/AccountApi.md#post_logout) | **POST** /account_api/logout | 
 *AccountApi* | [**post_request_email_login_token**](docs/AccountApi.md#post_request_email_login_token) | **POST** /account_api/request_email_login_token | Request email login token to be sent via email.
 *AccountApi* | [**post_reset_news_paging**](docs/AccountApi.md#post_reset_news_paging) | **POST** /account_api/reset_news_paging | 
@@ -61,8 +66,12 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**post_set_account_deletion_request_state**](docs/AccountApi.md#post_set_account_deletion_request_state) | **POST** /account_api/set_account_deletion_request_state/{aid} | Request account deletion or cancel the deletion
 *AccountApi* | [**post_set_email_login_enabled**](docs/AccountApi.md#post_set_email_login_enabled) | **POST** /account_api/set_email_login_enabled | Enable or disable email login for an account.
 *AccountApi* | [**post_sign_in_with_login**](docs/AccountApi.md#post_sign_in_with_login) | **POST** /account_api/sign_in_with_login | Start new session with sign in with Apple or Google.
+*AccountApi* | [**post_verify_email**](docs/AccountApi.md#post_verify_email) | **POST** /verify_email | Verify email address using the token from the form submission.
+*AccountApi* | [**post_verify_new_email**](docs/AccountApi.md#post_verify_new_email) | **POST** /verify_new_email | Verify new email address using the token from the form submission.
 *AccountApi* | [**put_setting_profile_visiblity**](docs/AccountApi.md#put_setting_profile_visiblity) | **PUT** /account_api/settings/profile_visibility | Update current profile visiblity value.
 *AccountApi* | [**put_setting_unlimited_likes**](docs/AccountApi.md#put_setting_unlimited_likes) | **PUT** /account_api/settings/unlimited_likes | 
+*AccountApi* | [**put_sign_in_with_apple**](docs/AccountApi.md#put_sign_in_with_apple) | **PUT** /account_api/sign_in_with_apple | Associate or disassociate Apple sign in with account.
+*AccountApi* | [**put_sign_in_with_google**](docs/AccountApi.md#put_sign_in_with_google) | **PUT** /account_api/sign_in_with_google | Associate or disassociate Google sign in with account.
 *AccountAdminApi* | [**delete_news_item**](docs/AccountAdminApi.md#delete_news_item) | **DELETE** /account_api/delete_news/{nid} | 
 *AccountAdminApi* | [**delete_news_translation**](docs/AccountAdminApi.md#delete_news_translation) | **DELETE** /account_api/delete_news_translation/{nid}/{locale} | 
 *AccountAdminApi* | [**get_account_id_from_email**](docs/AccountAdminApi.md#get_account_id_from_email) | **GET** /account_api/get_account_id_from_email/{email} | Get account ID from email
@@ -73,6 +82,7 @@ Class | Method | HTTP request | Description
 *AccountAdminApi* | [**get_custom_email_config**](docs/AccountAdminApi.md#get_custom_email_config) | **GET** /account_api/custom_email_config | 
 *AccountAdminApi* | [**get_custom_email_list**](docs/AccountAdminApi.md#get_custom_email_list) | **GET** /account_api/custom_email_list | List all custom emails, newest first.
 *AccountAdminApi* | [**get_email_address_state_admin**](docs/AccountAdminApi.md#get_email_address_state_admin) | **GET** /account_api/email_address_state_admin/{aid} | Get email address state for admin.
+*AccountAdminApi* | [**get_manual_association_membership_registry**](docs/AccountAdminApi.md#get_manual_association_membership_registry) | **GET** /account_api/manual_association_membership_registry | Get the manual association membership registry.
 *AccountAdminApi* | [**get_permissions**](docs/AccountAdminApi.md#get_permissions) | **GET** /account_api/get_permissions/{aid} | Get [model::Permissions] for specific account.
 *AccountAdminApi* | [**post_account_verification_queue_remove_next_item**](docs/AccountAdminApi.md#post_account_verification_queue_remove_next_item) | **POST** /account_api/account_verification_queue_remove_next_item | Remove next item from account verification queue if possible.
 *AccountAdminApi* | [**post_admin_cancel_email_change**](docs/AccountAdminApi.md#post_admin_cancel_email_change) | **POST** /account_api/admin_cancel_email_change/{aid} | Cancel email changing process for any account.
@@ -81,7 +91,11 @@ Class | Method | HTTP request | Description
 *AccountAdminApi* | [**post_create_custom_email**](docs/AccountAdminApi.md#post_create_custom_email) | **POST** /account_api/create_custom_email | Create a new custom email message draft.
 *AccountAdminApi* | [**post_create_news_item**](docs/AccountAdminApi.md#post_create_news_item) | **POST** /account_api/create_news_item | 
 *AccountAdminApi* | [**post_delete_account**](docs/AccountAdminApi.md#post_delete_account) | **POST** /account_api/delete_account/{aid} | Delete account instantly
+*AccountAdminApi* | [**post_delete_association_membership**](docs/AccountAdminApi.md#post_delete_association_membership) | **POST** /account_api/delete_association_membership | Remove association membership of an account.
+*AccountAdminApi* | [**post_get_association_member**](docs/AccountAdminApi.md#post_get_association_member) | **POST** /account_api/association_member | Get a single association member entry for an account.
+*AccountAdminApi* | [**post_get_association_members_page**](docs/AccountAdminApi.md#post_get_association_members_page) | **POST** /account_api/association_members_page | Get a paged list of association members with an account.
 *AccountAdminApi* | [**post_get_client_version_statistics**](docs/AccountAdminApi.md#post_get_client_version_statistics) | **POST** /account_api/client_version_statistics | Get client version statistics.
+*AccountAdminApi* | [**post_manual_association_membership_registry**](docs/AccountAdminApi.md#post_manual_association_membership_registry) | **POST** /account_api/manual_association_membership_registry | Set the manual association membership registry.
 *AccountAdminApi* | [**post_save_info_banners**](docs/AccountAdminApi.md#post_save_info_banners) | **POST** /account_api/save_info_banners | Save info banners to dynamic client config.
 *AccountAdminApi* | [**post_send_custom_email_draft_to_my_email_address**](docs/AccountAdminApi.md#post_send_custom_email_draft_to_my_email_address) | **POST** /account_api/send_custom_email_draft_to_my_email_address | 
 *AccountAdminApi* | [**post_send_custom_email_to_all_accounts**](docs/AccountAdminApi.md#post_send_custom_email_to_all_accounts) | **POST** /account_api/send_custom_email_to_all_accounts | 
@@ -89,6 +103,7 @@ Class | Method | HTTP request | Description
 *AccountAdminApi* | [**post_set_ban_state**](docs/AccountAdminApi.md#post_set_ban_state) | **POST** /account_api/set_ban_state | Ban or unban account
 *AccountAdminApi* | [**post_set_news_publicity**](docs/AccountAdminApi.md#post_set_news_publicity) | **DELETE** /account_api/set_news_publicity/{nid} | 
 *AccountAdminApi* | [**post_set_permissions**](docs/AccountAdminApi.md#post_set_permissions) | **POST** /account_api/set_permissions/{aid} | Set permissions for account
+*AccountAdminApi* | [**post_update_association_membership_type**](docs/AccountAdminApi.md#post_update_association_membership_type) | **POST** /account_api/update_association_membership_type | Change the membership type of an existing association membership.
 *AccountAdminApi* | [**post_update_custom_email**](docs/AccountAdminApi.md#post_update_custom_email) | **POST** /account_api/update_custom_email | Update a custom email message draft.
 *AccountAdminApi* | [**post_update_news_translation**](docs/AccountAdminApi.md#post_update_news_translation) | **POST** /account_api/update_news_translation/{nid}/{locale} | 
 *AccountBotApi* | [**post_bot_login**](docs/AccountBotApi.md#post_bot_login) | **POST** /account_api/bot_login | Get new AccessToken for a bot account. If the account is not registered as a bot account, then the request will fail.
@@ -312,6 +327,11 @@ Class | Method | HTTP request | Description
  - [AgeVerificationPlatforms](docs/AgeVerificationPlatforms.md)
  - [ApiUsageCount](docs/ApiUsageCount.md)
  - [ApiUsageStatistics](docs/ApiUsageStatistics.md)
+ - [AppAttestation](docs/AppAttestation.md)
+ - [AssociationConfig](docs/AssociationConfig.md)
+ - [AssociationMember](docs/AssociationMember.md)
+ - [AssociationMembersPage](docs/AssociationMembersPage.md)
+ - [AssociationMembership](docs/AssociationMembership.md)
  - [Attribute](docs/Attribute.md)
  - [AttributeHash](docs/AttributeHash.md)
  - [AttributeMode](docs/AttributeMode.md)
@@ -364,6 +384,7 @@ Class | Method | HTTP request | Description
  - [CurrentAccountInteractionState](docs/CurrentAccountInteractionState.md)
  - [CustomEmail](docs/CustomEmail.md)
  - [CustomEmailId](docs/CustomEmailId.md)
+ - [CustomEmailTargetGroup](docs/CustomEmailTargetGroup.md)
  - [CustomEmailTranslation](docs/CustomEmailTranslation.md)
  - [CustomReport](docs/CustomReport.md)
  - [CustomReportLanguage](docs/CustomReportLanguage.md)
@@ -379,6 +400,7 @@ Class | Method | HTTP request | Description
  - [DataExportState](docs/DataExportState.md)
  - [DataExportStateType](docs/DataExportStateType.md)
  - [DataExportType](docs/DataExportType.md)
+ - [DebugAppAttestation](docs/DebugAppAttestation.md)
  - [DeliveryInfoType](docs/DeliveryInfoType.md)
  - [DemoAccountLoginCredentials](docs/DemoAccountLoginCredentials.md)
  - [DemoAccountLoginResult](docs/DemoAccountLoginResult.md)
@@ -406,6 +428,10 @@ Class | Method | HTTP request | Description
  - [GetAllAdminsResult](docs/GetAllAdminsResult.md)
  - [GetApiUsageStatisticsResult](docs/GetApiUsageStatisticsResult.md)
  - [GetApiUsageStatisticsSettings](docs/GetApiUsageStatisticsSettings.md)
+ - [GetAssociationMember](docs/GetAssociationMember.md)
+ - [GetAssociationMembersOnlyInfo](docs/GetAssociationMembersOnlyInfo.md)
+ - [GetAssociationMembersPage](docs/GetAssociationMembersPage.md)
+ - [GetAssociationMembership](docs/GetAssociationMembership.md)
  - [GetBotsResult](docs/GetBotsResult.md)
  - [GetChatMessageReports](docs/GetChatMessageReports.md)
  - [GetClientFeaturesConfigResult](docs/GetClientFeaturesConfigResult.md)
@@ -463,6 +489,8 @@ Class | Method | HTTP request | Description
  - [LoginResult](docs/LoginResult.md)
  - [MaintenanceTask](docs/MaintenanceTask.md)
  - [ManagerInstanceNameList](docs/ManagerInstanceNameList.md)
+ - [ManualAssociationMembershipRegistry](docs/ManualAssociationMembershipRegistry.md)
+ - [ManualAssociationMembershipRegistryInput](docs/ManualAssociationMembershipRegistryInput.md)
  - [ManualServerMaintenanceInfoForAnotherServer](docs/ManualServerMaintenanceInfoForAnotherServer.md)
  - [MapBounds](docs/MapBounds.md)
  - [MapConfig](docs/MapConfig.md)
@@ -485,6 +513,7 @@ Class | Method | HTTP request | Description
  - [MediaContentType](docs/MediaContentType.md)
  - [MediaContentUploadType](docs/MediaContentUploadType.md)
  - [MediaVerificationStatus](docs/MediaVerificationStatus.md)
+ - [MembershipType](docs/MembershipType.md)
  - [MessageDeliveryInfo](docs/MessageDeliveryInfo.md)
  - [MessageDeliveryInfoIdList](docs/MessageDeliveryInfoIdList.md)
  - [MessageDeliveryInfoList](docs/MessageDeliveryInfoList.md)
@@ -585,6 +614,8 @@ Class | Method | HTTP request | Description
  - [PushNotificationEncryptionKey](docs/PushNotificationEncryptionKey.md)
  - [PushNotificationInfoSyncVersion](docs/PushNotificationInfoSyncVersion.md)
  - [PutContentToContentSlotResult](docs/PutContentToContentSlotResult.md)
+ - [PutSignInWithApple](docs/PutSignInWithApple.md)
+ - [PutSignInWithGoogle](docs/PutSignInWithGoogle.md)
  - [ReceivedLikeId](docs/ReceivedLikeId.md)
  - [ReceivedLikesIteratorState](docs/ReceivedLikesIteratorState.md)
  - [ReceivedLikesPage](docs/ReceivedLikesPage.md)
@@ -635,6 +666,7 @@ Class | Method | HTTP request | Description
  - [SignInWithAppleInfo](docs/SignInWithAppleInfo.md)
  - [SignInWithGoogleInfo](docs/SignInWithGoogleInfo.md)
  - [SignInWithLoginInfo](docs/SignInWithLoginInfo.md)
+ - [SignInWithState](docs/SignInWithState.md)
  - [SoftwareInfo](docs/SoftwareInfo.md)
  - [SoftwareUpdateState](docs/SoftwareUpdateState.md)
  - [SoftwareUpdateStatus](docs/SoftwareUpdateStatus.md)
@@ -649,6 +681,8 @@ Class | Method | HTTP request | Description
  - [UnixTime](docs/UnixTime.md)
  - [UnreadNewsCount](docs/UnreadNewsCount.md)
  - [UnreadNewsCountResult](docs/UnreadNewsCountResult.md)
+ - [UpdateAssociationMembership](docs/UpdateAssociationMembership.md)
+ - [UpdateAssociationMembershipType](docs/UpdateAssociationMembershipType.md)
  - [UpdateChatMessageReports](docs/UpdateChatMessageReports.md)
  - [UpdateCustomEmail](docs/UpdateCustomEmail.md)
  - [UpdateCustomReportEmpty](docs/UpdateCustomReportEmpty.md)

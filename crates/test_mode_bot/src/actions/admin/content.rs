@@ -158,6 +158,7 @@ impl BotAction for ModerateContentModerationRequest {
                     &request.account_id.to_string(),
                     &request.content_id.to_string(),
                     Some(false),
+                    None,
                 )
                 .await
                 .change_context(TestError::ApiRequest)
@@ -264,6 +265,7 @@ impl AdminBotContentModerationLogic {
             &moderation.account_id.aid,
             &moderation.content_id.cid,
             Some(false),
+            None,
         )
         .await
         .change_context(TestError::ApiRequest)?
