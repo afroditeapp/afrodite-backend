@@ -172,26 +172,24 @@ nsfw = { version = "0.2.0", default-features = false }
 # Firebase cloud messaging, tls_client_rustls and tls_client_rustls configures TLS
 [workspace.dependencies.fcm]
 git = "https://github.com/jutuon/fcm-rust"
-rev = "713e744005ccb9456f77655a2480a806e29e1b77"
+rev = "88c8b4c16908af5b77f84316ea5a913c6f2a5889"
 default-features = false
 
 # Face detection
 [workspace.dependencies.rustface]
 git = "https://github.com/jutuon/rustface"
-rev = "271563b947d7906f2126e1dfaae292d900171bcb"
-default-features = false
+rev = "73d4d116b9e0641fe42fed9df0cce5aaf52e56d5"
 
-# APNs support, version 0.10.0 with dependencies
-# updated and webpki-roots replaced with rustls-platform-verifier.
+# APNs support
 [workspace.dependencies.a2]
 git = "https://github.com/jutuon/a2"
-rev = "4408b2c090da04771551dd71fbb866411e344df8"
+rev = "f9cf21653eed774104c961c878519d52d2785f75"
 default-features = false
-features = ["ring"]
+features = ["aws-lc-rs"]
 
 [workspace.dependencies.web-push]
 git = "https://github.com/jutuon/rust-web-push"
-rev = "175a11cb311f077a155ec57f7f44962588b12f62"
+rev = "961f307d53009cba9c036f650c57339c72842530"
 default-features = false
 features = ["hyper-rustls-client"]
 

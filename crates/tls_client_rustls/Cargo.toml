@@ -14,7 +14,7 @@ async-openai = { workspace = true }
 
 [features]
 enable = [
-    "fcm/rustls-tls-native-roots",
+    "fcm/rustls",
     "reqwest/rustls",
     "lettre/tokio1-rustls-tls",
     "lettre/rustls-native-certs",

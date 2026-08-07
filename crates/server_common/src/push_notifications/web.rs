@@ -9,7 +9,7 @@ use tokio::{sync::mpsc::Receiver, task::JoinHandle};
 use tracing::{error, info, warn};
 use web_push::{
     ContentEncoding, HyperWebPushClient, PartialVapidSignatureBuilder, SubscriptionInfo, Urgency,
-    WebPushClient, WebPushError, WebPushMessageBuilder,
+    WebPushError, WebPushMessageBuilder,
 };
 
 use crate::push_notifications::{
@@ -292,7 +292,6 @@ impl WebPushSendingLogic {
                     | WebPushError::BadRequest(_)
                     | WebPushError::PayloadTooLarge
                     | WebPushError::InvalidPackageName
-                    | WebPushError::MissingCryptoKeys
                     | WebPushError::InvalidCryptoKeys => {
                         error!("Disabling web push notifications, error: {e}");
                         Err(Action::DisablePushNotificationSupport)
