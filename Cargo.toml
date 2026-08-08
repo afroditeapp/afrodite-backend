@@ -118,7 +118,7 @@ tokio-stream = { version = "0.1.19", features = ["sync", "fs"] }
 tokio-util = { version = "0.7.19", features = ["io"]}
 async-trait = "0.1.91"
 
-reqwest = { version = "0.13.4", default-features = false, features = ["json", "charset", "http2", "system-proxy", "rustls"] }
+reqwest = { version = "0.13.4", default-features = false, features = ["json", "charset", "http2", "system-proxy", "rustls", "brotli", "gzip", "zstd"] }
 utoipa = { version = "5.5.0", features = ["axum_extras", "uuid", "chrono"] }
 utoipa-axum = { version = "0.2.0" }
 utoipa-swagger-ui = { version = "9.0.2", features = ["axum", "vendored"] }
