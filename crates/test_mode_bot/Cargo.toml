@@ -14,6 +14,8 @@ futures = { workspace = true }
 tokio = { workspace = true }
 tokio-stream = { workspace = true }
 tokio-tungstenite = { workspace = true }
+tokio-rustls = { workspace = true }
+rustls-platform-verifier = { workspace = true }
 
 async-trait = { workspace = true }
 async-openai = { workspace = true }

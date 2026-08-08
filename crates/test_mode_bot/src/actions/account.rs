@@ -1,4 +1,4 @@
-use std::{fmt::Debug, time::Duration};
+use std::{fmt::Debug, sync::Arc, time::Duration};
 
 use api_client::{
     apis::{
@@ -15,6 +15,7 @@ use base64::Engine;
 use error_stack::ResultExt;
 use futures::SinkExt;
 use headers::HeaderValue;
+use rustls_platform_verifier::ConfigVerifierExt;
 use simple_backend_model::VersionNumber;
 use simple_backend_utils::Result;
 use test_mode_utils::{
@@ -22,7 +23,10 @@ use test_mode_utils::{
     websocket_protocol::parse_server_event_to_client_for_test_mode,
 };
 use tokio_stream::StreamExt;
-use tokio_tungstenite::tungstenite::{Message, client::IntoClientRequest};
+use tokio_tungstenite::{
+    Connector,
+    tungstenite::{Message, client::IntoClientRequest},
+};
 use tracing::warn;
 use url::Url;
 use utils::api::{ADMIN_BOT_EMAIL, PATH_CONNECT, USER_BOT_EMAIL_PREFIX, USER_BOT_EMAIL_SUFFIX};
@@ -200,9 +204,17 @@ async fn connect_websocket_internal(
         http::header::SEC_WEBSOCKET_PROTOCOL,
         HeaderValue::from_str(&protocol_header_value).change_context(TestError::WebSocket)?,
     );
-    let (mut stream, _) = tokio_tungstenite::connect_async(r)
-        .await
-        .change_context(TestError::WebSocket)?;
+    let (mut stream, _) = tokio_tungstenite::connect_async_tls_with_config(
+        r,
+        None,
+        false,
+        Some(Connector::Rustls(Arc::new(
+            tokio_rustls::rustls::ClientConfig::with_platform_verifier()
+                .change_context(TestError::WebSocket)?,
+        ))),
+    )
+    .await
+    .change_context(TestError::WebSocket)?;
 
     let response = stream
         .next()
