@@ -314,6 +314,13 @@ pub fn get_config(
         return Err(GetConfigError::InvalidConfiguration).attach("APNs key file does not exist");
     }
 
+    if let Some(config) = file_config.push_notifications.web.as_ref()
+        && !(config.sub.starts_with("mailto:") || config.sub.starts_with("https:"))
+    {
+        return Err(GetConfigError::InvalidConfiguration)
+            .attach("Web push notification config: sub must start with mailto: or https:");
+    }
+
     let public_api_tls_config = match &file_config.tls.public_api {
         Some(PublicApiTlsConfig::Manual(config)) => Some(Arc::new(generate_server_config(
             config.key.as_path(),

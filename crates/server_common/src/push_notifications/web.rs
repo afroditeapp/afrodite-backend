@@ -19,6 +19,9 @@ use crate::push_notifications::{
 struct WebPushClientState {
     client: HyperWebPushClient,
     vapid_builder: PartialVapidSignatureBuilder,
+    /// VAPID `sub` claim which contains application server contact
+    /// information.
+    sub: String,
 }
 
 pub struct WebPushManager<T> {
@@ -50,10 +53,13 @@ impl<T: PushNotificationStateProvider + Send + Sync + 'static> WebPushManager<T>
         state: T,
         quit_notification: ServerQuitWatcher,
     ) -> WebPushManagerQuitHandle {
-        let web = if let Some((_, vapid_builder)) = config.simple_backend().web_push_config() {
+        let web = if let Some((web_push_config, vapid_builder)) =
+            config.simple_backend().web_push_config()
+        {
             Some(WebPushClientState {
                 client: HyperWebPushClient::new(),
                 vapid_builder: vapid_builder.clone(),
+                sub: web_push_config.sub.clone(),
             })
         } else {
             None
@@ -143,6 +149,7 @@ impl<T: PushNotificationStateProvider + Send + Sync + 'static> WebPushManager<T>
                 .send_push_notification(
                     &web.client,
                     &web.vapid_builder,
+                    &web.sub,
                     &token,
                     &notification_data,
                     n.id(),
@@ -204,6 +211,7 @@ impl WebPushSendingLogic {
         &mut self,
         client: &HyperWebPushClient,
         vapid_builder: &PartialVapidSignatureBuilder,
+        sub: &str,
         token: &PushNotificationDeviceToken,
         notification_data: &str,
         topic: &str,
@@ -214,6 +222,7 @@ impl WebPushSendingLogic {
                 .send_push_notification_internal(
                     client,
                     vapid_builder,
+                    sub,
                     token,
                     notification_data,
                     topic,
@@ -240,6 +249,7 @@ impl WebPushSendingLogic {
         &mut self,
         client: &HyperWebPushClient,
         vapid_builder: &PartialVapidSignatureBuilder,
+        sub: &str,
         token: &PushNotificationDeviceToken,
         notification_data: &str,
         topic: &str,
@@ -250,14 +260,12 @@ impl WebPushSendingLogic {
                 Action::RemoveDeviceToken
             })?;
 
-        let vapid_signature = vapid_builder
-            .clone()
-            .add_sub_info(&subscription_info)
-            .build()
-            .map_err(|e| {
-                error!("Failed to build VAPID signature: {e}");
-                Action::DisablePushNotificationSupport
-            })?;
+        let mut vapid_builder = vapid_builder.clone().add_sub_info(&subscription_info);
+        vapid_builder.set_sub(sub);
+        let vapid_signature = vapid_builder.build().map_err(|e| {
+            error!("Failed to build VAPID signature: {e}");
+            Action::DisablePushNotificationSupport
+        })?;
 
         let mut message_builder = WebPushMessageBuilder::new(&subscription_info);
         message_builder.set_ttl(60 * 60 * 24 * 14);

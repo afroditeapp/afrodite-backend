@@ -75,6 +75,7 @@ local_bot_api_port = 3001
 
 # [push_notifications.web]
 # vapid_private_key_path = "server_config/vapid_key.pem"
+# sub = "mailto:admin@example.com"
 
 # [email_sending]
 # smtp_server_address = "smtp.example.com"
@@ -447,6 +448,9 @@ pub struct ApnsConfig {
 pub struct WebPushConfig {
     /// Path to VAPID private key file (PEM format)
     pub vapid_private_key_path: PathBuf,
+    /// Contact information for the VAPID `sub` claim.
+    /// Must start with `mailto:` or `https:`.
+    pub sub: String,
     #[serde(default)]
     pub debug_logging: bool,
 }
