@@ -7,12 +7,12 @@ use axum::{
 use axum_extra::TypedHeader;
 use headers::{ContentLength, ContentType, IfNoneMatch};
 use model::{
-    ContentQualityVariant, EventToClientInternal, NotificationEvent, PendingAppNotificationInternal,
+    ContentQualityVariant, EventToClientInternal, GetContentProcessingState, NotificationEvent,
+    PendingAppNotificationInternal,
 };
 use model_media::{
-    AccountContent, AccountId, AccountIdInternal, AccountState, ContentId, ContentProcessingState,
-    ContentSlot, GetContentQueryParams, NewContentParams, Permissions,
-    PutContentToContentSlotResult,
+    AccountContent, AccountId, AccountIdInternal, AccountState, ContentId, ContentSlot,
+    GetContentQueryParams, NewContentParams, Permissions, PutContentToContentSlotResult,
 };
 use server_api::{
     S,
@@ -439,7 +439,7 @@ const PATH_GET_CONTENT_PROCESSING_STATE: &str = "/media_api/content_processing_s
     get,
     path = PATH_GET_CONTENT_PROCESSING_STATE,
     responses(
-        (status = 200, description = "Successful.", body = ContentProcessingState),
+        (status = 200, description = "Successful.", body = GetContentProcessingState),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -448,18 +448,15 @@ const PATH_GET_CONTENT_PROCESSING_STATE: &str = "/media_api/content_processing_s
 pub async fn get_content_processing_state(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
-) -> Result<Json<ContentProcessingState>, StatusCode> {
+) -> Result<Json<GetContentProcessingState>, StatusCode> {
     MEDIA.get_content_processing_state.incr();
 
-    if let Some(state) = state
+    let state = state
         .content_processing()
         .get_current_state(account_id)
-        .await
-    {
-        Ok(state.into())
-    } else {
-        Ok(ContentProcessingState::default().into())
-    }
+        .await;
+
+    Ok(GetContentProcessingState { state }.into())
 }
 
 const PATH_DELETE_CONTENT: &str = "/media_api/content/{aid}/{cid}";

@@ -198,15 +198,15 @@ impl ContentProcessingStateInternal {
             Self::InQueue {
                 wait_queue_position,
             } => ContentProcessingState {
-                state: ContentProcessingStateType::InQueue.into(),
-                processing_id_from_client: processing_id_from_client.into(),
+                state: ContentProcessingStateType::InQueue,
+                processing_id_from_client,
                 wait_queue_position: Some(*wait_queue_position),
                 cid: None,
                 face_detected: None,
             },
             Self::Processing => ContentProcessingState {
-                state: ContentProcessingStateType::Processing.into(),
-                processing_id_from_client: processing_id_from_client.into(),
+                state: ContentProcessingStateType::Processing,
+                processing_id_from_client,
                 wait_queue_position: None,
                 cid: None,
                 face_detected: None,
@@ -215,22 +215,22 @@ impl ContentProcessingStateInternal {
                 content_id,
                 face_detected,
             } => ContentProcessingState {
-                state: ContentProcessingStateType::Completed.into(),
-                processing_id_from_client: processing_id_from_client.into(),
+                state: ContentProcessingStateType::Completed,
+                processing_id_from_client,
                 wait_queue_position: None,
                 cid: Some(*content_id),
                 face_detected: Some(*face_detected),
             },
             Self::Failed => ContentProcessingState {
-                state: ContentProcessingStateType::Failed.into(),
-                processing_id_from_client: processing_id_from_client.into(),
+                state: ContentProcessingStateType::Failed,
+                processing_id_from_client,
                 wait_queue_position: None,
                 cid: None,
                 face_detected: None,
             },
             Self::NsfwDetected => ContentProcessingState {
-                state: ContentProcessingStateType::NsfwDetected.into(),
-                processing_id_from_client: processing_id_from_client.into(),
+                state: ContentProcessingStateType::NsfwDetected,
+                processing_id_from_client,
                 wait_queue_position: None,
                 cid: None,
                 face_detected: None,
@@ -239,12 +239,10 @@ impl ContentProcessingStateInternal {
     }
 }
 
-#[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ContentProcessingState {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub state: Option<ContentProcessingStateType>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub processing_id_from_client: Option<u8>,
+    pub state: ContentProcessingStateType,
+    pub processing_id_from_client: u8,
     /// Current position in processing queue.
     ///
     /// First value is 1.
@@ -258,6 +256,12 @@ pub struct ContentProcessingState {
     /// Face detected info of the processed content.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub face_detected: Option<bool>,
+}
+
+#[derive(Default, Serialize, ToSchema)]
+pub struct GetContentProcessingState {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub state: Option<ContentProcessingState>,
 }
 
 /// Version UUID for public profile content.
