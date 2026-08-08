@@ -17,13 +17,9 @@ use file::{
 };
 use manager_api::{RootCertStore, TlsConfig};
 use manager_model::ManagerInstanceName;
-use rustls_pemfile::certs;
+use rustls_pki_types::{CertificateDer, PrivateKeyDer, pem::PemObject};
 use simple_backend_utils::Result;
-use tokio_rustls::rustls::{
-    ServerConfig,
-    pki_types::{CertificateDer, pem::PemObject},
-    server::WebPkiClientVerifier,
-};
+use tokio_rustls::rustls::{ServerConfig, server::WebPkiClientVerifier};
 use tracing::{info, warn};
 
 use self::file::{
@@ -311,17 +307,12 @@ fn generate_server_config(
     let mut key_reader = BufReader::new(
         std::fs::File::open(key_path).change_context(GetConfigError::CreateTlsConfig)?,
     );
-    let all_keys: Vec<_> = rustls_pemfile::private_key(&mut key_reader)
-        .iter()
-        .flatten()
-        .map(|v| v.clone_key())
-        .collect();
-    let mut key_iter = all_keys.into_iter();
+    let mut key_iter = PrivateKeyDer::pem_reader_iter(&mut key_reader);
 
-    let key = if let Some(key) = key_iter.next() {
-        key
-    } else {
-        return Err(GetConfigError::CreateTlsConfig).attach("No key found");
+    let key = match key_iter.next() {
+        Some(Ok(key)) => key,
+        Some(Err(e)) => return Err(GetConfigError::CreateTlsConfig).attach(e),
+        None => return Err(GetConfigError::CreateTlsConfig).attach("No key found"),
     };
 
     if key_iter.next().is_some() {
@@ -331,15 +322,12 @@ fn generate_server_config(
     let mut cert_reader = BufReader::new(
         std::fs::File::open(cert_path).change_context(GetConfigError::CreateTlsConfig)?,
     );
+    let mut cert_iter = CertificateDer::pem_reader_iter(&mut cert_reader);
 
-    let all_certs: Vec<_> = certs(&mut cert_reader)
-        .map(|r| r.map(|c| c.into_owned()))
-        .collect();
-    let mut cert_iter = all_certs.into_iter();
-    let cert = if let Some(cert) = cert_iter.next() {
-        cert.change_context(GetConfigError::CreateTlsConfig)?
-    } else {
-        return Err(GetConfigError::CreateTlsConfig).attach("No cert found");
+    let cert = match cert_iter.next() {
+        Some(Ok(cert)) => cert,
+        Some(Err(e)) => return Err(GetConfigError::CreateTlsConfig).attach(e),
+        None => return Err(GetConfigError::CreateTlsConfig).attach("No cert found"),
     };
 
     if cert_iter.next().is_some() {

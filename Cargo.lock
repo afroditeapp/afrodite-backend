@@ -3138,7 +3138,7 @@ dependencies = [
  "error-stack",
  "manager_api",
  "manager_model",
- "rustls-pemfile",
+ "rustls-pki-types",
  "serde",
  "simple_backend_utils",
  "thiserror 2.0.20",
@@ -4809,15 +4809,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rustls-pemfile"
-version = "2.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dce314e5fee3f39953d46bb63bb8a46d40c2f8fb7cc5a3b6cab2bde9721d6e50"
-dependencies = [
- "rustls-pki-types",
-]
-
-[[package]]
 name = "rustls-pki-types"
 version = "1.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5763,7 +5754,7 @@ dependencies = [
  "lettre",
  "manager_model",
  "reqwest",
- "rustls-pemfile",
+ "rustls-pki-types",
  "serde",
  "simple_backend_model",
  "simple_backend_utils",

@@ -149,7 +149,7 @@ mime = "0.3.17"
 # Server TLS
 tokio-rustls = { version = "0.26.4", default-features = false, features = ["logging", "tls12", "ring"] }
 tokio-rustls-acme = { version = "0.9.1", default-features = false }
-rustls-pemfile = "2.2.0"
+rustls-pki-types = "1.15.1"
 rustls-platform-verifier = "0.7.0"
 
 # Procedural macros
