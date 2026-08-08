@@ -61,7 +61,7 @@ make run-release
 2. Install other dependencies.
 
 ```
-sudo apt install git build-essential pkg-config libssl-dev libsqlite3-dev libpq-dev
+sudo apt install git build-essential pkg-config libsqlite3-dev libpq-dev
 ```
 
 #### macOS
@@ -72,7 +72,7 @@ sudo apt install git build-essential pkg-config libssl-dev libsqlite3-dev libpq-
 2. Install other dependencies.
 
 ```
-brew install openssl@3 postgresql
+brew install postgresql
 ```
 
 ### Development dependencies

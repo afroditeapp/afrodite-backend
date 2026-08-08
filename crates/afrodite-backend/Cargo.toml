@@ -36,7 +36,5 @@ model_server_data = { path = "../model_server_data" }
 database = { path = "../database" }
 database_media = { path = "../database_media" }
 
-tls_client = { path = "../tls_client" }
-
 [build-dependencies]
 vergen-gitcl = { workspace = true }

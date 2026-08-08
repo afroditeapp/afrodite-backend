@@ -3,8 +3,6 @@
 #![deny(unused_features)]
 #![warn(unused_crate_dependencies)]
 
-use tls_client as _;
-
 pub mod args;
 pub mod backup_tools;
 pub mod build_info;

@@ -60,10 +60,6 @@ members = [
     "crates/manager_api",
     "crates/manager_config",
     "crates/manager_model",
-    # TLS client config
-    "crates/tls_client",
-    "crates/tls_client_native",
-    "crates/tls_client_rustls",
 ]
 
 [workspace.dependencies]
@@ -122,8 +118,7 @@ tokio-stream = { version = "0.1.19", features = ["sync", "fs"] }
 tokio-util = { version = "0.7.19", features = ["io"]}
 async-trait = "0.1.91"
 
-# tls_client_rustls and tls_client_rustls configures TLS
-reqwest = { version = "0.13.4", default-features = false, features = ["json", "charset", "http2", "system-proxy"] }
+reqwest = { version = "0.13.4", default-features = false, features = ["json", "charset", "http2", "system-proxy", "rustls"] }
 utoipa = { version = "5.5.0", features = ["axum_extras", "uuid", "chrono"] }
 utoipa-axum = { version = "0.2.0" }
 utoipa-swagger-ui = { version = "9.0.2", features = ["axum", "vendored"] }
@@ -138,8 +133,8 @@ axum-extra = { version = "0.12.6", features = ["typed-header"] }
 tower = "0.5.3"
 tower-http = { version = "0.6.11", features = ["trace", "compression-br", "compression-gzip", "compression-zstd"] }
 
-# Email sending, tls_client_rustls and tls_client_rustls configures TLS
-lettre = { version = "0.11.23", default-features = false, features = ["smtp-transport", "pool", "hostname", "builder"] }
+# Email sending
+lettre = { version = "0.11.23", default-features = false, features = ["smtp-transport", "pool", "hostname", "builder", "tokio1-rustls", "aws-lc-rs", "rustls-platform-verifier"] }
 
 # File hosting package extracting
 flate2 = "1.1.9"
@@ -158,22 +153,20 @@ quote = "1.0.47"
 
 # Test mode
 inventory = "0.3.24"
-# tls_client_rustls and tls_client_rustls configures TLS.
-# tokio-tungstenite 0.27 is available but axum uses 0.26.
-tokio-tungstenite = { version = "0.29.0", features = ["url"] }
+tokio-tungstenite = { version = "0.29.0", features = ["url", "rustls-tls-native-roots"] }
 pgp = { version = "0.20.0", default-features = false }
 smallvec = "1.15.2"
-# tls_client_rustls and tls_client_rustls configures TLS.
-async-openai = { version = "0.41.3", default-features = false, features = ["chat-completion"] }
+async-openai = { version = "0.41.3", default-features = false, features = ["chat-completion", "rustls"] }
 unicode-segmentation = "1.13.3"
 icu_properties = "2.2.0"
 nsfw = { version = "0.2.0", default-features = false }
 
-# Firebase cloud messaging, tls_client_rustls and tls_client_rustls configures TLS
+# Firebase cloud messaging
 [workspace.dependencies.fcm]
 git = "https://github.com/jutuon/fcm-rust"
 rev = "88c8b4c16908af5b77f84316ea5a913c6f2a5889"
 default-features = false
+features = ["rustls"]
 
 # Face detection
 [workspace.dependencies.rustface]

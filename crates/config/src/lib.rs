@@ -6,8 +6,6 @@
 
 use base16ct::HexDisplay;
 use regex::Regex;
-// Ignore unused depenency warning
-use tls_client as _;
 
 pub mod args;
 pub mod bot_config_file;
