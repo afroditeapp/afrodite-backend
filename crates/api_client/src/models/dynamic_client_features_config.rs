@@ -13,8 +13,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct DynamicClientFeaturesConfig {
-    #[serde(rename = "info_banners", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub info_banners: Option<Option<models::InfoBannersConfig>>,
+    #[serde(rename = "info_banners", skip_serializing_if = "Option::is_none")]
+    pub info_banners: Option<models::InfoBannersConfig>,
 }
 
 impl DynamicClientFeaturesConfig {

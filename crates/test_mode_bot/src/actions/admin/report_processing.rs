@@ -327,7 +327,7 @@ impl AdminBotReportProcessingLogic {
             match report {
                 ReportInternal::ProfileName(r) => {
                     let cfg = config.profile_name.as_ref();
-                    if let Some(Some(text)) = r.content.profile_name.as_ref()
+                    if let Some(text) = r.content.profile_name.as_ref()
                         && let Some(llm) = profile_name_llm
                     {
                         let (a, s) = Self::llm_profile_string_decision(text, llm).await?;
@@ -338,7 +338,7 @@ impl AdminBotReportProcessingLogic {
                 }
                 ReportInternal::ProfileText(r) => {
                     let cfg = config.profile_text.as_ref();
-                    if let Some(Some(text)) = r.content.profile_text.as_ref()
+                    if let Some(text) = r.content.profile_text.as_ref()
                         && let Some(llm) = profile_text_llm
                     {
                         let (a, s) = Self::llm_profile_string_decision(text, llm).await?;
@@ -349,8 +349,7 @@ impl AdminBotReportProcessingLogic {
                 }
                 ReportInternal::ProfileContent(r) => {
                     let cfg = config.profile_content.as_ref();
-                    if let Some(content_id) =
-                        r.content.profile_content.as_ref().and_then(|v| v.as_ref())
+                    if let Some(content_id) = r.content.profile_content.as_ref()
                         && let Some(llm) = profile_content_llm
                     {
                         let (a, s) = Self::llm_profile_content_decision(
@@ -457,7 +456,6 @@ impl AdminBotReportProcessingLogic {
 
             let should_ban = current_ban
                 .banned_until
-                .flatten()
                 .is_none_or(|existing| ban.ban_until.ut > existing.ut);
 
             if should_ban {
@@ -465,11 +463,11 @@ impl AdminBotReportProcessingLogic {
                     &api.api(),
                     SetAccountBanState {
                         account: ban.target.clone(),
-                        ban_until: Some(Some(ban.ban_until.clone())),
-                        reason_category: Some(Some(
-                            api_client::models::AccountBanReasonCategory::new(ban.reason_category),
+                        ban_until: Some(ban.ban_until.clone()),
+                        reason_category: Some(api_client::models::AccountBanReasonCategory::new(
+                            ban.reason_category,
                         )),
-                        reason_details: Some(None),
+                        reason_details: None,
                     },
                 )
                 .await

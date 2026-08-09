@@ -60,7 +60,6 @@ impl BotAction for ChangeProfileText {
             .await
             .change_context(TestError::ApiRequest)?
             .profile
-            .flatten()
             .ok_or(TestError::MissingValue.report())?;
 
         let profile_text = match &self.mode {
@@ -82,8 +81,8 @@ impl BotAction for ChangeProfileText {
                 })
                 .collect(),
             age: current_profile.age,
-            name: current_profile.name.flatten().unwrap_or_default(),
-            ptext: Some(Some(profile_text)),
+            name: current_profile.name.unwrap_or_default(),
+            ptext: Some(profile_text),
         };
         post_profile(&state.api(), update)
             .await
@@ -150,7 +149,6 @@ impl BotAction for GetProfile {
             .await
             .change_context(TestError::ApiRequest)?
             .profile
-            .flatten()
             .ok_or(TestError::MissingValue.report())?;
         state.previous_value = PreviousValue::Profile(profile);
         Ok(())
@@ -422,7 +420,6 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
             .await
             .change_context(TestError::ApiRequest)?
             .profile_attributes
-            .flatten()
             .map(|v| v.attributes)
             .unwrap_or_default();
 
@@ -475,7 +472,7 @@ impl BotAction for ChangeBotAgeAndOtherSettings {
             name,
             age: age.into(),
             attributes,
-            ptext: Some(state.get_bot_config().text.clone().map(|v| v.into_string())),
+            ptext: state.get_bot_config().text.clone().map(|v| v.into_string()),
         };
 
         post_profile(&state.api(), update)

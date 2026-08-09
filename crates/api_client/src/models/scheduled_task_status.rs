@@ -13,10 +13,10 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ScheduledTaskStatus {
-    #[serde(rename = "server_restart", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub server_restart: Option<Option<models::MaintenanceTask>>,
-    #[serde(rename = "system_reboot", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub system_reboot: Option<Option<models::MaintenanceTask>>,
+    #[serde(rename = "server_restart", skip_serializing_if = "Option::is_none")]
+    pub server_restart: Option<models::MaintenanceTask>,
+    #[serde(rename = "system_reboot", skip_serializing_if = "Option::is_none")]
+    pub system_reboot: Option<models::MaintenanceTask>,
 }
 
 impl ScheduledTaskStatus {

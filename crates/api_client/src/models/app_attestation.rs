@@ -13,8 +13,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AppAttestation {
-    #[serde(rename = "debug", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub debug: Option<Option<models::DebugAppAttestation>>,
+    #[serde(rename = "debug", skip_serializing_if = "Option::is_none")]
+    pub debug: Option<models::DebugAppAttestation>,
 }
 
 impl AppAttestation {

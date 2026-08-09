@@ -14,10 +14,10 @@ use serde::{Deserialize, Serialize};
 /// GetClientVersionStatisticsSettings : Time range is inclusive. [Self::max_time] must be greater or equal to [Self::min_time].
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetClientVersionStatisticsSettings {
-    #[serde(rename = "max_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub max_time: Option<Option<models::UnixTime>>,
-    #[serde(rename = "min_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub min_time: Option<Option<models::UnixTime>>,
+    #[serde(rename = "max_time", skip_serializing_if = "Option::is_none")]
+    pub max_time: Option<models::UnixTime>,
+    #[serde(rename = "min_time", skip_serializing_if = "Option::is_none")]
+    pub min_time: Option<models::UnixTime>,
 }
 
 impl GetClientVersionStatisticsSettings {

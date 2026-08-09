@@ -13,16 +13,16 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct NsfwDetectionThresholds {
-    #[serde(rename = "drawings", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub drawings: Option<Option<f64>>,
-    #[serde(rename = "hentai", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub hentai: Option<Option<f64>>,
-    #[serde(rename = "neutral", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub neutral: Option<Option<f64>>,
-    #[serde(rename = "porn", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub porn: Option<Option<f64>>,
-    #[serde(rename = "sexy", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub sexy: Option<Option<f64>>,
+    #[serde(rename = "drawings", skip_serializing_if = "Option::is_none")]
+    pub drawings: Option<f64>,
+    #[serde(rename = "hentai", skip_serializing_if = "Option::is_none")]
+    pub hentai: Option<f64>,
+    #[serde(rename = "neutral", skip_serializing_if = "Option::is_none")]
+    pub neutral: Option<f64>,
+    #[serde(rename = "porn", skip_serializing_if = "Option::is_none")]
+    pub porn: Option<f64>,
+    #[serde(rename = "sexy", skip_serializing_if = "Option::is_none")]
+    pub sexy: Option<f64>,
 }
 
 impl NsfwDetectionThresholds {

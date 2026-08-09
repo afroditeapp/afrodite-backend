@@ -13,8 +13,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetAccountIdFromEmailResult {
-    #[serde(rename = "aid", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub aid: Option<Option<models::AccountId>>,
+    #[serde(rename = "aid", skip_serializing_if = "Option::is_none")]
+    pub aid: Option<models::AccountId>,
 }
 
 impl GetAccountIdFromEmailResult {

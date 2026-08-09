@@ -15,10 +15,10 @@ use serde::{Deserialize, Serialize};
 pub struct ProfileStringPendingModeration {
     #[serde(rename = "id")]
     pub id: models::AccountId,
-    #[serde(rename = "rejected_category", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub rejected_category: Option<Option<models::ProfileStringModerationRejectedReasonCategory>>,
-    #[serde(rename = "rejected_details", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub rejected_details: Option<Option<models::ProfileStringModerationRejectedReasonDetails>>,
+    #[serde(rename = "rejected_category", skip_serializing_if = "Option::is_none")]
+    pub rejected_category: Option<models::ProfileStringModerationRejectedReasonCategory>,
+    #[serde(rename = "rejected_details", skip_serializing_if = "Option::is_none")]
+    pub rejected_details: Option<models::ProfileStringModerationRejectedReasonDetails>,
     /// A string wrapper that ensures the string is not empty. This type is used for TEXT columns that should not allow empty strings. In the database, these columns are NULL when there is no value, and this type represents non-NULL values that must be non-empty.
     #[serde(rename = "value")]
     pub value: String,

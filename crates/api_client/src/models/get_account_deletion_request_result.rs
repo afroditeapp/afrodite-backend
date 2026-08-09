@@ -13,8 +13,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetAccountDeletionRequestResult {
-    #[serde(rename = "automatic_deletion_allowed", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub automatic_deletion_allowed: Option<Option<models::UnixTime>>,
+    #[serde(rename = "automatic_deletion_allowed", skip_serializing_if = "Option::is_none")]
+    pub automatic_deletion_allowed: Option<models::UnixTime>,
 }
 
 impl GetAccountDeletionRequestResult {

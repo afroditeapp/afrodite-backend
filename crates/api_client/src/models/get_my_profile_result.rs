@@ -13,24 +13,24 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetMyProfileResult {
-    #[serde(rename = "name_moderation_info", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub name_moderation_info: Option<Option<models::ProfileStringModerationInfo>>,
+    #[serde(rename = "name_moderation_info", skip_serializing_if = "Option::is_none")]
+    pub name_moderation_info: Option<models::ProfileStringModerationInfo>,
     #[serde(rename = "profile")]
     pub profile: models::Profile,
-    #[serde(rename = "profile_age_range_verified", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub profile_age_range_verified: Option<Option<bool>>,
-    #[serde(rename = "profile_age_range_verified_manual", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub profile_age_range_verified_manual: Option<Option<bool>>,
-    #[serde(rename = "profile_name_verified", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub profile_name_verified: Option<Option<bool>>,
-    #[serde(rename = "profile_name_verified_manual", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub profile_name_verified_manual: Option<Option<bool>>,
+    #[serde(rename = "profile_age_range_verified", skip_serializing_if = "Option::is_none")]
+    pub profile_age_range_verified: Option<bool>,
+    #[serde(rename = "profile_age_range_verified_manual", skip_serializing_if = "Option::is_none")]
+    pub profile_age_range_verified_manual: Option<bool>,
+    #[serde(rename = "profile_name_verified", skip_serializing_if = "Option::is_none")]
+    pub profile_name_verified: Option<bool>,
+    #[serde(rename = "profile_name_verified_manual", skip_serializing_if = "Option::is_none")]
+    pub profile_name_verified_manual: Option<bool>,
     #[serde(rename = "profile_sync_version")]
     pub profile_sync_version: models::ProfileSyncVersion,
     #[serde(rename = "profile_version")]
     pub profile_version: models::ProfileVersion,
-    #[serde(rename = "text_moderation_info", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub text_moderation_info: Option<Option<models::ProfileStringModerationInfo>>,
+    #[serde(rename = "text_moderation_info", skip_serializing_if = "Option::is_none")]
+    pub text_moderation_info: Option<models::ProfileStringModerationInfo>,
 }
 
 impl GetMyProfileResult {

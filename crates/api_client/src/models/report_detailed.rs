@@ -14,8 +14,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ReportDetailed {
     /// Only available when account interaction exists.
-    #[serde(rename = "chat_info", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub chat_info: Option<Option<models::ReportChatInfo>>,
+    #[serde(rename = "chat_info", skip_serializing_if = "Option::is_none")]
+    pub chat_info: Option<models::ReportChatInfo>,
     #[serde(rename = "content")]
     pub content: models::ReportContent,
     #[serde(rename = "creator_info")]

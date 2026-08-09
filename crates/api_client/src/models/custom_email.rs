@@ -15,10 +15,10 @@ use serde::{Deserialize, Serialize};
 pub struct CustomEmail {
     #[serde(rename = "id")]
     pub id: models::CustomEmailId,
-    #[serde(rename = "sending_completed_unix_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub sending_completed_unix_time: Option<Option<models::UnixTime>>,
-    #[serde(rename = "sending_initiated_unix_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub sending_initiated_unix_time: Option<Option<models::UnixTime>>,
+    #[serde(rename = "sending_completed_unix_time", skip_serializing_if = "Option::is_none")]
+    pub sending_completed_unix_time: Option<models::UnixTime>,
+    #[serde(rename = "sending_initiated_unix_time", skip_serializing_if = "Option::is_none")]
+    pub sending_initiated_unix_time: Option<models::UnixTime>,
     #[serde(rename = "translations")]
     pub translations: Vec<models::CustomEmailTranslation>,
 }

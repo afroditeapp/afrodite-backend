@@ -13,11 +13,11 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetProfileStringState {
-    #[serde(rename = "moderation_info", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub moderation_info: Option<Option<models::ProfileStringModerationInfo>>,
+    #[serde(rename = "moderation_info", skip_serializing_if = "Option::is_none")]
+    pub moderation_info: Option<models::ProfileStringModerationInfo>,
     /// If `None`, the `moderation_info` is `None`.
-    #[serde(rename = "value", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub value: Option<Option<String>>,
+    #[serde(rename = "value", skip_serializing_if = "Option::is_none")]
+    pub value: Option<String>,
 }
 
 impl GetProfileStringState {

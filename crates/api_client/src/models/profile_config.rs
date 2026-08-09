@@ -13,10 +13,10 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ProfileConfig {
-    #[serde(rename = "first_image", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub first_image: Option<Option<models::FirstImageConfig>>,
-    #[serde(rename = "profile_name_regex", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub profile_name_regex: Option<Option<String>>,
+    #[serde(rename = "first_image", skip_serializing_if = "Option::is_none")]
+    pub first_image: Option<models::FirstImageConfig>,
+    #[serde(rename = "profile_name_regex", skip_serializing_if = "Option::is_none")]
+    pub profile_name_regex: Option<String>,
 }
 
 impl ProfileConfig {

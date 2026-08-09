@@ -87,7 +87,7 @@ impl<'a> LazyProfileAgeAndName<'a> {
     }
 
     async fn name(&mut self) -> Result<Option<String>, TestError> {
-        Ok(self.get().await?.name.clone().flatten())
+        Ok(self.get().await?.name.clone())
     }
 }
 
@@ -182,9 +182,9 @@ impl AdminBotAccountVerificationLogic {
             api,
             account_id,
             EditVerificationValues {
-                profile_age_range: Some(profile_age_range),
-                profile_name: Some(profile_name),
-                security_content: Some(security_content),
+                profile_age_range,
+                profile_name,
+                security_content,
             },
             profile_age_range_flags | profile_name_flags | security_content_flags,
         )
@@ -222,8 +222,7 @@ impl AdminBotAccountVerificationLogic {
         let response = account_admin_api::get_account_verification_queue_next_item(&api.api())
             .await
             .change_context(TestError::ApiRequest)?
-            .item
-            .flatten();
+            .item;
 
         Ok(response)
     }
@@ -238,7 +237,7 @@ impl AdminBotAccountVerificationLogic {
             &api.api(),
             PostAccountVerificationQueueRemoveNextItem {
                 account_id,
-                edit: Some(Some(edit)),
+                edit: Some(edit),
                 verification_error_flags: AccountVerificationErrorFlagsValue {
                     v: verification_error_flags.bits().into(),
                 },

@@ -17,10 +17,10 @@ pub struct TextInfoBanner {
     pub body: models::StringResource,
     #[serde(rename = "dismissible", skip_serializing_if = "Option::is_none")]
     pub dismissible: Option<bool>,
-    #[serde(rename = "icon", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub icon: Option<Option<String>>,
-    #[serde(rename = "url_button", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub url_button: Option<Option<models::InfoBannerUrlButton>>,
+    #[serde(rename = "icon", skip_serializing_if = "Option::is_none")]
+    pub icon: Option<String>,
+    #[serde(rename = "url_button", skip_serializing_if = "Option::is_none")]
+    pub url_button: Option<models::InfoBannerUrlButton>,
 }
 
 impl TextInfoBanner {

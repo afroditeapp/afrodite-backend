@@ -199,14 +199,14 @@ fn convert_content_processing_state(
         ContentProcessingStateInternal::InQueue {
             wait_queue_position,
         } => {
-            converted.wait_queue_position = Some(Some(wait_queue_position));
+            converted.wait_queue_position = Some(wait_queue_position);
         }
         ContentProcessingStateInternal::Completed {
             content_id,
             face_detected,
         } => {
-            converted.cid = Some(Some(ContentId::new(content_id.cid.to_string())));
-            converted.face_detected = Some(Some(face_detected));
+            converted.cid = Some(ContentId::new(content_id.cid.to_string()));
+            converted.face_detected = Some(face_detected);
         }
         ContentProcessingStateInternal::Processing
         | ContentProcessingStateInternal::Failed

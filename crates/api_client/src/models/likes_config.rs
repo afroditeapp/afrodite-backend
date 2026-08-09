@@ -13,11 +13,11 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct LikesConfig {
-    #[serde(rename = "daily", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub daily: Option<Option<models::DailyLikesConfig>>,
+    #[serde(rename = "daily", skip_serializing_if = "Option::is_none")]
+    pub daily: Option<models::DailyLikesConfig>,
     /// UTC time with \"hh:mm\" format.
-    #[serde(rename = "unlimited_likes_disabling_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub unlimited_likes_disabling_time: Option<Option<String>>,
+    #[serde(rename = "unlimited_likes_disabling_time", skip_serializing_if = "Option::is_none")]
+    pub unlimited_likes_disabling_time: Option<String>,
 }
 
 impl LikesConfig {

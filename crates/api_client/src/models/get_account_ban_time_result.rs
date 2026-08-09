@@ -13,15 +13,15 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetAccountBanTimeResult {
-    #[serde(rename = "admin_type", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub admin_type: Option<Option<models::AccountBannedAdminType>>,
+    #[serde(rename = "admin_type", skip_serializing_if = "Option::is_none")]
+    pub admin_type: Option<models::AccountBannedAdminType>,
     /// If `None` the account is not banned.
-    #[serde(rename = "banned_until", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub banned_until: Option<Option<models::UnixTime>>,
-    #[serde(rename = "reason_category", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub reason_category: Option<Option<models::AccountBanReasonCategory>>,
-    #[serde(rename = "reason_details", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub reason_details: Option<Option<models::AccountBanReasonDetails>>,
+    #[serde(rename = "banned_until", skip_serializing_if = "Option::is_none")]
+    pub banned_until: Option<models::UnixTime>,
+    #[serde(rename = "reason_category", skip_serializing_if = "Option::is_none")]
+    pub reason_category: Option<models::AccountBanReasonCategory>,
+    #[serde(rename = "reason_details", skip_serializing_if = "Option::is_none")]
+    pub reason_details: Option<models::AccountBanReasonDetails>,
 }
 
 impl GetAccountBanTimeResult {

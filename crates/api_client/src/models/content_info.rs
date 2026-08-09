@@ -25,8 +25,8 @@ pub struct ContentInfo {
     #[serde(rename = "face_detected", skip_serializing_if = "Option::is_none")]
     pub face_detected: Option<bool>,
     /// Face verified against current security content (automatic or manual)
-    #[serde(rename = "face_verified", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub face_verified: Option<Option<bool>>,
+    #[serde(rename = "face_verified", skip_serializing_if = "Option::is_none")]
+    pub face_verified: Option<bool>,
 }
 
 impl ContentInfo {

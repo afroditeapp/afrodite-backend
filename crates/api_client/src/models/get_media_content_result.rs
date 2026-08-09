@@ -17,8 +17,8 @@ pub struct GetMediaContentResult {
     pub profile_content: models::MyProfileContent,
     #[serde(rename = "profile_content_version")]
     pub profile_content_version: models::ProfileContentVersion,
-    #[serde(rename = "security_content", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub security_content: Option<Option<models::MyContentInfo>>,
+    #[serde(rename = "security_content", skip_serializing_if = "Option::is_none")]
+    pub security_content: Option<models::MyContentInfo>,
     #[serde(rename = "sync_version")]
     pub sync_version: models::MediaContentSyncVersion,
 }

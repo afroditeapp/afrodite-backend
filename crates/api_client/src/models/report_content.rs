@@ -13,16 +13,16 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ReportContent {
-    #[serde(rename = "chat_message", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub chat_message: Option<Option<models::ChatMessageReport>>,
-    #[serde(rename = "profile_content", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub profile_content: Option<Option<models::ContentId>>,
+    #[serde(rename = "chat_message", skip_serializing_if = "Option::is_none")]
+    pub chat_message: Option<models::ChatMessageReport>,
+    #[serde(rename = "profile_content", skip_serializing_if = "Option::is_none")]
+    pub profile_content: Option<models::ContentId>,
     /// Null or non-empty string
-    #[serde(rename = "profile_name", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub profile_name: Option<Option<String>>,
+    #[serde(rename = "profile_name", skip_serializing_if = "Option::is_none")]
+    pub profile_name: Option<String>,
     /// Null or non-empty string
-    #[serde(rename = "profile_text", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub profile_text: Option<Option<String>>,
+    #[serde(rename = "profile_text", skip_serializing_if = "Option::is_none")]
+    pub profile_text: Option<String>,
 }
 
 impl ReportContent {

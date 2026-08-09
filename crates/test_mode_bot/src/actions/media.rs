@@ -109,7 +109,7 @@ impl SendImageToSlot {
                     .await
                     .change_context(TestError::ApiRequest)?;
 
-                let Some(state_from_api) = state_from_api.state.flatten() else {
+                let Some(state_from_api) = state_from_api.state else {
                     return Err(TestError::ApiRequest.report());
                 };
 
@@ -127,12 +127,10 @@ impl SendImageToSlot {
                     | ContentProcessingStateType::InQueue => {
                         tokio::time::sleep(std::time::Duration::from_millis(200)).await
                     }
-                    ContentProcessingStateType::Completed => {
-                        match state_from_api.cid.clone().flatten() {
-                            None => return Err(TestError::ApiRequest.report()),
-                            Some(cid) => return Ok(cid),
-                        }
-                    }
+                    ContentProcessingStateType::Completed => match state_from_api.cid.clone() {
+                        None => return Err(TestError::ApiRequest.report()),
+                        Some(cid) => return Ok(cid),
+                    },
                 }
             }
         }

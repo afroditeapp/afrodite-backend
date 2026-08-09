@@ -13,8 +13,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetAssociationMembersOnlyInfo {
-    #[serde(rename = "info_markdown", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub info_markdown: Option<Option<models::StringResource>>,
+    #[serde(rename = "info_markdown", skip_serializing_if = "Option::is_none")]
+    pub info_markdown: Option<models::StringResource>,
 }
 
 impl GetAssociationMembersOnlyInfo {

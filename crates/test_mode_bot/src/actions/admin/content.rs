@@ -183,7 +183,7 @@ impl BotAction for ModerateContentModerationRequest {
                         account_id: request.account_id,
                         content_id: request.content_id,
                         accept: true,
-                        move_to_human: Some(Some(false)),
+                        move_to_human: Some(false),
                         rejected_category: None,
                         rejected_details: None,
                     },
@@ -302,15 +302,15 @@ impl AdminBotContentModerationLogic {
                     account_id: moderation.account_id,
                     content_id: moderation.content_id,
                     accept: result.accept,
-                    move_to_human: Some(Some(result.move_to_human)),
+                    move_to_human: Some(result.move_to_human),
                     rejected_category: None,
-                    rejected_details: Some(result.rejected_details.and_then(|v| {
+                    rejected_details: result.rejected_details.and_then(|v| {
                         if v.is_empty() {
                             None
                         } else {
                             Some(MediaContentModerationRejectedReasonDetails::new(v))
                         }
-                    })),
+                    }),
                 },
             )
             .await

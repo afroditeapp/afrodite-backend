@@ -46,7 +46,7 @@ pub async fn handle_profile_age_range_verification(
     Ok((
         Some(EditVerificationProfileAgeRange {
             current_profile_age,
-            verified_value: Some(Some(accepted)),
+            verified_value: Some(accepted),
         }),
         flags,
     ))

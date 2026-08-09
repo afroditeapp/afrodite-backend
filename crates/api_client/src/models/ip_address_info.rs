@@ -19,8 +19,8 @@ pub struct IpAddressInfo {
     /// Usage count
     #[serde(rename = "c")]
     pub c: i64,
-    #[serde(rename = "country", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub country: Option<Option<String>>,
+    #[serde(rename = "country", skip_serializing_if = "Option::is_none")]
+    pub country: Option<String>,
     /// First usage time
     #[serde(rename = "f")]
     pub f: models::UnixTime,

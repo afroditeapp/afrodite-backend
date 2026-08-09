@@ -18,10 +18,10 @@ pub struct NewsItemSimple {
     #[serde(rename = "private", skip_serializing_if = "Option::is_none")]
     pub private: Option<bool>,
     /// Latest publication time
-    #[serde(rename = "time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub time: Option<Option<models::UnixTime>>,
-    #[serde(rename = "title", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub title: Option<Option<String>>,
+    #[serde(rename = "time", skip_serializing_if = "Option::is_none")]
+    pub time: Option<models::UnixTime>,
+    #[serde(rename = "title", skip_serializing_if = "Option::is_none")]
+    pub title: Option<String>,
 }
 
 impl NewsItemSimple {

@@ -13,11 +13,11 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ServerMaintenanceStatus {
-    #[serde(rename = "end", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub end: Option<Option<models::UnixTime>>,
+    #[serde(rename = "end", skip_serializing_if = "Option::is_none")]
+    pub end: Option<models::UnixTime>,
     /// If None, ignore [Self::end].
-    #[serde(rename = "start", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub start: Option<Option<models::UnixTime>>,
+    #[serde(rename = "start", skip_serializing_if = "Option::is_none")]
+    pub start: Option<models::UnixTime>,
 }
 
 impl ServerMaintenanceStatus {

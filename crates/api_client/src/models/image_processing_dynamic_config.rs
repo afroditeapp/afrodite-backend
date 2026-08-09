@@ -17,8 +17,8 @@ pub struct ImageProcessingDynamicConfig {
     #[serde(rename = "nsfw_thresholds")]
     pub nsfw_thresholds: models::NsfwDetectionThresholds,
     /// See [rustface::Detector::set_score_thresh] documentation. Value 1.0 seems to work well.
-    #[serde(rename = "seetaface_threshold", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub seetaface_threshold: Option<Option<f64>>,
+    #[serde(rename = "seetaface_threshold", skip_serializing_if = "Option::is_none")]
+    pub seetaface_threshold: Option<f64>,
 }
 
 impl ImageProcessingDynamicConfig {

@@ -31,7 +31,7 @@ pub struct ConversationKey {
 }
 
 fn extract_chat_message(report: &ReportDetailed) -> Option<&ChatMessageReport> {
-    report.content.chat_message.as_ref()?.as_ref()
+    report.content.chat_message.as_ref()
 }
 
 pub async fn convert_to_report_internal(

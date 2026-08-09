@@ -263,11 +263,7 @@ impl BotTestRunner {
         let bot_accounts =
             Self::get_or_create_bot_accounts(bot_config_file.clone(), api_client).await;
 
-        let has_admin = bot_accounts
-            .admin
-            .as_ref()
-            .and_then(|b| b.as_ref())
-            .is_some();
+        let has_admin = bot_accounts.admin.as_ref().is_some();
         let user_count = bot_accounts
             .users
             .as_ref()
@@ -281,7 +277,6 @@ impl BotTestRunner {
             let account_id_from_api = bot_accounts
                 .admin
                 .as_ref()
-                .and_then(|b| b.as_ref())
                 .map(|b| b.aid.clone())
                 .unwrap_or_else(|| api_client::models::AccountId::new(String::new()));
 

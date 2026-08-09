@@ -14,15 +14,15 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AccountVerificationQueueStatus {
     /// The first queue position is 1
-    #[serde(rename = "queue_position", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub queue_position: Option<Option<i32>>,
+    #[serde(rename = "queue_position", skip_serializing_if = "Option::is_none")]
+    pub queue_position: Option<i32>,
     /// Empty flags value means there are no known verification errors.
     #[serde(rename = "verification_error_flags")]
     pub verification_error_flags: models::AccountVerificationErrorFlagsValue,
-    #[serde(rename = "verification_method", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub verification_method: Option<Option<models::VerificationMethod>>,
-    #[serde(rename = "verification_unix_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub verification_unix_time: Option<Option<models::UnixTime>>,
+    #[serde(rename = "verification_method", skip_serializing_if = "Option::is_none")]
+    pub verification_method: Option<models::VerificationMethod>,
+    #[serde(rename = "verification_unix_time", skip_serializing_if = "Option::is_none")]
+    pub verification_unix_time: Option<models::UnixTime>,
 }
 
 impl AccountVerificationQueueStatus {

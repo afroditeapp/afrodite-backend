@@ -13,10 +13,10 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SoftwareUpdateStatus {
-    #[serde(rename = "downloaded", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub downloaded: Option<Option<models::SoftwareInfo>>,
-    #[serde(rename = "installed", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub installed: Option<Option<models::SoftwareInfo>>,
+    #[serde(rename = "downloaded", skip_serializing_if = "Option::is_none")]
+    pub downloaded: Option<models::SoftwareInfo>,
+    #[serde(rename = "installed", skip_serializing_if = "Option::is_none")]
+    pub installed: Option<models::SoftwareInfo>,
     #[serde(rename = "state")]
     pub state: models::SoftwareUpdateState,
 }

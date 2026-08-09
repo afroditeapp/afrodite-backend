@@ -13,8 +13,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetDynamicClientFeaturesConfigResult {
-    #[serde(rename = "config", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub config: Option<Option<models::DynamicClientFeaturesConfig>>,
+    #[serde(rename = "config", skip_serializing_if = "Option::is_none")]
+    pub config: Option<models::DynamicClientFeaturesConfig>,
 }
 
 impl GetDynamicClientFeaturesConfigResult {

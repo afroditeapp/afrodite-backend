@@ -15,8 +15,8 @@ use serde::{Deserialize, Serialize};
 pub struct UpdateProfileContentResult {
     #[serde(rename = "error", skip_serializing_if = "Option::is_none")]
     pub error: Option<bool>,
-    #[serde(rename = "error_content_at_index_does_not_exist", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub error_content_at_index_does_not_exist: Option<Option<i64>>,
+    #[serde(rename = "error_content_at_index_does_not_exist", skip_serializing_if = "Option::is_none")]
+    pub error_content_at_index_does_not_exist: Option<i64>,
 }
 
 impl UpdateProfileContentResult {

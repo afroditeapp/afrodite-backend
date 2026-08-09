@@ -21,28 +21,28 @@ pub struct ContentInfoDetailed {
     #[serde(rename = "face_detected")]
     pub face_detected: bool,
     /// Manual face detected value set by admin
-    #[serde(rename = "face_detected_manual", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub face_detected_manual: Option<Option<bool>>,
+    #[serde(rename = "face_detected_manual", skip_serializing_if = "Option::is_none")]
+    pub face_detected_manual: Option<bool>,
     /// Face verified against current security content (automatic or manual)
-    #[serde(rename = "face_verified", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub face_verified: Option<Option<bool>>,
+    #[serde(rename = "face_verified", skip_serializing_if = "Option::is_none")]
+    pub face_verified: Option<bool>,
     /// Manual face verified value set by admin
-    #[serde(rename = "face_verified_manual", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub face_verified_manual: Option<Option<bool>>,
-    #[serde(rename = "rejected_reason_category", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub rejected_reason_category: Option<Option<models::MediaContentModerationRejectedReasonCategory>>,
-    #[serde(rename = "rejected_reason_details", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub rejected_reason_details: Option<Option<models::MediaContentModerationRejectedReasonDetails>>,
+    #[serde(rename = "face_verified_manual", skip_serializing_if = "Option::is_none")]
+    pub face_verified_manual: Option<bool>,
+    #[serde(rename = "rejected_reason_category", skip_serializing_if = "Option::is_none")]
+    pub rejected_reason_category: Option<models::MediaContentModerationRejectedReasonCategory>,
+    #[serde(rename = "rejected_reason_details", skip_serializing_if = "Option::is_none")]
+    pub rejected_reason_details: Option<models::MediaContentModerationRejectedReasonDetails>,
     #[serde(rename = "secure_capture")]
     pub secure_capture: bool,
-    #[serde(rename = "slot", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub slot: Option<Option<models::ContentSlot>>,
+    #[serde(rename = "slot", skip_serializing_if = "Option::is_none")]
+    pub slot: Option<models::ContentSlot>,
     #[serde(rename = "state")]
     pub state: models::ContentModerationState,
-    #[serde(rename = "usage_end_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub usage_end_time: Option<Option<models::UnixTime>>,
-    #[serde(rename = "usage_start_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub usage_start_time: Option<Option<models::UnixTime>>,
+    #[serde(rename = "usage_end_time", skip_serializing_if = "Option::is_none")]
+    pub usage_end_time: Option<models::UnixTime>,
+    #[serde(rename = "usage_start_time", skip_serializing_if = "Option::is_none")]
+    pub usage_start_time: Option<models::UnixTime>,
 }
 
 impl ContentInfoDetailed {

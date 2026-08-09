@@ -19,8 +19,8 @@ pub struct InitEmailChangeResult {
     pub error_email_sending_failed: Option<bool>,
     #[serde(rename = "error_email_sending_timeout", skip_serializing_if = "Option::is_none")]
     pub error_email_sending_timeout: Option<bool>,
-    #[serde(rename = "error_try_again_later_after_seconds", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub error_try_again_later_after_seconds: Option<Option<i32>>,
+    #[serde(rename = "error_try_again_later_after_seconds", skip_serializing_if = "Option::is_none")]
+    pub error_try_again_later_after_seconds: Option<i32>,
 }
 
 impl InitEmailChangeResult {

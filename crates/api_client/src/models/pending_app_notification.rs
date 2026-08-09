@@ -13,8 +13,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct PendingAppNotification {
-    #[serde(rename = "data_integer", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub data_integer: Option<Option<i64>>,
+    #[serde(rename = "data_integer", skip_serializing_if = "Option::is_none")]
+    pub data_integer: Option<i64>,
     #[serde(rename = "notification_type")]
     pub notification_type: models::PendingAppNotificationType,
     #[serde(rename = "push_notification_sent", skip_serializing_if = "Option::is_none")]

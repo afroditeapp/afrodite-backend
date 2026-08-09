@@ -97,7 +97,6 @@ impl SetBotPublicKey {
             .await
             .change_context(TestError::ApiRequest)?
             .id
-            .flatten()
             .map(|v| v.id);
 
         if let Some(keys) = state.chat.keys.clone()
@@ -120,7 +119,7 @@ impl SetBotPublicKey {
             return Err(TestError::ApiRequest.report()).attach("Too many public keys");
         }
 
-        let Some(public_key_id) = r.key_id.flatten().map(|v| v.id) else {
+        let Some(public_key_id) = r.key_id.map(|v| v.id) else {
             return Err(TestError::ApiRequest.report()).attach("Public key ID not found");
         };
 
@@ -340,7 +339,7 @@ async fn send_message_internal(
         .await
         .change_context(TestError::ApiRequest)?;
 
-    let latest_key_id = match latest_key_id.id.flatten().map(|v| v.id) {
+    let latest_key_id = match latest_key_id.id.map(|v| v.id) {
         Some(value) => value,
         None => {
             warn!("Recipient public key is missing");

@@ -156,18 +156,14 @@ impl AdminBotProfileStringModerationLogic {
                 value: moderation.value.clone(),
                 accept: r.accept,
                 rejected_category: None,
-                rejected_details: Some(r.rejected_details.and_then(|v| {
+                rejected_details: r.rejected_details.and_then(|v| {
                     if v.is_empty() {
                         None
                     } else {
                         Some(ProfileStringModerationRejectedReasonDetails::new(v))
                     }
-                })),
-                move_to_human: if r.move_to_human {
-                    Some(Some(true))
-                } else {
-                    None
-                },
+                }),
+                move_to_human: if r.move_to_human { Some(true) } else { None },
             },
         )
         .await;

@@ -13,10 +13,10 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AccountVerificationConfig {
-    #[serde(rename = "methods", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub methods: Option<Option<models::AccountVerificationMethodsConfig>>,
-    #[serde(rename = "scopes", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub scopes: Option<Option<models::AccountVerificationScopesConfig>>,
+    #[serde(rename = "methods", skip_serializing_if = "Option::is_none")]
+    pub methods: Option<models::AccountVerificationMethodsConfig>,
+    #[serde(rename = "scopes", skip_serializing_if = "Option::is_none")]
+    pub scopes: Option<models::AccountVerificationScopesConfig>,
 }
 
 impl AccountVerificationConfig {

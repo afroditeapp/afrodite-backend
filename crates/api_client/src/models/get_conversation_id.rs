@@ -13,8 +13,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetConversationId {
-    #[serde(rename = "value", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub value: Option<Option<models::ConversationId>>,
+    #[serde(rename = "value", skip_serializing_if = "Option::is_none")]
+    pub value: Option<models::ConversationId>,
 }
 
 impl GetConversationId {

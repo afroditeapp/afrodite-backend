@@ -15,12 +15,12 @@ use serde::{Deserialize, Serialize};
 pub struct InfoBanner {
     #[serde(rename = "mode")]
     pub mode: models::InfoBannerMode,
-    #[serde(rename = "override_predefined_banner", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub override_predefined_banner: Option<Option<models::PredefinedBanner>>,
+    #[serde(rename = "override_predefined_banner", skip_serializing_if = "Option::is_none")]
+    pub override_predefined_banner: Option<models::PredefinedBanner>,
     #[serde(rename = "platform")]
     pub platform: models::BannerPlatform,
-    #[serde(rename = "text", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub text: Option<Option<models::TextInfoBanner>>,
+    #[serde(rename = "text", skip_serializing_if = "Option::is_none")]
+    pub text: Option<models::TextInfoBanner>,
     /// Server increments this field when banner is changed. It wraps, so use \"not equal\" comparison when checking version changes.
     #[serde(rename = "version", skip_serializing_if = "Option::is_none")]
     pub version: Option<i32>,

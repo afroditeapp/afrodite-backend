@@ -15,16 +15,16 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct BackupTransferInitialMessage {
     /// Access token from target client
-    #[serde(rename = "access_token", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub access_token: Option<Option<String>>,
+    #[serde(rename = "access_token", skip_serializing_if = "Option::is_none")]
+    pub access_token: Option<String>,
     #[serde(rename = "role")]
     pub role: models::BackupTransferClientRole,
     /// Data from target client
-    #[serde(rename = "target_data", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub target_data: Option<Option<String>>,
+    #[serde(rename = "target_data", skip_serializing_if = "Option::is_none")]
+    pub target_data: Option<String>,
     /// SHA256 hash of target's data from source client. The hash is in hexadecimal format.
-    #[serde(rename = "target_data_sha256", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub target_data_sha256: Option<Option<String>>,
+    #[serde(rename = "target_data_sha256", skip_serializing_if = "Option::is_none")]
+    pub target_data_sha256: Option<String>,
 }
 
 impl BackupTransferInitialMessage {

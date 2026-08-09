@@ -13,8 +13,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct PostVideoCallUrlResult {
-    #[serde(rename = "jitsi_meet", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub jitsi_meet: Option<Option<models::JitsiMeetUrl>>,
+    #[serde(rename = "jitsi_meet", skip_serializing_if = "Option::is_none")]
+    pub jitsi_meet: Option<models::JitsiMeetUrl>,
 }
 
 impl PostVideoCallUrlResult {

@@ -47,7 +47,6 @@ pub async fn handle_security_content_verification(
             .await
             .change_context(TestError::ApiRequest)?
             .content
-            .flatten()
     else {
         return Ok((
             None,
@@ -88,7 +87,7 @@ pub async fn handle_security_content_verification(
     Ok((
         Some(EditVerificationSecurityContent {
             security_content: security_content.cid,
-            verified_value: Some(Some(accepted)),
+            verified_value: Some(accepted),
         }),
         flags,
     ))

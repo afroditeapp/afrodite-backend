@@ -14,26 +14,26 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct NewsItem {
     /// Only visible for accounts which have some news permissions
-    #[serde(rename = "aid_creator", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub aid_creator: Option<Option<models::AccountId>>,
+    #[serde(rename = "aid_creator", skip_serializing_if = "Option::is_none")]
+    pub aid_creator: Option<models::AccountId>,
     /// Only visible for accounts which have some news permissions
-    #[serde(rename = "aid_editor", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub aid_editor: Option<Option<models::AccountId>>,
+    #[serde(rename = "aid_editor", skip_serializing_if = "Option::is_none")]
+    pub aid_editor: Option<models::AccountId>,
     #[serde(rename = "body")]
     pub body: String,
     /// Option<i64> is a workaround for Dart OpenApi generator version 7.9.0
-    #[serde(rename = "edit_unix_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub edit_unix_time: Option<Option<i64>>,
+    #[serde(rename = "edit_unix_time", skip_serializing_if = "Option::is_none")]
+    pub edit_unix_time: Option<i64>,
     #[serde(rename = "locale")]
     pub locale: String,
     /// Latest publication time
-    #[serde(rename = "time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub time: Option<Option<models::UnixTime>>,
+    #[serde(rename = "time", skip_serializing_if = "Option::is_none")]
+    pub time: Option<models::UnixTime>,
     #[serde(rename = "title")]
     pub title: String,
     /// Only visible for accounts which have some news permissions
-    #[serde(rename = "version", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub version: Option<Option<models::NewsTranslationVersion>>,
+    #[serde(rename = "version", skip_serializing_if = "Option::is_none")]
+    pub version: Option<models::NewsTranslationVersion>,
 }
 
 impl NewsItem {

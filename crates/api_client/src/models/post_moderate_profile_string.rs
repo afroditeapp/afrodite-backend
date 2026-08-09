@@ -20,12 +20,12 @@ pub struct PostModerateProfileString {
     #[serde(rename = "id")]
     pub id: models::AccountId,
     /// If true, ignore accept and move the text to waiting for human moderation state. rejected_category and rejected_details can be used to set the reason why the bot moved the content to human moderation.
-    #[serde(rename = "move_to_human", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub move_to_human: Option<Option<bool>>,
-    #[serde(rename = "rejected_category", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub rejected_category: Option<Option<models::ProfileStringModerationRejectedReasonCategory>>,
-    #[serde(rename = "rejected_details", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub rejected_details: Option<Option<models::ProfileStringModerationRejectedReasonDetails>>,
+    #[serde(rename = "move_to_human", skip_serializing_if = "Option::is_none")]
+    pub move_to_human: Option<bool>,
+    #[serde(rename = "rejected_category", skip_serializing_if = "Option::is_none")]
+    pub rejected_category: Option<models::ProfileStringModerationRejectedReasonCategory>,
+    #[serde(rename = "rejected_details", skip_serializing_if = "Option::is_none")]
+    pub rejected_details: Option<models::ProfileStringModerationRejectedReasonDetails>,
     /// A string wrapper that ensures the string is not empty. This type is used for TEXT columns that should not allow empty strings. In the database, these columns are NULL when there is no value, and this type represents non-NULL values that must be non-empty.
     #[serde(rename = "value")]
     pub value: String,

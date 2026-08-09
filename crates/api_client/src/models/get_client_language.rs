@@ -13,8 +13,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetClientLanguage {
-    #[serde(rename = "l", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub l: Option<Option<models::ClientLanguage>>,
+    #[serde(rename = "l", skip_serializing_if = "Option::is_none")]
+    pub l: Option<models::ClientLanguage>,
 }
 
 impl GetClientLanguage {

@@ -15,8 +15,8 @@ use serde::{Deserialize, Serialize};
 pub struct EditVerificationProfileAgeRange {
     #[serde(rename = "current_profile_age")]
     pub current_profile_age: i32,
-    #[serde(rename = "verified_value", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub verified_value: Option<Option<bool>>,
+    #[serde(rename = "verified_value", skip_serializing_if = "Option::is_none")]
+    pub verified_value: Option<bool>,
 }
 
 impl EditVerificationProfileAgeRange {

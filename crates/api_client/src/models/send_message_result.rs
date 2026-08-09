@@ -14,8 +14,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SendMessageResult {
     /// Base64 encoded PGP signed message containing [SignedMessageData].
-    #[serde(rename = "d", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub d: Option<Option<String>>,
+    #[serde(rename = "d", skip_serializing_if = "Option::is_none")]
+    pub d: Option<String>,
     #[serde(rename = "error", skip_serializing_if = "Option::is_none")]
     pub error: Option<bool>,
     #[serde(rename = "error_recipient_blocked_sender_or_recipient_not_found", skip_serializing_if = "Option::is_none")]
@@ -31,11 +31,11 @@ pub struct SendMessageResult {
     #[serde(rename = "error_too_many_sender_acknowledgements_missing", skip_serializing_if = "Option::is_none")]
     pub error_too_many_sender_acknowledgements_missing: Option<bool>,
     /// Remaining messages which can be sent to conversation before delivery to recipient or message sending acknowledgement must happen. The value will be returned only if there is 5 or less messages left.
-    #[serde(rename = "remaining_conversation_messages", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub remaining_conversation_messages: Option<Option<i32>>,
+    #[serde(rename = "remaining_conversation_messages", skip_serializing_if = "Option::is_none")]
+    pub remaining_conversation_messages: Option<i32>,
     /// Remaining daily messages count. The value will be returned only if there is 50 or less messages left.
-    #[serde(rename = "remaining_messages", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub remaining_messages: Option<Option<i32>>,
+    #[serde(rename = "remaining_messages", skip_serializing_if = "Option::is_none")]
+    pub remaining_messages: Option<i32>,
 }
 
 impl SendMessageResult {

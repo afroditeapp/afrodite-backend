@@ -17,10 +17,10 @@ pub struct MediaContentPendingModeration {
     pub account_id: models::AccountId,
     #[serde(rename = "content_id")]
     pub content_id: models::ContentId,
-    #[serde(rename = "rejected_category", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub rejected_category: Option<Option<models::MediaContentModerationRejectedReasonCategory>>,
-    #[serde(rename = "rejected_details", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub rejected_details: Option<Option<models::MediaContentModerationRejectedReasonDetails>>,
+    #[serde(rename = "rejected_category", skip_serializing_if = "Option::is_none")]
+    pub rejected_category: Option<models::MediaContentModerationRejectedReasonCategory>,
+    #[serde(rename = "rejected_details", skip_serializing_if = "Option::is_none")]
+    pub rejected_details: Option<models::MediaContentModerationRejectedReasonDetails>,
 }
 
 impl MediaContentPendingModeration {

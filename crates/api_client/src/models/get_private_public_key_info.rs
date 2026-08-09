@@ -13,8 +13,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetPrivatePublicKeyInfo {
-    #[serde(rename = "latest_public_key_id", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub latest_public_key_id: Option<Option<models::PublicKeyId>>,
+    #[serde(rename = "latest_public_key_id", skip_serializing_if = "Option::is_none")]
+    pub latest_public_key_id: Option<models::PublicKeyId>,
     #[serde(rename = "max_public_key_count")]
     pub max_public_key_count: i64,
 }

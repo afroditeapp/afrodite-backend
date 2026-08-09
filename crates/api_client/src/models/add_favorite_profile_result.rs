@@ -19,8 +19,8 @@ pub struct AddFavoriteProfileResult {
     #[serde(rename = "error_too_many_favorites", skip_serializing_if = "Option::is_none")]
     pub error_too_many_favorites: Option<bool>,
     /// Remaining favorites count. The value will be returned only if there is 5 or less favorites left.
-    #[serde(rename = "remaining_favorites_count", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub remaining_favorites_count: Option<Option<i32>>,
+    #[serde(rename = "remaining_favorites_count", skip_serializing_if = "Option::is_none")]
+    pub remaining_favorites_count: Option<i32>,
 }
 
 impl AddFavoriteProfileResult {

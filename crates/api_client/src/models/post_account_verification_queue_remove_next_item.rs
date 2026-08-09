@@ -15,8 +15,8 @@ use serde::{Deserialize, Serialize};
 pub struct PostAccountVerificationQueueRemoveNextItem {
     #[serde(rename = "account_id")]
     pub account_id: models::AccountId,
-    #[serde(rename = "edit", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub edit: Option<Option<models::EditVerificationValues>>,
+    #[serde(rename = "edit", skip_serializing_if = "Option::is_none")]
+    pub edit: Option<models::EditVerificationValues>,
     #[serde(rename = "verification_error_flags")]
     pub verification_error_flags: models::AccountVerificationErrorFlagsValue,
 }

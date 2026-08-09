@@ -62,8 +62,8 @@ pub async fn handle_profile_name_verification(
 
     Ok((
         Some(EditVerificationProfileName {
-            current_profile_name: Some(Some(profile_name)),
-            verified_value: Some(Some(accepted)),
+            current_profile_name: Some(profile_name),
+            verified_value: Some(accepted),
         }),
         flags,
     ))

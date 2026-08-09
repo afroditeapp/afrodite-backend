@@ -13,12 +13,12 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SecurityContentAdminInfo {
-    #[serde(rename = "content", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub content: Option<Option<models::MyContentInfo>>,
-    #[serde(rename = "security_content_verified", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub security_content_verified: Option<Option<bool>>,
-    #[serde(rename = "security_content_verified_manual", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub security_content_verified_manual: Option<Option<bool>>,
+    #[serde(rename = "content", skip_serializing_if = "Option::is_none")]
+    pub content: Option<models::MyContentInfo>,
+    #[serde(rename = "security_content_verified", skip_serializing_if = "Option::is_none")]
+    pub security_content_verified: Option<bool>,
+    #[serde(rename = "security_content_verified_manual", skip_serializing_if = "Option::is_none")]
+    pub security_content_verified_manual: Option<bool>,
 }
 
 impl SecurityContentAdminInfo {

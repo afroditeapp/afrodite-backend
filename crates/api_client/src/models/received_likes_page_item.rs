@@ -14,8 +14,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ReceivedLikesPageItem {
     /// If Some, the like is not viewed yet
-    #[serde(rename = "not_viewed", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub not_viewed: Option<Option<models::ReceivedLikeId>>,
+    #[serde(rename = "not_viewed", skip_serializing_if = "Option::is_none")]
+    pub not_viewed: Option<models::ReceivedLikeId>,
     #[serde(rename = "p")]
     pub p: models::ProfileLink,
 }

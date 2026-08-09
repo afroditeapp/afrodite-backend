@@ -14,8 +14,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct JitsiMeetUrl {
     /// Custom Jitsi Meet URL to a meeting with HTTPS schema. If exists, this should be used to open the meeting when Jitsi Meet app is not installed.
-    #[serde(rename = "custom_url", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub custom_url: Option<Option<String>>,
+    #[serde(rename = "custom_url", skip_serializing_if = "Option::is_none")]
+    pub custom_url: Option<String>,
     /// Standard Jitsi Meet URL to a meeting with HTTPS schema. Can be used to create an URL which opens Jitsi Meet app.
     #[serde(rename = "url")]
     pub url: String,

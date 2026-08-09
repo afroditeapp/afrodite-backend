@@ -23,10 +23,10 @@ pub struct MyContentInfo {
     /// Face verified against current security content (automatic or manual)
     #[serde(rename = "face_verified", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub face_verified: Option<Option<bool>>,
-    #[serde(rename = "rejected_reason_category", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub rejected_reason_category: Option<Option<models::MediaContentModerationRejectedReasonCategory>>,
-    #[serde(rename = "rejected_reason_details", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub rejected_reason_details: Option<Option<models::MediaContentModerationRejectedReasonDetails>>,
+    #[serde(rename = "rejected_reason_category", skip_serializing_if = "Option::is_none")]
+    pub rejected_reason_category: Option<models::MediaContentModerationRejectedReasonCategory>,
+    #[serde(rename = "rejected_reason_details", skip_serializing_if = "Option::is_none")]
+    pub rejected_reason_details: Option<models::MediaContentModerationRejectedReasonDetails>,
     #[serde(rename = "state")]
     pub state: models::ContentModerationState,
 }

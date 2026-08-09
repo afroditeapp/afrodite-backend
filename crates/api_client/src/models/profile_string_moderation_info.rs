@@ -13,10 +13,10 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ProfileStringModerationInfo {
-    #[serde(rename = "rejected_reason_category", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub rejected_reason_category: Option<Option<models::ProfileStringModerationRejectedReasonCategory>>,
-    #[serde(rename = "rejected_reason_details", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub rejected_reason_details: Option<Option<models::ProfileStringModerationRejectedReasonDetails>>,
+    #[serde(rename = "rejected_reason_category", skip_serializing_if = "Option::is_none")]
+    pub rejected_reason_category: Option<models::ProfileStringModerationRejectedReasonCategory>,
+    #[serde(rename = "rejected_reason_details", skip_serializing_if = "Option::is_none")]
+    pub rejected_reason_details: Option<models::ProfileStringModerationRejectedReasonDetails>,
     #[serde(rename = "state")]
     pub state: models::ProfileStringModerationState,
 }
