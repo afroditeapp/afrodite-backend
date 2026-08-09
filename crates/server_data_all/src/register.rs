@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{collections::HashMap, net::IpAddr, sync::Arc};
 
 use config::Config;
 use database::{DbWriteMode, DieselDatabaseError, current::write::GetDbWriteCommandsCommon};
@@ -6,6 +6,7 @@ use database_account::current::write::GetDbWriteCommandsAccount;
 use database_chat::current::write::GetDbWriteCommandsChat;
 use database_media::current::write::GetDbWriteCommandsMedia;
 use database_profile::current::write::GetDbWriteCommandsProfile;
+use model::{AccountIdDb, IpAddressStorage};
 use model_account::{
     AccountIdInternal, EmailAddress, EmailAddressStateInternal, SharedStateRaw, SignInWithInfo,
 };
@@ -30,10 +31,11 @@ impl RegisterAccount<'_> {
         account_id: AccountIdInternal,
         sign_in_with_info: SignInWithInfo,
         email: Option<EmailAddress>,
+        ip: IpAddr,
     ) -> Result<(), DataError> {
         let config = self.config_arc().clone();
         self.db_transaction(move |current| {
-            Self::register_db_action(config, account_id, sign_in_with_info, email, current)
+            Self::register_db_action(config, account_id, sign_in_with_info, email, ip, current)
         })
         .await?;
 
@@ -61,6 +63,7 @@ impl RegisterAccount<'_> {
         id: AccountIdInternal,
         sign_in_with_info: SignInWithInfo,
         email: Option<EmailAddress>,
+        ip: IpAddr,
         mut current: DbWriteMode,
     ) -> simple_backend_utils::Result<AccountIdInternal, DieselDatabaseError> {
         // Common
@@ -124,6 +127,14 @@ impl RegisterAccount<'_> {
                 .limits()
                 .reset_daily_likes_left(id, config.daily_likes.into())?;
         }
+
+        // Save the IP address used at registration time.
+        let mut ip_data = HashMap::new();
+        ip_data.insert(AccountIdDb::from(id), IpAddressStorage::new(ip.into()));
+        current
+            .common_admin()
+            .statistics()
+            .save_ip_address_data(ip_data)?;
 
         Ok(id)
     }

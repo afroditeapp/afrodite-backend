@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use std::net::{IpAddr, SocketAddr};
 
 use axum::extract::{ConnectInfo, State};
 use model::{BotAccountType, ClientType};
@@ -88,11 +88,14 @@ pub const PATH_BOT_REGISTER: &str = "/account_api/bot_register";
         (status = 500, description = "Internal server error."),
     )
 )]
-pub async fn post_bot_register(State(state): State<S>) -> Result<Json<AccountId>, StatusCode> {
+pub async fn post_bot_register(
+    State(state): State<S>,
+    ConnectInfo(address): ConnectInfo<SocketAddr>,
+) -> Result<Json<AccountId>, StatusCode> {
     ACCOUNT_BOT.post_bot_register.incr();
     let RegisterImplResult::Ok(new_account_id) = state
         .data_all_access()
-        .register_impl(SignInWithInfo::default(), None)
+        .register_impl(SignInWithInfo::default(), None, address.ip())
         .await?
     else {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
@@ -123,9 +126,12 @@ pub const PATH_GET_BOTS: &str = "/account_api/get_bots";
         (status = 500, description = "Internal server error."),
     )
 )]
-pub async fn post_get_bots(State(state): State<S>) -> Result<Json<GetBotsResult>, StatusCode> {
+pub async fn post_get_bots(
+    State(state): State<S>,
+    ConnectInfo(address): ConnectInfo<SocketAddr>,
+) -> Result<Json<GetBotsResult>, StatusCode> {
     ACCOUNT_BOT.post_get_bots.incr();
-    get_or_create_bots_impl(&state).await
+    get_or_create_bots_impl(&state, address.ip()).await
 }
 
 pub const PATH_REMOTE_GET_BOTS: &str = "/account_api/remote_get_bots";
@@ -168,12 +174,12 @@ pub async fn post_remote_get_bots(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    get_or_create_bots_impl(&state).await
+    get_or_create_bots_impl(&state, address.ip()).await
 }
 
 /// Get or create bot accounts based on server configuration.
 /// Creates accounts that don't exist.
-async fn get_or_create_bots_impl(state: &S) -> Result<Json<GetBotsResult>, StatusCode> {
+async fn get_or_create_bots_impl(state: &S, ip: IpAddr) -> Result<Json<GetBotsResult>, StatusCode> {
     // Get existing bot accounts using data layer
     let mut result = state.read().account().get_existing_bots().await?;
 
@@ -194,6 +200,7 @@ async fn get_or_create_bots_impl(state: &S) -> Result<Json<GetBotsResult>, Statu
             state,
             EmailAddress(ADMIN_BOT_EMAIL.to_string()),
             BotAccountType::Admin,
+            ip,
         )
         .await?
     {
@@ -208,7 +215,7 @@ async fn get_or_create_bots_impl(state: &S) -> Result<Json<GetBotsResult>, Statu
                 "{}{}{}",
                 USER_BOT_EMAIL_PREFIX, bot_number, USER_BOT_EMAIL_SUFFIX
             ));
-            let bot = create_bot_account(state, bot_email, BotAccountType::User).await?;
+            let bot = create_bot_account(state, bot_email, BotAccountType::User, ip).await?;
             result.users.push(bot);
         }
     }
@@ -221,10 +228,11 @@ async fn create_bot_account(
     state: &S,
     email: EmailAddress,
     bot_type: BotAccountType,
+    ip: IpAddr,
 ) -> Result<BotAccount, StatusCode> {
     let RegisterImplResult::Ok(new_account_id) = state
         .data_all_access()
-        .register_impl(SignInWithInfo::default(), None)
+        .register_impl(SignInWithInfo::default(), None, ip)
         .await?
     else {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);

@@ -54,7 +54,7 @@ pub(super) async fn email_registration_with_token_impl(
 
     let id = match state
         .data_all_access()
-        .register_impl(SignInWithInfo::default(), Some(email))
+        .register_impl(SignInWithInfo::default(), Some(email), address.ip())
         .await?
     {
         RegisterImplResult::Ok(id) => id,

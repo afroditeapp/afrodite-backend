@@ -1,4 +1,4 @@
-use std::{future::Future, sync::Arc};
+use std::{future::Future, net::IpAddr, sync::Arc};
 
 use axum::extract::ws::WebSocket;
 use config::{Config, file::EmailAddress};
@@ -141,6 +141,7 @@ pub trait DataAllUtils: Send + Sync + 'static {
         write_command_runner: &'a WriteCommandRunnerHandle,
         sign_in_with: SignInWithInfo,
         email: Option<EmailAddress>,
+        ip: IpAddr,
     ) -> BoxFuture<'a, server_common::result::Result<RegisterImplResult, DataError>>;
 
     #[allow(clippy::too_many_arguments)]

@@ -4,7 +4,7 @@
 #![warn(unused_crate_dependencies)]
 #![allow(async_fn_in_trait)]
 
-use std::sync::Arc;
+use std::{net::IpAddr, sync::Arc};
 
 use api_usage::ApiUsageTracker;
 use axum::extract::ws::WebSocket;
@@ -201,10 +201,11 @@ impl DataAllAccess<'_> {
         &self,
         sign_in_with: SignInWithInfo,
         email: Option<EmailAddress>,
+        ip: IpAddr,
     ) -> server_common::result::Result<RegisterImplResult, DataError> {
         let cmd = self
             .utils()
-            .register_impl(self.write(), sign_in_with, email);
+            .register_impl(self.write(), sign_in_with, email, ip);
         cmd.await
     }
 

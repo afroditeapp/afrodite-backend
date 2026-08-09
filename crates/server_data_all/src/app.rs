@@ -1,3 +1,5 @@
+use std::net::IpAddr;
+
 use axum::extract::ws::WebSocket;
 use config::Config;
 use futures::{FutureExt, future::BoxFuture};
@@ -55,6 +57,7 @@ impl DataAllUtils for DataAllUtilsImpl {
         write_command_runner: &'a WriteCommandRunnerHandle,
         sign_in_with: SignInWithInfo,
         email: Option<EmailAddress>,
+        ip: IpAddr,
     ) -> BoxFuture<'a, server_common::result::Result<RegisterImplResult, DataError>> {
         async move {
             let r = write_command_runner
@@ -78,7 +81,7 @@ impl DataAllUtils for DataAllUtilsImpl {
 
                     let id = cmds.account().get_next_unique_account_id().await?;
                     RegisterAccount::new(cmds.write_handle())
-                        .register(id, sign_in_with, email.clone())
+                        .register(id, sign_in_with, email.clone(), ip)
                         .await?;
 
                     if email.is_some() {

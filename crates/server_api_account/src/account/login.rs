@@ -330,7 +330,7 @@ async fn handle_sign_in_with_info(
 
         let id = match state
             .data_all_access()
-            .register_impl(info.sign_in_with_info(), Some(email))
+            .register_impl(info.sign_in_with_info(), Some(email), address.ip())
             .await?
         {
             RegisterImplResult::Ok(id) => id,

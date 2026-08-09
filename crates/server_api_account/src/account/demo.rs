@@ -107,6 +107,7 @@ const PATH_POST_DEMO_ACCOUNT_REGISTER_ACCOUNT: &str = "/account_api/demo_account
 )]
 pub async fn post_demo_account_register_account(
     State(state): State<S>,
+    ConnectInfo(address): ConnectInfo<SocketAddr>,
     Json(token): Json<DemoAccountToken>,
 ) -> Result<Json<DemoAccountRegisterAccountResult>, StatusCode> {
     ACCOUNT.post_demo_account_register_account.incr();
@@ -129,7 +130,7 @@ pub async fn post_demo_account_register_account(
 
     let RegisterImplResult::Ok(id) = state
         .data_all_access()
-        .register_impl(SignInWithInfo::default(), None)
+        .register_impl(SignInWithInfo::default(), None, address.ip())
         .await?
     else {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
