@@ -406,7 +406,7 @@ pub async fn post_sign_in_with_apple_redirect_to_app(
 struct EmailLoginResultInternal {
     token: EmailLoginToken,
     handle: Option<EmailSendingHandle>,
-    error_registration_ip_address_limit_reached: bool,
+    error_email_registration_ip_address_limit_reached: bool,
     error_email_registration_limit_reached: bool,
     error_email_registration_platform_disabled: bool,
     error_email_registration_all_platforms_disabled: bool,
@@ -417,7 +417,7 @@ impl EmailLoginResultInternal {
         Self {
             token,
             handle: Some(handle),
-            error_registration_ip_address_limit_reached: false,
+            error_email_registration_ip_address_limit_reached: false,
             error_email_registration_limit_reached: false,
             error_email_registration_platform_disabled: false,
             error_email_registration_all_platforms_disabled: false,
@@ -428,54 +428,38 @@ impl EmailLoginResultInternal {
         Self {
             token: EmailLoginToken::generate_new(),
             handle: None,
-            error_registration_ip_address_limit_reached: false,
+            error_email_registration_ip_address_limit_reached: false,
             error_email_registration_limit_reached: false,
             error_email_registration_platform_disabled: false,
             error_email_registration_all_platforms_disabled: false,
         }
     }
 
-    fn error_registration_ip_address_limit_reached() -> Self {
+    fn error_email_registration_ip_address_limit_reached() -> Self {
         Self {
-            token: EmailLoginToken::generate_new(),
-            handle: None,
-            error_registration_ip_address_limit_reached: true,
-            error_email_registration_limit_reached: false,
-            error_email_registration_platform_disabled: false,
-            error_email_registration_all_platforms_disabled: false,
+            error_email_registration_ip_address_limit_reached: true,
+            ..Self::error_hidden()
         }
     }
 
     fn error_email_registration_limit_reached() -> Self {
         Self {
-            token: EmailLoginToken::generate_new(),
-            handle: None,
-            error_registration_ip_address_limit_reached: false,
             error_email_registration_limit_reached: true,
-            error_email_registration_platform_disabled: false,
-            error_email_registration_all_platforms_disabled: false,
+            ..Self::error_hidden()
         }
     }
 
     fn error_email_registration_platform_disabled() -> Self {
         Self {
-            token: EmailLoginToken::generate_new(),
-            handle: None,
-            error_registration_ip_address_limit_reached: false,
-            error_email_registration_limit_reached: false,
             error_email_registration_platform_disabled: true,
-            error_email_registration_all_platforms_disabled: false,
+            ..Self::error_hidden()
         }
     }
 
     fn error_email_registration_all_platforms_disabled() -> Self {
         Self {
-            token: EmailLoginToken::generate_new(),
-            handle: None,
-            error_registration_ip_address_limit_reached: false,
-            error_email_registration_limit_reached: false,
-            error_email_registration_platform_disabled: false,
             error_email_registration_all_platforms_disabled: true,
+            ..Self::error_hidden()
         }
     }
 }
@@ -514,7 +498,7 @@ pub async fn post_request_email_login_token(
     // Wait until at least 5 seconds have elapsed
     tokio::time::sleep_until(wait_until.into()).await;
 
-    if r.error_registration_ip_address_limit_reached {
+    if r.error_email_registration_ip_address_limit_reached {
         Ok(Json(
             RequestEmailLoginTokenResult::error_email_registration_ip_address_limit_reached(),
         ))
@@ -567,7 +551,9 @@ async fn handle_login_token_sending(
             .check_and_increment(address.ip(), max_per_day_per_ip)
             .await
         {
-            return Ok(EmailLoginResultInternal::error_registration_ip_address_limit_reached());
+            return Ok(
+                EmailLoginResultInternal::error_email_registration_ip_address_limit_reached(),
+            );
         }
 
         let max_per_day = state
