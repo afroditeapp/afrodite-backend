@@ -18,11 +18,11 @@ pub struct Account {
     #[serde(rename = "email_verified", skip_serializing_if = "Option::is_none")]
     pub email_verified: Option<bool>,
     #[serde(rename = "permissions")]
-    pub permissions: Box<models::Permissions>,
+    pub permissions: models::Permissions,
     #[serde(rename = "state")]
-    pub state: Box<models::AccountStateContainer>,
+    pub state: models::AccountStateContainer,
     #[serde(rename = "sync_version")]
-    pub sync_version: Box<models::AccountSyncVersion>,
+    pub sync_version: models::AccountSyncVersion,
     #[serde(rename = "visibility")]
     pub visibility: models::ProfileVisibility,
 }
@@ -32,9 +32,9 @@ impl Account {
         Account {
             age_verified: None,
             email_verified: None,
-            permissions: Box::new(permissions),
-            state: Box::new(state),
-            sync_version: Box::new(sync_version),
+            permissions,
+            state,
+            sync_version,
             visibility,
         }
     }

@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct RemoteBotLogin {
     #[serde(rename = "aid")]
-    pub aid: Box<models::AccountId>,
+    pub aid: models::AccountId,
     #[serde(rename = "password")]
     pub password: String,
 }
@@ -22,7 +22,7 @@ pub struct RemoteBotLogin {
 impl RemoteBotLogin {
     pub fn new(aid: models::AccountId, password: String) -> RemoteBotLogin {
         RemoteBotLogin {
-            aid: Box::new(aid),
+            aid,
             password,
         }
     }

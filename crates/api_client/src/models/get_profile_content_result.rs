@@ -14,9 +14,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetProfileContentResult {
     #[serde(rename = "content", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub content: Option<Option<Box<models::ProfileContent>>>,
+    pub content: Option<Option<models::ProfileContent>>,
     #[serde(rename = "version", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub version: Option<Option<Box<models::ProfileContentVersion>>>,
+    pub version: Option<Option<models::ProfileContentVersion>>,
 }
 
 impl GetProfileContentResult {

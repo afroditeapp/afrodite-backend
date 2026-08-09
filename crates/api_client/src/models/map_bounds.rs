@@ -14,16 +14,16 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct MapBounds {
     #[serde(rename = "bottom_right")]
-    pub bottom_right: Box<models::MapCoordinate>,
+    pub bottom_right: models::MapCoordinate,
     #[serde(rename = "top_left")]
-    pub top_left: Box<models::MapCoordinate>,
+    pub top_left: models::MapCoordinate,
 }
 
 impl MapBounds {
     pub fn new(bottom_right: models::MapCoordinate, top_left: models::MapCoordinate) -> MapBounds {
         MapBounds {
-            bottom_right: Box::new(bottom_right),
-            top_left: Box::new(top_left),
+            bottom_right,
+            top_left,
         }
     }
 }

@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct PostMediaContentFaceVerifiedValueItem {
     #[serde(rename = "content_id")]
-    pub content_id: Box<models::ContentId>,
+    pub content_id: models::ContentId,
     /// Bot sets automatic face verification value. Human admin sets manual override value. Set to None to clear the currently applicable value.
     #[serde(rename = "value", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub value: Option<Option<bool>>,
@@ -23,7 +23,7 @@ pub struct PostMediaContentFaceVerifiedValueItem {
 impl PostMediaContentFaceVerifiedValueItem {
     pub fn new(content_id: models::ContentId) -> PostMediaContentFaceVerifiedValueItem {
         PostMediaContentFaceVerifiedValueItem {
-            content_id: Box::new(content_id),
+            content_id,
             value: None,
         }
     }

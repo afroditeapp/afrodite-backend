@@ -14,13 +14,13 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetIpAddressStatisticsSettings {
     #[serde(rename = "account")]
-    pub account: Box<models::AccountId>,
+    pub account: models::AccountId,
 }
 
 impl GetIpAddressStatisticsSettings {
     pub fn new(account: models::AccountId) -> GetIpAddressStatisticsSettings {
         GetIpAddressStatisticsSettings {
-            account: Box::new(account),
+            account,
         }
     }
 }

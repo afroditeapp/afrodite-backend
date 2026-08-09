@@ -205,7 +205,7 @@ fn convert_content_processing_state(
             content_id,
             face_detected,
         } => {
-            converted.cid = Some(Some(Box::new(ContentId::new(content_id.cid.to_string()))));
+            converted.cid = Some(Some(ContentId::new(content_id.cid.to_string())));
             converted.face_detected = Some(Some(face_detected));
         }
         ContentProcessingStateInternal::Processing

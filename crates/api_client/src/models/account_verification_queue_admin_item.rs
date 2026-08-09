@@ -14,22 +14,22 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AccountVerificationQueueAdminItem {
     #[serde(rename = "account_id")]
-    pub account_id: Box<models::AccountId>,
+    pub account_id: models::AccountId,
     #[serde(rename = "verification_data")]
     pub verification_data: String,
     #[serde(rename = "verification_method")]
     pub verification_method: models::VerificationMethod,
     #[serde(rename = "verification_scope")]
-    pub verification_scope: Box<models::AccountVerificationScope>,
+    pub verification_scope: models::AccountVerificationScope,
 }
 
 impl AccountVerificationQueueAdminItem {
     pub fn new(account_id: models::AccountId, verification_data: String, verification_method: models::VerificationMethod, verification_scope: models::AccountVerificationScope) -> AccountVerificationQueueAdminItem {
         AccountVerificationQueueAdminItem {
-            account_id: Box::new(account_id),
+            account_id,
             verification_data,
             verification_method,
-            verification_scope: Box::new(verification_scope),
+            verification_scope,
         }
     }
 }

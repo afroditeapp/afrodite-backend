@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetNewsItemResult {
     #[serde(rename = "item", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub item: Option<Option<Box<models::NewsItem>>>,
+    pub item: Option<Option<models::NewsItem>>,
     #[serde(rename = "private", skip_serializing_if = "Option::is_none")]
     pub private: Option<bool>,
 }

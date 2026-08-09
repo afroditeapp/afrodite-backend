@@ -14,22 +14,22 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ReportIteratorQuery {
     #[serde(rename = "aid")]
-    pub aid: Box<models::AccountId>,
+    pub aid: models::AccountId,
     #[serde(rename = "mode")]
     pub mode: models::ReportIteratorMode,
     #[serde(rename = "page")]
     pub page: i64,
     #[serde(rename = "start_position")]
-    pub start_position: Box<models::UnixTime>,
+    pub start_position: models::UnixTime,
 }
 
 impl ReportIteratorQuery {
     pub fn new(aid: models::AccountId, mode: models::ReportIteratorMode, page: i64, start_position: models::UnixTime) -> ReportIteratorQuery {
         ReportIteratorQuery {
-            aid: Box::new(aid),
+            aid,
             mode,
             page,
-            start_position: Box::new(start_position),
+            start_position,
         }
     }
 }

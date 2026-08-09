@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 pub struct ContentProcessingState {
     /// Content ID of the processed content.
     #[serde(rename = "cid", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub cid: Option<Option<Box<models::ContentId>>>,
+    pub cid: Option<Option<models::ContentId>>,
     /// Face detected info of the processed content.
     #[serde(rename = "face_detected", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub face_detected: Option<Option<bool>>,

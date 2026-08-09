@@ -14,16 +14,16 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AdminInfo {
     #[serde(rename = "aid")]
-    pub aid: Box<models::AccountId>,
+    pub aid: models::AccountId,
     #[serde(rename = "permissions")]
-    pub permissions: Box<models::Permissions>,
+    pub permissions: models::Permissions,
 }
 
 impl AdminInfo {
     pub fn new(aid: models::AccountId, permissions: models::Permissions) -> AdminInfo {
         AdminInfo {
-            aid: Box::new(aid),
-            permissions: Box::new(permissions),
+            aid,
+            permissions,
         }
     }
 }

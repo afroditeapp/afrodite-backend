@@ -282,7 +282,7 @@ impl BotTestRunner {
                 .admin
                 .as_ref()
                 .and_then(|b| b.as_ref())
-                .map(|b| b.aid.as_ref().clone())
+                .map(|b| b.aid.clone())
                 .unwrap_or_else(|| api_client::models::AccountId::new(String::new()));
 
             let admin_bot = AdminBot::new(
@@ -310,7 +310,7 @@ impl BotTestRunner {
                 .users
                 .as_ref()
                 .and_then(|users| users.get(user_index))
-                .map(|b| b.aid.as_ref().clone())
+                .map(|b| b.aid.clone())
                 .unwrap_or_else(|| api_client::models::AccountId::new(String::new()));
 
             let user_bot = UserBot::new(

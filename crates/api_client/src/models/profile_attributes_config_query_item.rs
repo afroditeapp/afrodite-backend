@@ -14,16 +14,16 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ProfileAttributesConfigQueryItem {
     #[serde(rename = "a")]
-    pub a: Box<models::Attribute>,
+    pub a: models::Attribute,
     #[serde(rename = "h")]
-    pub h: Box<models::AttributeHash>,
+    pub h: models::AttributeHash,
 }
 
 impl ProfileAttributesConfigQueryItem {
     pub fn new(a: models::Attribute, h: models::AttributeHash) -> ProfileAttributesConfigQueryItem {
         ProfileAttributesConfigQueryItem {
-            a: Box::new(a),
-            h: Box::new(h),
+            a,
+            h,
         }
     }
 }

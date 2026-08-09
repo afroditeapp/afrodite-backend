@@ -16,14 +16,14 @@ pub struct ApiUsageCount {
     #[serde(rename = "c")]
     pub c: i64,
     #[serde(rename = "t")]
-    pub t: Box<models::UnixTime>,
+    pub t: models::UnixTime,
 }
 
 impl ApiUsageCount {
     pub fn new(c: i64, t: models::UnixTime) -> ApiUsageCount {
         ApiUsageCount {
             c,
-            t: Box::new(t),
+            t,
         }
     }
 }

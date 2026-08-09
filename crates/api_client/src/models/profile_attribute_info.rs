@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ProfileAttributeInfo {
     #[serde(rename = "h")]
-    pub h: Box<models::AttributeHash>,
+    pub h: models::AttributeHash,
     #[serde(rename = "id")]
     pub id: i32,
 }
@@ -22,7 +22,7 @@ pub struct ProfileAttributeInfo {
 impl ProfileAttributeInfo {
     pub fn new(h: models::AttributeHash, id: i32) -> ProfileAttributeInfo {
         ProfileAttributeInfo {
-            h: Box::new(h),
+            h,
             id,
         }
     }

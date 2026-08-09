@@ -18,18 +18,18 @@ pub struct AccountVerificationQueueStatus {
     pub queue_position: Option<Option<i32>>,
     /// Empty flags value means there are no known verification errors.
     #[serde(rename = "verification_error_flags")]
-    pub verification_error_flags: Box<models::AccountVerificationErrorFlagsValue>,
+    pub verification_error_flags: models::AccountVerificationErrorFlagsValue,
     #[serde(rename = "verification_method", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub verification_method: Option<Option<models::VerificationMethod>>,
     #[serde(rename = "verification_unix_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub verification_unix_time: Option<Option<Box<models::UnixTime>>>,
+    pub verification_unix_time: Option<Option<models::UnixTime>>,
 }
 
 impl AccountVerificationQueueStatus {
     pub fn new(verification_error_flags: models::AccountVerificationErrorFlagsValue) -> AccountVerificationQueueStatus {
         AccountVerificationQueueStatus {
             queue_position: None,
-            verification_error_flags: Box::new(verification_error_flags),
+            verification_error_flags,
             verification_method: None,
             verification_unix_time: None,
         }

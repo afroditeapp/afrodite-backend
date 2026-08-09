@@ -16,14 +16,14 @@ pub struct UpdateChatMessageReports {
     #[serde(rename = "messages")]
     pub messages: Vec<models::ChatMessageReportData>,
     #[serde(rename = "target")]
-    pub target: Box<models::AccountId>,
+    pub target: models::AccountId,
 }
 
 impl UpdateChatMessageReports {
     pub fn new(messages: Vec<models::ChatMessageReportData>, target: models::AccountId) -> UpdateChatMessageReports {
         UpdateChatMessageReports {
             messages,
-            target: Box::new(target),
+            target,
         }
     }
 }

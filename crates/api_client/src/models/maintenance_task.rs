@@ -16,14 +16,14 @@ pub struct MaintenanceTask {
     #[serde(rename = "notify_server")]
     pub notify_server: bool,
     #[serde(rename = "time")]
-    pub time: Box<models::UnixTime>,
+    pub time: models::UnixTime,
 }
 
 impl MaintenanceTask {
     pub fn new(notify_server: bool, time: models::UnixTime) -> MaintenanceTask {
         MaintenanceTask {
             notify_server,
-            time: Box::new(time),
+            time,
         }
     }
 }

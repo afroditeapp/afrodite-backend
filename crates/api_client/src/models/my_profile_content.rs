@@ -24,7 +24,7 @@ pub struct MyProfileContent {
     #[serde(rename = "grid_crop_y", skip_serializing_if = "Option::is_none")]
     pub grid_crop_y: Option<f32>,
     #[serde(rename = "verification_status")]
-    pub verification_status: Box<models::MediaVerificationStatus>,
+    pub verification_status: models::MediaVerificationStatus,
 }
 
 impl MyProfileContent {
@@ -35,7 +35,7 @@ impl MyProfileContent {
             grid_crop_size: None,
             grid_crop_x: None,
             grid_crop_y: None,
-            verification_status: Box::new(verification_status),
+            verification_status,
         }
     }
 }

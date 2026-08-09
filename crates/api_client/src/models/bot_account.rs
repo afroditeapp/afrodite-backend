@@ -14,13 +14,13 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct BotAccount {
     #[serde(rename = "aid")]
-    pub aid: Box<models::AccountId>,
+    pub aid: models::AccountId,
 }
 
 impl BotAccount {
     pub fn new(aid: models::AccountId) -> BotAccount {
         BotAccount {
-            aid: Box::new(aid),
+            aid,
         }
     }
 }

@@ -14,16 +14,16 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct UpdateProfileContentReport {
     #[serde(rename = "content")]
-    pub content: Box<models::ContentId>,
+    pub content: models::ContentId,
     #[serde(rename = "target")]
-    pub target: Box<models::AccountId>,
+    pub target: models::AccountId,
 }
 
 impl UpdateProfileContentReport {
     pub fn new(content: models::ContentId, target: models::AccountId) -> UpdateProfileContentReport {
         UpdateProfileContentReport {
-            content: Box::new(content),
-            target: Box::new(target),
+            content,
+            target,
         }
     }
 }

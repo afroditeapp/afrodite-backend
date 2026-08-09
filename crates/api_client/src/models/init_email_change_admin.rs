@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct InitEmailChangeAdmin {
     #[serde(rename = "account_id")]
-    pub account_id: Box<models::AccountId>,
+    pub account_id: models::AccountId,
     #[serde(rename = "new_email")]
     pub new_email: String,
 }
@@ -22,7 +22,7 @@ pub struct InitEmailChangeAdmin {
 impl InitEmailChangeAdmin {
     pub fn new(account_id: models::AccountId, new_email: String) -> InitEmailChangeAdmin {
         InitEmailChangeAdmin {
-            account_id: Box::new(account_id),
+            account_id,
             new_email,
         }
     }

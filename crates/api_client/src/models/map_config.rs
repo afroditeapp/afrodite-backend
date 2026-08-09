@@ -15,14 +15,14 @@ use serde::{Deserialize, Serialize};
 pub struct MapConfig {
     /// Limit viewable map area
     #[serde(rename = "bounds", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub bounds: Option<Option<Box<models::MapBounds>>>,
+    pub bounds: Option<Option<models::MapBounds>>,
     #[serde(rename = "initial_location", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub initial_location: Option<Option<Box<models::MapCoordinate>>>,
+    pub initial_location: Option<Option<models::MapCoordinate>>,
     /// Increase this version number to make client to redownload cached map tiles.
     #[serde(rename = "tile_data_version", skip_serializing_if = "Option::is_none")]
     pub tile_data_version: Option<i32>,
     #[serde(rename = "zoom", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub zoom: Option<Option<Box<models::MapZoom>>>,
+    pub zoom: Option<Option<models::MapZoom>>,
 }
 
 impl MapConfig {

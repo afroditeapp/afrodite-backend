@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct PendingChatNotificationToDelete {
     #[serde(rename = "account_id_sender")]
-    pub account_id_sender: Box<models::AccountId>,
+    pub account_id_sender: models::AccountId,
     #[serde(rename = "message_count")]
     pub message_count: i64,
 }
@@ -22,7 +22,7 @@ pub struct PendingChatNotificationToDelete {
 impl PendingChatNotificationToDelete {
     pub fn new(account_id_sender: models::AccountId, message_count: i64) -> PendingChatNotificationToDelete {
         PendingChatNotificationToDelete {
-            account_id_sender: Box::new(account_id_sender),
+            account_id_sender,
             message_count,
         }
     }

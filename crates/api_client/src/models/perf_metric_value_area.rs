@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 pub struct PerfMetricValueArea {
     /// Time value for the first data point. Every next time value is increased with [Self::time_granularity].
     #[serde(rename = "first_time_value")]
-    pub first_time_value: Box<models::UnixTime>,
+    pub first_time_value: models::UnixTime,
     /// Time granularity for values in between start time and time points.
     #[serde(rename = "time_granularity")]
     pub time_granularity: models::TimeGranularity,
@@ -26,7 +26,7 @@ pub struct PerfMetricValueArea {
 impl PerfMetricValueArea {
     pub fn new(first_time_value: models::UnixTime, time_granularity: models::TimeGranularity, values: Vec<i32>) -> PerfMetricValueArea {
         PerfMetricValueArea {
-            first_time_value: Box::new(first_time_value),
+            first_time_value,
             time_granularity,
             values,
         }

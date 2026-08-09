@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetContentProcessingState {
     #[serde(rename = "state", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub state: Option<Option<Box<models::ContentProcessingState>>>,
+    pub state: Option<Option<models::ContentProcessingState>>,
 }
 
 impl GetContentProcessingState {

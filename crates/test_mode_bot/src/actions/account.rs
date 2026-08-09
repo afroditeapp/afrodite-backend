@@ -83,7 +83,7 @@ impl BotAction for Login {
         };
 
         let auth_pair = if let Some(Some(auth_pair)) = login_result.tokens {
-            *auth_pair.clone()
+            auth_pair.clone()
         } else {
             return Err(TestError::ApiRequest.report());
         };
@@ -246,7 +246,7 @@ async fn connect_websocket_internal(
             .change_context(TestError::WebSocket)?;
         match refresh_token {
             Message::Binary(refresh_token) => {
-                *auth.refresh = RefreshToken::new(
+                auth.refresh = RefreshToken::new(
                     base64::engine::general_purpose::STANDARD.encode(&refresh_token),
                 );
             }
@@ -262,7 +262,7 @@ async fn connect_websocket_internal(
             Message::Binary(access_token_bytes) => {
                 let access_token =
                     base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(access_token_bytes);
-                *auth.access = AccessToken::new(access_token.clone());
+                auth.access = AccessToken::new(access_token.clone());
                 api_client.set_access_token(access_token);
             }
             _ => return Err(TestError::WebSocketWrongValue.report()),
@@ -353,7 +353,7 @@ impl From<AccountStateContainer> for AccountState {
 
 impl From<Account> for AccountState {
     fn from(value: Account) -> Self {
-        let state: AccountStateContainer = *value.state;
+        let state: AccountStateContainer = value.state;
         state.into()
     }
 }
@@ -394,7 +394,7 @@ impl BotAction for AssertAccountState {
             bot_assert_eq(state.visibility, wanted_visibility)?;
         }
 
-        bot_assert_eq(state.state, self.account.to_container().into())
+        bot_assert_eq(state.state, self.account.to_container())
     }
 }
 

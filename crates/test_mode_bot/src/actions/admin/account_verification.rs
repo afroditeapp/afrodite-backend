@@ -115,7 +115,7 @@ impl AdminBotAccountVerificationLogic {
             None => return Ok(Some(EmptyPage)),
         };
 
-        let account_id = (*item.account_id).clone();
+        let account_id = item.account_id.clone();
         let method_action = match Self::parse_verification_method_action(
             &item.verification_method,
             &item.verification_data,
@@ -182,9 +182,9 @@ impl AdminBotAccountVerificationLogic {
             api,
             account_id,
             EditVerificationValues {
-                profile_age_range: Some(profile_age_range.map(Box::new)),
-                profile_name: Some(profile_name.map(Box::new)),
-                security_content: Some(security_content.map(Box::new)),
+                profile_age_range: Some(profile_age_range),
+                profile_name: Some(profile_name),
+                security_content: Some(security_content),
             },
             profile_age_range_flags | profile_name_flags | security_content_flags,
         )
@@ -223,8 +223,7 @@ impl AdminBotAccountVerificationLogic {
             .await
             .change_context(TestError::ApiRequest)?
             .item
-            .flatten()
-            .map(|item| *item);
+            .flatten();
 
         Ok(response)
     }
@@ -238,11 +237,11 @@ impl AdminBotAccountVerificationLogic {
         account_admin_api::post_account_verification_queue_remove_next_item(
             &api.api(),
             PostAccountVerificationQueueRemoveNextItem {
-                account_id: Box::new(account_id),
-                edit: Some(Some(Box::new(edit))),
-                verification_error_flags: Box::new(AccountVerificationErrorFlagsValue {
+                account_id,
+                edit: Some(Some(edit)),
+                verification_error_flags: AccountVerificationErrorFlagsValue {
                     v: verification_error_flags.bits().into(),
-                }),
+                },
             },
         )
         .await

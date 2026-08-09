@@ -14,19 +14,19 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct EmailLogin {
     #[serde(rename = "client_info")]
-    pub client_info: Box<models::ClientInfo>,
+    pub client_info: models::ClientInfo,
     #[serde(rename = "client_token")]
-    pub client_token: Box<models::EmailLoginToken>,
+    pub client_token: models::EmailLoginToken,
     #[serde(rename = "email_token")]
-    pub email_token: Box<models::EmailLoginToken>,
+    pub email_token: models::EmailLoginToken,
 }
 
 impl EmailLogin {
     pub fn new(client_info: models::ClientInfo, client_token: models::EmailLoginToken, email_token: models::EmailLoginToken) -> EmailLogin {
         EmailLogin {
-            client_info: Box::new(client_info),
-            client_token: Box::new(client_token),
-            email_token: Box::new(email_token),
+            client_info,
+            client_token,
+            email_token,
         }
     }
 }

@@ -15,18 +15,18 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AssociationMember {
     #[serde(rename = "aid_creator", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub aid_creator: Option<Option<Box<models::AccountId>>>,
+    pub aid_creator: Option<Option<models::AccountId>>,
     #[serde(rename = "aid_editor", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub aid_editor: Option<Option<Box<models::AccountId>>>,
+    pub aid_editor: Option<Option<models::AccountId>>,
     #[serde(rename = "aid_member")]
-    pub aid_member: Box<models::AccountId>,
+    pub aid_member: models::AccountId,
     #[serde(rename = "creation_unix_time")]
-    pub creation_unix_time: Box<models::UnixTime>,
+    pub creation_unix_time: models::UnixTime,
     /// A string wrapper that ensures the string is not empty. This type is used for TEXT columns that should not allow empty strings. In the database, these columns are NULL when there is no value, and this type represents non-NULL values that must be non-empty.
     #[serde(rename = "domicile", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub domicile: Option<Option<String>>,
     #[serde(rename = "edit_unix_time")]
-    pub edit_unix_time: Box<models::UnixTime>,
+    pub edit_unix_time: models::UnixTime,
     /// A string wrapper that ensures the string is not empty. This type is used for TEXT columns that should not allow empty strings. In the database, these columns are NULL when there is no value, and this type represents non-NULL values that must be non-empty.
     #[serde(rename = "email", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub email: Option<Option<String>>,
@@ -43,10 +43,10 @@ impl AssociationMember {
         AssociationMember {
             aid_creator: None,
             aid_editor: None,
-            aid_member: Box::new(aid_member),
-            creation_unix_time: Box::new(creation_unix_time),
+            aid_member,
+            creation_unix_time,
             domicile: None,
-            edit_unix_time: Box::new(edit_unix_time),
+            edit_unix_time,
             email: None,
             full_name: None,
             membership_type,

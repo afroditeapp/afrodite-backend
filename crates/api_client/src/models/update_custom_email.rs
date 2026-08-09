@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct UpdateCustomEmail {
     #[serde(rename = "id")]
-    pub id: Box<models::CustomEmailId>,
+    pub id: models::CustomEmailId,
     /// Translation with \"default\" locale must exist.
     #[serde(rename = "translations")]
     pub translations: Vec<models::CustomEmailTranslation>,
@@ -23,7 +23,7 @@ pub struct UpdateCustomEmail {
 impl UpdateCustomEmail {
     pub fn new(id: models::CustomEmailId, translations: Vec<models::CustomEmailTranslation>) -> UpdateCustomEmail {
         UpdateCustomEmail {
-            id: Box::new(id),
+            id,
             translations,
         }
     }

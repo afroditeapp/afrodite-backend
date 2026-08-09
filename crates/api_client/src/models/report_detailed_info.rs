@@ -14,25 +14,25 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ReportDetailedInfo {
     #[serde(rename = "creator")]
-    pub creator: Box<models::AccountId>,
+    pub creator: models::AccountId,
     #[serde(rename = "id")]
-    pub id: Box<models::ReportId>,
+    pub id: models::ReportId,
     #[serde(rename = "processing_state")]
     pub processing_state: models::ReportProcessingState,
     #[serde(rename = "report_type")]
-    pub report_type: Box<models::ReportType>,
+    pub report_type: models::ReportType,
     #[serde(rename = "target")]
-    pub target: Box<models::AccountId>,
+    pub target: models::AccountId,
 }
 
 impl ReportDetailedInfo {
     pub fn new(creator: models::AccountId, id: models::ReportId, processing_state: models::ReportProcessingState, report_type: models::ReportType, target: models::AccountId) -> ReportDetailedInfo {
         ReportDetailedInfo {
-            creator: Box::new(creator),
-            id: Box::new(id),
+            creator,
+            id,
             processing_state,
-            report_type: Box::new(report_type),
-            target: Box::new(target),
+            report_type,
+            target,
         }
     }
 }

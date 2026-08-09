@@ -160,9 +160,7 @@ impl AdminBotProfileStringModerationLogic {
                     if v.is_empty() {
                         None
                     } else {
-                        Some(Box::new(ProfileStringModerationRejectedReasonDetails::new(
-                            v,
-                        )))
+                        Some(ProfileStringModerationRejectedReasonDetails::new(v))
                     }
                 })),
                 move_to_human: if r.move_to_human {

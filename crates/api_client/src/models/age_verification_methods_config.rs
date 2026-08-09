@@ -14,9 +14,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AgeVerificationMethodsConfig {
     #[serde(rename = "debug", skip_serializing_if = "Option::is_none")]
-    pub debug: Option<Box<models::AgeVerificationPlatforms>>,
+    pub debug: Option<models::AgeVerificationPlatforms>,
     #[serde(rename = "eudi", skip_serializing_if = "Option::is_none")]
-    pub eudi: Option<Box<models::AgeVerificationPlatforms>>,
+    pub eudi: Option<models::AgeVerificationPlatforms>,
 }
 
 impl AgeVerificationMethodsConfig {

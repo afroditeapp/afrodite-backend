@@ -18,14 +18,14 @@ pub struct InfoBanner {
     #[serde(rename = "override_predefined_banner", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub override_predefined_banner: Option<Option<models::PredefinedBanner>>,
     #[serde(rename = "platform")]
-    pub platform: Box<models::BannerPlatform>,
+    pub platform: models::BannerPlatform,
     #[serde(rename = "text", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub text: Option<Option<Box<models::TextInfoBanner>>>,
+    pub text: Option<Option<models::TextInfoBanner>>,
     /// Server increments this field when banner is changed. It wraps, so use \"not equal\" comparison when checking version changes.
     #[serde(rename = "version", skip_serializing_if = "Option::is_none")]
     pub version: Option<i32>,
     #[serde(rename = "visibility")]
-    pub visibility: Box<models::BannerVisibility>,
+    pub visibility: models::BannerVisibility,
 }
 
 impl InfoBanner {
@@ -33,10 +33,10 @@ impl InfoBanner {
         InfoBanner {
             mode,
             override_predefined_banner: None,
-            platform: Box::new(platform),
+            platform,
             text: None,
             version: None,
-            visibility: Box::new(visibility),
+            visibility,
         }
     }
 }

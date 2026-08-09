@@ -22,7 +22,7 @@ pub struct AdminBotReportProcessingMessagesLlmConfig {
     #[serde(rename = "user_text_template")]
     pub user_text_template: String,
     #[serde(rename = "automatic_banning_expected_responses")]
-    pub automatic_banning_expected_responses: Box<models::AutomaticBanningExpectedLlmResponsesConfig>,
+    pub automatic_banning_expected_responses: models::AutomaticBanningExpectedLlmResponsesConfig,
     /// Required placeholder \"{text}\" is replaced with the report creator's message. Optional placeholder \"{message_number}\" is replaced with the message number.
     #[serde(rename = "report_creator_message_template")]
     pub report_creator_message_template: String,
@@ -37,7 +37,7 @@ impl AdminBotReportProcessingMessagesLlmConfig {
             expected_response,
             system_text,
             user_text_template,
-            automatic_banning_expected_responses: Box::new(automatic_banning_expected_responses),
+            automatic_banning_expected_responses,
             report_creator_message_template,
             report_target_message_template,
         }

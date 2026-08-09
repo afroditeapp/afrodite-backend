@@ -20,7 +20,7 @@ pub struct AddPublicKeyResult {
     #[serde(rename = "error_too_many_public_keys", skip_serializing_if = "Option::is_none")]
     pub error_too_many_public_keys: Option<bool>,
     #[serde(rename = "key_id", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub key_id: Option<Option<Box<models::PublicKeyId>>>,
+    pub key_id: Option<Option<models::PublicKeyId>>,
 }
 
 impl AddPublicKeyResult {

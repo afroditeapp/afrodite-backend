@@ -16,24 +16,24 @@ pub struct PostModerateMediaContent {
     #[serde(rename = "accept")]
     pub accept: bool,
     #[serde(rename = "account_id")]
-    pub account_id: Box<models::AccountId>,
+    pub account_id: models::AccountId,
     #[serde(rename = "content_id")]
-    pub content_id: Box<models::ContentId>,
+    pub content_id: models::ContentId,
     /// If true, ignore accept and move the content to waiting for human moderation state. rejected_category and rejected_details can be used to set the reason why the bot moved the content to human moderation.
     #[serde(rename = "move_to_human", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub move_to_human: Option<Option<bool>>,
     #[serde(rename = "rejected_category", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub rejected_category: Option<Option<Box<models::MediaContentModerationRejectedReasonCategory>>>,
+    pub rejected_category: Option<Option<models::MediaContentModerationRejectedReasonCategory>>,
     #[serde(rename = "rejected_details", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub rejected_details: Option<Option<Box<models::MediaContentModerationRejectedReasonDetails>>>,
+    pub rejected_details: Option<Option<models::MediaContentModerationRejectedReasonDetails>>,
 }
 
 impl PostModerateMediaContent {
     pub fn new(accept: bool, account_id: models::AccountId, content_id: models::ContentId) -> PostModerateMediaContent {
         PostModerateMediaContent {
             accept,
-            account_id: Box::new(account_id),
-            content_id: Box::new(content_id),
+            account_id,
+            content_id,
             move_to_human: None,
             rejected_category: None,
             rejected_details: None,

@@ -14,9 +14,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SoftwareUpdateStatus {
     #[serde(rename = "downloaded", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub downloaded: Option<Option<Box<models::SoftwareInfo>>>,
+    pub downloaded: Option<Option<models::SoftwareInfo>>,
     #[serde(rename = "installed", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub installed: Option<Option<Box<models::SoftwareInfo>>>,
+    pub installed: Option<Option<models::SoftwareInfo>>,
     #[serde(rename = "state")]
     pub state: models::SoftwareUpdateState,
 }

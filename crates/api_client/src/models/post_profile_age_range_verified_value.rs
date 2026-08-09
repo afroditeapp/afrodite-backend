@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct PostProfileAgeRangeVerifiedValue {
     #[serde(rename = "account_id")]
-    pub account_id: Box<models::AccountId>,
+    pub account_id: models::AccountId,
     #[serde(rename = "current_profile_age")]
     pub current_profile_age: i32,
     /// Bot sets automatic profile age range verification value. Human admin sets manual override value. Set to None to clear the currently applicable value.
@@ -25,7 +25,7 @@ pub struct PostProfileAgeRangeVerifiedValue {
 impl PostProfileAgeRangeVerifiedValue {
     pub fn new(account_id: models::AccountId, current_profile_age: i32) -> PostProfileAgeRangeVerifiedValue {
         PostProfileAgeRangeVerifiedValue {
-            account_id: Box::new(account_id),
+            account_id,
             current_profile_age,
             value: None,
         }

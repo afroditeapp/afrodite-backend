@@ -14,17 +14,17 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct PendingMessageId {
     #[serde(rename = "id")]
-    pub id: Box<models::MessageId>,
+    pub id: models::MessageId,
     /// Sender of the message.
     #[serde(rename = "sender")]
-    pub sender: Box<models::AccountId>,
+    pub sender: models::AccountId,
 }
 
 impl PendingMessageId {
     pub fn new(id: models::MessageId, sender: models::AccountId) -> PendingMessageId {
         PendingMessageId {
-            id: Box::new(id),
-            sender: Box::new(sender),
+            id,
+            sender,
         }
     }
 }

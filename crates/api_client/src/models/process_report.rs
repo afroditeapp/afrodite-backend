@@ -17,23 +17,23 @@ pub struct ProcessReport {
     #[serde(rename = "accepted")]
     pub accepted: bool,
     #[serde(rename = "content")]
-    pub content: Box<models::ReportContent>,
+    pub content: models::ReportContent,
     #[serde(rename = "creator")]
-    pub creator: Box<models::AccountId>,
+    pub creator: models::AccountId,
     #[serde(rename = "report_type")]
-    pub report_type: Box<models::ReportType>,
+    pub report_type: models::ReportType,
     #[serde(rename = "target")]
-    pub target: Box<models::AccountId>,
+    pub target: models::AccountId,
 }
 
 impl ProcessReport {
     pub fn new(accepted: bool, content: models::ReportContent, creator: models::AccountId, report_type: models::ReportType, target: models::AccountId) -> ProcessReport {
         ProcessReport {
             accepted,
-            content: Box::new(content),
-            creator: Box::new(creator),
-            report_type: Box::new(report_type),
-            target: Box::new(target),
+            content,
+            creator,
+            report_type,
+            target,
         }
     }
 }

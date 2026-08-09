@@ -18,7 +18,7 @@ pub struct MembershipType {
     #[serde(rename = "id")]
     pub id: i32,
     #[serde(rename = "title")]
-    pub title: Box<models::StringResource>,
+    pub title: models::StringResource,
 }
 
 impl MembershipType {
@@ -26,7 +26,7 @@ impl MembershipType {
         MembershipType {
             admin_only: None,
             id,
-            title: Box::new(title),
+            title,
         }
     }
 }

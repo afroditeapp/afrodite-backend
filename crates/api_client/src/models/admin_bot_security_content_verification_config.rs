@@ -16,7 +16,7 @@ pub struct AdminBotSecurityContentVerificationConfig {
     #[serde(rename = "default_action")]
     pub default_action: models::AcceptOrReject,
     #[serde(rename = "llm")]
-    pub llm: Box<models::AdminBotSecurityContentVerificationLlmConfig>,
+    pub llm: models::AdminBotSecurityContentVerificationLlmConfig,
     /// Large language model based security content verification. Actions: reject and accept.
     #[serde(rename = "llm_enabled", skip_serializing_if = "Option::is_none")]
     pub llm_enabled: Option<bool>,
@@ -26,7 +26,7 @@ impl AdminBotSecurityContentVerificationConfig {
     pub fn new(default_action: models::AcceptOrReject, llm: models::AdminBotSecurityContentVerificationLlmConfig) -> AdminBotSecurityContentVerificationConfig {
         AdminBotSecurityContentVerificationConfig {
             default_action,
-            llm: Box::new(llm),
+            llm,
             llm_enabled: None,
         }
     }

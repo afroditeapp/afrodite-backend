@@ -14,11 +14,11 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct CustomEmail {
     #[serde(rename = "id")]
-    pub id: Box<models::CustomEmailId>,
+    pub id: models::CustomEmailId,
     #[serde(rename = "sending_completed_unix_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub sending_completed_unix_time: Option<Option<Box<models::UnixTime>>>,
+    pub sending_completed_unix_time: Option<Option<models::UnixTime>>,
     #[serde(rename = "sending_initiated_unix_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub sending_initiated_unix_time: Option<Option<Box<models::UnixTime>>>,
+    pub sending_initiated_unix_time: Option<Option<models::UnixTime>>,
     #[serde(rename = "translations")]
     pub translations: Vec<models::CustomEmailTranslation>,
 }
@@ -26,7 +26,7 @@ pub struct CustomEmail {
 impl CustomEmail {
     pub fn new(id: models::CustomEmailId, translations: Vec<models::CustomEmailTranslation>) -> CustomEmail {
         CustomEmail {
-            id: Box::new(id),
+            id,
             sending_completed_unix_time: None,
             sending_initiated_unix_time: None,
             translations,

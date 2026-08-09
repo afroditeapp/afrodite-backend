@@ -14,19 +14,19 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetChatMessageReports {
     #[serde(rename = "creator")]
-    pub creator: Box<models::AccountId>,
+    pub creator: models::AccountId,
     #[serde(rename = "only_not_processed")]
     pub only_not_processed: bool,
     #[serde(rename = "target")]
-    pub target: Box<models::AccountId>,
+    pub target: models::AccountId,
 }
 
 impl GetChatMessageReports {
     pub fn new(creator: models::AccountId, only_not_processed: bool, target: models::AccountId) -> GetChatMessageReports {
         GetChatMessageReports {
-            creator: Box::new(creator),
+            creator,
             only_not_processed,
-            target: Box::new(target),
+            target,
         }
     }
 }

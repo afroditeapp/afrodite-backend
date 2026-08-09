@@ -14,20 +14,20 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct NewReceivedLikesCountResult {
     #[serde(rename = "c")]
-    pub c: Box<models::NewReceivedLikesCount>,
+    pub c: models::NewReceivedLikesCount,
     /// Latest received like in use. Client can use this to check should received likes be refreshed.
     #[serde(rename = "l")]
-    pub l: Box<models::ReceivedLikeId>,
+    pub l: models::ReceivedLikeId,
     #[serde(rename = "v")]
-    pub v: Box<models::ReceivedLikesSyncVersion>,
+    pub v: models::ReceivedLikesSyncVersion,
 }
 
 impl NewReceivedLikesCountResult {
     pub fn new(c: models::NewReceivedLikesCount, l: models::ReceivedLikeId, v: models::ReceivedLikesSyncVersion) -> NewReceivedLikesCountResult {
         NewReceivedLikesCountResult {
-            c: Box::new(c),
-            l: Box::new(l),
-            v: Box::new(v),
+            c,
+            l,
+            v,
         }
     }
 }

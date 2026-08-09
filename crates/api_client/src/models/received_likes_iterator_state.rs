@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ReceivedLikesIteratorState {
     #[serde(rename = "id_at_reset")]
-    pub id_at_reset: Box<models::ReceivedLikeId>,
+    pub id_at_reset: models::ReceivedLikeId,
     #[serde(rename = "page")]
     pub page: i64,
 }
@@ -22,7 +22,7 @@ pub struct ReceivedLikesIteratorState {
 impl ReceivedLikesIteratorState {
     pub fn new(id_at_reset: models::ReceivedLikeId, page: i64) -> ReceivedLikesIteratorState {
         ReceivedLikesIteratorState {
-            id_at_reset: Box::new(id_at_reset),
+            id_at_reset,
             page,
         }
     }

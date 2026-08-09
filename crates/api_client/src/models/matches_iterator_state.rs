@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct MatchesIteratorState {
     #[serde(rename = "id_at_reset")]
-    pub id_at_reset: Box<models::MatchId>,
+    pub id_at_reset: models::MatchId,
     #[serde(rename = "page")]
     pub page: i64,
 }
@@ -22,7 +22,7 @@ pub struct MatchesIteratorState {
 impl MatchesIteratorState {
     pub fn new(id_at_reset: models::MatchId, page: i64) -> MatchesIteratorState {
         MatchesIteratorState {
-            id_at_reset: Box::new(id_at_reset),
+            id_at_reset,
             page,
         }
     }

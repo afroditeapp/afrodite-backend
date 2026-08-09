@@ -14,19 +14,19 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct DemoAccountLoginToAccount {
     #[serde(rename = "aid")]
-    pub aid: Box<models::AccountId>,
+    pub aid: models::AccountId,
     #[serde(rename = "client_info")]
-    pub client_info: Box<models::ClientInfo>,
+    pub client_info: models::ClientInfo,
     #[serde(rename = "token")]
-    pub token: Box<models::DemoAccountToken>,
+    pub token: models::DemoAccountToken,
 }
 
 impl DemoAccountLoginToAccount {
     pub fn new(aid: models::AccountId, client_info: models::ClientInfo, token: models::DemoAccountToken) -> DemoAccountLoginToAccount {
         DemoAccountLoginToAccount {
-            aid: Box::new(aid),
-            client_info: Box::new(client_info),
-            token: Box::new(token),
+            aid,
+            client_info,
+            token,
         }
     }
 }

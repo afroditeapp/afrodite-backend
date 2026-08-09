@@ -14,23 +14,23 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ProfileLink {
     #[serde(rename = "a")]
-    pub a: Box<models::AccountId>,
+    pub a: models::AccountId,
     #[serde(rename = "c")]
-    pub c: Box<models::ProfileContentVersion>,
+    pub c: models::ProfileContentVersion,
     /// Account's most recent disconnect time.  If the last seen time is not None, then it is Unix timestamp or -1 if the profile is currently online.
     #[serde(rename = "l", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub l: Option<Option<i64>>,
     #[serde(rename = "p")]
-    pub p: Box<models::ProfileVersion>,
+    pub p: models::ProfileVersion,
 }
 
 impl ProfileLink {
     pub fn new(a: models::AccountId, c: models::ProfileContentVersion, p: models::ProfileVersion) -> ProfileLink {
         ProfileLink {
-            a: Box::new(a),
-            c: Box::new(c),
+            a,
+            c,
             l: None,
-            p: Box::new(p),
+            p,
         }
     }
 }

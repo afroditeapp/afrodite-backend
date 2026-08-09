@@ -14,9 +14,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct PostSecurityContentVerifiedValue {
     #[serde(rename = "account_id")]
-    pub account_id: Box<models::AccountId>,
+    pub account_id: models::AccountId,
     #[serde(rename = "security_content")]
-    pub security_content: Box<models::ContentId>,
+    pub security_content: models::ContentId,
     /// Bot sets automatic security content verification value. Human admin sets manual override value. Set to None to clear the currently applicable value.
     #[serde(rename = "value", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub value: Option<Option<bool>>,
@@ -25,8 +25,8 @@ pub struct PostSecurityContentVerifiedValue {
 impl PostSecurityContentVerifiedValue {
     pub fn new(account_id: models::AccountId, security_content: models::ContentId) -> PostSecurityContentVerifiedValue {
         PostSecurityContentVerifiedValue {
-            account_id: Box::new(account_id),
-            security_content: Box::new(security_content),
+            account_id,
+            security_content,
             value: None,
         }
     }

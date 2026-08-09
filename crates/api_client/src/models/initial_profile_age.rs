@@ -16,14 +16,14 @@ pub struct InitialProfileAge {
     #[serde(rename = "initial_profile_age")]
     pub initial_profile_age: i32,
     #[serde(rename = "initial_profile_age_set_unix_time")]
-    pub initial_profile_age_set_unix_time: Box<models::UnixTime>,
+    pub initial_profile_age_set_unix_time: models::UnixTime,
 }
 
 impl InitialProfileAge {
     pub fn new(initial_profile_age: i32, initial_profile_age_set_unix_time: models::UnixTime) -> InitialProfileAge {
         InitialProfileAge {
             initial_profile_age,
-            initial_profile_age_set_unix_time: Box::new(initial_profile_age_set_unix_time),
+            initial_profile_age_set_unix_time,
         }
     }
 }

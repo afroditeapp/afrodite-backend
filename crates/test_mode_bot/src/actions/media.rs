@@ -130,7 +130,7 @@ impl SendImageToSlot {
                     ContentProcessingStateType::Completed => {
                         match state_from_api.cid.clone().flatten() {
                             None => return Err(TestError::ApiRequest.report()),
-                            Some(cid) => return Ok(*cid),
+                            Some(cid) => return Ok(cid),
                         }
                     }
                 }

@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetAssociationMember {
     #[serde(rename = "member", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub member: Option<Option<Box<models::AssociationMember>>>,
+    pub member: Option<Option<models::AssociationMember>>,
 }
 
 impl GetAssociationMember {

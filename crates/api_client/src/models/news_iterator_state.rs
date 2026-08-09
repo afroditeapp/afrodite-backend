@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct NewsIteratorState {
     #[serde(rename = "id_at_reset")]
-    pub id_at_reset: Box<models::PublicationId>,
+    pub id_at_reset: models::PublicationId,
     #[serde(rename = "page")]
     pub page: i64,
 }
@@ -22,7 +22,7 @@ pub struct NewsIteratorState {
 impl NewsIteratorState {
     pub fn new(id_at_reset: models::PublicationId, page: i64) -> NewsIteratorState {
         NewsIteratorState {
-            id_at_reset: Box::new(id_at_reset),
+            id_at_reset,
             page,
         }
     }

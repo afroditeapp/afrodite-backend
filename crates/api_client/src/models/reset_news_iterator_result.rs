@@ -14,19 +14,19 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ResetNewsIteratorResult {
     #[serde(rename = "c")]
-    pub c: Box<models::UnreadNewsCount>,
+    pub c: models::UnreadNewsCount,
     #[serde(rename = "s")]
-    pub s: Box<models::NewsIteratorState>,
+    pub s: models::NewsIteratorState,
     #[serde(rename = "v")]
-    pub v: Box<models::NewsSyncVersion>,
+    pub v: models::NewsSyncVersion,
 }
 
 impl ResetNewsIteratorResult {
     pub fn new(c: models::UnreadNewsCount, s: models::NewsIteratorState, v: models::NewsSyncVersion) -> ResetNewsIteratorResult {
         ResetNewsIteratorResult {
-            c: Box::new(c),
-            s: Box::new(s),
-            v: Box::new(v),
+            c,
+            s,
+            v,
         }
     }
 }

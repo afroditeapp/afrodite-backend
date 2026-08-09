@@ -15,18 +15,18 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetApiUsageStatisticsSettings {
     #[serde(rename = "account")]
-    pub account: Box<models::AccountId>,
+    pub account: models::AccountId,
     #[serde(rename = "max_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub max_time: Option<Option<Box<models::UnixTime>>>,
+    pub max_time: Option<Option<models::UnixTime>>,
     #[serde(rename = "min_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub min_time: Option<Option<Box<models::UnixTime>>>,
+    pub min_time: Option<Option<models::UnixTime>>,
 }
 
 impl GetApiUsageStatisticsSettings {
     /// Time range is inclusive. [Self::max_time] must be greater or equal to [Self::min_time].
     pub fn new(account: models::AccountId) -> GetApiUsageStatisticsSettings {
         GetApiUsageStatisticsSettings {
-            account: Box::new(account),
+            account,
             max_time: None,
             min_time: None,
         }

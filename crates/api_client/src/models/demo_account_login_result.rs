@@ -17,7 +17,7 @@ pub struct DemoAccountLoginResult {
     #[serde(rename = "locked")]
     pub locked: bool,
     #[serde(rename = "token", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub token: Option<Option<Box<models::DemoAccountToken>>>,
+    pub token: Option<Option<models::DemoAccountToken>>,
 }
 
 impl DemoAccountLoginResult {

@@ -14,16 +14,16 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct UpdateProfileAttributesSchema {
     #[serde(rename = "current_state")]
-    pub current_state: Box<models::ProfileAttributesSchemaExport>,
+    pub current_state: models::ProfileAttributesSchemaExport,
     #[serde(rename = "new_state")]
-    pub new_state: Box<models::ProfileAttributesSchemaExport>,
+    pub new_state: models::ProfileAttributesSchemaExport,
 }
 
 impl UpdateProfileAttributesSchema {
     pub fn new(current_state: models::ProfileAttributesSchemaExport, new_state: models::ProfileAttributesSchemaExport) -> UpdateProfileAttributesSchema {
         UpdateProfileAttributesSchema {
-            current_state: Box::new(current_state),
-            new_state: Box::new(new_state),
+            current_state,
+            new_state,
         }
     }
 }

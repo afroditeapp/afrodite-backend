@@ -308,9 +308,7 @@ impl AdminBotContentModerationLogic {
                         if v.is_empty() {
                             None
                         } else {
-                            Some(Box::new(MediaContentModerationRejectedReasonDetails::new(
-                                v,
-                            )))
+                            Some(MediaContentModerationRejectedReasonDetails::new(v))
                         }
                     })),
                 },

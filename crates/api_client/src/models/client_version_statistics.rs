@@ -16,14 +16,14 @@ pub struct ClientVersionStatistics {
     #[serde(rename = "values")]
     pub values: Vec<models::ClientVersionCount>,
     #[serde(rename = "version")]
-    pub version: Box<models::ClientVersion>,
+    pub version: models::ClientVersion,
 }
 
 impl ClientVersionStatistics {
     pub fn new(values: Vec<models::ClientVersionCount>, version: models::ClientVersion) -> ClientVersionStatistics {
         ClientVersionStatistics {
             values,
-            version: Box::new(version),
+            version,
         }
     }
 }

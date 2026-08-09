@@ -23,10 +23,10 @@ pub struct IpAddressInfo {
     pub country: Option<Option<String>>,
     /// First usage time
     #[serde(rename = "f")]
-    pub f: Box<models::UnixTime>,
+    pub f: models::UnixTime,
     /// Latest usage time
     #[serde(rename = "l")]
-    pub l: Box<models::UnixTime>,
+    pub l: models::UnixTime,
     /// IP list names. IP address belongs to these IP lists.
     #[serde(rename = "lists", skip_serializing_if = "Option::is_none")]
     pub lists: Option<Vec<String>>,
@@ -38,8 +38,8 @@ impl IpAddressInfo {
             a,
             c,
             country: None,
-            f: Box::new(f),
-            l: Box::new(l),
+            f,
+            l,
             lists: None,
         }
     }

@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SetEmailLoginEnabled {
     #[serde(rename = "aid")]
-    pub aid: Box<models::AccountId>,
+    pub aid: models::AccountId,
     #[serde(rename = "enabled")]
     pub enabled: bool,
 }
@@ -22,7 +22,7 @@ pub struct SetEmailLoginEnabled {
 impl SetEmailLoginEnabled {
     pub fn new(aid: models::AccountId, enabled: bool) -> SetEmailLoginEnabled {
         SetEmailLoginEnabled {
-            aid: Box::new(aid),
+            aid,
             enabled,
         }
     }

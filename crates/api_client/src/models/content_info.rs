@@ -17,7 +17,7 @@ pub struct ContentInfo {
     #[serde(rename = "accepted", skip_serializing_if = "Option::is_none")]
     pub accepted: Option<bool>,
     #[serde(rename = "cid")]
-    pub cid: Box<models::ContentId>,
+    pub cid: models::ContentId,
     /// Default value is not set to API doc as the API doc will then have \"oneOf\" property and Dart code generator does not support it.  Default value is [MediaContentType::JpegImage].
     #[serde(rename = "ctype", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub ctype: Option<Option<models::MediaContentType>>,
@@ -33,7 +33,7 @@ impl ContentInfo {
     pub fn new(cid: models::ContentId) -> ContentInfo {
         ContentInfo {
             accepted: None,
-            cid: Box::new(cid),
+            cid,
             ctype: None,
             face_detected: None,
             face_verified: None,

@@ -17,11 +17,11 @@ pub struct GetAccountBanTimeResult {
     pub admin_type: Option<Option<models::AccountBannedAdminType>>,
     /// If `None` the account is not banned.
     #[serde(rename = "banned_until", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub banned_until: Option<Option<Box<models::UnixTime>>>,
+    pub banned_until: Option<Option<models::UnixTime>>,
     #[serde(rename = "reason_category", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub reason_category: Option<Option<Box<models::AccountBanReasonCategory>>>,
+    pub reason_category: Option<Option<models::AccountBanReasonCategory>>,
     #[serde(rename = "reason_details", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub reason_details: Option<Option<Box<models::AccountBanReasonDetails>>>,
+    pub reason_details: Option<Option<models::AccountBanReasonDetails>>,
 }
 
 impl GetAccountBanTimeResult {

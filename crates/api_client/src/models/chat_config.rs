@@ -14,11 +14,11 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ChatConfig {
     #[serde(rename = "check_online_status", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub check_online_status: Option<Option<Box<models::CheckOnlineStatusConfig>>>,
+    pub check_online_status: Option<Option<models::CheckOnlineStatusConfig>>,
     #[serde(rename = "message_state_seen", skip_serializing_if = "Option::is_none")]
     pub message_state_seen: Option<bool>,
     #[serde(rename = "typing_indicator", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub typing_indicator: Option<Option<Box<models::TypingIndicatorConfig>>>,
+    pub typing_indicator: Option<Option<models::TypingIndicatorConfig>>,
 }
 
 impl ChatConfig {

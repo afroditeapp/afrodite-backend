@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct InfoBannerUrlButton {
     #[serde(rename = "text")]
-    pub text: Box<models::StringResource>,
+    pub text: models::StringResource,
     #[serde(rename = "url")]
     pub url: String,
 }
@@ -22,7 +22,7 @@ pub struct InfoBannerUrlButton {
 impl InfoBannerUrlButton {
     pub fn new(text: models::StringResource, url: String) -> InfoBannerUrlButton {
         InfoBannerUrlButton {
-            text: Box::new(text),
+            text,
             url,
         }
     }

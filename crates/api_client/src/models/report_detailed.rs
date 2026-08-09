@@ -15,25 +15,25 @@ use serde::{Deserialize, Serialize};
 pub struct ReportDetailed {
     /// Only available when account interaction exists.
     #[serde(rename = "chat_info", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub chat_info: Option<Option<Box<models::ReportChatInfo>>>,
+    pub chat_info: Option<Option<models::ReportChatInfo>>,
     #[serde(rename = "content")]
-    pub content: Box<models::ReportContent>,
+    pub content: models::ReportContent,
     #[serde(rename = "creator_info")]
-    pub creator_info: Box<models::ReportAccountInfo>,
+    pub creator_info: models::ReportAccountInfo,
     #[serde(rename = "info")]
-    pub info: Box<models::ReportDetailedInfo>,
+    pub info: models::ReportDetailedInfo,
     #[serde(rename = "target_info")]
-    pub target_info: Box<models::ReportAccountInfo>,
+    pub target_info: models::ReportAccountInfo,
 }
 
 impl ReportDetailed {
     pub fn new(content: models::ReportContent, creator_info: models::ReportAccountInfo, info: models::ReportDetailedInfo, target_info: models::ReportAccountInfo) -> ReportDetailed {
         ReportDetailed {
             chat_info: None,
-            content: Box::new(content),
-            creator_info: Box::new(creator_info),
-            info: Box::new(info),
-            target_info: Box::new(target_info),
+            content,
+            creator_info,
+            info,
+            target_info,
         }
     }
 }

@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ManualServerMaintenanceInfoForAnotherServer {
     #[serde(rename = "text", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub text: Option<Option<Box<models::StringResource>>>,
+    pub text: Option<Option<models::StringResource>>,
 }
 
 impl ManualServerMaintenanceInfoForAnotherServer {

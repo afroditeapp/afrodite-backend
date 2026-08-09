@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 pub struct RequestEmailLoginTokenResult {
     /// Client token to be used together with the email token.
     #[serde(rename = "client_token", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub client_token: Option<Option<Box<models::EmailLoginToken>>>,
+    pub client_token: Option<Option<models::EmailLoginToken>>,
     /// Maximum number of email login tokens that can be sent per month.
     #[serde(rename = "email_login_emails_per_month", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub email_login_emails_per_month: Option<Option<i64>>,

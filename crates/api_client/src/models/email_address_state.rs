@@ -19,7 +19,7 @@ pub struct EmailAddressState {
     pub email_change: Option<Option<String>>,
     /// API route handler sets this value
     #[serde(rename = "email_change_completion_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub email_change_completion_time: Option<Option<Box<models::UnixTime>>>,
+    pub email_change_completion_time: Option<Option<models::UnixTime>>,
     #[serde(rename = "email_change_verified", skip_serializing_if = "Option::is_none")]
     pub email_change_verified: Option<bool>,
     #[serde(rename = "email_login_enabled", skip_serializing_if = "Option::is_none")]

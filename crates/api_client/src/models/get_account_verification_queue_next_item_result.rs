@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetAccountVerificationQueueNextItemResult {
     #[serde(rename = "item", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub item: Option<Option<Box<models::AccountVerificationQueueAdminItem>>>,
+    pub item: Option<Option<models::AccountVerificationQueueAdminItem>>,
 }
 
 impl GetAccountVerificationQueueNextItemResult {

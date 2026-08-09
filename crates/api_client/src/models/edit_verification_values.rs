@@ -14,11 +14,11 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct EditVerificationValues {
     #[serde(rename = "profile_age_range", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub profile_age_range: Option<Option<Box<models::EditVerificationProfileAgeRange>>>,
+    pub profile_age_range: Option<Option<models::EditVerificationProfileAgeRange>>,
     #[serde(rename = "profile_name", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub profile_name: Option<Option<Box<models::EditVerificationProfileName>>>,
+    pub profile_name: Option<Option<models::EditVerificationProfileName>>,
     #[serde(rename = "security_content", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub security_content: Option<Option<Box<models::EditVerificationSecurityContent>>>,
+    pub security_content: Option<Option<models::EditVerificationSecurityContent>>,
 }
 
 impl EditVerificationValues {

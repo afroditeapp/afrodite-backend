@@ -15,16 +15,16 @@ use serde::{Deserialize, Serialize};
 pub struct ReceivedLikesPageItem {
     /// If Some, the like is not viewed yet
     #[serde(rename = "not_viewed", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub not_viewed: Option<Option<Box<models::ReceivedLikeId>>>,
+    pub not_viewed: Option<Option<models::ReceivedLikeId>>,
     #[serde(rename = "p")]
-    pub p: Box<models::ProfileLink>,
+    pub p: models::ProfileLink,
 }
 
 impl ReceivedLikesPageItem {
     pub fn new(p: models::ProfileLink) -> ReceivedLikesPageItem {
         ReceivedLikesPageItem {
             not_viewed: None,
-            p: Box::new(p),
+            p,
         }
     }
 }

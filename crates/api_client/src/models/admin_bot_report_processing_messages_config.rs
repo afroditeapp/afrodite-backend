@@ -14,13 +14,13 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AdminBotReportProcessingMessagesConfig {
     #[serde(rename = "automatic_banning_day_counts")]
-    pub automatic_banning_day_counts: Box<models::AutomaticBanningDayCountConfig>,
+    pub automatic_banning_day_counts: models::AutomaticBanningDayCountConfig,
     #[serde(rename = "automatic_banning_enabled", skip_serializing_if = "Option::is_none")]
     pub automatic_banning_enabled: Option<bool>,
     #[serde(rename = "default_action")]
     pub default_action: models::AcceptOrReject,
     #[serde(rename = "llm")]
-    pub llm: Box<models::AdminBotReportProcessingMessagesLlmConfig>,
+    pub llm: models::AdminBotReportProcessingMessagesLlmConfig,
     #[serde(rename = "llm_enabled", skip_serializing_if = "Option::is_none")]
     pub llm_enabled: Option<bool>,
 }
@@ -28,10 +28,10 @@ pub struct AdminBotReportProcessingMessagesConfig {
 impl AdminBotReportProcessingMessagesConfig {
     pub fn new(automatic_banning_day_counts: models::AutomaticBanningDayCountConfig, default_action: models::AcceptOrReject, llm: models::AdminBotReportProcessingMessagesLlmConfig) -> AdminBotReportProcessingMessagesConfig {
         AdminBotReportProcessingMessagesConfig {
-            automatic_banning_day_counts: Box::new(automatic_banning_day_counts),
+            automatic_banning_day_counts,
             automatic_banning_enabled: None,
             default_action,
-            llm: Box::new(llm),
+            llm,
             llm_enabled: None,
         }
     }

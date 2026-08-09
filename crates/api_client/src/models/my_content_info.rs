@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct MyContentInfo {
     #[serde(rename = "cid")]
-    pub cid: Box<models::ContentId>,
+    pub cid: models::ContentId,
     #[serde(rename = "ctype")]
     pub ctype: models::MediaContentType,
     /// Face detected (automatic or manual)
@@ -24,9 +24,9 @@ pub struct MyContentInfo {
     #[serde(rename = "face_verified", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub face_verified: Option<Option<bool>>,
     #[serde(rename = "rejected_reason_category", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub rejected_reason_category: Option<Option<Box<models::MediaContentModerationRejectedReasonCategory>>>,
+    pub rejected_reason_category: Option<Option<models::MediaContentModerationRejectedReasonCategory>>,
     #[serde(rename = "rejected_reason_details", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub rejected_reason_details: Option<Option<Box<models::MediaContentModerationRejectedReasonDetails>>>,
+    pub rejected_reason_details: Option<Option<models::MediaContentModerationRejectedReasonDetails>>,
     #[serde(rename = "state")]
     pub state: models::ContentModerationState,
 }
@@ -34,7 +34,7 @@ pub struct MyContentInfo {
 impl MyContentInfo {
     pub fn new(cid: models::ContentId, ctype: models::MediaContentType, face_detected: bool, state: models::ContentModerationState) -> MyContentInfo {
         MyContentInfo {
-            cid: Box::new(cid),
+            cid,
             ctype,
             face_detected,
             face_verified: None,

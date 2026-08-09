@@ -17,14 +17,14 @@ pub struct UpdateProfileTextReport {
     #[serde(rename = "profile_text")]
     pub profile_text: String,
     #[serde(rename = "target")]
-    pub target: Box<models::AccountId>,
+    pub target: models::AccountId,
 }
 
 impl UpdateProfileTextReport {
     pub fn new(profile_text: String, target: models::AccountId) -> UpdateProfileTextReport {
         UpdateProfileTextReport {
             profile_text,
-            target: Box::new(target),
+            target,
         }
     }
 }

@@ -61,9 +61,7 @@ impl BotAction for ChangeProfileText {
             .change_context(TestError::ApiRequest)?
             .profile
             .flatten()
-            .ok_or(TestError::MissingValue.report())?
-            .as_ref()
-            .clone();
+            .ok_or(TestError::MissingValue.report())?;
 
         let profile_text = match &self.mode {
             ProfileText::Static(text) => text.to_string(),
@@ -153,9 +151,7 @@ impl BotAction for GetProfile {
             .change_context(TestError::ApiRequest)?
             .profile
             .flatten()
-            .ok_or(TestError::MissingValue.report())?
-            .as_ref()
-            .clone();
+            .ok_or(TestError::MissingValue.report())?;
         state.previous_value = PreviousValue::Profile(profile);
         Ok(())
     }

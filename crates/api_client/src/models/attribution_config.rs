@@ -15,10 +15,10 @@ use serde::{Deserialize, Serialize};
 pub struct AttributionConfig {
     /// Generic attribution info text displayed in about screen of the app.
     #[serde(rename = "generic", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub generic: Option<Option<Box<models::StringResource>>>,
+    pub generic: Option<Option<models::StringResource>>,
     /// Attribution info text displayed when IP country data is shown.
     #[serde(rename = "ip_country", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub ip_country: Option<Option<Box<models::StringResource>>>,
+    pub ip_country: Option<Option<models::StringResource>>,
 }
 
 impl AttributionConfig {

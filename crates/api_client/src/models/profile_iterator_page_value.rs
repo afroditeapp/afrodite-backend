@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ProfileIteratorPageValue {
     #[serde(rename = "account_id")]
-    pub account_id: Box<models::AccountId>,
+    pub account_id: models::AccountId,
     #[serde(rename = "age")]
     pub age: i64,
     /// A string wrapper that ensures the string is not empty. This type is used for TEXT columns that should not allow empty strings. In the database, these columns are NULL when there is no value, and this type represents non-NULL values that must be non-empty.
@@ -25,7 +25,7 @@ pub struct ProfileIteratorPageValue {
 impl ProfileIteratorPageValue {
     pub fn new(account_id: models::AccountId, age: i64) -> ProfileIteratorPageValue {
         ProfileIteratorPageValue {
-            account_id: Box::new(account_id),
+            account_id,
             age,
             name: None,
         }

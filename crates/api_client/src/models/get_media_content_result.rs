@@ -14,22 +14,22 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetMediaContentResult {
     #[serde(rename = "profile_content")]
-    pub profile_content: Box<models::MyProfileContent>,
+    pub profile_content: models::MyProfileContent,
     #[serde(rename = "profile_content_version")]
-    pub profile_content_version: Box<models::ProfileContentVersion>,
+    pub profile_content_version: models::ProfileContentVersion,
     #[serde(rename = "security_content", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub security_content: Option<Option<Box<models::MyContentInfo>>>,
+    pub security_content: Option<Option<models::MyContentInfo>>,
     #[serde(rename = "sync_version")]
-    pub sync_version: Box<models::MediaContentSyncVersion>,
+    pub sync_version: models::MediaContentSyncVersion,
 }
 
 impl GetMediaContentResult {
     pub fn new(profile_content: models::MyProfileContent, profile_content_version: models::ProfileContentVersion, sync_version: models::MediaContentSyncVersion) -> GetMediaContentResult {
         GetMediaContentResult {
-            profile_content: Box::new(profile_content),
-            profile_content_version: Box::new(profile_content_version),
+            profile_content,
+            profile_content_version,
             security_content: None,
-            sync_version: Box::new(sync_version),
+            sync_version,
         }
     }
 }

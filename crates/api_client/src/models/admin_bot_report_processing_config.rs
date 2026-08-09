@@ -14,22 +14,22 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AdminBotReportProcessingConfig {
     #[serde(rename = "messages")]
-    pub messages: Box<models::AdminBotReportProcessingMessagesConfig>,
+    pub messages: models::AdminBotReportProcessingMessagesConfig,
     #[serde(rename = "profile_content")]
-    pub profile_content: Box<models::AdminBotReportProcessingProfileContentConfig>,
+    pub profile_content: models::AdminBotReportProcessingProfileContentConfig,
     #[serde(rename = "profile_name")]
-    pub profile_name: Box<models::AdminBotReportProcessingProfileStringConfig>,
+    pub profile_name: models::AdminBotReportProcessingProfileStringConfig,
     #[serde(rename = "profile_text")]
-    pub profile_text: Box<models::AdminBotReportProcessingProfileStringConfig>,
+    pub profile_text: models::AdminBotReportProcessingProfileStringConfig,
 }
 
 impl AdminBotReportProcessingConfig {
     pub fn new(messages: models::AdminBotReportProcessingMessagesConfig, profile_content: models::AdminBotReportProcessingProfileContentConfig, profile_name: models::AdminBotReportProcessingProfileStringConfig, profile_text: models::AdminBotReportProcessingProfileStringConfig) -> AdminBotReportProcessingConfig {
         AdminBotReportProcessingConfig {
-            messages: Box::new(messages),
-            profile_content: Box::new(profile_content),
-            profile_name: Box::new(profile_name),
-            profile_text: Box::new(profile_text),
+            messages,
+            profile_content,
+            profile_name,
+            profile_text,
         }
     }
 }

@@ -152,7 +152,7 @@ impl BotAction for AcceptReceivedLikesAndSendMessage {
         let r = post_reset_received_likes_paging(&state.api())
             .await
             .change_context(TestError::ApiRequest)?;
-        let mut iterator_state = *r.s;
+        let mut iterator_state = r.s;
 
         loop {
             let received_likes = post_get_received_likes_page(&state.api(), iterator_state.clone())
@@ -168,7 +168,7 @@ impl BotAction for AcceptReceivedLikesAndSendMessage {
                 post_send_like(
                     &state.api(),
                     SendLike {
-                        account_id: like.p.a.as_ref().clone().into(),
+                        account_id: like.p.a.clone(),
                         allow_matching: Some(true),
                     },
                 )
@@ -176,7 +176,7 @@ impl BotAction for AcceptReceivedLikesAndSendMessage {
                 .change_context(TestError::ApiRequest)?;
 
                 let new_msg = "Hello!".to_string();
-                send_message(state, *like.p.a, new_msg).await?;
+                send_message(state, like.p.a, new_msg).await?;
             }
         }
 
@@ -264,8 +264,8 @@ impl BotAction for AnswerReceivedMessages {
             ids: pending_messages
                 .iter()
                 .map(|msg| PendingMessageId {
-                    sender: msg.sender.clone().into(),
-                    id: msg.message_id.clone().into(),
+                    sender: msg.sender.clone(),
+                    id: msg.message_id.clone(),
                 })
                 .collect(),
             delivery_failed: None,
@@ -277,8 +277,8 @@ impl BotAction for AnswerReceivedMessages {
 
         for msg in &pending_messages {
             let seen = SeenMessage {
-                mn: Box::new(msg.message_number.clone()),
-                sender: Box::new(msg.sender.clone()),
+                mn: msg.message_number.clone(),
+                sender: msg.sender.clone(),
             };
 
             post_mark_message_as_seen(&state.api(), seen)
@@ -406,7 +406,7 @@ impl BotAction for SendLikeIfNeeded {
             let r = post_send_like(
                 &state.api(),
                 SendLike {
-                    account_id: account_id.into(),
+                    account_id,
                     allow_matching: Some(true),
                 },
             )

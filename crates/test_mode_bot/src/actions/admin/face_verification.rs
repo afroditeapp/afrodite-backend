@@ -139,7 +139,7 @@ impl AdminBotFaceVerificationLogic {
 
             if value.is_some() {
                 values.push(PostMediaContentFaceVerifiedValueItem {
-                    content_id: Box::new(content_id),
+                    content_id,
                     value: Some(value),
                 });
             }

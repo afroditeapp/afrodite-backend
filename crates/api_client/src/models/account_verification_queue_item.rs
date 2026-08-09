@@ -18,7 +18,7 @@ pub struct AccountVerificationQueueItem {
     #[serde(rename = "verification_method")]
     pub verification_method: models::VerificationMethod,
     #[serde(rename = "verification_scope")]
-    pub verification_scope: Box<models::AccountVerificationScope>,
+    pub verification_scope: models::AccountVerificationScope,
 }
 
 impl AccountVerificationQueueItem {
@@ -26,7 +26,7 @@ impl AccountVerificationQueueItem {
         AccountVerificationQueueItem {
             verification_data,
             verification_method,
-            verification_scope: Box::new(verification_scope),
+            verification_scope,
         }
     }
 }

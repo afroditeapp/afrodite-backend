@@ -15,18 +15,18 @@ use serde::{Deserialize, Serialize};
 pub struct ClientConfig {
     /// None, if client features are not configured.
     #[serde(rename = "client_features", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub client_features: Option<Option<Box<models::ClientFeaturesConfigHash>>>,
+    pub client_features: Option<Option<models::ClientFeaturesConfigHash>>,
     /// None, if custom reports are not configured.
     #[serde(rename = "custom_reports", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub custom_reports: Option<Option<Box<models::CustomReportsConfigHash>>>,
+    pub custom_reports: Option<Option<models::CustomReportsConfigHash>>,
     /// None, if dynamic client features are not configured.
     #[serde(rename = "dynamic_client_features", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub dynamic_client_features: Option<Option<Box<models::DynamicClientFeaturesConfigHash>>>,
+    pub dynamic_client_features: Option<Option<models::DynamicClientFeaturesConfigHash>>,
     /// None, if attributes are not configured.
     #[serde(rename = "profile_attributes", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub profile_attributes: Option<Option<Box<models::PartialProfileAttributesConfig>>>,
+    pub profile_attributes: Option<Option<models::PartialProfileAttributesConfig>>,
     #[serde(rename = "sync_version")]
-    pub sync_version: Box<models::ClientConfigSyncVersion>,
+    pub sync_version: models::ClientConfigSyncVersion,
 }
 
 impl ClientConfig {
@@ -36,7 +36,7 @@ impl ClientConfig {
             custom_reports: None,
             dynamic_client_features: None,
             profile_attributes: None,
-            sync_version: Box::new(sync_version),
+            sync_version,
         }
     }
 }

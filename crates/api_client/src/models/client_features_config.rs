@@ -14,25 +14,25 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ClientFeaturesConfig {
     #[serde(rename = "account_verification", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub account_verification: Option<Option<Box<models::AccountVerificationConfig>>>,
+    pub account_verification: Option<Option<models::AccountVerificationConfig>>,
     #[serde(rename = "age_verification", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub age_verification: Option<Option<Box<models::AgeVerificationConfig>>>,
+    pub age_verification: Option<Option<models::AgeVerificationConfig>>,
     #[serde(rename = "association", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub association: Option<Option<Box<models::AssociationConfig>>>,
+    pub association: Option<Option<models::AssociationConfig>>,
     #[serde(rename = "attribution", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub attribution: Option<Option<Box<models::AttributionConfig>>>,
+    pub attribution: Option<Option<models::AttributionConfig>>,
     #[serde(rename = "chat", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub chat: Option<Option<Box<models::ChatConfig>>>,
+    pub chat: Option<Option<models::ChatConfig>>,
     #[serde(rename = "features", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub features: Option<Option<Box<models::FeaturesConfig>>>,
+    pub features: Option<Option<models::FeaturesConfig>>,
     #[serde(rename = "likes", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub likes: Option<Option<Box<models::LikesConfig>>>,
+    pub likes: Option<Option<models::LikesConfig>>,
     #[serde(rename = "map", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub map: Option<Option<Box<models::MapConfig>>>,
+    pub map: Option<Option<models::MapConfig>>,
     #[serde(rename = "news", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub news: Option<Option<Box<models::NewsConfig>>>,
+    pub news: Option<Option<models::NewsConfig>>,
     #[serde(rename = "profile", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub profile: Option<Option<Box<models::ProfileConfig>>>,
+    pub profile: Option<Option<models::ProfileConfig>>,
 }
 
 impl ClientFeaturesConfig {

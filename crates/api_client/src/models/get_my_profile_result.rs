@@ -14,9 +14,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetMyProfileResult {
     #[serde(rename = "name_moderation_info", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub name_moderation_info: Option<Option<Box<models::ProfileStringModerationInfo>>>,
+    pub name_moderation_info: Option<Option<models::ProfileStringModerationInfo>>,
     #[serde(rename = "profile")]
-    pub profile: Box<models::Profile>,
+    pub profile: models::Profile,
     #[serde(rename = "profile_age_range_verified", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub profile_age_range_verified: Option<Option<bool>>,
     #[serde(rename = "profile_age_range_verified_manual", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -26,24 +26,24 @@ pub struct GetMyProfileResult {
     #[serde(rename = "profile_name_verified_manual", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub profile_name_verified_manual: Option<Option<bool>>,
     #[serde(rename = "profile_sync_version")]
-    pub profile_sync_version: Box<models::ProfileSyncVersion>,
+    pub profile_sync_version: models::ProfileSyncVersion,
     #[serde(rename = "profile_version")]
-    pub profile_version: Box<models::ProfileVersion>,
+    pub profile_version: models::ProfileVersion,
     #[serde(rename = "text_moderation_info", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub text_moderation_info: Option<Option<Box<models::ProfileStringModerationInfo>>>,
+    pub text_moderation_info: Option<Option<models::ProfileStringModerationInfo>>,
 }
 
 impl GetMyProfileResult {
     pub fn new(profile: models::Profile, profile_sync_version: models::ProfileSyncVersion, profile_version: models::ProfileVersion) -> GetMyProfileResult {
         GetMyProfileResult {
             name_moderation_info: None,
-            profile: Box::new(profile),
+            profile,
             profile_age_range_verified: None,
             profile_age_range_verified_manual: None,
             profile_name_verified: None,
             profile_name_verified_manual: None,
-            profile_sync_version: Box::new(profile_sync_version),
-            profile_version: Box::new(profile_version),
+            profile_sync_version,
+            profile_version,
             text_moderation_info: None,
         }
     }

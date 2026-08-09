@@ -14,12 +14,12 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct NewsItemSimple {
     #[serde(rename = "id")]
-    pub id: Box<models::NewsId>,
+    pub id: models::NewsId,
     #[serde(rename = "private", skip_serializing_if = "Option::is_none")]
     pub private: Option<bool>,
     /// Latest publication time
     #[serde(rename = "time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub time: Option<Option<Box<models::UnixTime>>>,
+    pub time: Option<Option<models::UnixTime>>,
     #[serde(rename = "title", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub title: Option<Option<String>>,
 }
@@ -27,7 +27,7 @@ pub struct NewsItemSimple {
 impl NewsItemSimple {
     pub fn new(id: models::NewsId) -> NewsItemSimple {
         NewsItemSimple {
-            id: Box::new(id),
+            id,
             private: None,
             time: None,
             title: None,

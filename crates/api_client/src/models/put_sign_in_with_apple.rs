@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct PutSignInWithApple {
     #[serde(rename = "apple", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub apple: Option<Option<Box<models::SignInWithAppleInfo>>>,
+    pub apple: Option<Option<models::SignInWithAppleInfo>>,
 }
 
 impl PutSignInWithApple {

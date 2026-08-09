@@ -15,10 +15,10 @@ use serde::{Deserialize, Serialize};
 pub struct NewsItem {
     /// Only visible for accounts which have some news permissions
     #[serde(rename = "aid_creator", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub aid_creator: Option<Option<Box<models::AccountId>>>,
+    pub aid_creator: Option<Option<models::AccountId>>,
     /// Only visible for accounts which have some news permissions
     #[serde(rename = "aid_editor", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub aid_editor: Option<Option<Box<models::AccountId>>>,
+    pub aid_editor: Option<Option<models::AccountId>>,
     #[serde(rename = "body")]
     pub body: String,
     /// Option<i64> is a workaround for Dart OpenApi generator version 7.9.0
@@ -28,12 +28,12 @@ pub struct NewsItem {
     pub locale: String,
     /// Latest publication time
     #[serde(rename = "time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub time: Option<Option<Box<models::UnixTime>>>,
+    pub time: Option<Option<models::UnixTime>>,
     #[serde(rename = "title")]
     pub title: String,
     /// Only visible for accounts which have some news permissions
     #[serde(rename = "version", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub version: Option<Option<Box<models::NewsTranslationVersion>>>,
+    pub version: Option<Option<models::NewsTranslationVersion>>,
 }
 
 impl NewsItem {

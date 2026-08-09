@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct EditVerificationSecurityContent {
     #[serde(rename = "security_content")]
-    pub security_content: Box<models::ContentId>,
+    pub security_content: models::ContentId,
     #[serde(rename = "verified_value", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub verified_value: Option<Option<bool>>,
 }
@@ -22,7 +22,7 @@ pub struct EditVerificationSecurityContent {
 impl EditVerificationSecurityContent {
     pub fn new(security_content: models::ContentId) -> EditVerificationSecurityContent {
         EditVerificationSecurityContent {
-            security_content: Box::new(security_content),
+            security_content,
             verified_value: None,
         }
     }

@@ -14,19 +14,19 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct PostAccountVerificationQueueRemoveNextItem {
     #[serde(rename = "account_id")]
-    pub account_id: Box<models::AccountId>,
+    pub account_id: models::AccountId,
     #[serde(rename = "edit", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub edit: Option<Option<Box<models::EditVerificationValues>>>,
+    pub edit: Option<Option<models::EditVerificationValues>>,
     #[serde(rename = "verification_error_flags")]
-    pub verification_error_flags: Box<models::AccountVerificationErrorFlagsValue>,
+    pub verification_error_flags: models::AccountVerificationErrorFlagsValue,
 }
 
 impl PostAccountVerificationQueueRemoveNextItem {
     pub fn new(account_id: models::AccountId, verification_error_flags: models::AccountVerificationErrorFlagsValue) -> PostAccountVerificationQueueRemoveNextItem {
         PostAccountVerificationQueueRemoveNextItem {
-            account_id: Box::new(account_id),
+            account_id,
             edit: None,
-            verification_error_flags: Box::new(verification_error_flags),
+            verification_error_flags,
         }
     }
 }

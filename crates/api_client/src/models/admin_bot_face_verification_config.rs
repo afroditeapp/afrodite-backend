@@ -16,7 +16,7 @@ pub struct AdminBotFaceVerificationConfig {
     #[serde(rename = "default_action")]
     pub default_action: models::AcceptOrReject,
     #[serde(rename = "llm")]
-    pub llm: Box<models::AdminBotFaceVerificationLlmConfig>,
+    pub llm: models::AdminBotFaceVerificationLlmConfig,
     /// Large language model based face verification. Actions: reject and accept.
     #[serde(rename = "llm_enabled", skip_serializing_if = "Option::is_none")]
     pub llm_enabled: Option<bool>,
@@ -26,7 +26,7 @@ impl AdminBotFaceVerificationConfig {
     pub fn new(default_action: models::AcceptOrReject, llm: models::AdminBotFaceVerificationLlmConfig) -> AdminBotFaceVerificationConfig {
         AdminBotFaceVerificationConfig {
             default_action,
-            llm: Box::new(llm),
+            llm,
             llm_enabled: None,
         }
     }

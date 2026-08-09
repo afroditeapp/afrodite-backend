@@ -15,9 +15,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetClientVersionStatisticsSettings {
     #[serde(rename = "max_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub max_time: Option<Option<Box<models::UnixTime>>>,
+    pub max_time: Option<Option<models::UnixTime>>,
     #[serde(rename = "min_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub min_time: Option<Option<Box<models::UnixTime>>>,
+    pub min_time: Option<Option<models::UnixTime>>,
 }
 
 impl GetClientVersionStatisticsSettings {

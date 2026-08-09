@@ -317,9 +317,9 @@ impl AdminBotReportProcessingLogic {
         let report_target = match report {
             ReportInternal::ProfileName(r)
             | ReportInternal::ProfileText(r)
-            | ReportInternal::ProfileContent(r) => Some(*r.info.target.clone()),
+            | ReportInternal::ProfileContent(r) => Some(r.info.target.clone()),
             ReportInternal::Conversation { messages } => {
-                messages.first().map(|m| *m.report.info.target.clone())
+                messages.first().map(|m| m.report.info.target.clone())
             }
         };
 
@@ -385,10 +385,10 @@ impl AdminBotReportProcessingLogic {
             | ReportInternal::ProfileContent(r) => {
                 vec![ProcessReport::new(
                     accepted,
-                    *r.content.clone(),
-                    *r.info.creator.clone(),
-                    *r.info.report_type.clone(),
-                    *r.info.target.clone(),
+                    r.content.clone(),
+                    r.info.creator.clone(),
+                    r.info.report_type.clone(),
+                    r.info.target.clone(),
                 )]
             }
             ReportInternal::Conversation { messages } => messages
@@ -396,10 +396,10 @@ impl AdminBotReportProcessingLogic {
                 .map(|msg| {
                     ProcessReport::new(
                         accepted,
-                        *msg.report.content.clone(),
-                        *msg.report.info.creator.clone(),
-                        *msg.report.info.report_type.clone(),
-                        *msg.report.info.target.clone(),
+                        msg.report.content.clone(),
+                        msg.report.info.creator.clone(),
+                        msg.report.info.report_type.clone(),
+                        msg.report.info.target.clone(),
                     )
                 })
                 .collect(),
@@ -464,11 +464,11 @@ impl AdminBotReportProcessingLogic {
                 post_set_ban_state(
                     &api.api(),
                     SetAccountBanState {
-                        account: Box::new(ban.target.clone()),
-                        ban_until: Some(Some(Box::new(ban.ban_until.clone()))),
-                        reason_category: Some(Some(Box::new(
+                        account: ban.target.clone(),
+                        ban_until: Some(Some(ban.ban_until.clone())),
+                        reason_category: Some(Some(
                             api_client::models::AccountBanReasonCategory::new(ban.reason_category),
-                        ))),
+                        )),
                         reason_details: Some(None),
                     },
                 )

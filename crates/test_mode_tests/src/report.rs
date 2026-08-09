@@ -37,7 +37,7 @@ async fn get_first_content_id(account: &Account) -> TestResult<ContentId> {
         .flatten()
         .and_then(|v| v.content.first().cloned())
         .ok_or(TestError::MissingValue.report())?;
-    Ok(*content.cid)
+    Ok(content.cid)
 }
 
 async fn process_all_reports_as(context: &mut TestContext, accepted: bool) -> TestResult {
@@ -56,10 +56,10 @@ async fn process_all_reports_as(context: &mut TestContext, accepted: bool) -> Te
         .map(|report| {
             ProcessReport::new(
                 accepted,
-                (*report.content).clone(),
-                *report.info.creator.clone(),
+                report.content.clone(),
+                report.info.creator.clone(),
                 ReportType::new(report.info.report_type.t),
-                *report.info.target.clone(),
+                report.info.target.clone(),
             )
         })
         .collect();
@@ -167,10 +167,10 @@ async fn auto_ban_spam_reporters_threshold_1_accepted_and_rejected_reports_do_no
 
         process_reports.push(ProcessReport::new(
             is_accepted,
-            (*report.content).clone(),
-            *report.info.creator.clone(),
+            report.content.clone(),
+            report.info.creator.clone(),
             ReportType::new(report.info.report_type.t),
-            *report.info.target.clone(),
+            report.info.target.clone(),
         ));
     }
 

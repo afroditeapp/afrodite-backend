@@ -16,14 +16,14 @@ pub struct ProfileStatisticsHistoryValue {
     #[serde(rename = "c")]
     pub c: i64,
     #[serde(rename = "ut")]
-    pub ut: Box<models::UnixTime>,
+    pub ut: models::UnixTime,
 }
 
 impl ProfileStatisticsHistoryValue {
     pub fn new(c: i64, ut: models::UnixTime) -> ProfileStatisticsHistoryValue {
         ProfileStatisticsHistoryValue {
             c,
-            ut: Box::new(ut),
+            ut,
         }
     }
 }

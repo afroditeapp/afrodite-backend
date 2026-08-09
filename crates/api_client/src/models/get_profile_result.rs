@@ -18,10 +18,10 @@ pub struct GetProfileResult {
     pub last_seen_time: Option<Option<i64>>,
     /// Profile data if it is newer than the version in the query.
     #[serde(rename = "profile", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub profile: Option<Option<Box<models::Profile>>>,
+    pub profile: Option<Option<models::Profile>>,
     /// If empty then profile does not exist or current account does not have access to the profile.
     #[serde(rename = "profile_version", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub profile_version: Option<Option<Box<models::ProfileVersion>>>,
+    pub profile_version: Option<Option<models::ProfileVersion>>,
 }
 
 impl GetProfileResult {

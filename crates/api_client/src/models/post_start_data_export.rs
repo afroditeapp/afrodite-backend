@@ -17,14 +17,14 @@ pub struct PostStartDataExport {
     pub data_export_type: models::DataExportType,
     /// Data reading source account.
     #[serde(rename = "source")]
-    pub source: Box<models::AccountId>,
+    pub source: models::AccountId,
 }
 
 impl PostStartDataExport {
     pub fn new(data_export_type: models::DataExportType, source: models::AccountId) -> PostStartDataExport {
         PostStartDataExport {
             data_export_type,
-            source: Box::new(source),
+            source,
         }
     }
 }

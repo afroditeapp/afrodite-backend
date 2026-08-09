@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetBotsResult {
     #[serde(rename = "admin", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub admin: Option<Option<Box<models::BotAccount>>>,
+    pub admin: Option<Option<models::BotAccount>>,
     #[serde(rename = "users", skip_serializing_if = "Option::is_none")]
     pub users: Option<Vec<models::BotAccount>>,
 }

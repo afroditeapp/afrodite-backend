@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct UpdateAssociationMembershipType {
     #[serde(rename = "member")]
-    pub member: Box<models::AccountId>,
+    pub member: models::AccountId,
     #[serde(rename = "membership_type")]
     pub membership_type: i32,
 }
@@ -24,7 +24,7 @@ impl UpdateAssociationMembershipType {
     /// Input for admin to change membership type of an existing entry.
     pub fn new(member: models::AccountId, membership_type: i32) -> UpdateAssociationMembershipType {
         UpdateAssociationMembershipType {
-            member: Box::new(member),
+            member,
             membership_type,
         }
     }

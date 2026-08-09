@@ -14,20 +14,20 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SetAccountBanState {
     #[serde(rename = "account")]
-    pub account: Box<models::AccountId>,
+    pub account: models::AccountId,
     /// `Some` value bans the account and `None` value unbans the account.
     #[serde(rename = "ban_until", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub ban_until: Option<Option<Box<models::UnixTime>>>,
+    pub ban_until: Option<Option<models::UnixTime>>,
     #[serde(rename = "reason_category", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub reason_category: Option<Option<Box<models::AccountBanReasonCategory>>>,
+    pub reason_category: Option<Option<models::AccountBanReasonCategory>>,
     #[serde(rename = "reason_details", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub reason_details: Option<Option<Box<models::AccountBanReasonDetails>>>,
+    pub reason_details: Option<Option<models::AccountBanReasonDetails>>,
 }
 
 impl SetAccountBanState {
     pub fn new(account: models::AccountId) -> SetAccountBanState {
         SetAccountBanState {
-            account: Box::new(account),
+            account,
             ban_until: None,
             reason_category: None,
             reason_details: None,

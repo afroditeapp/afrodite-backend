@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 pub struct DataExportState {
     /// Available when current state is [DataExportStateType::Done].
     #[serde(rename = "name", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub name: Option<Option<Box<models::DataExportName>>>,
+    pub name: Option<Option<models::DataExportName>>,
     #[serde(rename = "state")]
     pub state: models::DataExportStateType,
 }

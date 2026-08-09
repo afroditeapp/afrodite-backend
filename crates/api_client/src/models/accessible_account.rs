@@ -16,7 +16,7 @@ pub struct AccessibleAccount {
     #[serde(rename = "age", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub age: Option<Option<i64>>,
     #[serde(rename = "aid")]
-    pub aid: Box<models::AccountId>,
+    pub aid: models::AccountId,
     /// A string wrapper that ensures the string is not empty. This type is used for TEXT columns that should not allow empty strings. In the database, these columns are NULL when there is no value, and this type represents non-NULL values that must be non-empty.
     #[serde(rename = "name", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub name: Option<Option<String>>,
@@ -26,7 +26,7 @@ impl AccessibleAccount {
     pub fn new(aid: models::AccountId) -> AccessibleAccount {
         AccessibleAccount {
             age: None,
-            aid: Box::new(aid),
+            aid,
             name: None,
         }
     }

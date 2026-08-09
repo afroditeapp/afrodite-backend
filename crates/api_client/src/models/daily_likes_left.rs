@@ -17,14 +17,14 @@ pub struct DailyLikesLeft {
     #[serde(rename = "likes")]
     pub likes: i32,
     #[serde(rename = "version")]
-    pub version: Box<models::DailyLikesLeftSyncVersion>,
+    pub version: models::DailyLikesLeftSyncVersion,
 }
 
 impl DailyLikesLeft {
     pub fn new(likes: i32, version: models::DailyLikesLeftSyncVersion) -> DailyLikesLeft {
         DailyLikesLeft {
             likes,
-            version: Box::new(version),
+            version,
         }
     }
 }

@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 pub struct LoginResult {
     /// Account ID of current account. If `None`, the client is unsupported.
     #[serde(rename = "aid", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub aid: Option<Option<Box<models::AccountId>>>,
+    pub aid: Option<Option<models::AccountId>>,
     /// Current email of current account. If `None`, if email address is not set or the client version is unsupported.
     #[serde(rename = "email", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub email: Option<Option<String>>,
@@ -48,7 +48,7 @@ pub struct LoginResult {
     pub error_unsupported_client: Option<bool>,
     /// If `None`, the client is unsupported.
     #[serde(rename = "tokens", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub tokens: Option<Option<Box<models::AuthPair>>>,
+    pub tokens: Option<Option<models::AuthPair>>,
 }
 
 impl LoginResult {

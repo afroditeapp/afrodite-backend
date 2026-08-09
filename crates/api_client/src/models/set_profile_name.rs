@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SetProfileName {
     #[serde(rename = "account")]
-    pub account: Box<models::AccountId>,
+    pub account: models::AccountId,
     /// A string wrapper that ensures the string is not empty. This type is used for TEXT columns that should not allow empty strings. In the database, these columns are NULL when there is no value, and this type represents non-NULL values that must be non-empty.
     #[serde(rename = "name", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub name: Option<Option<String>>,
@@ -23,7 +23,7 @@ pub struct SetProfileName {
 impl SetProfileName {
     pub fn new(account: models::AccountId) -> SetProfileName {
         SetProfileName {
-            account: Box::new(account),
+            account,
             name: None,
         }
     }

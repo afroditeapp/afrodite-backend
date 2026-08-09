@@ -14,16 +14,16 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct UnreadNewsCountResult {
     #[serde(rename = "c")]
-    pub c: Box<models::UnreadNewsCount>,
+    pub c: models::UnreadNewsCount,
     #[serde(rename = "v")]
-    pub v: Box<models::NewsSyncVersion>,
+    pub v: models::NewsSyncVersion,
 }
 
 impl UnreadNewsCountResult {
     pub fn new(c: models::UnreadNewsCount, v: models::NewsSyncVersion) -> UnreadNewsCountResult {
         UnreadNewsCountResult {
-            c: Box::new(c),
-            v: Box::new(v),
+            c,
+            v,
         }
     }
 }

@@ -16,23 +16,23 @@ pub struct GetProfileFilters {
     #[serde(rename = "attribute_filters")]
     pub attribute_filters: Vec<models::ProfileAttributeFilterValue>,
     #[serde(rename = "last_seen_time_filter", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub last_seen_time_filter: Option<Option<Box<models::LastSeenTimeFilter>>>,
+    pub last_seen_time_filter: Option<Option<models::LastSeenTimeFilter>>,
     /// Show profiles until this far from current location. The value is in kilometers.  The value must be `None`, 1 or greater number.
     #[serde(rename = "max_distance_km_filter", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub max_distance_km_filter: Option<Option<Box<models::MaxDistanceKm>>>,
+    pub max_distance_km_filter: Option<Option<models::MaxDistanceKm>>,
     /// Show profiles starting this far from current location. The value is in kilometers.  The value must be `None`, 1 or greater number.
     #[serde(rename = "min_distance_km_filter", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub min_distance_km_filter: Option<Option<Box<models::MinDistanceKm>>>,
+    pub min_distance_km_filter: Option<Option<models::MinDistanceKm>>,
     #[serde(rename = "profile_created_filter", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub profile_created_filter: Option<Option<Box<models::ProfileCreatedTimeFilter>>>,
+    pub profile_created_filter: Option<Option<models::ProfileCreatedTimeFilter>>,
     #[serde(rename = "profile_edited_filter", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub profile_edited_filter: Option<Option<Box<models::ProfileEditedTimeFilter>>>,
+    pub profile_edited_filter: Option<Option<models::ProfileEditedTimeFilter>>,
     #[serde(rename = "profile_text_max_characters_filter", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub profile_text_max_characters_filter: Option<Option<Box<models::ProfileTextMaxCharactersFilter>>>,
+    pub profile_text_max_characters_filter: Option<Option<models::ProfileTextMaxCharactersFilter>>,
     #[serde(rename = "profile_text_min_characters_filter", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub profile_text_min_characters_filter: Option<Option<Box<models::ProfileTextMinCharactersFilter>>>,
+    pub profile_text_min_characters_filter: Option<Option<models::ProfileTextMinCharactersFilter>>,
     #[serde(rename = "profile_verification_status_filter", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub profile_verification_status_filter: Option<Option<Box<models::ProfileVerificationStatusFilter>>>,
+    pub profile_verification_status_filter: Option<Option<models::ProfileVerificationStatusFilter>>,
     /// Randomize iterator starting position within the profile index area which current position and [Self::max_distance_km] defines.
     #[serde(rename = "random_profile_order", skip_serializing_if = "Option::is_none")]
     pub random_profile_order: Option<bool>,

@@ -17,7 +17,7 @@ pub struct IpCountryStatisticsValue {
     pub c: i64,
     /// Value exists when [GetIpCountryStatisticsSettings::live_statistics] is false.
     #[serde(rename = "t", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub t: Option<Option<Box<models::UnixTime>>>,
+    pub t: Option<Option<models::UnixTime>>,
 }
 
 impl IpCountryStatisticsValue {

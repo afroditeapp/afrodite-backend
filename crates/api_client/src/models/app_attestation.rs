@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AppAttestation {
     #[serde(rename = "debug", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub debug: Option<Option<Box<models::DebugAppAttestation>>>,
+    pub debug: Option<Option<models::DebugAppAttestation>>,
 }
 
 impl AppAttestation {

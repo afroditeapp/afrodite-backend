@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SendLike {
     #[serde(rename = "account_id")]
-    pub account_id: Box<models::AccountId>,
+    pub account_id: models::AccountId,
     #[serde(rename = "allow_matching", skip_serializing_if = "Option::is_none")]
     pub allow_matching: Option<bool>,
 }
@@ -22,7 +22,7 @@ pub struct SendLike {
 impl SendLike {
     pub fn new(account_id: models::AccountId) -> SendLike {
         SendLike {
-            account_id: Box::new(account_id),
+            account_id,
             allow_matching: None,
         }
     }

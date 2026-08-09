@@ -14,18 +14,18 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SignInWithLoginInfo {
     #[serde(rename = "apple", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub apple: Option<Option<Box<models::SignInWithAppleInfo>>>,
+    pub apple: Option<Option<models::SignInWithAppleInfo>>,
     #[serde(rename = "client_info")]
-    pub client_info: Box<models::ClientInfo>,
+    pub client_info: models::ClientInfo,
     #[serde(rename = "google", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub google: Option<Option<Box<models::SignInWithGoogleInfo>>>,
+    pub google: Option<Option<models::SignInWithGoogleInfo>>,
 }
 
 impl SignInWithLoginInfo {
     pub fn new(client_info: models::ClientInfo) -> SignInWithLoginInfo {
         SignInWithLoginInfo {
             apple: None,
-            client_info: Box::new(client_info),
+            client_info,
             google: None,
         }
     }

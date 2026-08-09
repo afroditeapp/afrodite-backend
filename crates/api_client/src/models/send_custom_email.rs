@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SendCustomEmail {
     #[serde(rename = "email_id")]
-    pub email_id: Box<models::CustomEmailId>,
+    pub email_id: models::CustomEmailId,
     #[serde(rename = "target_group")]
     pub target_group: models::CustomEmailTargetGroup,
 }
@@ -22,7 +22,7 @@ pub struct SendCustomEmail {
 impl SendCustomEmail {
     pub fn new(email_id: models::CustomEmailId, target_group: models::CustomEmailTargetGroup) -> SendCustomEmail {
         SendCustomEmail {
-            email_id: Box::new(email_id),
+            email_id,
             target_group,
         }
     }

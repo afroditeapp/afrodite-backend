@@ -14,11 +14,11 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AssociationConfig {
     #[serde(rename = "association_info_markdown", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub association_info_markdown: Option<Option<Box<models::StringResource>>>,
+    pub association_info_markdown: Option<Option<models::StringResource>>,
     #[serde(rename = "association_name")]
-    pub association_name: Box<models::StringResource>,
+    pub association_name: models::StringResource,
     #[serde(rename = "membership_info_markdown", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub membership_info_markdown: Option<Option<Box<models::StringResource>>>,
+    pub membership_info_markdown: Option<Option<models::StringResource>>,
     #[serde(rename = "membership_types")]
     pub membership_types: Vec<models::MembershipType>,
     #[serde(rename = "user_can_edit_existing_membership", skip_serializing_if = "Option::is_none")]
@@ -33,7 +33,7 @@ impl AssociationConfig {
     pub fn new(association_name: models::StringResource, membership_types: Vec<models::MembershipType>) -> AssociationConfig {
         AssociationConfig {
             association_info_markdown: None,
-            association_name: Box::new(association_name),
+            association_name,
             membership_info_markdown: None,
             membership_types,
             user_can_edit_existing_membership: None,

@@ -15,10 +15,10 @@ use serde::{Deserialize, Serialize};
 pub struct PerfMetricQuery {
     /// Max value for inclusive time range.
     #[serde(rename = "max_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub max_time: Option<Option<Box<models::UnixTime>>>,
+    pub max_time: Option<Option<models::UnixTime>>,
     /// Min value for inclusive time range.
     #[serde(rename = "min_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub min_time: Option<Option<Box<models::UnixTime>>>,
+    pub min_time: Option<Option<models::UnixTime>>,
 }
 
 impl PerfMetricQuery {

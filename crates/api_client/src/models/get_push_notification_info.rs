@@ -14,19 +14,19 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetPushNotificationInfo {
     #[serde(rename = "device_token", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub device_token: Option<Option<Box<models::PushNotificationDeviceToken>>>,
+    pub device_token: Option<Option<models::PushNotificationDeviceToken>>,
     #[serde(rename = "sync_version")]
-    pub sync_version: Box<models::PushNotificationInfoSyncVersion>,
+    pub sync_version: models::PushNotificationInfoSyncVersion,
     /// Base64 encoded VAPID public key if web push notifications are enabled and current login session if from web client.
     #[serde(rename = "vapid_public_key", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub vapid_public_key: Option<Option<Box<models::VapidPublicKey>>>,
+    pub vapid_public_key: Option<Option<models::VapidPublicKey>>,
 }
 
 impl GetPushNotificationInfo {
     pub fn new(sync_version: models::PushNotificationInfoSyncVersion) -> GetPushNotificationInfo {
         GetPushNotificationInfo {
             device_token: None,
-            sync_version: Box::new(sync_version),
+            sync_version,
             vapid_public_key: None,
         }
     }

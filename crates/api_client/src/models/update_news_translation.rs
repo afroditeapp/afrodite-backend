@@ -16,7 +16,7 @@ pub struct UpdateNewsTranslation {
     #[serde(rename = "body")]
     pub body: String,
     #[serde(rename = "current_version")]
-    pub current_version: Box<models::NewsTranslationVersion>,
+    pub current_version: models::NewsTranslationVersion,
     #[serde(rename = "title")]
     pub title: String,
 }
@@ -25,7 +25,7 @@ impl UpdateNewsTranslation {
     pub fn new(body: String, current_version: models::NewsTranslationVersion, title: String) -> UpdateNewsTranslation {
         UpdateNewsTranslation {
             body,
-            current_version: Box::new(current_version),
+            current_version,
             title,
         }
     }

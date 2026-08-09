@@ -18,7 +18,7 @@ pub struct AdminBotAccountVerificationConfig {
     #[serde(rename = "profile_name_enabled", skip_serializing_if = "Option::is_none")]
     pub profile_name_enabled: Option<bool>,
     #[serde(rename = "security_content")]
-    pub security_content: Box<models::AdminBotSecurityContentVerificationConfig>,
+    pub security_content: models::AdminBotSecurityContentVerificationConfig,
     #[serde(rename = "security_content_enabled", skip_serializing_if = "Option::is_none")]
     pub security_content_enabled: Option<bool>,
 }
@@ -28,7 +28,7 @@ impl AdminBotAccountVerificationConfig {
         AdminBotAccountVerificationConfig {
             profile_age_range_enabled: None,
             profile_name_enabled: None,
-            security_content: Box::new(security_content),
+            security_content,
             security_content_enabled: None,
         }
     }

@@ -19,7 +19,7 @@ pub struct AdminBotReportProcessingProfileContentLlmConfig {
     #[serde(rename = "system_text")]
     pub system_text: String,
     #[serde(rename = "automatic_banning_expected_responses")]
-    pub automatic_banning_expected_responses: Box<models::AutomaticBanningExpectedLlmResponsesConfig>,
+    pub automatic_banning_expected_responses: models::AutomaticBanningExpectedLlmResponsesConfig,
 }
 
 impl AdminBotReportProcessingProfileContentLlmConfig {
@@ -27,7 +27,7 @@ impl AdminBotReportProcessingProfileContentLlmConfig {
         AdminBotReportProcessingProfileContentLlmConfig {
             expected_response,
             system_text,
-            automatic_banning_expected_responses: Box::new(automatic_banning_expected_responses),
+            automatic_banning_expected_responses,
         }
     }
 }

@@ -19,7 +19,7 @@ pub struct AdminBotProfileStringModerationConfig {
     #[serde(rename = "default_action")]
     pub default_action: models::ModerationAction,
     #[serde(rename = "llm")]
-    pub llm: Box<models::AdminBotStringModerationLlmConfig>,
+    pub llm: models::AdminBotStringModerationLlmConfig,
     /// Large language model based moderation. Actions: reject (or move_to_human) and accept
     #[serde(rename = "llm_enabled", skip_serializing_if = "Option::is_none")]
     pub llm_enabled: Option<bool>,
@@ -30,7 +30,7 @@ impl AdminBotProfileStringModerationConfig {
         AdminBotProfileStringModerationConfig {
             accept_single_visible_character: None,
             default_action,
-            llm: Box::new(llm),
+            llm,
             llm_enabled: None,
         }
     }

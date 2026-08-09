@@ -17,23 +17,23 @@ pub struct ChatMessageReport {
     #[serde(rename = "message_base64")]
     pub message_base64: String,
     #[serde(rename = "message_number")]
-    pub message_number: Box<models::MessageNumber>,
+    pub message_number: models::MessageNumber,
     #[serde(rename = "message_time")]
-    pub message_time: Box<models::UnixTime>,
+    pub message_time: models::UnixTime,
     #[serde(rename = "recipient")]
-    pub recipient: Box<models::AccountId>,
+    pub recipient: models::AccountId,
     #[serde(rename = "sender")]
-    pub sender: Box<models::AccountId>,
+    pub sender: models::AccountId,
 }
 
 impl ChatMessageReport {
     pub fn new(message_base64: String, message_number: models::MessageNumber, message_time: models::UnixTime, recipient: models::AccountId, sender: models::AccountId) -> ChatMessageReport {
         ChatMessageReport {
             message_base64,
-            message_number: Box::new(message_number),
-            message_time: Box::new(message_time),
-            recipient: Box::new(recipient),
-            sender: Box::new(sender),
+            message_number,
+            message_time,
+            recipient,
+            sender,
         }
     }
 }

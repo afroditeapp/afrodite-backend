@@ -14,9 +14,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct PostMediaContentFaceDetectedValue {
     #[serde(rename = "account_id")]
-    pub account_id: Box<models::AccountId>,
+    pub account_id: models::AccountId,
     #[serde(rename = "content_id")]
-    pub content_id: Box<models::ContentId>,
+    pub content_id: models::ContentId,
     /// Set to None to clear the manual override and use the automatic detection value
     #[serde(rename = "value", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub value: Option<Option<bool>>,
@@ -25,8 +25,8 @@ pub struct PostMediaContentFaceDetectedValue {
 impl PostMediaContentFaceDetectedValue {
     pub fn new(account_id: models::AccountId, content_id: models::ContentId) -> PostMediaContentFaceDetectedValue {
         PostMediaContentFaceDetectedValue {
-            account_id: Box::new(account_id),
-            content_id: Box::new(content_id),
+            account_id,
+            content_id,
             value: None,
         }
     }

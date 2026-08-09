@@ -14,11 +14,11 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AgeVerificationConfig {
     #[serde(rename = "methods", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub methods: Option<Option<Box<models::AgeVerificationMethodsConfig>>>,
+    pub methods: Option<Option<models::AgeVerificationMethodsConfig>>,
     #[serde(rename = "required", skip_serializing_if = "Option::is_none")]
-    pub required: Option<Box<models::AgeVerificationPlatforms>>,
+    pub required: Option<models::AgeVerificationPlatforms>,
     #[serde(rename = "verify_during_initial_setup", skip_serializing_if = "Option::is_none")]
-    pub verify_during_initial_setup: Option<Box<models::AgeVerificationPlatforms>>,
+    pub verify_during_initial_setup: Option<models::AgeVerificationPlatforms>,
 }
 
 impl AgeVerificationConfig {

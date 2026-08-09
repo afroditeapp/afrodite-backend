@@ -33,7 +33,7 @@ pub struct Profile {
     #[serde(rename = "unlimited_likes", skip_serializing_if = "Option::is_none")]
     pub unlimited_likes: Option<bool>,
     #[serde(rename = "verification_status")]
-    pub verification_status: Box<models::ProfileVerificationStatus>,
+    pub verification_status: models::ProfileVerificationStatus,
 }
 
 impl Profile {
@@ -47,7 +47,7 @@ impl Profile {
             ptext: None,
             ptext_accepted: None,
             unlimited_likes: None,
-            verification_status: Box::new(verification_status),
+            verification_status,
         }
     }
 }

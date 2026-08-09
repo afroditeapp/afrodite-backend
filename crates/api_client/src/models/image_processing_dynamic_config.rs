@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 pub struct ImageProcessingDynamicConfig {
     /// Thresholds when an image is classified as NSFW.  If a probability value is equal or greater than the related threshold then the image is classified as NSFW.  Threshold values must be in the range 0.0–1.0.
     #[serde(rename = "nsfw_thresholds")]
-    pub nsfw_thresholds: Box<models::NsfwDetectionThresholds>,
+    pub nsfw_thresholds: models::NsfwDetectionThresholds,
     /// See [rustface::Detector::set_score_thresh] documentation. Value 1.0 seems to work well.
     #[serde(rename = "seetaface_threshold", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub seetaface_threshold: Option<Option<f64>>,
@@ -24,7 +24,7 @@ pub struct ImageProcessingDynamicConfig {
 impl ImageProcessingDynamicConfig {
     pub fn new(nsfw_thresholds: models::NsfwDetectionThresholds) -> ImageProcessingDynamicConfig {
         ImageProcessingDynamicConfig {
-            nsfw_thresholds: Box::new(nsfw_thresholds),
+            nsfw_thresholds,
             seetaface_threshold: None,
         }
     }

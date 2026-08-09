@@ -16,14 +16,14 @@ pub struct UpdateCustomReportEmpty {
     #[serde(rename = "custom_report_id")]
     pub custom_report_id: i32,
     #[serde(rename = "target")]
-    pub target: Box<models::AccountId>,
+    pub target: models::AccountId,
 }
 
 impl UpdateCustomReportEmpty {
     pub fn new(custom_report_id: i32, target: models::AccountId) -> UpdateCustomReportEmpty {
         UpdateCustomReportEmpty {
             custom_report_id,
-            target: Box::new(target),
+            target,
         }
     }
 }

@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 pub struct DemoAccountRegisterAccountResult {
     /// Account ID if registration was successful
     #[serde(rename = "aid", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub aid: Option<Option<Box<models::AccountId>>>,
+    pub aid: Option<Option<models::AccountId>>,
     #[serde(rename = "error", skip_serializing_if = "Option::is_none")]
     pub error: Option<bool>,
     /// True when the demo account has reached its maximum account limit

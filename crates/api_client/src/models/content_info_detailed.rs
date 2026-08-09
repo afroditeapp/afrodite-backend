@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ContentInfoDetailed {
     #[serde(rename = "cid")]
-    pub cid: Box<models::ContentId>,
+    pub cid: models::ContentId,
     #[serde(rename = "ctype")]
     pub ctype: models::MediaContentType,
     /// Face detected (automatic)
@@ -30,9 +30,9 @@ pub struct ContentInfoDetailed {
     #[serde(rename = "face_verified_manual", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub face_verified_manual: Option<Option<bool>>,
     #[serde(rename = "rejected_reason_category", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub rejected_reason_category: Option<Option<Box<models::MediaContentModerationRejectedReasonCategory>>>,
+    pub rejected_reason_category: Option<Option<models::MediaContentModerationRejectedReasonCategory>>,
     #[serde(rename = "rejected_reason_details", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub rejected_reason_details: Option<Option<Box<models::MediaContentModerationRejectedReasonDetails>>>,
+    pub rejected_reason_details: Option<Option<models::MediaContentModerationRejectedReasonDetails>>,
     #[serde(rename = "secure_capture")]
     pub secure_capture: bool,
     #[serde(rename = "slot", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -40,15 +40,15 @@ pub struct ContentInfoDetailed {
     #[serde(rename = "state")]
     pub state: models::ContentModerationState,
     #[serde(rename = "usage_end_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub usage_end_time: Option<Option<Box<models::UnixTime>>>,
+    pub usage_end_time: Option<Option<models::UnixTime>>,
     #[serde(rename = "usage_start_time", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub usage_start_time: Option<Option<Box<models::UnixTime>>>,
+    pub usage_start_time: Option<Option<models::UnixTime>>,
 }
 
 impl ContentInfoDetailed {
     pub fn new(cid: models::ContentId, ctype: models::MediaContentType, face_detected: bool, secure_capture: bool, state: models::ContentModerationState) -> ContentInfoDetailed {
         ContentInfoDetailed {
-            cid: Box::new(cid),
+            cid,
             ctype,
             face_detected,
             face_detected_manual: None,

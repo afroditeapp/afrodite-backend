@@ -89,7 +89,8 @@ update-api-bindings-step-generate-bindings:
 	-g rust \
 	-o crates/api_client \
 	--package-name api_client \
-	--global-property apiDocs=false,modelDocs=false
+	--global-property apiDocs=false,modelDocs=false \
+	--additional-properties=avoidBoxedModels=true
 # Workarounds for generator bugs
 # Command output is redirected as macOS sed doesn't support normal -i
 	sed -e 's/models::models::StatisticsProfileVisibility/models::StatisticsProfileVisibility/g' crates/api_client/src/apis/profile_api.rs > $(TMP_FILE)

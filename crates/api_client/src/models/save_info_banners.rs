@@ -14,16 +14,16 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SaveInfoBanners {
     #[serde(rename = "current", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub current: Option<Option<Box<models::InfoBannersConfig>>>,
+    pub current: Option<Option<models::InfoBannersConfig>>,
     #[serde(rename = "new")]
-    pub new: Box<models::InfoBannersConfig>,
+    pub new: models::InfoBannersConfig,
 }
 
 impl SaveInfoBanners {
     pub fn new(new: models::InfoBannersConfig) -> SaveInfoBanners {
         SaveInfoBanners {
             current: None,
-            new: Box::new(new),
+            new,
         }
     }
 }

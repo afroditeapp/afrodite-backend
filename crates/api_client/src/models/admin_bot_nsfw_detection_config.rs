@@ -15,25 +15,25 @@ use serde::{Deserialize, Serialize};
 pub struct AdminBotNsfwDetectionConfig {
     /// Thresholds for accepting the image.
     #[serde(rename = "accept")]
-    pub accept: Box<models::NsfwDetectionThresholds>,
+    pub accept: models::NsfwDetectionThresholds,
     /// Thresholds for image deletion.
     #[serde(rename = "delete")]
-    pub delete: Box<models::NsfwDetectionThresholds>,
+    pub delete: models::NsfwDetectionThresholds,
     /// Thresholds for moving image to human moderation.
     #[serde(rename = "move_to_human")]
-    pub move_to_human: Box<models::NsfwDetectionThresholds>,
+    pub move_to_human: models::NsfwDetectionThresholds,
     /// Thresholds for image rejection.
     #[serde(rename = "reject")]
-    pub reject: Box<models::NsfwDetectionThresholds>,
+    pub reject: models::NsfwDetectionThresholds,
 }
 
 impl AdminBotNsfwDetectionConfig {
     pub fn new(accept: models::NsfwDetectionThresholds, delete: models::NsfwDetectionThresholds, move_to_human: models::NsfwDetectionThresholds, reject: models::NsfwDetectionThresholds) -> AdminBotNsfwDetectionConfig {
         AdminBotNsfwDetectionConfig {
-            accept: Box::new(accept),
-            delete: Box::new(delete),
-            move_to_human: Box::new(move_to_human),
-            reject: Box::new(reject),
+            accept,
+            delete,
+            move_to_human,
+            reject,
         }
     }
 }
