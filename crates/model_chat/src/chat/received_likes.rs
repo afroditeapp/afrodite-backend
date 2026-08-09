@@ -18,6 +18,7 @@ pub struct ReceivedLikesPageItem {
     pub p: ProfileLink,
     /// If Some, the like is not viewed yet
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub not_viewed: Option<ReceivedLikeId>,
 }
 

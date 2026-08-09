@@ -87,8 +87,10 @@ pub struct CustomEmailTranslation {
 pub struct CustomEmail {
     pub id: CustomEmailId,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub sending_initiated_unix_time: Option<UnixTime>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub sending_completed_unix_time: Option<UnixTime>,
     pub translations: Vec<CustomEmailTranslation>,
 }

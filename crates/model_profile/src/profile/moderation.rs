@@ -102,8 +102,10 @@ pub struct ProfileStringModerationInfo {
     #[diesel(column_name = "state_type")]
     pub state: ProfileStringModerationState,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub rejected_reason_category: Option<ProfileStringModerationRejectedReasonCategory>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub rejected_reason_details: Option<ProfileStringModerationRejectedReasonDetails>,
 }
 

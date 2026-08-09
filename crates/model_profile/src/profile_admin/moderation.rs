@@ -33,8 +33,10 @@ pub struct ProfileStringPendingModeration {
     pub id: AccountId,
     pub value: NonEmptyString,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub rejected_category: Option<ProfileStringModerationRejectedReasonCategory>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub rejected_details: Option<ProfileStringModerationRejectedReasonDetails>,
 }
 
@@ -45,13 +47,16 @@ pub struct PostModerateProfileString {
     pub content_type: ProfileStringModerationContentType,
     pub accept: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub rejected_category: Option<ProfileStringModerationRejectedReasonCategory>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub rejected_details: Option<ProfileStringModerationRejectedReasonDetails>,
     /// If true, ignore accept and move the text to waiting for human moderation state.
     /// rejected_category and rejected_details can be used to set the reason why the bot
     /// moved the content to human moderation.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub move_to_human: Option<bool>,
 }
 
@@ -64,7 +69,9 @@ pub struct GetProfileStringStateParams {
 pub struct GetProfileStringState {
     /// If `None`, the `moderation_info` is `None`.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub value: Option<NonEmptyString>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub moderation_info: Option<ProfileStringModerationInfo>,
 }

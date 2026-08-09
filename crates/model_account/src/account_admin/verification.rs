@@ -18,6 +18,7 @@ pub struct AccountVerificationQueueAdminItem {
 #[derive(Debug, Clone, Default, Serialize, Deserialize, ToSchema)]
 pub struct GetAccountVerificationQueueNextItemResult {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub item: Option<AccountVerificationQueueAdminItem>,
 }
 
@@ -26,5 +27,6 @@ pub struct PostAccountVerificationQueueRemoveNextItem {
     pub account_id: AccountId,
     pub verification_error_flags: AccountVerificationErrorFlagsValue,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub edit: Option<EditVerificationValues>,
 }

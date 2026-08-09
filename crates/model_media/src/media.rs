@@ -25,7 +25,7 @@ pub struct SlotId {
     pub slot_id: u8,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Deserialize, Serialize, ToSchema, IntoParams)]
+#[derive(Debug, Clone, Copy, PartialEq, Deserialize, Serialize, ToSchema)]
 pub struct ContentInfo {
     pub cid: ContentId,
     /// Default value is not set to API doc as the API doc will then have
@@ -48,6 +48,7 @@ pub struct ContentInfo {
     pub face_detected: bool,
     /// Face verified against current security content (automatic or manual)
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub face_verified: Option<bool>,
 }
 
@@ -83,7 +84,7 @@ fn value_is_default_grid_crop_xy(v: &f32) -> bool {
     *v == value_default_grid_crop_xy()
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct MyContentInfo {
     pub cid: ContentId,
     pub ctype: MediaContentType,
@@ -93,37 +94,47 @@ pub struct MyContentInfo {
     pub face_verified: Option<bool>,
     pub state: ContentModerationState,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub rejected_reason_category: Option<MediaContentModerationRejectedReasonCategory>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub rejected_reason_details: Option<MediaContentModerationRejectedReasonDetails>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ContentInfoDetailed {
     pub cid: ContentId,
     pub ctype: MediaContentType,
     pub state: ContentModerationState,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub slot: Option<ContentSlot>,
     pub secure_capture: bool,
     /// Face detected (automatic)
     face_detected: bool,
     /// Manual face detected value set by admin
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     face_detected_manual: Option<bool>,
     /// Face verified against current security content (automatic or manual)
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     face_verified: Option<bool>,
     /// Manual face verified value set by admin
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     face_verified_manual: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub usage_start_time: Option<UnixTime>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub usage_end_time: Option<UnixTime>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub rejected_reason_category: Option<MediaContentModerationRejectedReasonCategory>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub rejected_reason_details: Option<MediaContentModerationRejectedReasonDetails>,
 }
 
@@ -518,6 +529,7 @@ pub struct UpdateProfileContentResult {
     #[schema(default = false)]
     error: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     error_content_at_index_does_not_exist: Option<i64>,
 }
 
@@ -627,13 +639,16 @@ impl From<CurrentAccountMediaInternal> for MyProfileContent {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct SecurityContentAdminInfo {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub content: Option<MyContentInfo>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub security_content_verified: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub security_content_verified_manual: Option<bool>,
 }
 
@@ -682,9 +697,10 @@ pub struct GetContentQueryParams {
     pub q: Option<String>,
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, IntoParams)]
 pub struct GetProfileContentQueryParams {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[into_params(nullable = false)]
     version: Option<simple_backend_utils::UuidBase64Url>,
     /// If false profile content access is allowed when profile is set as public.
     /// If true profile content access is allowed when users are a match.
@@ -705,8 +721,10 @@ impl GetProfileContentQueryParams {
 #[derive(Debug, Serialize, ToSchema)]
 pub struct GetProfileContentResult {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub content: Option<ProfileContent>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub version: Option<ProfileContentVersion>,
 }
 
@@ -765,6 +783,7 @@ pub struct GetMediaContentResult {
     pub profile_content: MyProfileContent,
     pub profile_content_version: ProfileContentVersion,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub security_content: Option<MyContentInfo>,
     pub sync_version: MediaContentSyncVersion,
 }

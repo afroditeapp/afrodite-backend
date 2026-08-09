@@ -10,8 +10,10 @@ use crate::AccountId;
 pub struct GetApiUsageStatisticsSettings {
     pub account: AccountId,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub max_time: Option<UnixTime>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub min_time: Option<UnixTime>,
 }
 

@@ -6,8 +6,10 @@ use utoipa::ToSchema;
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct EmailAddressStateAdmin {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub email: Option<EmailAddress>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub email_change: Option<EmailAddress>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]

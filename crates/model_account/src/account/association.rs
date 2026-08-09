@@ -68,6 +68,7 @@ pub struct AssociationMembershipEntryInternal {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct GetAssociationMembership {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub membership: Option<AssociationMembership>,
 }
 
@@ -80,6 +81,7 @@ impl From<Option<AssociationMembership>> for GetAssociationMembership {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct GetAssociationMember {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub member: Option<AssociationMember>,
 }
 
@@ -102,5 +104,6 @@ pub struct AssociationMembershipDataExportEntry {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct GetAssociationMembersOnlyInfo {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub info_markdown: Option<StringResource>,
 }

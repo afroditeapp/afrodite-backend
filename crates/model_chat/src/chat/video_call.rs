@@ -4,6 +4,7 @@ use utoipa::ToSchema;
 #[derive(Default, Serialize, ToSchema)]
 pub struct PostVideoCallUrlResult {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub jitsi_meet: Option<JitsiMeetUrl>,
 }
 
@@ -16,5 +17,6 @@ pub struct JitsiMeetUrl {
     /// schema. If exists, this should be used to open the meeting
     /// when Jitsi Meet app is not installed.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub custom_url: Option<String>,
 }

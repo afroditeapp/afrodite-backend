@@ -317,8 +317,10 @@ impl EmailMessages {
 pub struct AccessibleAccount {
     pub aid: AccountId,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub name: Option<NonEmptyString>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     #[schema(value_type = Option<i64>)]
     pub age: Option<ProfileAge>,
 }

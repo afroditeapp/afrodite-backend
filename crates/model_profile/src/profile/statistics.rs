@@ -10,6 +10,7 @@ pub struct GetProfileStatisticsParams {
     ///
     /// Non default value is only for admins.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[into_params(nullable = false)]
     pub profile_visibility: Option<StatisticsProfileVisibility>,
     /// Non default value is only for admins.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]

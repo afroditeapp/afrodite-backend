@@ -22,8 +22,10 @@ impl From<ManagerApiScheduledTaskStatus> for ScheduledTaskStatus {
 #[derive(Debug, Default, Clone, Deserialize, Serialize, PartialEq, ToSchema)]
 pub struct ScheduledTaskStatus {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     system_reboot: Option<MaintenanceTask>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     server_restart: Option<MaintenanceTask>,
 }
 

@@ -147,6 +147,7 @@ pub struct IpAddressInfo {
     #[schema(default = json!([]))]
     pub lists: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub country: Option<String>,
 }
 
@@ -161,8 +162,10 @@ pub enum IpCountryStatisticsType {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct GetIpCountryStatisticsSettings {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub max_time: Option<UnixTime>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub min_time: Option<UnixTime>,
     pub statistics_type: IpCountryStatisticsType,
     /// Get statistics from RAM instead of database.
@@ -214,6 +217,7 @@ pub struct IpCountryStatistics {
 pub struct IpCountryStatisticsValue {
     /// Value exists when [GetIpCountryStatisticsSettings::live_statistics] is false.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub t: Option<UnixTime>,
     pub c: i64,
 }

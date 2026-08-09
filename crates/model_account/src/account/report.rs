@@ -11,5 +11,6 @@ pub struct UpdateCustomReportEmpty {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct GetCustomReportsConfigResult {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub config: Option<CustomReportsConfig>,
 }

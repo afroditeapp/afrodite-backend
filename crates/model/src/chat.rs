@@ -270,6 +270,7 @@ impl AdminDataExportPendingMessage {
 pub struct OnlineStatusUpdate {
     pub a: AccountId,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub l: Option<LastSeenTime>,
 }
 

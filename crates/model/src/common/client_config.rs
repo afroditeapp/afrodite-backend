@@ -14,15 +14,19 @@ use crate::{
 pub struct ClientConfig {
     /// None, if client features are not configured.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub client_features: Option<ClientFeaturesConfigHash>,
     /// None, if dynamic client features are not configured.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub dynamic_client_features: Option<DynamicClientFeaturesConfigHash>,
     /// None, if custom reports are not configured.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub custom_reports: Option<CustomReportsConfigHash>,
     /// None, if attributes are not configured.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub profile_attributes: Option<PartialProfileAttributesConfig>,
     pub sync_version: ClientConfigSyncVersion,
 }
@@ -87,5 +91,6 @@ impl AsRef<str> for ClientLanguage {
 #[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct GetClientLanguage {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub l: Option<ClientLanguage>,
 }

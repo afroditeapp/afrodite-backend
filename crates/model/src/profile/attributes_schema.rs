@@ -231,6 +231,7 @@ pub struct Attribute {
     pub required: bool,
     /// Icon for the attribute.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     #[schema(value_type = Option<String>)]
     pub icon: Option<IconResource>,
     /// Numeric unique identifier for the attribute.
@@ -468,6 +469,7 @@ pub struct AttributeValue {
     #[schema(default = true)]
     pub visible: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     #[schema(value_type = Option<String>)]
     pub icon: Option<IconResource>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]

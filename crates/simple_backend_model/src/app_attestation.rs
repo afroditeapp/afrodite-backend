@@ -4,6 +4,7 @@ use utoipa::ToSchema;
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, ToSchema)]
 pub struct AppAttestation {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub debug: Option<DebugAppAttestation>,
 }
 

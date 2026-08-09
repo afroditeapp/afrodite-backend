@@ -249,18 +249,22 @@ pub struct ContentProcessingState {
     ///
     /// i64 is used as Dart has only signed integers.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub wait_queue_position: Option<i64>,
     /// Content ID of the processed content.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub cid: Option<ContentId>,
     /// Face detected info of the processed content.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub face_detected: Option<bool>,
 }
 
 #[derive(Default, Serialize, ToSchema)]
 pub struct GetContentProcessingState {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub state: Option<ContentProcessingState>,
 }
 

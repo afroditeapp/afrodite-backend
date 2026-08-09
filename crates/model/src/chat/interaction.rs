@@ -492,5 +492,6 @@ impl AccountInteractionInternal {
 #[derive(Default, Serialize, ToSchema)]
 pub struct GetConversationId {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub value: Option<ConversationId>,
 }

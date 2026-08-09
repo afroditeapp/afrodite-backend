@@ -102,8 +102,10 @@ impl From<chrono::DateTime<chrono::Utc>> for UnixTime {
 pub struct ServerMaintenanceStatus {
     /// If None, ignore [Self::end].
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     start: Option<UnixTime>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     end: Option<UnixTime>,
 }
 
@@ -121,8 +123,10 @@ impl ServerMaintenanceStatus {
 pub struct ScheduledMaintenanceStatus {
     /// If None, ignore [Self::end].
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     start: Option<UnixTime>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     end: Option<UnixTime>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]

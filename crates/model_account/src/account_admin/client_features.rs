@@ -5,6 +5,7 @@ use utoipa::ToSchema;
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct SaveInfoBanners {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub current: Option<InfoBannersConfig>,
     pub new: InfoBannersConfig,
 }

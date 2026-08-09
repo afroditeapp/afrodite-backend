@@ -134,6 +134,7 @@ pub struct SendVerifyEmailMessageResult {
     #[schema(default = false)]
     error_email_sending_timeout: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     error_try_again_later_after_seconds: Option<u32>,
 }
 
@@ -200,6 +201,7 @@ pub struct InitEmailChangeResult {
     #[schema(default = false)]
     error_email_sending_timeout: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     error_try_again_later_after_seconds: Option<u32>,
 }
 

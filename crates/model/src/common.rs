@@ -56,6 +56,7 @@ pub struct ServerVersion {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct ManualServerMaintenanceInfoForAnotherServer {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub text: Option<crate::StringResource>,
 }
 

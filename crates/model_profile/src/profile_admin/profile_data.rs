@@ -8,6 +8,7 @@ pub struct GetProfileAgeAndName {
     #[schema(value_type = i16)]
     pub age: ProfileAge,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub name: Option<NonEmptyString>,
 }
 
@@ -15,14 +16,17 @@ pub struct GetProfileAgeAndName {
 pub struct SetProfileName {
     pub account: AccountId,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub name: Option<NonEmptyString>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ProfileAgeRangeVerificationAdminInfo {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub profile_age_range_verified: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub profile_age_range_verified_manual: Option<bool>,
 }
 
@@ -40,8 +44,10 @@ pub struct PostProfileAgeRangeVerifiedValue {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ProfileNameVerificationAdminInfo {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub profile_name_verified: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub profile_name_verified_manual: Option<bool>,
 }
 
@@ -49,6 +55,7 @@ pub struct ProfileNameVerificationAdminInfo {
 pub struct PostProfileNameVerifiedValue {
     pub account_id: AccountId,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub current_profile_name: Option<NonEmptyString>,
     /// Bot sets automatic profile name verification value.
     /// Human admin sets manual override value.

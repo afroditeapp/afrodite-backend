@@ -46,6 +46,7 @@ impl DynamicClientFeaturesConfigHash {
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct DynamicClientFeaturesConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub info_banners: Option<InfoBannersConfig>,
 }
 
@@ -117,8 +118,10 @@ pub struct InfoBanner {
     pub platform: BannerPlatform,
     pub visibility: BannerVisibility,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub override_predefined_banner: Option<PredefinedBanner>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub text: Option<TextInfoBanner>,
 }
 
@@ -129,8 +132,10 @@ pub struct TextInfoBanner {
     #[schema(default = false)]
     pub dismissible: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub url_button: Option<InfoBannerUrlButton>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     #[schema(value_type = Option<String>)]
     pub icon: Option<IconResource>,
 }
@@ -138,24 +143,34 @@ pub struct TextInfoBanner {
 #[derive(Debug, Default, Clone, Serialize, ToSchema)]
 pub struct ClientFeaturesConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     attribution: Option<AttributionConfig>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     features: Option<FeaturesConfig>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     news: Option<NewsConfig>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     map: Option<MapConfig>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     likes: Option<LikesConfig>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     profile: Option<ProfileConfig>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     chat: Option<ChatConfig>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     age_verification: Option<AgeVerificationConfig>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     account_verification: Option<AccountVerificationConfig>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     association: Option<AssociationConfig>,
 }
 
@@ -164,9 +179,11 @@ pub struct AttributionConfig {
     /// Generic attribution info text displayed in about screen
     /// of the app.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     generic: Option<StringResource>,
     /// Attribution info text displayed when IP country data is shown.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     ip_country: Option<StringResource>,
 }
 
@@ -220,10 +237,13 @@ pub struct NewsConfig {
 pub struct MapConfig {
     /// Limit viewable map area
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     bounds: Option<MapBounds>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     zoom: Option<MapZoom>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     initial_location: Option<MapCoordinate>,
     /// Increase this version number to make client to redownload cached
     /// map tiles.
@@ -290,8 +310,10 @@ impl Default for MapZoom {
 pub struct LikesConfig {
     /// UTC time with "hh:mm" format.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub unlimited_likes_disabling_time: Option<UtcTimeValue>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub daily: Option<DailyLikesConfig>,
 }
 
@@ -305,8 +327,10 @@ pub struct DailyLikesConfig {
 #[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ProfileConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub profile_name_regex: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub first_image: Option<FirstImageConfig>,
 }
 
@@ -408,6 +432,7 @@ pub struct AgeVerificationConfig {
     #[schema(default)]
     required: AgeVerificationPlatforms,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub methods: Option<AgeVerificationMethodsConfig>,
 }
 
@@ -448,8 +473,10 @@ impl AccountVerificationPlatforms {
 #[derive(Debug, Clone, Default, Deserialize, Serialize, ToSchema)]
 pub struct AccountVerificationConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub methods: Option<AccountVerificationMethodsConfig>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub scopes: Option<AccountVerificationScopesConfig>,
 }
 
@@ -479,8 +506,10 @@ pub struct AccountVerificationScopesConfig {
 #[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]
 pub struct ChatConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub typing_indicator: Option<TypingIndicatorConfig>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub check_online_status: Option<CheckOnlineStatusConfig>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
@@ -542,8 +571,10 @@ pub struct AssociationConfig {
     pub user_can_view_existing_membership: bool,
     pub association_name: StringResource,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub association_info_markdown: Option<StringResource>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub membership_info_markdown: Option<StringResource>,
     pub membership_types: Vec<MembershipType>,
 }

@@ -15,6 +15,7 @@ pub struct AddPublicKeyParams {
 #[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct AddPublicKeyResult {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     key_id: Option<PublicKeyId>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
@@ -55,12 +56,14 @@ impl AddPublicKeyResult {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct GetLatestPublicKeyId {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub id: Option<PublicKeyId>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct GetPrivatePublicKeyInfo {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub latest_public_key_id: Option<PublicKeyId>,
     pub max_public_key_count: i64,
 }

@@ -34,10 +34,13 @@ pub struct SetAccountBanState {
     pub account: AccountId,
     /// `Some` value bans the account and `None` value unbans the account.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub ban_until: Option<UnixTime>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub reason_category: Option<AccountBanReasonCategory>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub reason_details: Option<AccountBanReasonDetails>,
 }
 

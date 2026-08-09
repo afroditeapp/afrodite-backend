@@ -8,6 +8,7 @@ use crate::{ContentId, ProfileAge};
 pub struct EditVerificationSecurityContent {
     pub security_content: ContentId,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub verified_value: Option<bool>,
 }
 
@@ -16,23 +17,29 @@ pub struct EditVerificationProfileAgeRange {
     #[schema(value_type = i16)]
     pub current_profile_age: ProfileAge,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub verified_value: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct EditVerificationProfileName {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub current_profile_name: Option<NonEmptyString>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub verified_value: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct EditVerificationValues {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub security_content: Option<EditVerificationSecurityContent>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub profile_age_range: Option<EditVerificationProfileAgeRange>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub profile_name: Option<EditVerificationProfileName>,
 }

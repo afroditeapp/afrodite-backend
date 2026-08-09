@@ -137,10 +137,13 @@ impl PostAgeVerificationResult {
 pub struct AccountVerificationQueueStatus {
     /// The first queue position is 1
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub queue_position: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub verification_method: Option<VerificationMethod>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub verification_unix_time: Option<UnixTime>,
     /// Empty flags value means there are no known verification errors.
     pub verification_error_flags: AccountVerificationErrorFlagsValue,

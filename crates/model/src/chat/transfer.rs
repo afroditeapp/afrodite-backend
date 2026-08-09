@@ -15,12 +15,15 @@ pub struct BackupTransferInitialMessage {
     pub role: BackupTransferClientRole,
     /// Access token from target client
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub access_token: Option<String>,
     /// Data from target client
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub target_data: Option<String>,
     /// SHA256 hash of target's data from source client. The hash is in hexadecimal format.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub target_data_sha256: Option<String>,
 }
 

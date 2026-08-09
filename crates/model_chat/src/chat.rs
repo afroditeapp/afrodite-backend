@@ -172,6 +172,7 @@ pub fn message_id_from_string<'de, D: Deserializer<'de>>(d: D) -> Result<Message
 pub struct SendMessageResult {
     /// Base64 encoded PGP signed message containing [SignedMessageData].
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     d: Option<String>,
     // Errors
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
@@ -198,11 +199,13 @@ pub struct SendMessageResult {
     /// Remaining daily messages count. The value will be returned only
     /// if there is 50 or less messages left.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     remaining_messages: Option<u16>,
     /// Remaining messages which can be sent to conversation before
     /// delivery to recipient or message sending acknowledgement must happen.
     /// The value will be returned only if there is 5 or less messages left.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     remaining_conversation_messages: Option<u16>,
 }
 
@@ -299,10 +302,13 @@ pub struct SendLike {
 #[derive(Serialize, ToSchema)]
 pub struct SendLikeResult {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub status: Option<LimitedActionStatus>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub daily_likes_left: Option<DailyLikesLeft>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub error_account_interaction_state_mismatch: Option<CurrentAccountInteractionState>,
 }
 

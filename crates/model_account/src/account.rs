@@ -39,15 +39,18 @@ pub use verification::{
 pub struct LoginResult {
     /// If `None`, the client is unsupported.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     tokens: Option<AuthPair>,
 
     /// Account ID of current account. If `None`, the client is unsupported.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     aid: Option<AccountId>,
 
     /// Current email of current account. If `None`, if email address is not
     /// set or the client version is unsupported.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     email: Option<EmailAddress>,
 
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
@@ -221,6 +224,7 @@ pub struct ClientInfo {
     pub client_type: ClientType,
     pub client_version: ClientVersion,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub app_attestation: Option<AppAttestation>,
 }
 
@@ -365,14 +369,17 @@ pub struct EmailLoginTokens {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct EmailAddressState {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub email: Option<EmailAddress>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub email_change: Option<EmailAddress>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub email_change_verified: bool,
     /// API route handler sets this value
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub email_change_completion_time: Option<UnixTime>,
     #[serde(default = "default_true", skip_serializing_if = "is_true")]
     #[schema(default = true)]
@@ -414,6 +421,7 @@ pub struct BooleanSetting {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct GetAccountDeletionRequestResult {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub automatic_deletion_allowed: Option<UnixTime>,
 }
 
@@ -421,12 +429,16 @@ pub struct GetAccountDeletionRequestResult {
 pub struct GetAccountBanTimeResult {
     /// If `None` the account is not banned.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub banned_until: Option<UnixTime>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub admin_type: Option<AccountBannedAdminType>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub reason_category: Option<AccountBanReasonCategory>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub reason_details: Option<AccountBanReasonDetails>,
 }
 
@@ -434,8 +446,10 @@ pub struct GetAccountBanTimeResult {
 pub struct SignInWithLoginInfo {
     pub client_info: ClientInfo,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub apple: Option<SignInWithAppleInfo>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub google: Option<SignInWithGoogleInfo>,
 }
 
@@ -462,12 +476,14 @@ pub struct SignInWithGoogleInfo {
 #[derive(Deserialize, ToSchema)]
 pub struct PutSignInWithApple {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub apple: Option<SignInWithAppleInfo>,
 }
 
 #[derive(Deserialize, ToSchema)]
 pub struct PutSignInWithGoogle {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub google: Option<SignInWithGoogleInfo>,
 }
 
@@ -548,6 +564,7 @@ pub struct BotAccount {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct GetBotsResult {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub admin: Option<BotAccount>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub users: Vec<BotAccount>,

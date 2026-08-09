@@ -6,6 +6,7 @@ pub struct ImageProcessingDynamicConfig {
     /// See [rustface::Detector::set_score_thresh] documentation.
     /// Value 1.0 seems to work well.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub seetaface_threshold: Option<f64>,
     /// Thresholds when an image is classified as NSFW.
     ///
@@ -19,14 +20,19 @@ pub struct ImageProcessingDynamicConfig {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct NsfwDetectionThresholds {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub drawings: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub hentai: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub neutral: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub porn: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub sexy: Option<f64>,
 }
 

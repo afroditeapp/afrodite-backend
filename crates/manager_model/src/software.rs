@@ -5,8 +5,10 @@ use utoipa::{IntoParams, ToSchema};
 pub struct SoftwareUpdateStatus {
     pub state: SoftwareUpdateState,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub downloaded: Option<SoftwareInfo>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub installed: Option<SoftwareInfo>,
 }
 

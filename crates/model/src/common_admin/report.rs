@@ -37,6 +37,7 @@ pub struct ReportAccountInfo {
     #[schema(value_type = i16)]
     pub age: ProfileAge,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub name: Option<NonEmptyString>,
 }
 
@@ -89,6 +90,7 @@ pub struct ReportDetailed {
     pub target_info: ReportAccountInfo,
     /// Only available when account interaction exists.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub chat_info: Option<ReportChatInfo>,
 }
 
@@ -96,13 +98,17 @@ pub struct ReportDetailed {
 pub struct ReportContent {
     /// Null or non-empty string
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub profile_name: Option<NonEmptyString>,
     /// Null or non-empty string
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub profile_text: Option<NonEmptyString>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub profile_content: Option<ContentId>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub chat_message: Option<ChatMessageReport>,
 }
 

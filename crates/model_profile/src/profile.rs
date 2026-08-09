@@ -44,8 +44,10 @@ pub use report::*;
 #[derive(Debug, Clone, Serialize, ToSchema, PartialEq, Eq)]
 pub struct Profile {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub name: Option<NonEmptyString>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub ptext: Option<NonEmptyString>,
     #[schema(value_type = i16)]
     pub age: ProfileAge,
@@ -210,6 +212,7 @@ sync_version_wrappers!(ProfileSyncVersion,);
 #[derive(Deserialize, ToSchema)]
 pub struct ProfileUpdate {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub ptext: Option<NonEmptyString>,
     pub name: NonEmptyString,
     #[schema(value_type = i16)]
@@ -381,6 +384,7 @@ pub struct AddFavoriteProfileResult {
     /// Remaining favorites count. The value will be returned only
     /// if there is 5 or less favorites left.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     remaining_favorites_count: Option<u16>,
 }
 
@@ -405,10 +409,11 @@ impl AddFavoriteProfileResult {
     }
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema, IntoParams)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, IntoParams)]
 pub struct GetProfileQueryParam {
     /// Profile version UUID
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[into_params(nullable = false)]
     v: Option<simple_backend_utils::UuidBase64Url>,
     /// If requested profile is not public, allow getting the profile
     /// data if the requested profile is a match.
@@ -426,16 +431,19 @@ impl GetProfileQueryParam {
     }
 }
 
-#[derive(Debug, Clone, Serialize, ToSchema, IntoParams)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct GetProfileResult {
     /// Profile data if it is newer than the version in the query.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub profile: Option<Profile>,
     /// If empty then profile does not exist or current account does
     /// not have access to the profile.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub profile_version: Option<ProfileVersion>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     last_seen_time: Option<LastSeenTime>,
 }
 
@@ -498,16 +506,22 @@ pub struct GetMyProfileResult {
     pub profile_version: ProfileVersion,
     pub profile_sync_version: ProfileSyncVersion,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub profile_age_range_verified: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub profile_age_range_verified_manual: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub profile_name_verified: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub profile_name_verified_manual: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub name_moderation_info: Option<ProfileStringModerationInfo>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub text_moderation_info: Option<ProfileStringModerationInfo>,
 }
 
@@ -545,5 +559,6 @@ impl InitialProfileAge {
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct GetInitialProfileAgeResult {
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub value: Option<InitialProfileAge>,
 }

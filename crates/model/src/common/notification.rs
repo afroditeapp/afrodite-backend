@@ -130,6 +130,7 @@ impl PendingAppNotificationInternal {
 pub struct PendingAppNotificationToDelete {
     pub notification_type: PendingAppNotificationType,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub data_integer: Option<i64>,
 }
 
@@ -143,6 +144,7 @@ pub struct PendingAppNotification {
     #[schema(default = false)]
     pub push_notification_sent: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub data_integer: Option<i64>,
 }
 

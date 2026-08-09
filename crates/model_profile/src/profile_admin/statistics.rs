@@ -10,6 +10,7 @@ pub struct GetProfileStatisticsHistoryParams {
     pub value_type: ProfileStatisticsHistoryValueType,
     /// Required only for AgeChange history
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[into_params(nullable = false)]
     pub age: Option<i16>,
 }
 

@@ -51,8 +51,10 @@ pub struct MediaContentPendingModeration {
     pub account_id: AccountId,
     pub content_id: ContentId,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub rejected_category: Option<MediaContentModerationRejectedReasonCategory>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub rejected_details: Option<MediaContentModerationRejectedReasonDetails>,
 }
 
@@ -62,13 +64,16 @@ pub struct PostModerateMediaContent {
     pub content_id: ContentId,
     pub accept: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub rejected_category: Option<MediaContentModerationRejectedReasonCategory>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub rejected_details: Option<MediaContentModerationRejectedReasonDetails>,
     /// If true, ignore accept and move the content to waiting for human moderation state.
     /// rejected_category and rejected_details can be used to set the reason why the bot
     /// moved the content to human moderation.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
     pub move_to_human: Option<bool>,
 }
 
