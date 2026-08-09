@@ -13,6 +13,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct RequestEmailLoginToken {
+    #[serde(rename = "client_type")]
+    pub client_type: models::ClientType,
     #[serde(rename = "email")]
     pub email: String,
     /// Use this to bypass [LoginResult::error_email_registration_ip_address_limit_reached] when user wants to login to existing account.
@@ -21,8 +23,9 @@ pub struct RequestEmailLoginToken {
 }
 
 impl RequestEmailLoginToken {
-    pub fn new(email: String) -> RequestEmailLoginToken {
+    pub fn new(client_type: models::ClientType, email: String) -> RequestEmailLoginToken {
         RequestEmailLoginToken {
+            client_type,
             email,
             login_only: None,
         }

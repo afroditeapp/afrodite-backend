@@ -17,6 +17,8 @@ pub struct DynamicServerConfig {
     pub account_login_platforms: Option<Box<models::AccountLoginPlatforms>>,
     #[serde(rename = "account_registration_platforms", skip_serializing_if = "Option::is_none")]
     pub account_registration_platforms: Option<Box<models::AccountRegistrationPlatforms>>,
+    #[serde(rename = "email_registration_platforms", skip_serializing_if = "Option::is_none")]
+    pub email_registration_platforms: Option<Box<models::EmailRegistrationPlatforms>>,
 }
 
 impl DynamicServerConfig {
@@ -24,6 +26,7 @@ impl DynamicServerConfig {
         DynamicServerConfig {
             account_login_platforms: None,
             account_registration_platforms: None,
+            email_registration_platforms: None,
         }
     }
 }

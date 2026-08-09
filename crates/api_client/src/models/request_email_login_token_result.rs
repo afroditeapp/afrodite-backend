@@ -21,11 +21,17 @@ pub struct RequestEmailLoginTokenResult {
     pub email_login_emails_per_month: Option<Option<i64>>,
     #[serde(rename = "error", skip_serializing_if = "Option::is_none")]
     pub error: Option<bool>,
+    /// This is true when email registration has been disabled for all client platforms.
+    #[serde(rename = "error_email_registration_all_platforms_disabled", skip_serializing_if = "Option::is_none")]
+    pub error_email_registration_all_platforms_disabled: Option<bool>,
     #[serde(rename = "error_email_registration_ip_address_limit_reached", skip_serializing_if = "Option::is_none")]
     pub error_email_registration_ip_address_limit_reached: Option<bool>,
     /// This is true when the daily email registration limit has been reached. The client should guide the user to wait 24 hours or use another login method for account registration.
     #[serde(rename = "error_email_registration_limit_reached", skip_serializing_if = "Option::is_none")]
     pub error_email_registration_limit_reached: Option<bool>,
+    /// This is true when email registration has been disabled for the client platform the user is using.
+    #[serde(rename = "error_email_registration_platform_disabled", skip_serializing_if = "Option::is_none")]
+    pub error_email_registration_platform_disabled: Option<bool>,
     /// Minimum wait duration between token requests in seconds
     #[serde(rename = "resend_wait_seconds", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub resend_wait_seconds: Option<Option<i64>>,
@@ -40,8 +46,10 @@ impl RequestEmailLoginTokenResult {
             client_token: None,
             email_login_emails_per_month: None,
             error: None,
+            error_email_registration_all_platforms_disabled: None,
             error_email_registration_ip_address_limit_reached: None,
             error_email_registration_limit_reached: None,
+            error_email_registration_platform_disabled: None,
             resend_wait_seconds: None,
             token_validity_seconds: None,
         }

@@ -92,7 +92,7 @@ impl SendImageToSlot {
                         content_processing_state.processing_id_from_client
                             == processing_id_from_client
                             && content_processing_state.new_state.state
-                                == Some(Some(ContentProcessingStateType::Completed))
+                                == ContentProcessingStateType::Completed
                     }
                     _ => false,
                 })
@@ -109,25 +109,25 @@ impl SendImageToSlot {
                     .await
                     .change_context(TestError::ApiRequest)?;
 
-                match state_from_api.processing_id_from_client.flatten() {
-                    None => return Err(TestError::ApiRequest.report()),
-                    Some(id) if id != i32::from(processing_id_from_client) => {
-                        return Err(TestError::ApiRequest.report());
-                    }
-                    Some(_) => (),
+                let Some(state_from_api) = state_from_api.state.flatten() else {
+                    return Err(TestError::ApiRequest.report());
+                };
+
+                if state_from_api.processing_id_from_client != i32::from(processing_id_from_client)
+                {
+                    return Err(TestError::ApiRequest.report());
                 }
 
-                match state_from_api.state.flatten() {
-                    None
-                    | Some(ContentProcessingStateType::Failed)
-                    | Some(ContentProcessingStateType::NsfwDetected) => {
+                match state_from_api.state {
+                    ContentProcessingStateType::Failed
+                    | ContentProcessingStateType::NsfwDetected => {
                         return Err(TestError::ApiRequest.report());
                     }
-                    Some(ContentProcessingStateType::Processing)
-                    | Some(ContentProcessingStateType::InQueue) => {
+                    ContentProcessingStateType::Processing
+                    | ContentProcessingStateType::InQueue => {
                         tokio::time::sleep(std::time::Duration::from_millis(200)).await
                     }
-                    Some(ContentProcessingStateType::Completed) => {
+                    ContentProcessingStateType::Completed => {
                         match state_from_api.cid.clone().flatten() {
                             None => return Err(TestError::ApiRequest.report()),
                             Some(cid) => return Ok(*cid),

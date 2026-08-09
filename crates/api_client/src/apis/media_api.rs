@@ -258,7 +258,7 @@ pub async fn get_content(configuration: &configuration::Configuration, aid: &str
     }
 }
 
-pub async fn get_content_processing_state(configuration: &configuration::Configuration, ) -> Result<models::ContentProcessingState, Error<GetContentProcessingStateError>> {
+pub async fn get_content_processing_state(configuration: &configuration::Configuration, ) -> Result<models::GetContentProcessingState, Error<GetContentProcessingStateError>> {
 
     let uri_str = format!("{}/media_api/content_processing_state", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
@@ -285,8 +285,8 @@ pub async fn get_content_processing_state(configuration: &configuration::Configu
         let content = resp.text().await?;
         match content_type {
             ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::ContentProcessingState`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::ContentProcessingState`")))),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::GetContentProcessingState`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::GetContentProcessingState`")))),
         }
     } else {
         let content = resp.text().await?;

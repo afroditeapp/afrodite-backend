@@ -19,22 +19,22 @@ pub struct ContentProcessingState {
     /// Face detected info of the processed content.
     #[serde(rename = "face_detected", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub face_detected: Option<Option<bool>>,
-    #[serde(rename = "processing_id_from_client", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub processing_id_from_client: Option<Option<i32>>,
-    #[serde(rename = "state", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub state: Option<Option<models::ContentProcessingStateType>>,
+    #[serde(rename = "processing_id_from_client")]
+    pub processing_id_from_client: i32,
+    #[serde(rename = "state")]
+    pub state: models::ContentProcessingStateType,
     /// Current position in processing queue.  First value is 1.  i64 is used as Dart has only signed integers.
     #[serde(rename = "wait_queue_position", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub wait_queue_position: Option<Option<i64>>,
 }
 
 impl ContentProcessingState {
-    pub fn new() -> ContentProcessingState {
+    pub fn new(processing_id_from_client: i32, state: models::ContentProcessingStateType) -> ContentProcessingState {
         ContentProcessingState {
             cid: None,
             face_detected: None,
-            processing_id_from_client: None,
-            state: None,
+            processing_id_from_client,
+            state,
             wait_queue_position: None,
         }
     }

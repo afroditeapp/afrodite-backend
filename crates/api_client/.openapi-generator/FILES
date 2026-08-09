@@ -163,6 +163,7 @@ src/models/email_address_state.rs
 src/models/email_address_state_admin.rs
 src/models/email_login.rs
 src/models/email_login_token.rs
+src/models/email_registration_platforms.rs
 src/models/favorite_profiles_page.rs
 src/models/features_config.rs
 src/models/first_image_config.rs
@@ -183,6 +184,7 @@ src/models/get_client_features_config_result.rs
 src/models/get_client_language.rs
 src/models/get_client_version_statistics_result.rs
 src/models/get_client_version_statistics_settings.rs
+src/models/get_content_processing_state.rs
 src/models/get_conversation_id.rs
 src/models/get_custom_email_config.rs
 src/models/get_custom_reports_config_result.rs

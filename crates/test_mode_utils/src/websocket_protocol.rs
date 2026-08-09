@@ -123,7 +123,10 @@ fn convert_server_event_to_client_for_test_mode(
             let mut event = EventToClient::new(EventType::ContentProcessingStateChanged);
             let value = ContentProcessingStateChanged::new(
                 state_changed.processing_id_from_client,
-                convert_content_processing_state(state_changed.new_state),
+                convert_content_processing_state(
+                    state_changed.processing_id_from_client.into(),
+                    state_changed.new_state,
+                ),
             );
             event.content_processing_state_changed = Some(value);
             Some(event)
@@ -184,12 +187,13 @@ fn convert_server_event_to_client_for_test_mode(
 }
 
 fn convert_content_processing_state(
+    processing_id_from_client: i32,
     state: ContentProcessingStateInternal,
 ) -> ContentProcessingState {
-    let mut converted = ContentProcessingState::new();
-    converted.state = Some(Some(convert_content_processing_state_type(
-        state.state_type(),
-    )));
+    let mut converted = ContentProcessingState::new(
+        processing_id_from_client,
+        convert_content_processing_state_type(state.state_type()),
+    );
 
     match state {
         ContentProcessingStateInternal::InQueue {
