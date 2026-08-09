@@ -26,7 +26,9 @@ use test_mode::TestRunner;
 use crate::{backup_tools::handle_backup_mode, build_info::build_info};
 
 fn main() -> ExitCode {
-    tokio_rustls::rustls::crypto::ring::default_provider();
+    tokio_rustls::rustls::crypto::aws_lc_rs::default_provider()
+        .install_default()
+        .unwrap();
     handle_app_mode(args::get_config())
 }
 
