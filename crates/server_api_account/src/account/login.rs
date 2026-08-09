@@ -211,6 +211,36 @@ async fn validate_login_platform(state: &S, client_type: ClientType) -> Result<(
     }
 }
 
+async fn validate_email_registration_platform(
+    state: &S,
+    client_type: ClientType,
+) -> Result<(), EmailLoginResultInternal> {
+    let config = state
+        .dynamic_server_config_manager()
+        .dynamic_server_config()
+        .await
+        .unwrap_or_default()
+        .email_registration_platforms;
+
+    let enabled = match client_type {
+        ClientType::Android => config.android,
+        ClientType::Ios => config.ios,
+        ClientType::Web => config.web,
+        ClientType::Bot => false,
+    };
+
+    if enabled {
+        return Ok(());
+    }
+
+    let any_enabled = config.android || config.ios || config.web;
+    if any_enabled {
+        Err(EmailLoginResultInternal::error_email_registration_platform_disabled())
+    } else {
+        Err(EmailLoginResultInternal::error_email_registration_all_platforms_disabled())
+    }
+}
+
 /// Validate app attestation provided by the client against server config.
 ///
 /// If app attestation is not configured, attestation is not required and
@@ -378,6 +408,8 @@ struct EmailLoginResultInternal {
     handle: Option<EmailSendingHandle>,
     error_registration_ip_address_limit_reached: bool,
     error_email_registration_limit_reached: bool,
+    error_email_registration_platform_disabled: bool,
+    error_email_registration_all_platforms_disabled: bool,
 }
 
 impl EmailLoginResultInternal {
@@ -387,6 +419,8 @@ impl EmailLoginResultInternal {
             handle: Some(handle),
             error_registration_ip_address_limit_reached: false,
             error_email_registration_limit_reached: false,
+            error_email_registration_platform_disabled: false,
+            error_email_registration_all_platforms_disabled: false,
         }
     }
 
@@ -396,6 +430,8 @@ impl EmailLoginResultInternal {
             handle: None,
             error_registration_ip_address_limit_reached: false,
             error_email_registration_limit_reached: false,
+            error_email_registration_platform_disabled: false,
+            error_email_registration_all_platforms_disabled: false,
         }
     }
 
@@ -405,6 +441,8 @@ impl EmailLoginResultInternal {
             handle: None,
             error_registration_ip_address_limit_reached: true,
             error_email_registration_limit_reached: false,
+            error_email_registration_platform_disabled: false,
+            error_email_registration_all_platforms_disabled: false,
         }
     }
 
@@ -414,6 +452,30 @@ impl EmailLoginResultInternal {
             handle: None,
             error_registration_ip_address_limit_reached: false,
             error_email_registration_limit_reached: true,
+            error_email_registration_platform_disabled: false,
+            error_email_registration_all_platforms_disabled: false,
+        }
+    }
+
+    fn error_email_registration_platform_disabled() -> Self {
+        Self {
+            token: EmailLoginToken::generate_new(),
+            handle: None,
+            error_registration_ip_address_limit_reached: false,
+            error_email_registration_limit_reached: false,
+            error_email_registration_platform_disabled: true,
+            error_email_registration_all_platforms_disabled: false,
+        }
+    }
+
+    fn error_email_registration_all_platforms_disabled() -> Self {
+        Self {
+            token: EmailLoginToken::generate_new(),
+            handle: None,
+            error_registration_ip_address_limit_reached: false,
+            error_email_registration_limit_reached: false,
+            error_email_registration_platform_disabled: false,
+            error_email_registration_all_platforms_disabled: true,
         }
     }
 }
@@ -460,6 +522,14 @@ pub async fn post_request_email_login_token(
         Ok(Json(
             RequestEmailLoginTokenResult::error_email_registration_limit_reached(),
         ))
+    } else if r.error_email_registration_platform_disabled {
+        Ok(Json(
+            RequestEmailLoginTokenResult::error_email_registration_platform_disabled(),
+        ))
+    } else if r.error_email_registration_all_platforms_disabled {
+        Ok(Json(
+            RequestEmailLoginTokenResult::error_email_registration_all_platforms_disabled(),
+        ))
     } else {
         Ok(Json(RequestEmailLoginTokenResult::successful(
             r.token,
@@ -484,6 +554,10 @@ async fn handle_login_token_sending(
     request: RequestEmailLoginToken,
 ) -> Result<EmailLoginResultInternal, StatusCode> {
     if !request.login_only {
+        if let Err(error) = validate_email_registration_platform(state, request.client_type).await {
+            return Ok(error);
+        }
+
         let max_per_day_per_ip = state
             .config()
             .limits_account()

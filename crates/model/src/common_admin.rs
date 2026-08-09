@@ -84,6 +84,29 @@ impl Default for AccountLoginPlatforms {
     }
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct EmailRegistrationPlatforms {
+    #[serde(default = "default_true", skip_serializing_if = "value_is_true")]
+    #[schema(default = true)]
+    pub android: bool,
+    #[serde(default = "default_true", skip_serializing_if = "value_is_true")]
+    #[schema(default = true)]
+    pub ios: bool,
+    #[serde(default = "default_true", skip_serializing_if = "value_is_true")]
+    #[schema(default = true)]
+    pub web: bool,
+}
+
+impl Default for EmailRegistrationPlatforms {
+    fn default() -> Self {
+        Self {
+            android: true,
+            ios: true,
+            web: true,
+        }
+    }
+}
+
 fn default_true() -> bool {
     true
 }
@@ -97,4 +120,5 @@ fn value_is_true(v: &bool) -> bool {
 pub struct DynamicServerConfig {
     pub account_registration_platforms: AccountRegistrationPlatforms,
     pub account_login_platforms: AccountLoginPlatforms,
+    pub email_registration_platforms: EmailRegistrationPlatforms,
 }

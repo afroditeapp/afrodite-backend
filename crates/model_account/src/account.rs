@@ -239,6 +239,7 @@ pub struct RequestEmailLoginToken {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub login_only: bool,
+    pub client_type: ClientType,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]
@@ -266,6 +267,18 @@ pub struct RequestEmailLoginTokenResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     error_email_registration_limit_reached: bool,
+
+    /// This is true when email registration has been disabled for the
+    /// client platform the user is using.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_email_registration_platform_disabled: bool,
+
+    /// This is true when email registration has been disabled for all
+    /// client platforms.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_email_registration_all_platforms_disabled: bool,
 }
 
 impl RequestEmailLoginTokenResult {
@@ -296,6 +309,22 @@ impl RequestEmailLoginTokenResult {
         Self {
             error: true,
             error_email_registration_limit_reached: true,
+            ..Default::default()
+        }
+    }
+
+    pub fn error_email_registration_platform_disabled() -> Self {
+        Self {
+            error: true,
+            error_email_registration_platform_disabled: true,
+            ..Default::default()
+        }
+    }
+
+    pub fn error_email_registration_all_platforms_disabled() -> Self {
+        Self {
+            error: true,
+            error_email_registration_all_platforms_disabled: true,
             ..Default::default()
         }
     }
