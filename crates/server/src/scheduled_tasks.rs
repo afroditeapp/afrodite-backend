@@ -147,7 +147,31 @@ impl ScheduledTaskManager {
             .await?;
         self.save_profile_statistics().await?;
         self.delete_processed_reports_which_have_user_data().await?;
+        self.prune_email_address_history().await?;
         backup_data(&self.state, quit_notification).await?;
+        Ok(())
+    }
+
+    async fn prune_email_address_history(&self) -> Result<(), ScheduledTaskError> {
+        let retention_duration = self
+            .state
+            .config()
+            .limits_account()
+            .email_address_history_retention_duration;
+
+        let retention_unix_time = UnixTime::new(
+            UnixTime::current_time().ut - Into::<i64>::into(retention_duration.seconds),
+        );
+
+        db_write_raw!(self.state, move |cmds| {
+            cmds.account()
+                .email()
+                .prune_email_address_history(retention_unix_time)
+                .await
+        })
+        .await
+        .change_context(ScheduledTaskError::DatabaseError)?;
+
         Ok(())
     }
 

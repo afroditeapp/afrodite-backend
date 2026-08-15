@@ -456,6 +456,21 @@ pub(crate) async fn init_email_change_impl(
             }
         }
 
+        let history_max_count = cmds
+            .config()
+            .limits_account()
+            .email_address_history_max_count
+            .into();
+        let history_count = cmds
+            .read()
+            .account()
+            .email()
+            .email_address_history_count(account_id)
+            .await?;
+        if history_count >= history_max_count {
+            return Ok(InitEmailChangeResult::error_history_limit_reached().into());
+        }
+
         let emails_per_month =
             TryInto::<i16>::try_into(cmds.config().limits_account().email_change_emails_per_month)
                 .unwrap_or(i16::MAX);

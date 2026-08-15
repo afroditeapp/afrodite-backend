@@ -373,6 +373,18 @@ CREATE TABLE IF NOT EXISTS account_email_address_state(
             ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS account_email_address_history(
+    id                      BIGSERIAL PRIMARY KEY NOT NULL,
+    account_id              BIGINT NOT NULL,
+    old_email               TEXT,
+    new_email               TEXT,
+    change_unix_time        BIGINT NOT NULL,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 -- Pending email address change state.
 -- Row exists only while an email change is pending.
 -- Row is deleted when the change is cancelled, completed or the

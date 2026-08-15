@@ -70,4 +70,22 @@ impl ReadCommandsAccountEmail<'_> {
             .await
             .into_error()
     }
+
+    pub async fn email_address_history_entries(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<Vec<model_account::EmailAddressHistoryEntry>, DataError> {
+        self.db_read(move |mut cmds| cmds.account().email().email_address_history_entries(id))
+            .await
+            .into_error()
+    }
+
+    pub async fn email_address_history_count(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<i64, DataError> {
+        self.db_read(move |mut cmds| cmds.account().email().email_address_history_count(id))
+            .await
+            .into_error()
+    }
 }

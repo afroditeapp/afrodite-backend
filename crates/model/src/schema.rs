@@ -8,6 +8,16 @@ diesel::table! {
 }
 
 diesel::table! {
+    account_email_address_history (id) {
+        id -> Int8,
+        account_id -> Int8,
+        old_email -> Nullable<Text>,
+        new_email -> Nullable<Text>,
+        change_unix_time -> Int8,
+    }
+}
+
+diesel::table! {
     account_email_address_state (account_id) {
         account_id -> Int8,
         email -> Nullable<Text>,
@@ -1017,6 +1027,7 @@ diesel::table! {
 }
 
 diesel::joinable!(account_app_notification_settings -> account_id (account_id));
+diesel::joinable!(account_email_address_history -> account_id (account_id));
 diesel::joinable!(account_email_address_state -> account_id (account_id));
 diesel::joinable!(account_email_change -> account_id (account_id));
 diesel::joinable!(account_email_change_limits -> account_id (account_id));
@@ -1090,6 +1101,7 @@ diesel::joinable!(used_content_ids -> account_id (account_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     account_app_notification_settings,
+    account_email_address_history,
     account_email_address_state,
     account_email_change,
     account_email_change_limits,

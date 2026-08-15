@@ -264,4 +264,35 @@ impl CurrentReadAccountEmail<'_> {
             .optional()
             .into_db_error(())
     }
+
+    pub fn email_address_history_entries(
+        &mut self,
+        account: AccountIdInternal,
+    ) -> Result<Vec<model_account::EmailAddressHistoryEntry>, DieselDatabaseError> {
+        use crate::schema::account_email_address_history::dsl::*;
+
+        let entries: Vec<model_account::EmailAddressHistoryEntry> = account_email_address_history
+            .filter(account_id.eq(account.as_db_id()))
+            .order(change_unix_time.asc())
+            .select(model_account::EmailAddressHistoryEntry::as_select())
+            .load(self.conn())
+            .into_db_error(account)?;
+
+        Ok(entries)
+    }
+
+    pub fn email_address_history_count(
+        &mut self,
+        account: AccountIdInternal,
+    ) -> Result<i64, DieselDatabaseError> {
+        use crate::schema::account_email_address_history::dsl::*;
+
+        let count = account_email_address_history
+            .filter(account_id.eq(account.as_db_id()))
+            .count()
+            .get_result(self.conn())
+            .into_db_error(account)?;
+
+        Ok(count)
+    }
 }

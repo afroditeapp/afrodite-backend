@@ -283,9 +283,10 @@ impl WriteCommandsAccountEmail<'_> {
         new_email: EmailAddress,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
+            let old_email = cmds.read().account().data().email_address(id)?.map(|e| e.0);
             cmds.account()
                 .email()
-                .complete_email_change(id, new_email.0)
+                .complete_email_change(id, new_email.0, old_email)
         })?;
 
         self.0
@@ -379,6 +380,17 @@ impl WriteCommandsAccountEmail<'_> {
             cmds.account()
                 .email()
                 .upsert_email_registration_limits(limits)
+        })
+    }
+
+    pub async fn prune_email_address_history(
+        &self,
+        retention_unix_time: UnixTime,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.account()
+                .email()
+                .prune_email_address_history(retention_unix_time)
         })
     }
 }

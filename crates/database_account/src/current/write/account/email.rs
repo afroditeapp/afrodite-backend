@@ -145,12 +145,13 @@ impl CurrentWriteAccountEmail<'_> {
         &mut self,
         id: AccountIdInternal,
         new_email: String,
+        old_email: Option<String>,
     ) -> Result<(), DieselDatabaseError> {
         {
             use model::schema::account_email_address_state::dsl::*;
 
             update(account_email_address_state.find(id.as_db_id()))
-                .set(email.eq(Some(new_email)))
+                .set(email.eq(Some(new_email.clone())))
                 .execute(self.conn())
                 .into_db_error(id)?;
         }
@@ -162,6 +163,52 @@ impl CurrentWriteAccountEmail<'_> {
                 .execute(self.conn())
                 .into_db_error(id)?;
         }
+
+        self.insert_email_address_history_entry(
+            id,
+            old_email,
+            Some(new_email),
+            UnixTime::current_time(),
+        )?;
+
+        Ok(())
+    }
+
+    fn insert_email_address_history_entry(
+        &mut self,
+        account: AccountIdInternal,
+        old_email_value: Option<String>,
+        new_email_value: Option<String>,
+        change_unix_time_value: UnixTime,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::account_email_address_history::dsl::*;
+
+        insert_into(account_email_address_history)
+            .values((
+                account_id.eq(account.as_db_id()),
+                old_email.eq(old_email_value),
+                new_email.eq(new_email_value),
+                change_unix_time.eq(change_unix_time_value),
+            ))
+            .execute_my_conn(self.conn())
+            .into_db_error(account)?;
+
+        Ok(())
+    }
+
+    /// Prune email address history for all accounts.
+    ///
+    /// Deletes entries older than `retention_unix_time`.
+    pub fn prune_email_address_history(
+        &mut self,
+        retention_unix_time: UnixTime,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::account_email_address_history::dsl::*;
+
+        delete(account_email_address_history)
+            .filter(change_unix_time.lt(retention_unix_time))
+            .execute(self.conn())
+            .into_db_error(())?;
 
         Ok(())
     }

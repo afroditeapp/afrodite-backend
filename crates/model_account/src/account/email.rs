@@ -16,6 +16,16 @@ pub struct EmailChangeLimits {
     pub monthly_limit_reset_unix_time: Option<UnixTime>,
 }
 
+/// A single email address change history entry.
+#[derive(Debug, Clone, Serialize, Queryable, Selectable)]
+#[diesel(table_name = crate::schema::account_email_address_history)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct EmailAddressHistoryEntry {
+    pub old_email: Option<EmailAddress>,
+    pub new_email: Option<EmailAddress>,
+    pub change_unix_time: UnixTime,
+}
+
 #[derive(
     Debug,
     Deserialize,
@@ -200,6 +210,9 @@ pub struct InitEmailChangeResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     error_email_sending_timeout: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_history_limit_reached: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
     error_try_again_later_after_seconds: Option<u32>,
@@ -224,6 +237,14 @@ impl InitEmailChangeResult {
         Self {
             error: true,
             error_email_sending_timeout: true,
+            ..Default::default()
+        }
+    }
+
+    pub fn error_history_limit_reached() -> Self {
+        Self {
+            error: true,
+            error_history_limit_reached: true,
             ..Default::default()
         }
     }
