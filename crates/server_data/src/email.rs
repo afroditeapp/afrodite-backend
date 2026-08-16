@@ -1,4 +1,5 @@
 use error_stack::IntoReport;
+use model_server_data::EmailAddress;
 pub use simple_backend::email::EmailError;
 use simple_backend_utils::consts::MIB_IN_BYTES;
 use tokio::sync::{
@@ -42,7 +43,7 @@ pub enum HighPriorityEmailMsg {
         result_sender: oneshot::Sender<Result<(), DataError>>,
     },
     RegistrationToken {
-        email: String,
+        email: EmailAddress,
         token: String,
         result_sender: oneshot::Sender<Result<(), DataError>>,
     },
@@ -130,7 +131,7 @@ impl EmailChannelSender {
 
     pub fn send_registration_login_token(
         &self,
-        email: String,
+        email: EmailAddress,
         token: String,
     ) -> simple_backend_utils::Result<EmailSendingHandle, DataError> {
         let (result_sender, result_receiver) = oneshot::channel();

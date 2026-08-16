@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use error_stack::ResultExt;
 use model::{AccessToken, AccountIdInternal, EmailMessages, EventToClientInternal, UnixTime};
+use model_media::EmailAddress;
 use server_api::{
     app::{GetConfig, ReadData, WriteData},
     db_write_raw,
@@ -150,10 +151,10 @@ impl EmailManager {
 
     async fn handle_send_registration_token(
         &self,
-        email: &str,
+        email: &EmailAddress,
         token: &str,
     ) -> simple_backend_utils::Result<(), EmailError> {
-        if email.ends_with("@example.com") {
+        if email.as_str().ends_with("@example.com") {
             return Ok(());
         }
 
@@ -165,7 +166,12 @@ impl EmailManager {
             .change_context(EmailError::GettingEmailDataFailed)?;
 
         self.smtp_client
-            .send(email, &content.subject, &content.body, content.body_is_html)
+            .send(
+                email.as_str(),
+                &content.subject,
+                &content.body,
+                content.body_is_html,
+            )
             .await
             .change_context(EmailError::SendingFailed)?;
 
@@ -200,7 +206,7 @@ impl EmailManager {
         };
 
         let email = if let Some(email) = email_address {
-            if email.0.ends_with("@example.com") {
+            if email.as_str().ends_with("@example.com") {
                 let is_bot = async || {
                     self.state
                         .read()
@@ -237,7 +243,7 @@ impl EmailManager {
 
                 return Ok(None);
             } else {
-                email.0
+                email.into_string()
             }
         } else {
             return Ok(None);

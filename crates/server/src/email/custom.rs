@@ -157,10 +157,10 @@ impl CustomEmailHandler {
             .change_context(EmailError::GettingEmailDataFailed)?;
 
         let email = if let Some(email) = email {
-            if email.0.ends_with("@example.com") {
+            if email.as_str().ends_with("@example.com") {
                 return Ok(None);
             } else {
-                email.0
+                email.into_string()
             }
         } else {
             return Ok(None);

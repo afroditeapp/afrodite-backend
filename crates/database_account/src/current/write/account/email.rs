@@ -2,7 +2,8 @@ use database::{DieselDatabaseError, define_current_write_commands};
 use diesel::{delete, insert_into, prelude::*, update};
 use model::{AccountIdInternal, EmailLoginTokenRow, UnixTime};
 use model_account::{
-    AccountEmailSendingStateRaw, EmailChangeLimits, EmailLoginLimits, EmailVerificationLimits,
+    AccountEmailSendingStateRaw, EmailAddress, EmailChangeLimits, EmailLoginLimits,
+    EmailVerificationLimits,
 };
 use simple_backend_utils::{Result, db::MyRunQueryDsl};
 
@@ -113,7 +114,7 @@ impl CurrentWriteAccountEmail<'_> {
     pub fn init_email_change(
         &mut self,
         id: AccountIdInternal,
-        new_email: String,
+        new_email: EmailAddress,
         current_time: UnixTime,
         verification_token: Vec<u8>,
     ) -> Result<(), DieselDatabaseError> {
@@ -144,8 +145,8 @@ impl CurrentWriteAccountEmail<'_> {
     pub fn complete_email_change(
         &mut self,
         id: AccountIdInternal,
-        new_email: String,
-        old_email: Option<String>,
+        new_email: EmailAddress,
+        old_email: Option<EmailAddress>,
     ) -> Result<(), DieselDatabaseError> {
         {
             use model::schema::account_email_address_state::dsl::*;
@@ -177,8 +178,8 @@ impl CurrentWriteAccountEmail<'_> {
     fn insert_email_address_history_entry(
         &mut self,
         account: AccountIdInternal,
-        old_email_value: Option<String>,
-        new_email_value: Option<String>,
+        old_email_value: Option<EmailAddress>,
+        new_email_value: Option<EmailAddress>,
         change_unix_time_value: UnixTime,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::account_email_address_history::dsl::*;

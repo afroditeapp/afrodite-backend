@@ -25,7 +25,7 @@ pub(super) async fn request_email_registration_token(
 
     let handle = state
         .email_channel_sender()
-        .send_registration_login_token(request.email.0.clone(), email_token.into_string())?;
+        .send_registration_login_token(request.email.clone(), email_token.into_string())?;
 
     Ok(EmailLoginResultInternal::successful(client_token, handle))
 }

@@ -30,8 +30,8 @@ pub async fn complete_initial_setup(
             (config.grant_admin_access_config(), email.as_ref())
         {
             let matches = if grant_admin_access_config.debug_match_only_email_domain {
-                let mut wanted_email_iter = grant_admin_access_config.email.0.split('@');
-                let mut email_iter = email.0.split('@');
+                let mut wanted_email_iter = grant_admin_access_config.email.as_str().split('@');
+                let mut email_iter = email.as_str().split('@');
                 wanted_email_iter.next();
                 email_iter.next();
                 let wanted_domain = wanted_email_iter.next();

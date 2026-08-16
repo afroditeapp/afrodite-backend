@@ -6,7 +6,7 @@ use chrono::{Datelike, Timelike};
 use config::{
     args::{SelectedBenchmark, TestMode},
     file::{
-        ApiConfig, AutomaticProfileSearchConfig, ConfigFile, EmailAddress, GrantAdminAccessConfig,
+        ApiConfig, AutomaticProfileSearchConfig, ConfigFile, GrantAdminAccessConfig,
         LocationConfig, ScheduledTasksConfig,
     },
 };
@@ -125,7 +125,7 @@ fn new_config(config: &TestMode, bot_api_port: u16) -> (ConfigFile, SimpleBacken
         grant_admin_access: GrantAdminAccessConfig {
             debug_for_every_matching_new_account: false,
             debug_match_only_email_domain: false,
-            email: EmailAddress(ADMIN_BOT_EMAIL.to_string()),
+            email: ADMIN_BOT_EMAIL.to_string().try_into().unwrap(),
         }
         .into(),
         general: config::file::GeneralConfig::default(),

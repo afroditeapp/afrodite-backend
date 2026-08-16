@@ -193,7 +193,7 @@ impl WriteCommandsAccountEmail<'_> {
         db_transaction!(self, move |mut cmds| {
             cmds.account().email().init_email_change(
                 id,
-                new_email.0.clone(),
+                new_email,
                 current_time,
                 verification_token_bytes,
             )
@@ -283,10 +283,10 @@ impl WriteCommandsAccountEmail<'_> {
         new_email: EmailAddress,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
-            let old_email = cmds.read().account().data().email_address(id)?.map(|e| e.0);
+            let old_email = cmds.read().account().data().email_address(id)?;
             cmds.account()
                 .email()
-                .complete_email_change(id, new_email.0, old_email)
+                .complete_email_change(id, new_email, old_email)
         })?;
 
         self.0

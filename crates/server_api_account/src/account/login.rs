@@ -692,7 +692,7 @@ async fn handle_login_token_sending(
 
         let handle = state
             .email_channel_sender()
-            .send_registration_login_token(email.0, email_token.into_string())
+            .send_registration_login_token(email, email_token.into_string())
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
         Ok(EmailLoginResultInternal::successful(client_token, handle))

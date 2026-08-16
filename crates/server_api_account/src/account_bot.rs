@@ -198,7 +198,10 @@ async fn get_or_create_bots_impl(state: &S, ip: IpAddr) -> Result<Json<GetBotsRe
         && result.admin.is_none()
         && let admin = create_bot_account(
             state,
-            EmailAddress(ADMIN_BOT_EMAIL.to_string()),
+            ADMIN_BOT_EMAIL
+                .to_string()
+                .try_into()
+                .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?,
             BotAccountType::Admin,
             ip,
         )
@@ -211,10 +214,12 @@ async fn get_or_create_bots_impl(state: &S, ip: IpAddr) -> Result<Json<GetBotsRe
     if result.users.len() < expected_user_count {
         for i in result.users.len()..expected_user_count {
             let bot_number = i + 1; // Start from bot1, not bot0
-            let bot_email = EmailAddress(format!(
+            let bot_email = format!(
                 "{}{}{}",
                 USER_BOT_EMAIL_PREFIX, bot_number, USER_BOT_EMAIL_SUFFIX
-            ));
+            )
+            .try_into()
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
             let bot = create_bot_account(state, bot_email, BotAccountType::User, ip).await?;
             result.users.push(bot);
         }

@@ -35,15 +35,15 @@ impl AuthPair {
 )]
 #[diesel(sql_type = Text)]
 #[serde(try_from = "String")]
-pub struct EmailAddress(pub String);
+pub struct EmailAddress(String);
 
 impl EmailAddress {
-    pub fn new(id: String) -> Self {
-        Self(id.to_lowercase())
-    }
-
     pub fn as_str(&self) -> &str {
         &self.0
+    }
+
+    pub fn into_string(self) -> String {
+        self.0
     }
 }
 
@@ -57,11 +57,17 @@ impl TryFrom<String> for EmailAddress {
             return Err("Email address contains leading or trailing whitespace".to_string());
         }
 
-        if value.contains('@') {
-            Ok(Self(value.to_lowercase()))
-        } else {
-            Err("Email address does not have '@' character".to_string())
+        if !value.contains('@') {
+            return Err("Email address does not have '@' character".to_string());
         }
+
+        // Client uses 254 character limit. Let's assume that one character
+        // is max 4 bytes.
+        if value.len() > 254 * 4 {
+            return Err("Email address is too long".to_string());
+        }
+
+        Ok(Self(value.to_lowercase()))
     }
 }
 
