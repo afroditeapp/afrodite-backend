@@ -198,6 +198,21 @@ impl ModeAndIdSequenceNumber {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
+pub struct UnsignedIntegerAttributeConfig {
+    /// User visible minimum value for the attribute.
+    pub min: u16,
+    /// User visible maximum value for the attribute.
+    pub max: u16,
+    /// User visible unit for the value, for example `cm` or `kg`.
+    ///
+    /// The default text shown when a translation for the key
+    /// `{attribute_key}_unit` is not available.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub unit: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ToSchema)]
 pub struct Attribute {
     /// String unique identifier for the attribute.
     pub key: String,
@@ -205,12 +220,19 @@ pub struct Attribute {
     pub name: String,
     /// Mode of the attribute.
     pub mode: AttributeMode,
+    /// Config for unsigned integer mode attributes. The config must exist
+    /// when attribute's mode is [AttributeMode::UnsignedInteger].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub unsigned_integer_config: Option<UnsignedIntegerAttributeConfig>,
+    /// Must be 1 when current mode is [AttributeMode::UnsignedInteger].
     #[serde(
         default = "value_non_zero_u8_one",
         skip_serializing_if = "value_non_zero_u8_is_one"
     )]
     #[schema(default = 1, value_type = u8)]
     pub max_selected: NonZeroU8,
+    /// Must be 2 when current mode is [AttributeMode::UnsignedInteger].
     #[serde(
         default = "value_non_zero_u8_one",
         skip_serializing_if = "value_non_zero_u8_is_one"
@@ -245,6 +267,8 @@ pub struct Attribute {
     ///
     /// Values are sorted by AttributeValue ID. Indexing with it is
     /// not possible as ID might be a bitflag value.
+    ///
+    /// Must be empty when current mode is [AttributeMode::UnsignedInteger].
     pub values: Vec<AttributeValue>,
     /// Translations for attribute name and attribute values.
     #[serde(default = "value_empty_vec", skip_serializing_if = "value_is_empty")]
@@ -268,6 +292,48 @@ impl Attribute {
     }
 
     fn validate_internal(&self) -> Result<(), String> {
+        if self.mode.is_unsigned_integer() {
+            // The unsigned integer mode has a single numeric value so it has
+            // no discrete attribute values and the value list checks below
+            // don't apply.
+            if self.max_selected != value_non_zero_u8_one() {
+                return Err(format!(
+                    "Attribute {} in unsigned integer mode must have max_selected 1",
+                    self.key
+                ));
+            }
+
+            if self.max_filters != NonZeroU8::new(2).unwrap() {
+                return Err(format!(
+                    "Attribute {} in unsigned integer mode must have max_filters 2",
+                    self.key
+                ));
+            }
+
+            let unsigned_integer_config =
+                self.unsigned_integer_config.as_ref().ok_or_else(|| {
+                    format!(
+                        "Attribute {} in unsigned integer mode must have unsigned_integer_config",
+                        self.key
+                    )
+                })?;
+            if unsigned_integer_config.min > unsigned_integer_config.max {
+                return Err(format!(
+                    "Attribute {} unsigned_integer_config min must be less or equal to max",
+                    self.key
+                ));
+            }
+
+            if !self.values.is_empty() {
+                return Err(format!(
+                    "Attribute {} in unsigned integer mode must have empty values list",
+                    self.key
+                ));
+            }
+
+            return Ok(());
+        }
+
         let mut keys = HashSet::new();
         keys.insert(self.key.clone());
 
@@ -504,6 +570,8 @@ pub enum AttributeMode {
     OneLevel,
     /// u32 values
     TwoLevel,
+    /// u16 number value
+    UnsignedInteger,
 }
 
 impl AttributeMode {
@@ -514,6 +582,25 @@ impl AttributeMode {
     pub fn is_one_level(&self) -> bool {
         *self == Self::OneLevel
     }
+
+    pub fn is_unsigned_integer(&self) -> bool {
+        *self == Self::UnsignedInteger
+    }
+
+    /// Returns the data type used to store the attribute values.
+    pub fn attribute_data_type(&self) -> AttributeDataType {
+        match self {
+            Self::Bitflag | Self::OneLevel | Self::UnsignedInteger => AttributeDataType::U16,
+            Self::TwoLevel => AttributeDataType::U32,
+        }
+    }
+}
+
+pub enum AttributeDataType {
+    /// u16 values
+    U16,
+    /// u32 values
+    U32,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, ToSchema)]

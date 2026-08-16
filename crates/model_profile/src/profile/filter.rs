@@ -61,27 +61,71 @@ impl ProfileFiltersUpdate {
             match attribute_info {
                 None => return Err("Unknown attribute ID".to_string()),
                 Some(info) => {
-                    let check = |values: &[u32]| {
-                        let error = || {
-                            Err(format!(
-                                "Attribute supports max {} filter values",
-                                info.max_filters,
-                            ))
-                        };
-                        if info.mode.is_bitflag() {
-                            let selected = values.first().copied().unwrap_or_default().count_ones();
-                            if selected > info.max_filters.get().into() {
+                    if info.mode.is_unsigned_integer() {
+                        if !a.unwanted.is_empty() {
+                            return Err(
+                                "unsigned integer attribute filter cannot have unwanted values"
+                                    .to_string(),
+                            );
+                        }
+                        if a.wanted.len() == 2 {
+                            let min = a.wanted[0];
+                            let max = a.wanted[1];
+                            let unsigned_integer_config = info
+                                .unsigned_integer_config
+                                .as_ref()
+                                .ok_or_else(|| {
+                                    format!(
+                                        "Attribute {} in unsigned integer mode must have unsigned_integer_config",
+                                        info.key
+                                    )
+                                })?;
+                            if min > max {
+                                return Err(
+                                    "unsigned integer attribute filter min must be less or equal to max"
+                                        .to_string(),
+                                );
+                            }
+                            if min < unsigned_integer_config.min.into()
+                                || max > unsigned_integer_config.max.into()
+                            {
+                                return Err(format!(
+                                    "unsigned integer attribute filter min..=max must be within {}..={}",
+                                    unsigned_integer_config.min, unsigned_integer_config.max
+                                ));
+                            }
+                        } else if a.wanted.is_empty() {
+                            // Valid value
+                        } else {
+                            return Err(
+                                "unsigned integer attribute filter must have exactly zero or two wanted values"
+                                    .to_string(),
+                            );
+                        }
+                    } else {
+                        let check = |values: &[u32]| {
+                            let error = || {
+                                Err(format!(
+                                    "Attribute supports max {} filter values",
+                                    info.max_filters,
+                                ))
+                            };
+                            if info.mode.is_bitflag() {
+                                let selected =
+                                    values.first().copied().unwrap_or_default().count_ones();
+                                if selected > info.max_filters.get().into() {
+                                    return error();
+                                }
+                            } else if values.len() > info.max_filters.get().into() {
                                 return error();
                             }
-                        } else if values.len() > info.max_filters.get().into() {
-                            return error();
-                        }
 
-                        Ok(())
-                    };
+                            Ok(())
+                        };
 
-                    check(&a.wanted)?;
-                    check(&a.unwanted)?;
+                        check(&a.wanted)?;
+                        check(&a.unwanted)?;
+                    }
                 }
             }
         }

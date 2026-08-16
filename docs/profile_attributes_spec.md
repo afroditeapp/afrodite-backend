@@ -104,10 +104,27 @@ values = [
     - `TwoLevel` - u32 values.
         Top and sub level values are possible to set.
         Max value count for top and sub level are u16::MAX.
+    - `UnsignedInteger` - u16 number value.
+        The attribute has a single numeric value and no `values` list is
+        used. The user visible min, max and unit for the attribute are
+        defined with the `unsigned_integer_config` field.
+        Filter wanted value is two u16 values defining an inclusive range.
+        The first value is min and the second value is max. Filter unwanted
+        value must be empty. The min..=max filter range must be within the
+        `unsigned_integer_config` min..=max range.
 - `max_selected` - Optional max value count for selected attribute values.
-    Default and min value is 1.
+    Default and min value is 1. Must be 1 when mode is `UnsignedInteger`.
 - `max_filters` - Optional max value count for selected filter values.
-    Default and min value is 1.
+    Default and min value is 1. Must be 2 when mode is `UnsignedInteger`.
+- `unsigned_integer_config` - Config for unsigned integer mode attributes.
+    Required when mode is `UnsignedInteger`.
+    Fields are
+    - `min` - User visible minimum value for the attribute.
+    - `max` - User visible maximum value for the attribute.
+    - `unit` - User visible unit for the value, for example `cm` or `kg`.
+        The default text shown when a translation for the key
+        `{attribute_key}_unit` is not available. (default: null)
+    The `min` value must be less or equal to the `max` value.
 - `order_number` - Unique order number for the attribute.
         0 is the first attribute.
 - `value_order` - Display order mode for the attribute values.
@@ -123,6 +140,7 @@ values = [
 - `id` - unique numeric ID for the attribute. This is used in database
         level.
 - `values` - list of possible top level values for the attribute.
+    Must be empty when mode is `UnsignedInteger`.
     Contains strings or objects with fields
     - `key` - unique identifier for the value
     - `name` - Default name for the value

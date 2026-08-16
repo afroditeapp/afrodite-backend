@@ -140,6 +140,12 @@ impl AttributeValueReader {
                 logical_and,
                 NumberExistence::two_level_attribute_find_from_sorted,
             ),
+            AttributeMode::UnsignedInteger => {
+                let value = attribute_data.first().copied().unwrap_or_default();
+                let min = filter_data.first().copied().unwrap_or_default();
+                let max = filter_data.get(1).copied().unwrap_or_default();
+                value >= min && value <= max
+            }
         }
     }
 
@@ -196,6 +202,9 @@ impl AttributeValueReader {
                 attribute_data,
                 NumberExistence::two_level_attribute_find_from_sorted,
             ),
+            // The unsigned integer mode has no unwanted values so no values are
+            // excluded.
+            AttributeMode::UnsignedInteger => false,
         }
     }
 

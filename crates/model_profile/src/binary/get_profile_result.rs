@@ -1,7 +1,7 @@
 use utils::minimal_i64;
 
 use crate::{
-    AttributeMode, GetProfileResultInternal, LastSeenTime, Profile, ProfileAttributeValue,
+    AttributeDataType, GetProfileResultInternal, LastSeenTime, Profile, ProfileAttributeValue,
     ProfileAttributesInternal,
 };
 
@@ -71,30 +71,31 @@ fn append_attribute_with_values(
     attribute: &ProfileAttributeValue,
     schema: &ProfileAttributesInternal,
 ) {
-    let use_u32_values = schema
+    let data_type = schema
         .get_attribute(attribute.id())
-        .map(|value| value.mode)
-        .unwrap_or_else(|| AttributeMode::TwoLevel)
-        == AttributeMode::TwoLevel;
+        .map(|value| value.mode.attribute_data_type())
+        .unwrap_or(AttributeDataType::U32);
 
     let attribute_id = attribute.id().to_u16();
-    let encoded_attribute_id = if use_u32_values {
-        attribute_id | ATTRIBUTE_ID_U32_VALUES_FLAG
-    } else {
-        attribute_id
+    let encoded_attribute_id = match data_type {
+        AttributeDataType::U16 => attribute_id,
+        AttributeDataType::U32 => attribute_id | ATTRIBUTE_ID_U32_VALUES_FLAG,
     };
 
     buffer.extend_from_slice(&encoded_attribute_id.to_le_bytes());
     buffer.push(attribute.raw_values_count_u8());
 
-    if use_u32_values {
-        for value in attribute.raw_values() {
-            buffer.extend_from_slice(&value.to_le_bytes());
+    match data_type {
+        AttributeDataType::U16 => {
+            for value in attribute.raw_values() {
+                let value_u16 = *value as u16;
+                buffer.extend_from_slice(&value_u16.to_le_bytes());
+            }
         }
-    } else {
-        for value in attribute.raw_values() {
-            let value_u16 = *value as u16;
-            buffer.extend_from_slice(&value_u16.to_le_bytes());
+        AttributeDataType::U32 => {
+            for value in attribute.raw_values() {
+                buffer.extend_from_slice(&value.to_le_bytes());
+            }
         }
     }
 }

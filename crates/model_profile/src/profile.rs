@@ -269,6 +269,32 @@ impl ProfileUpdateInternal {
                         if selected > info.max_selected.get().into() {
                             return error();
                         }
+                    } else if info.mode.is_unsigned_integer() {
+                        // The unsigned integer attribute has a single value
+                        // which must fit in the user visible min..=max range.
+                        if a.v.len() > 1 {
+                            return error();
+                        }
+                        if let Some(value) = a.v.first() {
+                            let unsigned_integer_config = info
+                                .unsigned_integer_config
+                                .as_ref()
+                                .ok_or_else(|| {
+                                    format!(
+                                        "Attribute {} in unsigned integer mode must have unsigned_integer_config",
+                                        info.key
+                                    )
+                                })?;
+                            let min = unsigned_integer_config.min;
+                            let max = unsigned_integer_config.max;
+                            let value = *value;
+                            if value < min.into() || value > max.into() {
+                                return Err(format!(
+                                    "unsigned integer attribute value must be within {}..={}",
+                                    min, max
+                                ));
+                            }
+                        }
                     } else if a.v.len() > info.max_selected.get().into() {
                         return error();
                     }
