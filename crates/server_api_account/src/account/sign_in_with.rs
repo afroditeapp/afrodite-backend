@@ -2,9 +2,11 @@ use axum::{Extension, extract::State};
 use base64::Engine;
 use model::AccountIdInternal;
 use model_account::{
-    AppleAccountId, GoogleAccountId, PutSignInWithApple, PutSignInWithGoogle, SignInWithState,
+    AppleAccountId, GoogleAccountId, PutSignInWithApple, PutSignInWithGoogle, PutSignInWithResult,
+    SignInWithState,
 };
 use server_api::{S, create_open_api_router, db_write};
+use server_data::{DataError, app::GetConfig, write_commands::WriteCmds};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::{app::SignInWith, create_counters};
 
@@ -53,7 +55,7 @@ const PATH_PUT_SIGN_IN_WITH_APPLE: &str = "/account_api/sign_in_with_apple";
     path = PATH_PUT_SIGN_IN_WITH_APPLE,
     request_body = PutSignInWithApple,
     responses(
-        (status = 200, description = "Successful."),
+        (status = 200, description = "Successful.", body = PutSignInWithResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -63,10 +65,10 @@ pub async fn put_sign_in_with_apple(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Json(body): Json<PutSignInWithApple>,
-) -> Result<(), StatusCode> {
+) -> Result<Json<PutSignInWithResult>, StatusCode> {
     ACCOUNT.put_sign_in_with_apple.incr();
 
-    if let Some(apple) = body.apple {
+    let result = if let Some(apple) = body.apple {
         let nonce_bytes = base64::engine::general_purpose::URL_SAFE
             .decode(apple.nonce)
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
@@ -80,21 +82,28 @@ pub async fn put_sign_in_with_apple(
         }
 
         db_write!(state, move |cmds| {
+            if check_sign_in_with_history_limit(&cmds, account_id).await? {
+                return Ok(PutSignInWithResult::error_history_limit_reached());
+            }
+
             cmds.account()
                 .sign_in_with()
                 .update_apple_account_id(account_id, Some(AppleAccountId(info.id)))
-                .await
-        })?;
+                .await?;
+
+            Ok(PutSignInWithResult::ok())
+        })?
     } else {
         db_write!(state, move |cmds| {
             cmds.account()
                 .sign_in_with()
                 .update_apple_account_id(account_id, None)
-                .await
-        })?;
-    }
+                .await?;
+            Ok(PutSignInWithResult::ok())
+        })?
+    };
 
-    Ok(())
+    Ok(result.into())
 }
 
 const PATH_PUT_SIGN_IN_WITH_GOOGLE: &str = "/account_api/sign_in_with_google";
@@ -105,7 +114,7 @@ const PATH_PUT_SIGN_IN_WITH_GOOGLE: &str = "/account_api/sign_in_with_google";
     path = PATH_PUT_SIGN_IN_WITH_GOOGLE,
     request_body = PutSignInWithGoogle,
     responses(
-        (status = 200, description = "Successful."),
+        (status = 200, description = "Successful.", body = PutSignInWithResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -115,10 +124,10 @@ pub async fn put_sign_in_with_google(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
     Json(body): Json<PutSignInWithGoogle>,
-) -> Result<(), StatusCode> {
+) -> Result<Json<PutSignInWithResult>, StatusCode> {
     ACCOUNT.put_sign_in_with_google.incr();
 
-    if let Some(google) = body.google {
+    let result = if let Some(google) = body.google {
         let nonce_bytes = base64::engine::general_purpose::URL_SAFE
             .decode(google.nonce)
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
@@ -132,21 +141,45 @@ pub async fn put_sign_in_with_google(
         }
 
         db_write!(state, move |cmds| {
+            if check_sign_in_with_history_limit(&cmds, account_id).await? {
+                return Ok(PutSignInWithResult::error_history_limit_reached());
+            }
+
             cmds.account()
                 .sign_in_with()
                 .update_google_account_id(account_id, Some(GoogleAccountId(info.id)))
-                .await
-        })?;
+                .await?;
+
+            Ok(PutSignInWithResult::ok())
+        })?
     } else {
         db_write!(state, move |cmds| {
             cmds.account()
                 .sign_in_with()
                 .update_google_account_id(account_id, None)
-                .await
-        })?;
-    }
+                .await?;
+            Ok(PutSignInWithResult::ok())
+        })?
+    };
 
-    Ok(())
+    Ok(result.into())
+}
+
+async fn check_sign_in_with_history_limit(
+    cmds: &WriteCmds,
+    account_id: AccountIdInternal,
+) -> server_data::result::Result<bool, DataError> {
+    let history_max_count = cmds
+        .config()
+        .limits_account()
+        .sign_in_with_history_max_count
+        .into();
+    let history_count = cmds
+        .read()
+        .account()
+        .sign_in_with_history_count(account_id)
+        .await?;
+    Ok(history_count >= history_max_count)
 }
 
 create_open_api_router!(

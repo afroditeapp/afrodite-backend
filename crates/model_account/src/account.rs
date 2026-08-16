@@ -493,6 +493,32 @@ pub struct SignInWithState {
     pub google: bool,
 }
 
+/// Result of a sign in with Apple or Google association change.
+#[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]
+pub struct PutSignInWithResult {
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_history_limit_reached: bool,
+}
+
+impl PutSignInWithResult {
+    pub fn ok() -> Self {
+        Self {
+            ..Default::default()
+        }
+    }
+
+    pub fn error_history_limit_reached() -> Self {
+        Self {
+            error: true,
+            error_history_limit_reached: true,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::sign_in_with_info)]
 #[diesel(check_for_backend(crate::Db))]

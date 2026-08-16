@@ -363,6 +363,19 @@ CREATE TABLE IF NOT EXISTS sign_in_with_info(
             ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS account_sign_in_with_history(
+    id                      BIGSERIAL PRIMARY KEY NOT NULL,
+    account_id              BIGINT NOT NULL,
+    provider_type_number    SMALLINT NOT NULL,
+    old_id                  TEXT,
+    new_id                  TEXT,
+    change_unix_time        BIGINT NOT NULL,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS account_email_address_state(
     account_id          BIGINT PRIMARY KEY NOT NULL,
     email               TEXT                        UNIQUE,

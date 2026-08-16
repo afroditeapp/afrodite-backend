@@ -1,5 +1,5 @@
 use database_account::current::write::GetDbWriteCommandsAccount;
-use model::AccountIdInternal;
+use model::{AccountIdInternal, UnixTime};
 use model_account::{AppleAccountId, GoogleAccountId};
 use server_data::{
     DataError, db_transaction, define_cmd_wrapper_write, result::Result, write::DbTransaction,
@@ -29,6 +29,17 @@ impl WriteCommandsAccountSignInWith<'_> {
             cmds.account()
                 .sign_in_with()
                 .update_google_account_id(id, google_id)
+        })
+    }
+
+    pub async fn prune_sign_in_with_history(
+        &self,
+        retention_unix_time: UnixTime,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.account()
+                .sign_in_with()
+                .prune_sign_in_with_history(retention_unix_time)
         })
     }
 }

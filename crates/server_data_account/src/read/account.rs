@@ -4,7 +4,8 @@ use model::UnixTime;
 use model_account::{
     AccountGlobalState, AccountId, AccountIdInternal, AccountVerificationDataInternal,
     AppleAccountId, BotAccount, EmailAddress, EmailAddressState, EmailAddressStateInternal,
-    EmailChange, EmailLoginTokens, GetBotsResult, GoogleAccountId, SignInWithInfo,
+    EmailChange, EmailLoginTokens, GetBotsResult, GoogleAccountId, SignInWithHistoryEntry,
+    SignInWithInfo,
 };
 use model_server_state::DemoAccountId;
 use server_data::{
@@ -59,6 +60,28 @@ impl ReadCommandsAccount<'_> {
         })
         .await
         .into_error()
+    }
+
+    pub async fn sign_in_with_history_entries(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<Vec<SignInWithHistoryEntry>, DataError> {
+        self.db_read(move |mut cmds| {
+            cmds.account()
+                .sign_in_with()
+                .sign_in_with_history_entries(id)
+        })
+        .await
+        .into_error()
+    }
+
+    pub async fn sign_in_with_history_count(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<i64, DataError> {
+        self.db_read(move |mut cmds| cmds.account().sign_in_with().sign_in_with_history_count(id))
+            .await
+            .into_error()
     }
 
     pub async fn email_address_state(

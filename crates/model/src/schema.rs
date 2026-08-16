@@ -199,6 +199,17 @@ diesel::table! {
 }
 
 diesel::table! {
+    account_sign_in_with_history (id) {
+        id -> Int8,
+        account_id -> Int8,
+        provider_type_number -> Int2,
+        old_id -> Nullable<Text>,
+        new_id -> Nullable<Text>,
+        change_unix_time -> Int8,
+    }
+}
+
+diesel::table! {
     account_state (account_id) {
         account_id -> Int8,
         account_deletion_request_unix_time -> Nullable<Int8>,
@@ -1040,6 +1051,7 @@ diesel::joinable!(account_email_verification_token_time -> account_id (account_i
 diesel::joinable!(account_id -> used_account_ids (id));
 diesel::joinable!(account_interaction_index -> account_interaction (interaction_id));
 diesel::joinable!(account_permissions -> account_id (account_id));
+diesel::joinable!(account_sign_in_with_history -> account_id (account_id));
 diesel::joinable!(admin_notification_settings -> account_id (account_id));
 diesel::joinable!(admin_notification_subscriptions -> account_id (account_id));
 diesel::joinable!(api_usage_statistics_metric_value -> account_id (account_id));
@@ -1116,6 +1128,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     account_interaction,
     account_interaction_index,
     account_permissions,
+    account_sign_in_with_history,
     account_state,
     admin_notification_settings,
     admin_notification_subscriptions,

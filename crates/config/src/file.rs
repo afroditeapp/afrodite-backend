@@ -411,6 +411,12 @@ pub struct AccountLimitsConfig {
     /// How long email address history entries are kept before they are
     /// deleted by the daily scheduled task.
     pub email_address_history_retention_duration: DurationValue,
+    /// Max number of sign in with history entries kept per account.
+    /// Sign in with ID change is blocked when this limit is reached.
+    pub sign_in_with_history_max_count: u16,
+    /// How long sign in with history entries are kept before they are
+    /// deleted by the daily scheduled task.
+    pub sign_in_with_history_retention_duration: DurationValue,
     pub email_login_token_validity_duration: DurationValue,
     pub email_login_resend_min_wait_duration: DurationValue,
     pub email_login_emails_per_month: u16,
@@ -437,6 +443,8 @@ impl Default for AccountLimitsConfig {
             email_change_emails_per_month: 10,
             email_address_history_max_count: 30,
             email_address_history_retention_duration: DurationValue::from_days(90),
+            sign_in_with_history_max_count: 30,
+            sign_in_with_history_retention_duration: DurationValue::from_days(90),
             email_login_token_validity_duration: DurationValue::from_seconds(15 * 60),
             email_login_resend_min_wait_duration: DurationValue::from_seconds(15 * 60),
             email_login_emails_per_month: 10,
