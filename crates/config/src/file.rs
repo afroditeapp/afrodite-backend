@@ -68,6 +68,8 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # email_login_emails_per_month = 10
 # email_registration_token_validity_duration = "15m"
 # email_registration_max_per_day_per_ip = 100
+# email_registration_max_per_day_per_ip_common_country = 500
+# email_registration_common_countries = ["FI"]
 # email_registration_max_per_day = 1000
 # post_account_verification_queue_item_daily_max_count = 10
 # account_verification_queue_max_length = 100
@@ -422,6 +424,13 @@ pub struct AccountLimitsConfig {
     pub email_login_emails_per_month: u16,
     pub email_registration_token_validity_duration: DurationValue,
     pub email_registration_max_per_day_per_ip: u16,
+    /// Less restrictive per IP limit used when the requesting IP is
+    /// from a country in [Self::email_registration_common_countries].
+    pub email_registration_max_per_day_per_ip_common_country: u16,
+    /// Country codes which get the less restrictive
+    /// per IP limit. Empty by default which disables this feature.
+    #[serde(deserialize_with = "email_registration_common_countries_from_vec_string")]
+    pub email_registration_common_countries: Vec<String>,
     pub email_registration_max_per_day: u16,
     pub post_account_verification_queue_item_daily_max_count: u16,
     pub account_verification_queue_max_length: u16,
@@ -450,6 +459,8 @@ impl Default for AccountLimitsConfig {
             email_login_emails_per_month: 10,
             email_registration_token_validity_duration: DurationValue::from_seconds(15 * 60),
             email_registration_max_per_day_per_ip: 100,
+            email_registration_max_per_day_per_ip_common_country: 500,
+            email_registration_common_countries: Vec::new(),
             email_registration_max_per_day: 1000,
             post_account_verification_queue_item_daily_max_count: 10,
             account_verification_queue_max_length: 100,
@@ -457,6 +468,19 @@ impl Default for AccountLimitsConfig {
             custom_email_send_draft_to_my_email_address_monthly_max_count: 10,
         }
     }
+}
+
+fn email_registration_common_countries_from_vec_string<'de, D>(
+    d: D,
+) -> std::result::Result<Vec<String>, D::Error>
+where
+    D: serde::de::Deserializer<'de>,
+{
+    Vec::<String>::deserialize(d).map(|v| {
+        v.iter()
+            .map(|v| v.to_ascii_uppercase())
+            .collect::<Vec<String>>()
+    })
 }
 
 /// Chat releated limits config

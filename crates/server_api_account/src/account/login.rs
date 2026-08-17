@@ -23,7 +23,7 @@ use server_data::{
 };
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::{
-    app::{AppAttestationProvider, SignInWith},
+    app::{AppAttestationProvider, MaxMindDbDataProvider, SignInWith},
     app_attestation::AppAttestationError,
     create_counters,
     sign_in_with::{apple::AppleAccountInfo, google::GoogleAccountInfo},
@@ -532,6 +532,25 @@ pub async fn post_request_email_login_token(
     }
 }
 
+async fn is_ip_from_common_country(state: &S, address: SocketAddr) -> bool {
+    let common_countries = state
+        .config()
+        .limits_account()
+        .email_registration_common_countries;
+    if common_countries.is_empty() {
+        return false;
+    }
+
+    let ip_db = state.maxmind_db().current_db_ref().await;
+    match ip_db
+        .as_ref()
+        .and_then(|ip_db| ip_db.get_country_ref(address.ip()))
+    {
+        Some(country) => common_countries.iter().any(|v| v == country.as_str()),
+        None => false,
+    }
+}
+
 async fn handle_login_token_sending(
     state: &S,
     address: SocketAddr,
@@ -546,9 +565,20 @@ async fn handle_login_token_sending(
             .config()
             .limits_account()
             .email_registration_max_per_day_per_ip;
+        let max_per_day_per_ip_from_common_country = state
+            .config()
+            .limits_account()
+            .email_registration_max_per_day_per_ip_common_country;
+
+        let ip_limit = if is_ip_from_common_country(state, address).await {
+            max_per_day_per_ip_from_common_country
+        } else {
+            max_per_day_per_ip
+        };
+
         if state
             .email_registration_rate_limiter()
-            .check_and_increment(address.ip(), max_per_day_per_ip)
+            .check_and_increment(address.ip(), ip_limit)
             .await
         {
             return Ok(
