@@ -33,8 +33,15 @@ impl WriteCommandsCommonClientConfig<'_> {
 
     pub async fn upsert_dynamic_server_config(
         &self,
-        config: DynamicServerConfig,
+        mut config: DynamicServerConfig,
     ) -> Result<(), DataError> {
+        for domain in &mut config.email_registration_domain_lists.allowlist {
+            *domain = domain.trim().to_lowercase();
+        }
+        for domain in &mut config.email_registration_domain_lists.blocklist {
+            *domain = domain.trim().to_lowercase();
+        }
+
         let manager = self.dynamic_server_config().clone();
         db_transaction!(self, move |mut cmds| {
             cmds.common()

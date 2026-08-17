@@ -3,7 +3,7 @@ use std::sync::Arc;
 use database::{DbReaderRaw, current::read::GetDbReadCommandsCommon};
 use error_stack::ResultExt;
 use model::DynamicServerConfig;
-use tokio::sync::RwLock;
+use tokio::sync::{RwLock, RwLockReadGuard};
 
 use crate::DataError;
 
@@ -21,6 +21,12 @@ impl DynamicServerConfigManager {
 
     pub async fn dynamic_server_config(&self) -> Option<DynamicServerConfig> {
         self.value.read().await.clone()
+    }
+
+    pub async fn dynamic_server_config_ref(
+        &self,
+    ) -> RwLockReadGuard<'_, Option<DynamicServerConfig>> {
+        self.value.read().await
     }
 
     pub fn set_dynamic_server_config_blocking(&self, value: Option<DynamicServerConfig>) {

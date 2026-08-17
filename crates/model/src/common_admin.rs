@@ -116,9 +116,23 @@ fn value_is_true(v: &bool) -> bool {
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]
+pub struct EmailRegistrationDomainLists {
+    /// If non-empty, only email domains in this list are accepted for email
+    /// registration. Values are lowercased and trimmed when the config is
+    /// saved.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub allowlist: Vec<String>,
+    /// Email domains in this list are rejected for email registration.
+    /// Values are lowercased and trimmed when the config is saved.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub blocklist: Vec<String>,
+}
+
+#[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]
 #[serde(default)]
 pub struct DynamicServerConfig {
     pub account_registration_platforms: AccountRegistrationPlatforms,
     pub account_login_platforms: AccountLoginPlatforms,
     pub email_registration_platforms: EmailRegistrationPlatforms,
+    pub email_registration_domain_lists: EmailRegistrationDomainLists,
 }

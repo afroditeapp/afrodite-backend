@@ -283,6 +283,13 @@ pub struct RequestEmailLoginTokenResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     error_email_registration_all_platforms_disabled: bool,
+
+    /// This is true when the email domain is not accepted for email
+    /// registration. This can happen when the domain is in the blocklist
+    /// or not in the allowlist configured by the server admin.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_email_registration_domain_not_accepted: bool,
 }
 
 impl RequestEmailLoginTokenResult {
@@ -329,6 +336,14 @@ impl RequestEmailLoginTokenResult {
         Self {
             error: true,
             error_email_registration_all_platforms_disabled: true,
+            ..Default::default()
+        }
+    }
+
+    pub fn error_email_registration_domain_not_accepted() -> Self {
+        Self {
+            error: true,
+            error_email_registration_domain_not_accepted: true,
             ..Default::default()
         }
     }

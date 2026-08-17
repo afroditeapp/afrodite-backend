@@ -160,10 +160,12 @@ async fn validate_registration_platform(
 ) -> Result<(), LoginResult> {
     let config = state
         .dynamic_server_config_manager()
-        .dynamic_server_config()
-        .await
-        .unwrap_or_default()
-        .account_registration_platforms;
+        .dynamic_server_config_ref()
+        .await;
+    let config = config
+        .as_ref()
+        .map(|config| config.account_registration_platforms.clone())
+        .unwrap_or_default();
 
     let enabled = match client_type {
         ClientType::Android => config.android,
@@ -187,10 +189,12 @@ async fn validate_registration_platform(
 async fn validate_login_platform(state: &S, client_type: ClientType) -> Result<(), LoginResult> {
     let config = state
         .dynamic_server_config_manager()
-        .dynamic_server_config()
-        .await
-        .unwrap_or_default()
-        .account_login_platforms;
+        .dynamic_server_config_ref()
+        .await;
+    let config = config
+        .as_ref()
+        .map(|config| config.account_login_platforms.clone())
+        .unwrap_or_default();
 
     let enabled = match client_type {
         ClientType::Android => config.android,
@@ -217,10 +221,12 @@ async fn validate_email_registration_platform(
 ) -> Result<(), EmailLoginResultInternal> {
     let config = state
         .dynamic_server_config_manager()
-        .dynamic_server_config()
-        .await
-        .unwrap_or_default()
-        .email_registration_platforms;
+        .dynamic_server_config_ref()
+        .await;
+    let config = config
+        .as_ref()
+        .map(|config| config.email_registration_platforms.clone())
+        .unwrap_or_default();
 
     let enabled = match client_type {
         ClientType::Android => config.android,
@@ -239,6 +245,38 @@ async fn validate_email_registration_platform(
     } else {
         Err(EmailLoginResultInternal::error_email_registration_all_platforms_disabled())
     }
+}
+
+/// Validate that the email domain is accepted for email registration
+/// according to the dynamic server config allowlist and blocklist.
+async fn validate_email_registration_domain(
+    state: &S,
+    email: &EmailAddress,
+) -> Result<(), EmailLoginResultInternal> {
+    let config = state
+        .dynamic_server_config_manager()
+        .dynamic_server_config_ref()
+        .await;
+    let lists = match config.as_ref() {
+        Some(config) => &config.email_registration_domain_lists,
+        None => return Ok(()),
+    };
+
+    let domain = email
+        .as_str()
+        .rsplit_once('@')
+        .map(|(_, domain)| domain)
+        .unwrap_or_default();
+
+    if lists.blocklist.iter().any(|d| d == domain) {
+        return Err(EmailLoginResultInternal::error_email_registration_domain_not_accepted());
+    }
+
+    if !lists.allowlist.is_empty() && !lists.allowlist.iter().any(|d| d == domain) {
+        return Err(EmailLoginResultInternal::error_email_registration_domain_not_accepted());
+    }
+
+    Ok(())
 }
 
 /// Validate app attestation provided by the client against server config.
@@ -410,6 +448,7 @@ struct EmailLoginResultInternal {
     error_email_registration_limit_reached: bool,
     error_email_registration_platform_disabled: bool,
     error_email_registration_all_platforms_disabled: bool,
+    error_email_registration_domain_not_accepted: bool,
 }
 
 impl EmailLoginResultInternal {
@@ -421,6 +460,7 @@ impl EmailLoginResultInternal {
             error_email_registration_limit_reached: false,
             error_email_registration_platform_disabled: false,
             error_email_registration_all_platforms_disabled: false,
+            error_email_registration_domain_not_accepted: false,
         }
     }
 
@@ -432,6 +472,7 @@ impl EmailLoginResultInternal {
             error_email_registration_limit_reached: false,
             error_email_registration_platform_disabled: false,
             error_email_registration_all_platforms_disabled: false,
+            error_email_registration_domain_not_accepted: false,
         }
     }
 
@@ -459,6 +500,13 @@ impl EmailLoginResultInternal {
     fn error_email_registration_all_platforms_disabled() -> Self {
         Self {
             error_email_registration_all_platforms_disabled: true,
+            ..Self::error_hidden()
+        }
+    }
+
+    fn error_email_registration_domain_not_accepted() -> Self {
+        Self {
+            error_email_registration_domain_not_accepted: true,
             ..Self::error_hidden()
         }
     }
@@ -514,6 +562,10 @@ pub async fn post_request_email_login_token(
         Ok(Json(
             RequestEmailLoginTokenResult::error_email_registration_all_platforms_disabled(),
         ))
+    } else if r.error_email_registration_domain_not_accepted {
+        Ok(Json(
+            RequestEmailLoginTokenResult::error_email_registration_domain_not_accepted(),
+        ))
     } else {
         Ok(Json(RequestEmailLoginTokenResult::successful(
             r.token,
@@ -558,6 +610,10 @@ async fn handle_login_token_sending(
 ) -> Result<EmailLoginResultInternal, StatusCode> {
     if !request.login_only {
         if let Err(error) = validate_email_registration_platform(state, request.client_type).await {
+            return Ok(error);
+        }
+
+        if let Err(error) = validate_email_registration_domain(state, &request.email).await {
             return Ok(error);
         }
 
