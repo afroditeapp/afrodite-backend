@@ -206,16 +206,16 @@ fn handle_image(
 
     encode_and_save_jpeg(config, &high, &command.output_high)?;
 
-    let medium = resize_image_if_needed(&oriented, 854);
+    let medium = resize_image_if_needed(&high, 854);
     encode_and_save_jpeg(config, &medium, &command.output_medium)?;
 
-    let low = resize_image_if_needed(&oriented, 640);
+    let low = resize_image_if_needed(&high, 640);
     encode_and_save_jpeg(config, &low, &command.output_low)?;
 
-    let lower = resize_image_if_needed(&oriented, 426);
+    let lower = resize_image_if_needed(&high, 426);
     encode_and_save_jpeg(config, &lower, &command.output_lower)?;
 
-    let very_low = resize_image_if_needed(&oriented, 256);
+    let very_low = resize_image_if_needed(&high, 256);
     encode_and_save_jpeg(config, &very_low, &command.output_very_low)?;
 
     let info = ImageProcessingInfo {
