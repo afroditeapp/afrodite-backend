@@ -14,8 +14,9 @@ use async_openai::{
     },
 };
 use base64::display::Base64Display;
-use config::bot_config_file::internal::{
-    AcceptOrReject, FaceVerificationConfigInternal, FaceVerificationLlmConfigInternal,
+use config::bot_config_file::{
+    ReasoningEffortConfig,
+    internal::{AcceptOrReject, FaceVerificationConfigInternal, FaceVerificationLlmConfigInternal},
 };
 use error_stack::ResultExt;
 use futures::{StreamExt, stream};
@@ -217,6 +218,10 @@ impl AdminBotFaceVerificationLogic {
                 model: config.llm.model.clone(),
                 temperature: config.llm.temperature,
                 seed: config.llm.seed,
+                reasoning_effort: config
+                    .llm
+                    .reasoning_effort
+                    .map(ReasoningEffortConfig::to_openai_api_type),
                 max_completion_tokens: Some(config.llm.max_tokens),
                 max_tokens: Some(config.llm.max_tokens),
                 ..Default::default()

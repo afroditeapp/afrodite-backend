@@ -12,9 +12,12 @@ use async_openai::{
     config::OpenAIConfig,
     types::chat::{ChatCompletionRequestMessage, CreateChatCompletionRequest},
 };
-use config::bot_config_file::internal::{
-    ModerationAction, ProfileStringModerationConfigInternal,
-    ProfileStringModerationLlmConfigInternal,
+use config::bot_config_file::{
+    ReasoningEffortConfig,
+    internal::{
+        ModerationAction, ProfileStringModerationConfigInternal,
+        ProfileStringModerationLlmConfigInternal,
+    },
 };
 use error_stack::ResultExt;
 use futures::{StreamExt, stream};
@@ -198,6 +201,10 @@ impl AdminBotProfileStringModerationLogic {
                 model: config.llm.model.clone(),
                 temperature: config.llm.temperature,
                 seed: config.llm.seed,
+                reasoning_effort: config
+                    .llm
+                    .reasoning_effort
+                    .map(ReasoningEffortConfig::to_openai_api_type),
                 max_completion_tokens: Some(config.llm.max_tokens),
                 max_tokens: Some(config.llm.max_tokens),
                 ..Default::default()

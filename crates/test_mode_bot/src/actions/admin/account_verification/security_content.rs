@@ -8,8 +8,12 @@ use async_openai::types::chat::{
     CreateChatCompletionRequest, ImageUrl,
 };
 use base64::display::Base64Display;
-use config::bot_config_file::internal::{
-    AcceptOrReject, AccountVerificationConfigInternal, SecurityContentVerificationConfigInternal,
+use config::bot_config_file::{
+    ReasoningEffortConfig,
+    internal::{
+        AcceptOrReject, AccountVerificationConfigInternal,
+        SecurityContentVerificationConfigInternal,
+    },
 };
 use error_stack::ResultExt;
 use simple_backend_utils::Result;
@@ -216,6 +220,10 @@ async fn llm_security_content_verification(
             model: config.llm.model.clone(),
             temperature: config.llm.temperature,
             seed: config.llm.seed,
+            reasoning_effort: config
+                .llm
+                .reasoning_effort
+                .map(ReasoningEffortConfig::to_openai_api_type),
             max_completion_tokens: Some(config.llm.max_tokens),
             max_tokens: Some(config.llm.max_tokens),
             ..Default::default()

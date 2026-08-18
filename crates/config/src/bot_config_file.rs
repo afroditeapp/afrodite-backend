@@ -380,6 +380,7 @@ pub struct LlmConfig {
     pub temperature: Option<f32>,
     pub seed: Option<i64>,
     pub max_tokens: u32,
+    pub reasoning_effort: Option<ReasoningEffortConfig>,
     pub debug_log_results: bool,
     pub retry_wait_times_in_seconds: Vec<u16>,
 }
@@ -395,6 +396,8 @@ pub struct BaseLlmConfig {
     seed: Option<i64>,
     /// Default value is 10 000.
     max_tokens: Option<u32>,
+    /// Reasoning effort for models that support it.
+    reasoning_effort: Option<ReasoningEffortConfig>,
     /// Log LLM request/response details for debugging.
     debug_log_results: Option<bool>,
     /// Wait times in seconds between retry attempts. The length of this vector
@@ -411,6 +414,7 @@ impl BaseLlmConfig {
             temperature: self.temperature.or(base.temperature),
             seed: self.seed.or(base.seed),
             max_tokens: self.max_tokens.or(base.max_tokens).unwrap_or(10_000),
+            reasoning_effort: self.reasoning_effort.or(base.reasoning_effort),
             debug_log_results: self
                 .debug_log_results
                 .or(base.debug_log_results)
@@ -420,6 +424,35 @@ impl BaseLlmConfig {
                 .or(base.retry_wait_times_in_seconds)
                 .unwrap_or_default(),
         })
+    }
+}
+
+/// Reasoning effort for LLM models that support it.
+///
+/// Mirrors the OpenAI chat completion API values.
+#[derive(Debug, Clone, Copy, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ReasoningEffortConfig {
+    None,
+    Minimal,
+    Low,
+    Medium,
+    High,
+    Xhigh,
+}
+
+impl ReasoningEffortConfig {
+    pub fn to_openai_api_type(self) -> async_openai::types::chat::ReasoningEffort {
+        use async_openai::types::chat::ReasoningEffort;
+
+        match self {
+            ReasoningEffortConfig::None => ReasoningEffort::None,
+            ReasoningEffortConfig::Minimal => ReasoningEffort::Minimal,
+            ReasoningEffortConfig::Low => ReasoningEffort::Low,
+            ReasoningEffortConfig::Medium => ReasoningEffort::Medium,
+            ReasoningEffortConfig::High => ReasoningEffort::High,
+            ReasoningEffortConfig::Xhigh => ReasoningEffort::Xhigh,
+        }
     }
 }
 
