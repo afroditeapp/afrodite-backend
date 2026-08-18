@@ -1,4 +1,5 @@
 use error_stack::IntoReport;
+use model::ClientLanguage;
 use model_server_data::EmailAddress;
 pub use simple_backend::email::EmailError;
 use simple_backend_utils::consts::MIB_IN_BYTES;
@@ -45,6 +46,7 @@ pub enum HighPriorityEmailMsg {
     RegistrationToken {
         email: EmailAddress,
         token: String,
+        language: Option<ClientLanguage>,
         result_sender: oneshot::Sender<Result<(), DataError>>,
     },
 }
@@ -133,11 +135,13 @@ impl EmailChannelSender {
         &self,
         email: EmailAddress,
         token: String,
+        language: Option<ClientLanguage>,
     ) -> simple_backend_utils::Result<EmailSendingHandle, DataError> {
         let (result_sender, result_receiver) = oneshot::channel();
         let cmd = HighPriorityEmailMsg::RegistrationToken {
             email,
             token,
+            language,
             result_sender,
         };
         match self.high_priority_sender.try_send(cmd) {

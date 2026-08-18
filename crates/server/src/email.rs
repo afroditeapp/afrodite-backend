@@ -3,7 +3,9 @@ pub mod custom;
 use std::sync::Arc;
 
 use error_stack::ResultExt;
-use model::{AccessToken, AccountIdInternal, EmailMessages, EventToClientInternal, UnixTime};
+use model::{
+    AccessToken, AccountIdInternal, ClientLanguage, EmailMessages, EventToClientInternal, UnixTime,
+};
 use model_media::EmailAddress;
 use server_api::{
     app::{GetConfig, ReadData, WriteData},
@@ -101,8 +103,8 @@ impl EmailManager {
 
                             let _ = result_sender.send(result.map_err(|_| DataError::EmailSendingFailed));
                         }
-                        HighPriorityEmailMsg::RegistrationToken { email, token, result_sender } => {
-                            let result = self.handle_send_registration_token(&email, &token).await;
+                        HighPriorityEmailMsg::RegistrationToken { email, token, language, result_sender } => {
+                            let result = self.handle_send_registration_token(&email, &token, &language).await;
                             if let Err(e) = &result {
                                 error!("Registration token email send failed: {:?}", e);
                             }
@@ -153,14 +155,14 @@ impl EmailManager {
         &self,
         email: &EmailAddress,
         token: &str,
+        language: &Option<ClientLanguage>,
     ) -> simple_backend_utils::Result<(), EmailError> {
         if email.as_str().ends_with("@example.com") {
             return Ok(());
         }
 
         let email_content = self.state.config().email_content();
-        // TODO(prod): Get language using login route
-        let getter = email_content.get::<String>(None);
+        let getter = email_content.get(language.as_ref());
         let content = getter
             .email_login(token)
             .change_context(EmailError::GettingEmailDataFailed)?;

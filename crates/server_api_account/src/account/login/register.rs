@@ -10,7 +10,7 @@ use crate::{account::login::EmailLoginResultInternal, app::WriteData, utils::Sta
 
 pub(super) async fn request_email_registration_token(
     state: &S,
-    request: &RequestEmailLoginToken,
+    request: RequestEmailLoginToken,
 ) -> Result<EmailLoginResultInternal, StatusCode> {
     let (client_token, email_token) = state
         .email_registration_tokens()
@@ -23,9 +23,11 @@ pub(super) async fn request_email_registration_token(
         )
         .await;
 
-    let handle = state
-        .email_channel_sender()
-        .send_registration_login_token(request.email.clone(), email_token.into_string())?;
+    let handle = state.email_channel_sender().send_registration_login_token(
+        request.email,
+        email_token.into_string(),
+        request.language,
+    )?;
 
     Ok(EmailLoginResultInternal::successful(client_token, handle))
 }

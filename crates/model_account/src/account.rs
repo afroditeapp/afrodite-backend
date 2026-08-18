@@ -1,5 +1,7 @@
 use diesel::prelude::*;
-use model::{ClientType, ClientVersion, EmailLoginToken, NewsSyncVersion, UnixTime};
+use model::{
+    ClientLanguage, ClientType, ClientVersion, EmailLoginToken, NewsSyncVersion, UnixTime,
+};
 use model_server_data::{
     AppleAccountId, AuthPair, EmailAddress, GoogleAccountId, PublicationId, SignInWithInfo,
 };
@@ -244,6 +246,11 @@ pub struct RequestEmailLoginToken {
     #[schema(default = false)]
     pub login_only: bool,
     pub client_type: ClientType,
+    /// Preferred language for token emails.
+    /// If `None`, the default language is used.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub language: Option<ClientLanguage>,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]

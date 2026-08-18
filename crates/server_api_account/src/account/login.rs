@@ -778,14 +778,14 @@ async fn handle_login_token_sending(
 
         let handle = state
             .email_channel_sender()
-            .send_registration_login_token(email, email_token.into_string())
+            .send_registration_login_token(email, email_token.into_string(), request.language)
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
         Ok(EmailLoginResultInternal::successful(client_token, handle))
     } else if request.login_only {
         Ok(EmailLoginResultInternal::error_hidden())
     } else {
-        request_email_registration_token(state, &request).await
+        request_email_registration_token(state, request).await
     }
 }
 
