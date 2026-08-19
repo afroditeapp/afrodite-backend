@@ -1,17 +1,24 @@
-use std::{io, path::PathBuf};
+use std::{
+    fs::File,
+    io::{self, BufReader, Read, Seek, SeekFrom},
+    path::PathBuf,
+};
 
 use error_stack::{IntoReport, ResultExt};
 use face_detection::FaceDetector;
-use image::{DynamicImage, EncodableLayout, ImageDecoder, ImageReader};
+use image::{DynamicImage, EncodableLayout, ImageDecoder, ImageFormat, ImageReader};
 use nsfw_detection::NsfwDetector;
 use serde::{Deserialize, Serialize};
 use simple_backend_config::image_process::ImageProcessingConfig;
-use simple_backend_utils::Result;
+use simple_backend_utils::{Result, consts::MIB_IN_BYTES};
 
 mod face_detection;
 mod nsfw_detection;
 
 const SOURCE_IMG_MIN_WIDTH_AND_HEIGHT: u32 = 512;
+
+/// RGB image with 200 000 000 pixels and 8-bits per color is about 573 MiB
+const SOURCE_IMG_DECODED_MAX_BYTES: u64 = (573 * MIB_IN_BYTES) as u64;
 
 #[derive(thiserror::Error, Debug)]
 pub enum ImageProcessError {
@@ -36,6 +43,12 @@ pub enum ImageProcessError {
     )]
     SourceImageTooSmall,
 
+    #[error(
+        "Decoded source image size is greater than {} bytes",
+        SOURCE_IMG_DECODED_MAX_BYTES
+    )]
+    SourceImageTooLarge,
+
     #[error("Face detection error")]
     FaceDetection,
 
@@ -50,6 +63,9 @@ pub enum ImageProcessError {
 
     #[error("NSFW detection error")]
     NsfwDetectionError,
+
+    #[error("Unsupported image format")]
+    UnsupportedImageFormat,
 }
 
 /// Image process reads this info as JSON from standard input.
@@ -164,34 +180,54 @@ pub fn run_image_processing_loop() -> Result<(), ImageProcessError> {
     }
 }
 
+fn open_image(path: &PathBuf) -> Result<ImageReader<BufReader<File>>, ImageProcessError> {
+    let mut file = File::open(path).change_context(ImageProcessError::InputReadingFailed)?;
+
+    let mut bytes = [0u8; 4];
+    file.read_exact(&mut bytes)
+        .change_context(ImageProcessError::InputReadingFailed)?;
+    let format = match bytes {
+        [0xFF, 0xD8, 0xFF, _] => ImageFormat::Jpeg,
+        [0x89, 0x50, 0x4E, 0x47] => ImageFormat::Png,
+        _ => return Err(ImageProcessError::UnsupportedImageFormat.into_report()),
+    };
+
+    file.seek(SeekFrom::Start(0))
+        .change_context(ImageProcessError::InputReadingFailed)?;
+    let buf_reader = BufReader::new(file);
+    Ok(ImageReader::with_format(buf_reader, format))
+}
+
 fn handle_image(
     config: &ImageProcessingConfig,
     face_detector: &FaceDetector,
     nsfw_detector: &NsfwDetector,
     command: ProcessImageCommand,
 ) -> Result<ImageProcessingInfo, ImageProcessError> {
-    let mut img_decoder = ImageReader::open(&command.input)
-        .change_context(ImageProcessError::InputReadingFailed)?
-        .with_guessed_format()
-        .change_context(ImageProcessError::InputReadingFailed)?
+    let mut img_decoder = open_image(&command.input)?
         .into_decoder()
         .change_context(ImageProcessError::InputReadingFailed)?;
-    let orientation = img_decoder
-        .orientation()
-        .change_context(ImageProcessError::ExifReadingFailed)?;
-    let img = DynamicImage::from_decoder(img_decoder)
-        .change_context(ImageProcessError::InputReadingFailed)?;
 
-    if img.width() < SOURCE_IMG_MIN_WIDTH_AND_HEIGHT
-        || img.height() < SOURCE_IMG_MIN_WIDTH_AND_HEIGHT
-    {
+    let (width, height) = img_decoder.dimensions();
+    if width < SOURCE_IMG_MIN_WIDTH_AND_HEIGHT || height < SOURCE_IMG_MIN_WIDTH_AND_HEIGHT {
         return Err(ImageProcessError::SourceImageTooSmall.into_report());
     }
 
-    let mut oriented = img;
-    oriented.apply_orientation(orientation);
+    if img_decoder.total_bytes() > SOURCE_IMG_DECODED_MAX_BYTES {
+        return Err(ImageProcessError::SourceImageTooLarge.into_report());
+    }
 
-    let high = resize_image_if_needed(&oriented, 1280);
+    let orientation = img_decoder
+        .orientation()
+        .change_context(ImageProcessError::ExifReadingFailed)?;
+    let mut img = DynamicImage::from_decoder(img_decoder)
+        .change_context(ImageProcessError::InputReadingFailed)?;
+    img.apply_orientation(orientation);
+
+    let high = resize_image_if_needed(&img, 1280);
+
+    // Full resolution image might consume a lot of RAM
+    drop(img);
 
     let face_detected = match face_detector.detect_face(high.to_luma8()) {
         Ok(v) => v,
