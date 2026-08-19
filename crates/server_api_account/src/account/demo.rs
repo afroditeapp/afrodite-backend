@@ -178,7 +178,12 @@ pub async fn post_demo_account_login_to_account(
         return Ok(LoginResult::error_unsupported_client().into());
     }
 
-    if let Err(error) = validate_app_attestation(&state, info.client_info.app_attestation.as_ref())
+    if let Err(error) = validate_app_attestation(
+        &state,
+        info.client_info.client_type,
+        info.client_info.app_attestation.as_ref(),
+    )
+    .await
     {
         return Ok(error.into());
     }

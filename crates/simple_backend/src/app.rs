@@ -44,8 +44,10 @@ impl SimpleBackendAppState {
         Ok(SimpleBackendAppState {
             reqwest_client: reqwest_client.clone(),
             tile_map: TileMapManager::new(&config).into(),
-            sign_in_with: SignInWithManager::new(config.clone(), reqwest_client).into(),
-            app_attestation: AppAttestationManager::new(config.clone()).into(),
+            sign_in_with: SignInWithManager::new(config.clone(), reqwest_client.clone()).into(),
+            app_attestation: AppAttestationManager::new(config.clone(), reqwest_client.clone())
+                .await
+                .into(),
             file_packages: FilePackageManager::new(&config)
                 .await
                 .change_context(AppStateCreationError::FilePackageManagerError)?

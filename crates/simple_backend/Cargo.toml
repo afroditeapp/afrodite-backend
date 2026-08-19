@@ -54,6 +54,9 @@ jsonwebtoken = { workspace = true }
 sha2 = { workspace = true }
 base64 = { workspace = true }
 
+# Google service account OAuth for the Play Integrity API (re-exported by fcm)
+fcm = { workspace = true }
+
 sysinfo = { workspace = true }
 
 manager_api = { path = "../manager_api" }

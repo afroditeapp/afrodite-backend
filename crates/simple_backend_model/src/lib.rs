@@ -33,6 +33,9 @@ pub use content_quality::*;
 pub mod app_attestation;
 pub use app_attestation::*;
 
+pub mod play_integrity;
+pub use play_integrity::*;
+
 #[cfg(test)]
 mod tests {
     // Ignore unused dependency warning. Unit tests need this dependency.

@@ -308,6 +308,16 @@ pub fn get_config(
             .attach("Firebase Cloud Messaging service account key file does not exist");
     }
 
+    if let Some(play_integrity_config) = file_config
+        .app_attestation
+        .as_ref()
+        .and_then(|c| c.play_integrity.as_ref())
+        && !play_integrity_config.service_account_key_path.exists()
+    {
+        return Err(GetConfigError::InvalidConfiguration)
+            .attach("Play Integrity API service account key file does not exist");
+    }
+
     if let Some(config) = file_config.push_notifications.apns.as_ref()
         && !config.key_path.exists()
     {

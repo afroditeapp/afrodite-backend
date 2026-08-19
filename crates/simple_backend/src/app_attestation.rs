@@ -5,6 +5,15 @@ use sha2::{Digest, Sha256};
 use simple_backend_config::SimpleBackendConfig;
 use simple_backend_model::{AppAttestation, DebugAppAttestationToken};
 
+use crate::app_attestation::play_integrity::{PlayIntegrityError, PlayIntegrityManager};
+
+mod play_integrity;
+
+#[derive(PartialEq)]
+pub enum AppAttestationClientType {
+    Android,
+}
+
 pub enum AppAttestationError {
     Failed,
     DeviceIntegrity,
@@ -13,19 +22,30 @@ pub enum AppAttestationError {
 
 pub struct AppAttestationManager {
     config: Arc<SimpleBackendConfig>,
+    play_integrity: PlayIntegrityManager,
 }
 
 impl AppAttestationManager {
-    pub fn new(config: Arc<SimpleBackendConfig>) -> Self {
-        Self { config }
+    pub async fn new(config: Arc<SimpleBackendConfig>, reqwest_client: reqwest::Client) -> Self {
+        let service_account_key_path = config
+            .app_attestation()
+            .and_then(|c| c.play_integrity.as_ref())
+            .map(|c| c.service_account_key_path.clone());
+        let play_integrity =
+            PlayIntegrityManager::new(service_account_key_path, reqwest_client).await;
+        Self {
+            config,
+            play_integrity,
+        }
     }
 
     /// Validate app attestation provided by the client against server config.
     ///
     /// If app attestation is not configured, attestation is not required and
     /// this always succeeds.
-    pub fn validate(
+    pub async fn validate(
         &self,
+        client_type: Option<AppAttestationClientType>,
         attestation: Option<&AppAttestation>,
     ) -> std::result::Result<(), AppAttestationError> {
         let Some(config) = self.config.app_attestation() else {
@@ -58,9 +78,28 @@ impl AppAttestationManager {
             if token.nonce != token_nonce {
                 return Err(AppAttestationError::Failed);
             }
-            Ok(())
-        } else {
-            Err(AppAttestationError::Failed)
+            return Ok(());
         }
+
+        if let Some(play_integrity) = &attestation.play_integrity {
+            // Google Play Integrity API is only supported on Android clients.
+            if client_type != Some(AppAttestationClientType::Android) {
+                return Err(AppAttestationError::Failed);
+            }
+            let Some(play_integrity_config) = &config.play_integrity else {
+                return Err(AppAttestationError::Failed);
+            };
+            return self
+                .play_integrity
+                .validate(play_integrity, play_integrity_config)
+                .await
+                .map_err(|error| match error {
+                    PlayIntegrityError::Failed => AppAttestationError::Failed,
+                    PlayIntegrityError::DeviceIntegrity => AppAttestationError::DeviceIntegrity,
+                    PlayIntegrityError::AppIntegrity => AppAttestationError::AppIntegrity,
+                });
+        }
+
+        Err(AppAttestationError::Failed)
     }
 }

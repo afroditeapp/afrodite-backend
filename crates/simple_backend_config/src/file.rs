@@ -134,6 +134,13 @@ local_bot_api_port = 3001
 # jwt_validity_time = "1h"
 # room_prefix = "Afrodite_meeting_"
 
+# [app_attestation.play_integrity]
+# require_device_integrity = true
+# require_app_integrity = true
+# package_name = "com.example.app"
+# service_account_key_path = "server_config/service_account_key.json"
+# max_age_seconds = 300 # optional
+
 "#;
 
 #[derive(thiserror::Error, Debug)]
@@ -677,12 +684,35 @@ impl NsfwDetectionConfig {
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct AppAttestationConfig {
     pub debug: Option<DebugAppAttestationConfig>,
+    pub play_integrity: Option<PlayIntegrityAppAttestationConfig>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct DebugAppAttestationConfig {
     pub require_device_integrity: bool,
     pub require_app_integrity: bool,
+}
+
+/// Google Play Integrity API attestation configuration.
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct PlayIntegrityAppAttestationConfig {
+    pub require_device_integrity: bool,
+    /// Require `appIntegrity.appRecognitionVerdict` to be `PLAY_RECOGNIZED`.
+    pub require_app_integrity: bool,
+    /// Expected application package name. The verdict token
+    /// `requestDetails.requestPackageName` must match this.
+    pub package_name: String,
+    /// Path to the Google service account key JSON file used to authenticate
+    /// to the Play Integrity API. The service account must have the
+    /// `playintegrity` OAuth scope.
+    pub service_account_key_path: PathBuf,
+    /// Maximum age of the verdict token in seconds.
+    #[serde(default = "default_play_integrity_max_age_seconds")]
+    pub max_age_seconds: u64,
+}
+
+fn default_play_integrity_max_age_seconds() -> u64 {
+    300
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]

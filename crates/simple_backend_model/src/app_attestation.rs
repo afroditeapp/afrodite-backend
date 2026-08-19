@@ -1,11 +1,16 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
+use crate::play_integrity::PlayIntegrityAppAttestation;
+
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, ToSchema)]
 pub struct AppAttestation {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
     pub debug: Option<DebugAppAttestation>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub play_integrity: Option<PlayIntegrityAppAttestation>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, ToSchema)]

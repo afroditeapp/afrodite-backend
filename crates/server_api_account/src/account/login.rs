@@ -24,7 +24,7 @@ use server_data::{
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::{
     app::{AppAttestationProvider, MaxMindDbDataProvider, SignInWith},
-    app_attestation::AppAttestationError,
+    app_attestation::{AppAttestationClientType, AppAttestationError},
     create_counters,
     sign_in_with::{apple::AppleAccountInfo, google::GoogleAccountInfo},
 };
@@ -283,13 +283,19 @@ async fn validate_email_registration_domain(
 ///
 /// If app attestation is not configured, attestation is not required and
 /// this always succeeds.
-pub(super) fn validate_app_attestation(
+pub(super) async fn validate_app_attestation(
     state: &S,
+    client_type: ClientType,
     attestation: Option<&AppAttestation>,
 ) -> Result<(), LoginResult> {
+    let client_type = match client_type {
+        ClientType::Android => Some(AppAttestationClientType::Android),
+        _ => None,
+    };
     state
         .app_attestation_manager()
-        .validate(attestation)
+        .validate(client_type, attestation)
+        .await
         .map_err(|error| match error {
             AppAttestationError::Failed => LoginResult::error_app_attestation_failed(),
             AppAttestationError::DeviceIntegrity => {
@@ -330,8 +336,12 @@ pub async fn post_sign_in_with_login(
         return Ok(error.into());
     }
 
-    if let Err(error) =
-        validate_app_attestation(&state, tokens.client_info.app_attestation.as_ref())
+    if let Err(error) = validate_app_attestation(
+        &state,
+        tokens.client_info.client_type,
+        tokens.client_info.app_attestation.as_ref(),
+    )
+    .await
     {
         return Ok(error.into());
     }
@@ -864,8 +874,12 @@ async fn post_email_login_with_token_impl(
         return Ok(error.into());
     }
 
-    if let Err(error) =
-        validate_app_attestation(&state, request.client_info.app_attestation.as_ref())
+    if let Err(error) = validate_app_attestation(
+        &state,
+        request.client_info.client_type,
+        request.client_info.app_attestation.as_ref(),
+    )
+    .await
     {
         return Ok(error.into());
     }
