@@ -163,6 +163,7 @@ src/models/email_address_state.rs
 src/models/email_address_state_admin.rs
 src/models/email_login.rs
 src/models/email_login_token.rs
+src/models/email_registration_domain_lists.rs
 src/models/email_registration_platforms.rs
 src/models/favorite_profiles_page.rs
 src/models/features_config.rs
@@ -364,6 +365,7 @@ src/models/push_notification_info_sync_version.rs
 src/models/put_content_to_content_slot_result.rs
 src/models/put_sign_in_with_apple.rs
 src/models/put_sign_in_with_google.rs
+src/models/put_sign_in_with_result.rs
 src/models/received_like_id.rs
 src/models/received_likes_iterator_state.rs
 src/models/received_likes_page.rs

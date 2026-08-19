@@ -24,6 +24,9 @@ pub struct RequestEmailLoginTokenResult {
     /// This is true when email registration has been disabled for all client platforms.
     #[serde(rename = "error_email_registration_all_platforms_disabled", skip_serializing_if = "Option::is_none")]
     pub error_email_registration_all_platforms_disabled: Option<bool>,
+    /// This is true when the email domain is not accepted for email registration. This can happen when the domain is in the blocklist or not in the allowlist configured by the server admin.
+    #[serde(rename = "error_email_registration_domain_not_accepted", skip_serializing_if = "Option::is_none")]
+    pub error_email_registration_domain_not_accepted: Option<bool>,
     #[serde(rename = "error_email_registration_ip_address_limit_reached", skip_serializing_if = "Option::is_none")]
     pub error_email_registration_ip_address_limit_reached: Option<bool>,
     /// This is true when the daily email registration limit has been reached. The client should guide the user to wait 24 hours or use another login method for account registration.
@@ -47,6 +50,7 @@ impl RequestEmailLoginTokenResult {
             email_login_emails_per_month: None,
             error: None,
             error_email_registration_all_platforms_disabled: None,
+            error_email_registration_domain_not_accepted: None,
             error_email_registration_ip_address_limit_reached: None,
             error_email_registration_limit_reached: None,
             error_email_registration_platform_disabled: None,

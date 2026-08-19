@@ -17,6 +17,9 @@ pub struct RequestEmailLoginToken {
     pub client_type: models::ClientType,
     #[serde(rename = "email")]
     pub email: String,
+    /// Preferred language for token emails. If `None`, the default language is used.
+    #[serde(rename = "language", skip_serializing_if = "Option::is_none")]
+    pub language: Option<models::ClientLanguage>,
     /// Use this to bypass [LoginResult::error_email_registration_ip_address_limit_reached] when user wants to login to existing account.
     #[serde(rename = "login_only", skip_serializing_if = "Option::is_none")]
     pub login_only: Option<bool>,
@@ -27,6 +30,7 @@ impl RequestEmailLoginToken {
         RequestEmailLoginToken {
             client_type,
             email,
+            language: None,
             login_only: None,
         }
     }

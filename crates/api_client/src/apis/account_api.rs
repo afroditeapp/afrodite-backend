@@ -1943,7 +1943,7 @@ pub async fn put_setting_unlimited_likes(configuration: &configuration::Configur
     }
 }
 
-pub async fn put_sign_in_with_apple(configuration: &configuration::Configuration, put_sign_in_with_apple: models::PutSignInWithApple) -> Result<(), Error<PutSignInWithAppleError>> {
+pub async fn put_sign_in_with_apple(configuration: &configuration::Configuration, put_sign_in_with_apple: models::PutSignInWithApple) -> Result<models::PutSignInWithResult, Error<PutSignInWithAppleError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_put_sign_in_with_apple = put_sign_in_with_apple;
 
@@ -1962,9 +1962,20 @@ pub async fn put_sign_in_with_apple(configuration: &configuration::Configuration
     let resp = configuration.client.execute(req).await?;
 
     let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
 
     if !status.is_client_error() && !status.is_server_error() {
-        Ok(())
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::PutSignInWithResult`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::PutSignInWithResult`")))),
+        }
     } else {
         let content = resp.text().await?;
         let entity: Option<PutSignInWithAppleError> = serde_json::from_str(&content).ok();
@@ -1972,7 +1983,7 @@ pub async fn put_sign_in_with_apple(configuration: &configuration::Configuration
     }
 }
 
-pub async fn put_sign_in_with_google(configuration: &configuration::Configuration, put_sign_in_with_google: models::PutSignInWithGoogle) -> Result<(), Error<PutSignInWithGoogleError>> {
+pub async fn put_sign_in_with_google(configuration: &configuration::Configuration, put_sign_in_with_google: models::PutSignInWithGoogle) -> Result<models::PutSignInWithResult, Error<PutSignInWithGoogleError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_put_sign_in_with_google = put_sign_in_with_google;
 
@@ -1991,9 +2002,20 @@ pub async fn put_sign_in_with_google(configuration: &configuration::Configuratio
     let resp = configuration.client.execute(req).await?;
 
     let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
 
     if !status.is_client_error() && !status.is_server_error() {
-        Ok(())
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::PutSignInWithResult`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::PutSignInWithResult`")))),
+        }
     } else {
         let content = resp.text().await?;
         let entity: Option<PutSignInWithGoogleError> = serde_json::from_str(&content).ok();
