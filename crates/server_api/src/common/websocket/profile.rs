@@ -28,8 +28,8 @@ pub async fn handle_get_next_profile_page(
                 ResponseNextProfilePageStatus::Success
             };
 
-            let profiles = if matches!(status, ResponseNextProfilePageStatus::Success) {
-                page.profiles().to_vec()
+            let items = if matches!(status, ResponseNextProfilePageStatus::Success) {
+                page.items().to_vec()
             } else {
                 Vec::new()
             };
@@ -39,7 +39,7 @@ pub async fn handle_get_next_profile_page(
                 EventToClientInternal::ResponseNextProfilePage {
                     request_id,
                     status,
-                    profiles,
+                    items,
                 },
             )
             .await?;
@@ -50,7 +50,7 @@ pub async fn handle_get_next_profile_page(
                 EventToClientInternal::ResponseNextProfilePage {
                     request_id,
                     status: ResponseNextProfilePageStatus::RateLimited,
-                    profiles: Vec::new(),
+                    items: Vec::new(),
                 },
             )
             .await?;
@@ -61,7 +61,7 @@ pub async fn handle_get_next_profile_page(
                 EventToClientInternal::ResponseNextProfilePage {
                     request_id,
                     status: ResponseNextProfilePageStatus::InternalServerError,
-                    profiles: Vec::new(),
+                    items: Vec::new(),
                 },
             )
             .await?;
@@ -178,8 +178,8 @@ pub async fn handle_automatic_profile_search_get_next_profile_page(
                 ResponseNextProfilePageStatus::Success
             };
 
-            let profiles = if matches!(status, ResponseNextProfilePageStatus::Success) {
-                page.profiles().to_vec()
+            let items = if matches!(status, ResponseNextProfilePageStatus::Success) {
+                page.items().to_vec()
             } else {
                 Vec::new()
             };
@@ -189,7 +189,7 @@ pub async fn handle_automatic_profile_search_get_next_profile_page(
                 EventToClientInternal::ResponseAutomaticProfileSearchNextProfilePage {
                     request_id,
                     status,
-                    profiles,
+                    items,
                 },
             )
             .await?;
@@ -200,7 +200,7 @@ pub async fn handle_automatic_profile_search_get_next_profile_page(
                 EventToClientInternal::ResponseAutomaticProfileSearchNextProfilePage {
                     request_id,
                     status: ResponseNextProfilePageStatus::RateLimited,
-                    profiles: Vec::new(),
+                    items: Vec::new(),
                 },
             )
             .await?;
@@ -211,7 +211,7 @@ pub async fn handle_automatic_profile_search_get_next_profile_page(
                 EventToClientInternal::ResponseAutomaticProfileSearchNextProfilePage {
                     request_id,
                     status: ResponseNextProfilePageStatus::InternalServerError,
-                    profiles: Vec::new(),
+                    items: Vec::new(),
                 },
             )
             .await?;

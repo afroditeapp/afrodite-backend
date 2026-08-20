@@ -1,5 +1,5 @@
 use diesel::{deserialize::FromSqlRow, expression::AsExpression, sql_types::SmallInt};
-use model::{NextNumberStorage, ProfileLink};
+use model::{NextNumberStorage, ProfileIteratorPageItem};
 use serde::{Deserialize, Serialize};
 use simple_backend_model::diesel_i16_wrapper;
 use utoipa::{IntoParams, ToSchema};
@@ -46,7 +46,7 @@ impl From<ProfileIteratorSessionIdInternal> for ProfileIteratorSessionId {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq, Default)]
 pub struct ProfilePage {
-    profiles: Vec<ProfileLink>,
+    items: Vec<ProfileIteratorPageItem>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     error: bool,
@@ -56,9 +56,9 @@ pub struct ProfilePage {
 }
 
 impl ProfilePage {
-    pub fn successful(profiles: Vec<ProfileLink>) -> Self {
+    pub fn successful(items: Vec<ProfileIteratorPageItem>) -> Self {
         Self {
-            profiles,
+            items,
             ..Default::default()
         }
     }
@@ -71,8 +71,8 @@ impl ProfilePage {
         }
     }
 
-    pub fn profiles(&self) -> &[ProfileLink] {
-        &self.profiles
+    pub fn items(&self) -> &[ProfileIteratorPageItem] {
+        &self.items
     }
 
     pub fn error_invalid_iterator_session_id_value(&self) -> bool {

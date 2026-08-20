@@ -3,8 +3,9 @@ use utils::minimal_i64;
 use crate::{
     AccountId, ContentProcessingStateChanged, ContentProcessingStateInternal,
     ContentProcessingStateType, EventToClientInternal, LastSeenTime, OnlineStatusUpdate,
-    ProfileContentVersion, ProfileLink, ProfileVersion, ResponseNextProfilePageStatus,
-    ResponseResetProfilePagingStatus, ScheduledMaintenanceStatus, ServerMessageType, UnixTime,
+    ProfileContentVersion, ProfileIteratorPageItem, ProfileIteratorPageItemType, ProfileLink,
+    ProfileVersion, ResponseNextProfilePageStatus, ResponseResetProfilePagingStatus,
+    ScheduledMaintenanceStatus, ServerMessageType, UnixTime,
 };
 
 pub fn parse_server_binary_message(message: &[u8]) -> Result<EventToClientInternal, String> {
@@ -57,12 +58,12 @@ pub fn parse_server_binary_message(message: &[u8]) -> Result<EventToClientIntern
             }
         }
         ServerMessageType::ResponseNextProfilePage => {
-            let (request_id, status, profiles) =
+            let (request_id, status, items) =
                 parse_response_next_profile_page_payload(&mut message_iter)?;
             EventToClientInternal::ResponseNextProfilePage {
                 request_id,
                 status,
-                profiles,
+                items,
             }
         }
         ServerMessageType::ResponseAutomaticProfileSearchResetProfilePaging => {
@@ -75,12 +76,12 @@ pub fn parse_server_binary_message(message: &[u8]) -> Result<EventToClientIntern
             }
         }
         ServerMessageType::ResponseAutomaticProfileSearchNextProfilePage => {
-            let (request_id, status, profiles) =
+            let (request_id, status, items) =
                 parse_response_next_profile_page_payload(&mut message_iter)?;
             EventToClientInternal::ResponseAutomaticProfileSearchNextProfilePage {
                 request_id,
                 status,
-                profiles,
+                items,
             }
         }
         ServerMessageType::ContentProcessingStateChanged => {
@@ -152,18 +153,8 @@ fn parse_uuid_base64_url_from_iter(
     payload_iter: &mut impl Iterator<Item = u8>,
     payload_name: &'static str,
 ) -> Result<simple_backend_utils::UuidBase64Url, String> {
-    let first_byte = next_payload_byte(payload_iter, payload_name)?;
-    parse_uuid_base64_url_from_iter_with_first_byte(first_byte, payload_iter, payload_name)
-}
-
-fn parse_uuid_base64_url_from_iter_with_first_byte(
-    first_byte: u8,
-    payload_iter: &mut impl Iterator<Item = u8>,
-    payload_name: &'static str,
-) -> Result<simple_backend_utils::UuidBase64Url, String> {
     let mut bytes = [0u8; 16];
-    bytes[0] = first_byte;
-    for byte in bytes.iter_mut().skip(1) {
+    for byte in bytes.iter_mut() {
         *byte = payload_iter
             .next()
             .ok_or_else(|| format!("truncated {payload_name} payload"))?;
@@ -262,7 +253,14 @@ fn parse_response_reset_profile_paging_payload(
 
 fn parse_response_next_profile_page_payload(
     payload_iter: &mut impl Iterator<Item = u8>,
-) -> Result<(u8, ResponseNextProfilePageStatus, Vec<ProfileLink>), String> {
+) -> Result<
+    (
+        u8,
+        ResponseNextProfilePageStatus,
+        Vec<ProfileIteratorPageItem>,
+    ),
+    String,
+> {
     let request_id = next_payload_byte(payload_iter, "response next profile page request id")?;
     let status_raw = next_payload_byte(payload_iter, "response next profile page status")?;
     let status = ResponseNextProfilePageStatus::try_from(status_raw)
@@ -277,33 +275,38 @@ fn parse_response_next_profile_page_payload(
         return Ok((request_id, status, Vec::new()));
     }
 
-    let mut profiles = Vec::new();
-    while let Some(account_id) = parse_optional_account_id_payload(payload_iter)? {
-        let profile_version = parse_profile_version_payload(payload_iter)?;
-        let profile_content_version = parse_profile_content_version_payload(payload_iter)?;
-        let last_seen = parse_optional_last_seen_time_payload(payload_iter)?;
+    let mut items = Vec::new();
+    while let Some(item_type_raw) = payload_iter.next() {
+        if item_type_raw > 127 {
+            return Err(format!(
+                "unsupported profile iterator page item type {item_type_raw}"
+            ));
+        }
 
-        profiles.push(ProfileLink::new(
-            account_id,
-            profile_version,
-            profile_content_version,
-            last_seen,
-        ));
+        if item_type_raw == ProfileIteratorPageItemType::ProfileLink as u8 {
+            let account_id = parse_account_id_payload(payload_iter)?;
+            let profile_version = parse_profile_version_payload(payload_iter)?;
+            let profile_content_version = parse_profile_content_version_payload(payload_iter)?;
+            let last_seen = parse_optional_last_seen_time_payload(payload_iter)?;
+
+            items.push(ProfileIteratorPageItem::profile_link(ProfileLink::new(
+                account_id,
+                profile_version,
+                profile_content_version,
+                last_seen,
+            )));
+        } else {
+            // Unknown item type with payload size equal to the byte value.
+            // Skip the item payload to stay forward-compatible.
+            for _ in 0..item_type_raw {
+                payload_iter
+                    .next()
+                    .ok_or_else(|| "truncated profile iterator page item payload".to_owned())?;
+            }
+        }
     }
 
-    Ok((request_id, status, profiles))
-}
-
-fn parse_optional_account_id_payload(
-    payload_iter: &mut impl Iterator<Item = u8>,
-) -> Result<Option<AccountId>, String> {
-    let Some(first_byte) = payload_iter.next() else {
-        return Ok(None);
-    };
-
-    let account_id =
-        parse_uuid_base64_url_from_iter_with_first_byte(first_byte, payload_iter, "account id")?;
-    Ok(Some(AccountId::new_base_64_url(account_id)))
+    Ok((request_id, status, items))
 }
 
 fn parse_profile_version_payload(
@@ -410,8 +413,8 @@ mod tests {
     use crate::{
         AccountId, ContentProcessingStateChanged, ContentProcessingStateInternal,
         EventToClientInternal, LastSeenTime, OnlineStatusUpdate, ProfileContentVersion,
-        ProfileLink, ProfileVersion, ResponseNextProfilePageStatus,
-        ResponseResetProfilePagingStatus, UnixTime,
+        ProfileIteratorPageItem, ProfileLink, ProfileVersion, ResponseNextProfilePageStatus,
+        ResponseResetProfilePagingStatus, ServerMessageType, UnixTime,
         common::websocket::server::create_server_binary_message,
     };
 
@@ -639,19 +642,19 @@ mod tests {
 
     #[test]
     fn roundtrip_response_next_profile_page_message() {
-        let profiles = vec![
-            ProfileLink::new(
+        let items = vec![
+            ProfileIteratorPageItem::profile_link(ProfileLink::new(
                 test_account_id(1),
                 test_profile_version(2),
                 test_profile_content_version(3),
                 Some(LastSeenTime::new(-1)),
-            ),
-            ProfileLink::new(
+            )),
+            ProfileIteratorPageItem::profile_link(ProfileLink::new(
                 test_account_id(4),
                 test_profile_version(5),
                 test_profile_content_version(6),
                 None,
-            ),
+            )),
         ];
         let request_id = 7;
         let status = ResponseNextProfilePageStatus::Success;
@@ -660,7 +663,7 @@ mod tests {
             create_server_binary_message(&EventToClientInternal::ResponseNextProfilePage {
                 request_id,
                 status,
-                profiles: profiles.clone(),
+                items: items.clone(),
             });
         let parsed = parse_server_binary_message(&message).expect("next profile page should parse");
 
@@ -668,14 +671,70 @@ mod tests {
             EventToClientInternal::ResponseNextProfilePage {
                 request_id: parsed_request_id,
                 status: parsed_status,
-                profiles: parsed_profiles,
+                items: parsed_items,
             } => {
                 assert_eq!(parsed_request_id, request_id);
                 assert_eq!(parsed_status, status);
-                assert_eq!(parsed_profiles, profiles);
+                assert_eq!(parsed_items, items);
             }
             _ => panic!("unexpected event parsed"),
         }
+    }
+
+    #[test]
+    fn parse_next_profile_page_skips_unknown_item_with_size_byte() {
+        let request_id = 7;
+        let status = ResponseNextProfilePageStatus::Success;
+
+        // Build a message with a profile link item followed by an unknown
+        // item type with a size byte of 3 and 3 payload bytes.
+        let mut message = vec![ServerMessageType::ResponseNextProfilePage as u8];
+        message.push(request_id);
+        message.push(status as u8);
+
+        // Profile link item (type byte 0).
+        message.push(0);
+        message.extend_from_slice(&[1; 16]); // account id
+        message.extend_from_slice(&[2; 16]); // profile version
+        message.extend_from_slice(&[3; 16]); // profile content version
+        message.push(0); // null last seen time
+
+        // Unknown item type with size byte 3 and 3 payload bytes.
+        message.push(3);
+        message.extend_from_slice(&[9, 9, 9]);
+
+        let parsed = parse_server_binary_message(&message).expect("message should parse");
+
+        match parsed {
+            EventToClientInternal::ResponseNextProfilePage {
+                request_id: parsed_request_id,
+                status: parsed_status,
+                items,
+            } => {
+                assert_eq!(parsed_request_id, request_id);
+                assert_eq!(parsed_status, status);
+                assert_eq!(items.len(), 1);
+                let profile = items[0]
+                    .profile_link_value()
+                    .expect("first item should be a profile link");
+                assert_eq!(profile.account_id(), test_account_id(1));
+            }
+            _ => panic!("unexpected event parsed"),
+        }
+    }
+
+    #[test]
+    fn parse_next_profile_page_rejects_item_type_over_127() {
+        let request_id = 7;
+        let status = ResponseNextProfilePageStatus::Success;
+
+        let mut message = vec![ServerMessageType::ResponseNextProfilePage as u8];
+        message.push(request_id);
+        message.push(status as u8);
+        message.push(128); // invalid item type
+
+        let result = parse_server_binary_message(&message);
+        assert!(result.is_err(), "item type over 127 should be an error");
     }
 
     #[test]
@@ -768,19 +827,19 @@ mod tests {
 
     #[test]
     fn roundtrip_response_automatic_profile_search_next_profile_page_message() {
-        let profiles = vec![
-            ProfileLink::new(
+        let items = vec![
+            ProfileIteratorPageItem::profile_link(ProfileLink::new(
                 test_account_id(14),
                 test_profile_version(15),
                 test_profile_content_version(16),
                 Some(LastSeenTime::new(123)),
-            ),
-            ProfileLink::new(
+            )),
+            ProfileIteratorPageItem::profile_link(ProfileLink::new(
                 test_account_id(17),
                 test_profile_version(18),
                 test_profile_content_version(19),
                 None,
-            ),
+            )),
         ];
         let request_id = 12;
         let status = ResponseNextProfilePageStatus::Success;
@@ -789,7 +848,7 @@ mod tests {
             &EventToClientInternal::ResponseAutomaticProfileSearchNextProfilePage {
                 request_id,
                 status,
-                profiles: profiles.clone(),
+                items: items.clone(),
             },
         );
         let parsed = parse_server_binary_message(&message)
@@ -799,11 +858,11 @@ mod tests {
             EventToClientInternal::ResponseAutomaticProfileSearchNextProfilePage {
                 request_id: parsed_request_id,
                 status: parsed_status,
-                profiles: parsed_profiles,
+                items: parsed_items,
             } => {
                 assert_eq!(parsed_request_id, request_id);
                 assert_eq!(parsed_status, status);
-                assert_eq!(parsed_profiles, profiles);
+                assert_eq!(parsed_items, items);
             }
             _ => panic!("unexpected event parsed"),
         }

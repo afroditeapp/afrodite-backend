@@ -1,5 +1,5 @@
 use axum::{Extension, extract::State};
-use model::{AccountIdInternal, ProfileLink};
+use model::{AccountIdInternal, ProfileIteratorPageItem, ProfileLink};
 use model_server_data::{
     AutomaticProfileSearchIteratorSessionId, ProfileIteratorSessionId, ProfilePage,
 };
@@ -97,7 +97,11 @@ pub async fn get_next_profile_page(
     let data = get_next_profile_page_data(account_id, iterator_session_id, state).await?;
 
     if let Some(data) = data {
-        Ok(ProfilePage::successful(data))
+        Ok(ProfilePage::successful(
+            data.into_iter()
+                .map(ProfileIteratorPageItem::profile_link)
+                .collect(),
+        ))
     } else {
         Ok(ProfilePage::error_invalid_iterator_session_id())
     }
@@ -224,7 +228,11 @@ pub async fn automatic_profile_search_get_next_profile_page(
             .await?;
 
     if let Some(data) = data {
-        Ok(ProfilePage::successful(data))
+        Ok(ProfilePage::successful(
+            data.into_iter()
+                .map(ProfileIteratorPageItem::profile_link)
+                .collect(),
+        ))
     } else {
         Ok(ProfilePage::error_invalid_iterator_session_id())
     }

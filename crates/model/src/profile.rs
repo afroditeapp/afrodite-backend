@@ -108,6 +108,30 @@ impl ProfileLink {
     }
 }
 
+/// A single item in a profile iterator page.
+///
+/// Each variant is represented by an optional field so that new item
+/// types can be added without breaking existing clients. Exactly one
+/// field is set for a valid item.
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct ProfileIteratorPageItem {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub profile_link: Option<ProfileLink>,
+}
+
+impl ProfileIteratorPageItem {
+    pub fn profile_link(profile_link: ProfileLink) -> Self {
+        Self {
+            profile_link: Some(profile_link),
+        }
+    }
+
+    pub fn profile_link_value(&self) -> Option<ProfileLink> {
+        self.profile_link
+    }
+}
+
 /// Profile age value which is in inclusive range `[18, 99]`.
 ///
 /// This serializes to i16, so this must not be added to API doc.

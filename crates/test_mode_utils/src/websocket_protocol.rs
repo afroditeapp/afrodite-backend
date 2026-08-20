@@ -147,14 +147,15 @@ fn convert_server_event_to_client_for_test_mode(
         EventToClientInternal::ResponseNextProfilePage {
             request_id,
             status,
-            profiles,
+            items,
         } => {
             let mut event = EventToClient::new(EventType::ResponseNextProfilePage);
             event.response_next_profile_page = Some(ResponseNextProfilePage {
                 request_id,
                 success: matches!(status, InternalResponseNextProfilePageStatus::Success),
-                profiles: profiles
+                profiles: items
                     .into_iter()
+                    .filter_map(|item| item.profile_link_value())
                     .map(|profile| profile.account_id().to_string())
                     .collect(),
             });

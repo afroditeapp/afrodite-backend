@@ -5,12 +5,18 @@ use utoipa::ToSchema;
 
 use crate::{
     AccountId, ContentProcessingStateChanged, ContentProcessingStateInternal,
-    EventToClientInternal, OnlineStatusUpdate, ProfileLink, ResponseNextProfilePageStatus,
-    ResponseResetProfilePagingStatus,
+    EventToClientInternal, OnlineStatusUpdate, ProfileIteratorPageItem,
+    ResponseNextProfilePageStatus, ResponseResetProfilePagingStatus,
 };
 
 mod parser;
 pub use parser::parse_server_binary_message;
+
+/// Type identifier byte for a single profile iterator page item.
+#[repr(u8)]
+pub enum ProfileIteratorPageItemType {
+    ProfileLink = 0,
+}
 
 /// First byte of websocket binary protocol messages sent from server to client.
 ///
@@ -53,11 +59,18 @@ pub use parser::parse_server_binary_message;
 ///     - 2: rate limited
 ///     - 3: internal server error
 ///   - if status is 0:
-///     - repeated profile entries until payload ends:
-///       - account id as 16-byte big-endian UUID
-///       - profile version as 16-byte big-endian UUID
-///       - profile content version as 16-byte big-endian UUID
-///       - null last seen time (0 byte) or last seen time as minimal i64
+///     - repeated profile iterator page items until payload ends:
+///       - item type and size byte (u8):
+///         - 0: profile link
+///         - 1..=127: unknown item type with payload size equal to the
+///           byte value (client must skip the payload)
+///         - 128..=255: error
+///       - item type specific data:
+///         - profile link:
+///           - account id as 16-byte big-endian UUID
+///           - profile version as 16-byte big-endian UUID
+///           - profile content version as 16-byte big-endian UUID
+///           - null last seen time (0 byte) or last seen time as minimal i64
 /// - `ResponseAutomaticProfileSearchResetProfilePaging` (63): payload format:
 ///   - request id byte (u8)
 ///   - status byte:
@@ -74,11 +87,18 @@ pub use parser::parse_server_binary_message;
 ///     - 2: rate limited
 ///     - 3: internal server error
 ///   - if status is 0:
-///     - repeated profile entries until payload ends:
-///       - account id as 16-byte big-endian UUID
-///       - profile version as 16-byte big-endian UUID
-///       - profile content version as 16-byte big-endian UUID
-///       - null last seen time (0 byte) or last seen time as minimal i64
+///     - repeated profile iterator page items until payload ends:
+///       - item type and size byte (u8):
+///         - 0: profile link
+///         - 1..=127: unknown item type with payload size equal to the
+///           byte value (client must skip the payload)
+///         - 128..=255: error
+///       - item type specific data:
+///         - profile link:
+///           - account id as 16-byte big-endian UUID
+///           - profile version as 16-byte big-endian UUID
+///           - profile content version as 16-byte big-endian UUID
+///           - null last seen time (0 byte) or last seen time as minimal i64
 /// - `ContentProcessingStateChanged` (90): payload format:
 ///   - client-provided processing id byte (u8)
 ///   - content processing state byte:
@@ -252,9 +272,9 @@ pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
         EventToClientInternal::ResponseNextProfilePage {
             request_id,
             status,
-            profiles,
+            items,
         } => {
-            append_response_next_profile_page_payload(&mut message, *request_id, *status, profiles);
+            append_response_next_profile_page_payload(&mut message, *request_id, *status, items);
         }
         EventToClientInternal::ResponseAutomaticProfileSearchResetProfilePaging {
             request_id,
@@ -271,9 +291,9 @@ pub fn create_server_binary_message(event: &EventToClientInternal) -> Vec<u8> {
         EventToClientInternal::ResponseAutomaticProfileSearchNextProfilePage {
             request_id,
             status,
-            profiles,
+            items,
         } => {
-            append_response_next_profile_page_payload(&mut message, *request_id, *status, profiles);
+            append_response_next_profile_page_payload(&mut message, *request_id, *status, items);
         }
         EventToClientInternal::AccountStateChanged
         | EventToClientInternal::NewMessageReceived
@@ -321,7 +341,7 @@ fn append_response_next_profile_page_payload(
     buffer: &mut Vec<u8>,
     request_id: u8,
     status: ResponseNextProfilePageStatus,
-    profiles: &[ProfileLink],
+    items: &[ProfileIteratorPageItem],
 ) {
     buffer.push(request_id);
     buffer.push(status as u8);
@@ -330,19 +350,23 @@ fn append_response_next_profile_page_payload(
         return;
     }
 
-    for profile in profiles {
-        let account_id = profile.account_id();
-        let profile_version = profile.profile_version();
-        let profile_content_version = profile.profile_content_version();
+    for item in items {
+        if let Some(profile) = item.profile_link_value() {
+            buffer.push(ProfileIteratorPageItemType::ProfileLink as u8);
 
-        buffer.extend_from_slice(account_id.aid.as_bytes());
-        buffer.extend_from_slice(profile_version.as_ref().as_bytes());
-        buffer.extend_from_slice(profile_content_version.as_ref().as_bytes());
+            let account_id = profile.account_id();
+            let profile_version = profile.profile_version();
+            let profile_content_version = profile.profile_content_version();
 
-        if let Some(last_seen) = profile.last_seen_time() {
-            minimal_i64::add_minimal_i64(buffer, last_seen.raw());
-        } else {
-            buffer.push(0);
+            buffer.extend_from_slice(account_id.aid.as_bytes());
+            buffer.extend_from_slice(profile_version.as_ref().as_bytes());
+            buffer.extend_from_slice(profile_content_version.as_ref().as_bytes());
+
+            if let Some(last_seen) = profile.last_seen_time() {
+                minimal_i64::add_minimal_i64(buffer, last_seen.raw());
+            } else {
+                buffer.push(0);
+            }
         }
     }
 }

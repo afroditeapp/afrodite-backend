@@ -15,7 +15,7 @@ use utoipa::{IntoParams, ToSchema};
 
 use crate::{
     Account, AccountStateContainer, ContentProcessingStateInternal, InitialSetupCompletedTime,
-    IpAddressInternal, OnlineStatusUpdate, ProfileLink, ProfileVisibility,
+    IpAddressInternal, OnlineStatusUpdate, ProfileIteratorPageItem, ProfileVisibility,
 };
 
 pub mod api_usage;
@@ -111,7 +111,7 @@ pub enum EventToClientInternal {
     ResponseNextProfilePage {
         request_id: u8,
         status: ResponseNextProfilePageStatus,
-        profiles: Vec<ProfileLink>,
+        items: Vec<ProfileIteratorPageItem>,
     },
     ResponseAutomaticProfileSearchResetProfilePaging {
         request_id: u8,
@@ -121,7 +121,7 @@ pub enum EventToClientInternal {
     ResponseAutomaticProfileSearchNextProfilePage {
         request_id: u8,
         status: ResponseNextProfilePageStatus,
-        profiles: Vec<ProfileLink>,
+        items: Vec<ProfileIteratorPageItem>,
     },
     NewsChanged,
     MediaContentChanged,
