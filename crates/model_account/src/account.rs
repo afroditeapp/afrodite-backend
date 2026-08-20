@@ -521,9 +521,12 @@ pub struct PutSignInWithResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     error: bool,
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    error_history_limit_reached: bool,
+    /// Set when the sign in with history limit is reached. Contains the
+    /// amount of seconds the client must wait before the oldest history
+    /// entry expires and a new association change can be made.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    error_history_limit_reached: Option<u32>,
 }
 
 impl PutSignInWithResult {
@@ -533,10 +536,10 @@ impl PutSignInWithResult {
         }
     }
 
-    pub fn error_history_limit_reached() -> Self {
+    pub fn error_history_limit_reached(seconds: u32) -> Self {
         Self {
             error: true,
-            error_history_limit_reached: true,
+            error_history_limit_reached: Some(seconds),
         }
     }
 }

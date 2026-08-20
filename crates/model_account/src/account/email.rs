@@ -210,9 +210,12 @@ pub struct InitEmailChangeResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     error_email_sending_timeout: bool,
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    error_history_limit_reached: bool,
+    /// Set when the email address history limit is reached. Contains the
+    /// amount of seconds the client must wait before the oldest history
+    /// entry expires and a new email change can be made.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    error_history_limit_reached: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
     error_try_again_later_after_seconds: Option<u32>,
@@ -241,10 +244,10 @@ impl InitEmailChangeResult {
         }
     }
 
-    pub fn error_history_limit_reached() -> Self {
+    pub fn error_history_limit_reached(seconds: u32) -> Self {
         Self {
             error: true,
-            error_history_limit_reached: true,
+            error_history_limit_reached: Some(seconds),
             ..Default::default()
         }
     }

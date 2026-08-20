@@ -84,6 +84,19 @@ impl ReadCommandsAccount<'_> {
             .into_error()
     }
 
+    pub async fn sign_in_with_history_oldest_change_unix_time(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<Option<UnixTime>, DataError> {
+        self.db_read(move |mut cmds| {
+            cmds.account()
+                .sign_in_with()
+                .sign_in_with_history_oldest_change_unix_time(id)
+        })
+        .await
+        .into_error()
+    }
+
     pub async fn email_address_state(
         &self,
         id: AccountIdInternal,

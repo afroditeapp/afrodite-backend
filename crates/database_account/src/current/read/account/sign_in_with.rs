@@ -1,6 +1,6 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
-use model::AccountIdInternal;
+use model::{AccountIdInternal, UnixTime};
 use model_account::{AppleAccountId, GoogleAccountId, SignInWithHistoryEntry, SignInWithInfoRaw};
 use simple_backend_utils::Result;
 
@@ -81,5 +81,20 @@ impl CurrentReadAccountSignInWith<'_> {
             .into_db_error(account)?;
 
         Ok(count)
+    }
+
+    pub fn sign_in_with_history_oldest_change_unix_time(
+        &mut self,
+        account: AccountIdInternal,
+    ) -> Result<Option<UnixTime>, DieselDatabaseError> {
+        use crate::schema::account_sign_in_with_history::dsl::*;
+
+        account_sign_in_with_history
+            .filter(account_id.eq(account.as_db_id()))
+            .order(change_unix_time.asc())
+            .select(change_unix_time)
+            .first(self.conn())
+            .optional()
+            .into_db_error(account)
     }
 }

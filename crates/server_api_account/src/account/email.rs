@@ -21,7 +21,10 @@ use server_api::{
     create_open_api_router, db_write,
     utils::Json,
 };
-use server_data::{app::GetConfig, email::EmailSendingHandle, read::GetReadCommandsCommon};
+use server_data::{
+    DataError, app::GetConfig, email::EmailSendingHandle, read::GetReadCommandsCommon,
+    result::WrappedContextExt,
+};
 use server_data_account::{
     read::GetReadCommandsAccount,
     write::{GetWriteCommandsAccount, account::email::TokenCheckResult},
@@ -468,7 +471,28 @@ pub(crate) async fn init_email_change_impl(
             .email_address_history_count(account_id)
             .await?;
         if history_count >= history_max_count {
-            return Ok(InitEmailChangeResult::error_history_limit_reached().into());
+            let retention_duration = cmds
+                .config()
+                .limits_account()
+                .email_address_history_retention_duration;
+            let oldest_change_time = cmds
+                .read()
+                .account()
+                .email()
+                .email_address_history_oldest_change_unix_time(account_id)
+                .await?
+                .ok_or(DataError::NotFound.report())?;
+            let seconds = (oldest_change_time.ut + retention_duration.seconds as i64)
+                - UnixTime::current_time().ut;
+            if seconds <= 0 {
+                // Oldest entry has expired, prune all expired entries so that
+                // the change can proceed.
+                cmds.account().email().prune_email_address_history().await?;
+            } else {
+                return Ok(
+                    InitEmailChangeResult::error_history_limit_reached(seconds as u32).into(),
+                );
+            }
         }
 
         let emails_per_month =

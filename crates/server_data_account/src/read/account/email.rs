@@ -1,5 +1,5 @@
 use database_account::current::read::GetDbReadCommandsAccount;
-use model::{AccountIdInternal, EmailLoginTokenRow};
+use model::{AccountIdInternal, EmailLoginTokenRow, UnixTime};
 use model_account::{
     AccountEmailSendingStateRaw, EmailChangeLimits, EmailLoginLimits, EmailVerificationLimits,
 };
@@ -87,5 +87,18 @@ impl ReadCommandsAccountEmail<'_> {
         self.db_read(move |mut cmds| cmds.account().email().email_address_history_count(id))
             .await
             .into_error()
+    }
+
+    pub async fn email_address_history_oldest_change_unix_time(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<Option<UnixTime>, DataError> {
+        self.db_read(move |mut cmds| {
+            cmds.account()
+                .email()
+                .email_address_history_oldest_change_unix_time(id)
+        })
+        .await
+        .into_error()
     }
 }

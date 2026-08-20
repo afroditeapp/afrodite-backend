@@ -383,10 +383,16 @@ impl WriteCommandsAccountEmail<'_> {
         })
     }
 
-    pub async fn prune_email_address_history(
-        &self,
-        retention_unix_time: UnixTime,
-    ) -> Result<(), DataError> {
+    pub async fn prune_email_address_history(&self) -> Result<(), DataError> {
+        let retention_duration = self
+            .config()
+            .limits_account()
+            .email_address_history_retention_duration;
+
+        let retention_unix_time = UnixTime::new(
+            UnixTime::current_time().ut - Into::<i64>::into(retention_duration.seconds),
+        );
+
         db_transaction!(self, move |mut cmds| {
             cmds.account()
                 .email()

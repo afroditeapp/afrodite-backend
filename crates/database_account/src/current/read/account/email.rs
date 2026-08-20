@@ -295,4 +295,19 @@ impl CurrentReadAccountEmail<'_> {
 
         Ok(count)
     }
+
+    pub fn email_address_history_oldest_change_unix_time(
+        &mut self,
+        account: AccountIdInternal,
+    ) -> Result<Option<UnixTime>, DieselDatabaseError> {
+        use crate::schema::account_email_address_history::dsl::*;
+
+        account_email_address_history
+            .filter(account_id.eq(account.as_db_id()))
+            .order(change_unix_time.asc())
+            .select(change_unix_time)
+            .first(self.conn())
+            .optional()
+            .into_db_error(account)
+    }
 }

@@ -1,12 +1,14 @@
 use axum::{Extension, extract::State};
 use base64::Engine;
-use model::AccountIdInternal;
+use model::{AccountIdInternal, UnixTime};
 use model_account::{
     AppleAccountId, GoogleAccountId, PutSignInWithApple, PutSignInWithGoogle, PutSignInWithResult,
     SignInWithState,
 };
 use server_api::{S, create_open_api_router, db_write};
-use server_data::{DataError, app::GetConfig, write_commands::WriteCmds};
+use server_data::{
+    DataError, app::GetConfig, result::WrappedContextExt, write_commands::WriteCmds,
+};
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::{app::SignInWith, create_counters};
 
@@ -82,8 +84,10 @@ pub async fn put_sign_in_with_apple(
         }
 
         db_write!(state, move |cmds| {
-            if check_sign_in_with_history_limit(&cmds, account_id).await? {
-                return Ok(PutSignInWithResult::error_history_limit_reached());
+            if let Some(seconds) =
+                sign_in_with_history_limit_wait_seconds(&cmds, account_id).await?
+            {
+                return Ok(PutSignInWithResult::error_history_limit_reached(seconds));
             }
 
             cmds.account()
@@ -141,8 +145,10 @@ pub async fn put_sign_in_with_google(
         }
 
         db_write!(state, move |cmds| {
-            if check_sign_in_with_history_limit(&cmds, account_id).await? {
-                return Ok(PutSignInWithResult::error_history_limit_reached());
+            if let Some(seconds) =
+                sign_in_with_history_limit_wait_seconds(&cmds, account_id).await?
+            {
+                return Ok(PutSignInWithResult::error_history_limit_reached(seconds));
             }
 
             cmds.account()
@@ -165,10 +171,13 @@ pub async fn put_sign_in_with_google(
     Ok(result.into())
 }
 
-async fn check_sign_in_with_history_limit(
+/// Returns `Some(seconds)` if the sign in with history limit is reached.
+/// If the oldest history entry has already expired, it is pruned and `None`
+/// is returned so that the caller can proceed.
+async fn sign_in_with_history_limit_wait_seconds(
     cmds: &WriteCmds,
     account_id: AccountIdInternal,
-) -> server_data::result::Result<bool, DataError> {
+) -> server_data::result::Result<Option<u32>, DataError> {
     let history_max_count = cmds
         .config()
         .limits_account()
@@ -179,7 +188,33 @@ async fn check_sign_in_with_history_limit(
         .account()
         .sign_in_with_history_count(account_id)
         .await?;
-    Ok(history_count >= history_max_count)
+    if history_count < history_max_count {
+        return Ok(None);
+    }
+
+    let retention_duration = cmds
+        .config()
+        .limits_account()
+        .sign_in_with_history_retention_duration;
+    let oldest_change_time = cmds
+        .read()
+        .account()
+        .sign_in_with_history_oldest_change_unix_time(account_id)
+        .await?
+        .ok_or(DataError::NotFound.report())?;
+    let seconds =
+        (oldest_change_time.ut + retention_duration.seconds as i64) - UnixTime::current_time().ut;
+    if seconds <= 0 {
+        // Oldest entry has expired, prune all expired entries so that the
+        // change can proceed.
+        cmds.account()
+            .sign_in_with()
+            .prune_sign_in_with_history()
+            .await?;
+        return Ok(None);
+    }
+
+    Ok(Some(seconds as u32))
 }
 
 create_open_api_router!(

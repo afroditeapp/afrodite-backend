@@ -154,21 +154,8 @@ impl ScheduledTaskManager {
     }
 
     async fn prune_email_address_history(&self) -> Result<(), ScheduledTaskError> {
-        let retention_duration = self
-            .state
-            .config()
-            .limits_account()
-            .email_address_history_retention_duration;
-
-        let retention_unix_time = UnixTime::new(
-            UnixTime::current_time().ut - Into::<i64>::into(retention_duration.seconds),
-        );
-
         db_write_raw!(self.state, move |cmds| {
-            cmds.account()
-                .email()
-                .prune_email_address_history(retention_unix_time)
-                .await
+            cmds.account().email().prune_email_address_history().await
         })
         .await
         .change_context(ScheduledTaskError::DatabaseError)?;
@@ -177,20 +164,10 @@ impl ScheduledTaskManager {
     }
 
     async fn prune_sign_in_with_history(&self) -> Result<(), ScheduledTaskError> {
-        let retention_duration = self
-            .state
-            .config()
-            .limits_account()
-            .sign_in_with_history_retention_duration;
-
-        let retention_unix_time = UnixTime::new(
-            UnixTime::current_time().ut - Into::<i64>::into(retention_duration.seconds),
-        );
-
         db_write_raw!(self.state, move |cmds| {
             cmds.account()
                 .sign_in_with()
-                .prune_sign_in_with_history(retention_unix_time)
+                .prune_sign_in_with_history()
                 .await
         })
         .await
