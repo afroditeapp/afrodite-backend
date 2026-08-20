@@ -35,7 +35,10 @@ use crate::{
     admin_notifications::AdminNotificationManagerData,
     demo::DemoAccountManager,
     dynamic_config::DynamicConfigManagerData,
-    email_registration::{EmailRegistrationTokenStore, limit::EmailRegistrationRateLimiter},
+    email_registration::{
+        EmailRegistrationTokenStore, address::EmailAddressValidator,
+        limit::EmailRegistrationRateLimiter,
+    },
     utils::ETagUtils,
 };
 
@@ -88,6 +91,7 @@ struct AppStateInternal {
     email_registration_tokens: EmailRegistrationTokenStore,
     email_registration_rate_limiter: EmailRegistrationRateLimiter,
     email_channel_sender: EmailChannelSender,
+    email_address_validator: EmailAddressValidator,
 }
 
 impl AppState {
@@ -133,6 +137,7 @@ impl AppState {
             email_registration_tokens: EmailRegistrationTokenStore::default(),
             email_registration_rate_limiter: EmailRegistrationRateLimiter::default(),
             email_channel_sender,
+            email_address_validator: EmailAddressValidator::new(),
         };
 
         AppState {
@@ -158,6 +163,10 @@ impl AppState {
 
     pub fn email_channel_sender(&self) -> &EmailChannelSender {
         &self.state.email_channel_sender
+    }
+
+    pub fn email_address_validator(&self) -> &EmailAddressValidator {
+        &self.state.email_address_validator
     }
 
     pub fn etag_utils(&self) -> &ETagUtils {

@@ -5,6 +5,7 @@ use model_server_data::EmailAddress;
 use simple_backend_utils::time::DurationValue;
 use tokio::sync::Mutex;
 
+pub mod address;
 pub mod limit;
 
 pub enum TokenData {

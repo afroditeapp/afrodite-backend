@@ -297,6 +297,13 @@ pub struct RequestEmailLoginTokenResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     error_email_registration_domain_not_accepted: bool,
+
+    /// This is true when the email address is not supported for email
+    /// registration. This can happen for example when the email address
+    /// contains characters that are not accepted for registration.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_email_registration_unsupported_email: bool,
 }
 
 impl RequestEmailLoginTokenResult {
@@ -351,6 +358,14 @@ impl RequestEmailLoginTokenResult {
         Self {
             error: true,
             error_email_registration_domain_not_accepted: true,
+            ..Default::default()
+        }
+    }
+
+    pub fn error_email_registration_unsupported_email() -> Self {
+        Self {
+            error: true,
+            error_email_registration_unsupported_email: true,
             ..Default::default()
         }
     }

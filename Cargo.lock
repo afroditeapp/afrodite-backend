@@ -5437,6 +5437,7 @@ dependencies = [
  "model",
  "model_server_data",
  "model_server_state",
+ "regex",
  "server_common",
  "server_data",
  "sha1 0.11.0",

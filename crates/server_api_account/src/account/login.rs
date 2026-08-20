@@ -449,6 +449,7 @@ struct EmailLoginResultInternal {
     error_email_registration_platform_disabled: bool,
     error_email_registration_all_platforms_disabled: bool,
     error_email_registration_domain_not_accepted: bool,
+    error_email_registration_unsupported_email: bool,
 }
 
 impl EmailLoginResultInternal {
@@ -461,6 +462,7 @@ impl EmailLoginResultInternal {
             error_email_registration_platform_disabled: false,
             error_email_registration_all_platforms_disabled: false,
             error_email_registration_domain_not_accepted: false,
+            error_email_registration_unsupported_email: false,
         }
     }
 
@@ -473,6 +475,7 @@ impl EmailLoginResultInternal {
             error_email_registration_platform_disabled: false,
             error_email_registration_all_platforms_disabled: false,
             error_email_registration_domain_not_accepted: false,
+            error_email_registration_unsupported_email: false,
         }
     }
 
@@ -510,6 +513,13 @@ impl EmailLoginResultInternal {
             ..Self::error_hidden()
         }
     }
+
+    fn error_email_registration_unsupported_email() -> Self {
+        Self {
+            error_email_registration_unsupported_email: true,
+            ..Self::error_hidden()
+        }
+    }
 }
 
 pub const PATH_POST_REQUEST_EMAIL_LOGIN_TOKEN: &str = "/account_api/request_email_login_token";
@@ -518,6 +528,11 @@ pub const PATH_POST_REQUEST_EMAIL_LOGIN_TOKEN: &str = "/account_api/request_emai
 ///
 /// The route always takes at least 5 seconds to complete to prevent timing attacks
 /// that could be used to enumerate existing email addresses.
+///
+/// When `login_only` is `false` (email registration can happen), the email
+/// address is validated with an email address validator. If the email address
+/// is not supported for registration, the request is rejected with
+/// `error_email_registration_unsupported_email`.
 #[utoipa::path(
     post,
     path = PATH_POST_REQUEST_EMAIL_LOGIN_TOKEN,
@@ -566,6 +581,10 @@ pub async fn post_request_email_login_token(
         Ok(Json(
             RequestEmailLoginTokenResult::error_email_registration_domain_not_accepted(),
         ))
+    } else if r.error_email_registration_unsupported_email {
+        Ok(Json(
+            RequestEmailLoginTokenResult::error_email_registration_unsupported_email(),
+        ))
     } else {
         Ok(Json(RequestEmailLoginTokenResult::successful(
             r.token,
@@ -611,6 +630,14 @@ async fn handle_login_token_sending(
     if !request.login_only {
         if let Err(error) = validate_email_registration_platform(state, request.client_type).await {
             return Ok(error);
+        }
+
+        if state
+            .email_address_validator()
+            .validate(request.email.as_str())
+            .is_some()
+        {
+            return Ok(EmailLoginResultInternal::error_email_registration_unsupported_email());
         }
 
         if let Err(error) = validate_email_registration_domain(state, &request.email).await {
