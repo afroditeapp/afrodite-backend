@@ -190,12 +190,21 @@ CREATE TABLE IF NOT EXISTS common_state(
     account_id                    INTEGER PRIMARY KEY NOT NULL,
     -- Sync version for client config.
     client_config_sync_version    SMALLINT            NOT NULL DEFAULT 0,
+    -- Null or non-empty string
+    client_language               TEXT,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+-- Login session related info for an account.
+CREATE TABLE IF NOT EXISTS login_session_info(
+    account_id                    INTEGER PRIMARY KEY NOT NULL,
     -- 0 = Android
     -- 1 = iOS
     -- 2 = Web
-    client_login_session_platform SMALLINT,
-    -- Null or non-empty string
-    client_language               TEXT,
+    client_platform SMALLINT,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

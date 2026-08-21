@@ -87,12 +87,14 @@ impl CurrentWriteCommonClientConfig<'_> {
         id: AccountIdInternal,
         value: ClientType,
     ) -> Result<(), DieselDatabaseError> {
-        use model::schema::common_state::dsl::*;
+        use model::schema::login_session_info::dsl::*;
 
-        update(common_state)
-            .filter(account_id.eq(id.as_db_id()))
-            .set(client_login_session_platform.eq(value))
-            .execute(self.conn())
+        insert_into(login_session_info)
+            .values((account_id.eq(id.as_db_id()), client_platform.eq(value)))
+            .on_conflict(account_id)
+            .do_update()
+            .set(client_platform.eq(value))
+            .execute_my_conn(self.conn())
             .into_db_error(())?;
 
         Ok(())

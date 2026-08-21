@@ -379,7 +379,6 @@ diesel::table! {
     common_state (account_id) {
         account_id -> Int8,
         client_config_sync_version -> Int2,
-        client_login_session_platform -> Nullable<Int2>,
         client_language -> Nullable<Text>,
     }
 }
@@ -691,6 +690,13 @@ diesel::table! {
         access_token_ip_address -> Bytea,
         access_token_ip_address_previous -> Nullable<Bytea>,
         refresh_token -> Bytea,
+    }
+}
+
+diesel::table! {
+    login_session_info (account_id) {
+        account_id -> Int8,
+        client_platform -> Nullable<Int2>,
     }
 }
 
@@ -1087,6 +1093,7 @@ diesel::joinable!(history_profile_statistics_count_changes_non_binary -> history
 diesel::joinable!(history_profile_statistics_count_changes_woman -> history_common_statistics_save_time (time_id));
 diesel::joinable!(ip_address_usage_statistics -> account_id (account_id));
 diesel::joinable!(login_session -> account_id (account_id));
+diesel::joinable!(login_session_info -> account_id (account_id));
 diesel::joinable!(media_app_notification_settings -> account_id (account_id));
 diesel::joinable!(media_report_profile_content -> common_report (report_id));
 diesel::joinable!(media_state -> account_id (account_id));
@@ -1183,6 +1190,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     latest_seen_message,
     latest_seen_message_pending_delivery,
     login_session,
+    login_session_info,
     manual_association_membership_registry,
     media_app_notification_settings,
     media_content,

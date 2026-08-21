@@ -28,11 +28,11 @@ impl CurrentReadCommonClientConfig<'_> {
         &mut self,
         id: AccountIdInternal,
     ) -> Result<Option<ClientType>, DieselDatabaseError> {
-        use crate::schema::common_state::dsl::*;
+        use crate::schema::login_session_info::dsl::*;
 
-        common_state
+        login_session_info
             .filter(account_id.eq(id.as_db_id()))
-            .select(client_login_session_platform)
+            .select(client_platform)
             .first(self.conn())
             .optional()
             .change_context(DieselDatabaseError::Execute)
