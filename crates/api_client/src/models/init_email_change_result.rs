@@ -19,8 +19,9 @@ pub struct InitEmailChangeResult {
     pub error_email_sending_failed: Option<bool>,
     #[serde(rename = "error_email_sending_timeout", skip_serializing_if = "Option::is_none")]
     pub error_email_sending_timeout: Option<bool>,
+    /// Set when the email address history limit is reached. Contains the amount of seconds the client must wait before the oldest history entry expires and a new email change can be made.
     #[serde(rename = "error_history_limit_reached", skip_serializing_if = "Option::is_none")]
-    pub error_history_limit_reached: Option<bool>,
+    pub error_history_limit_reached: Option<i32>,
     #[serde(rename = "error_try_again_later_after_seconds", skip_serializing_if = "Option::is_none")]
     pub error_try_again_later_after_seconds: Option<i32>,
 }

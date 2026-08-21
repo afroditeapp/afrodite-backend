@@ -1627,7 +1627,7 @@ pub async fn post_logout(configuration: &configuration::Configuration, ) -> Resu
     }
 }
 
-/// The route always takes at least 5 seconds to complete to prevent timing attacks that could be used to enumerate existing email addresses.
+/// The route always takes at least 5 seconds to complete to prevent timing attacks that could be used to enumerate existing email addresses.  When `login_only` is `false` (email registration can happen), the email address is validated with an email address validator. If the email address is not supported for registration, the request is rejected with `error_email_registration_unsupported_email`.
 pub async fn post_request_email_login_token(configuration: &configuration::Configuration, request_email_login_token: models::RequestEmailLoginToken) -> Result<models::RequestEmailLoginTokenResult, Error<PostRequestEmailLoginTokenError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_request_email_login_token = request_email_login_token;

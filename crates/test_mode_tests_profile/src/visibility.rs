@@ -66,7 +66,7 @@ async fn initial_setup_visibility_change_does_not_change_available_profiles(
         0,
         post_get_next_profile_page(&account1.api(), iterator_id)
             .await?
-            .profiles
+            .items
             .len(),
     )?;
     account1.run(SetProfileVisibility(true)).await?;
@@ -75,7 +75,7 @@ async fn initial_setup_visibility_change_does_not_change_available_profiles(
         0,
         post_get_next_profile_page(&account1.api(), iterator_id)
             .await?
-            .profiles
+            .items
             .len(),
     )
 }
@@ -97,7 +97,7 @@ async fn your_own_profile_can_be_returned_if_filters_allow(mut context: TestCont
         0,
         post_get_next_profile_page(&account1.api(), iterator_id)
             .await?
-            .profiles
+            .items
             .len(),
     )?;
     account1.run(SetProfileVisibility(true)).await?;
@@ -106,7 +106,7 @@ async fn your_own_profile_can_be_returned_if_filters_allow(mut context: TestCont
         1,
         post_get_next_profile_page(&account1.api(), iterator_id)
             .await?
-            .profiles
+            .items
             .len(),
     )
 }
@@ -121,7 +121,7 @@ async fn updates_changes_available_profiles(mut context: TestContext) -> TestRes
         0,
         post_get_next_profile_page(&account1.api(), iterator_id)
             .await?
-            .profiles
+            .items
             .len(),
     )?;
     account1.run(SetProfileVisibility(true)).await?;
@@ -130,7 +130,7 @@ async fn updates_changes_available_profiles(mut context: TestContext) -> TestRes
         0,
         post_get_next_profile_page(&account1.api(), iterator_id)
             .await?
-            .profiles
+            .items
             .len(),
     )?;
     account2.run(SetProfileVisibility(true)).await?;
@@ -139,7 +139,7 @@ async fn updates_changes_available_profiles(mut context: TestContext) -> TestRes
         1,
         post_get_next_profile_page(&account1.api(), iterator_id)
             .await?
-            .profiles
+            .items
             .len(),
     )?;
     account1.run(SetProfileVisibility(false)).await?;
@@ -148,7 +148,7 @@ async fn updates_changes_available_profiles(mut context: TestContext) -> TestRes
         1,
         post_get_next_profile_page(&account1.api(), iterator_id)
             .await?
-            .profiles
+            .items
             .len(),
     )?;
     account2.run(SetProfileVisibility(false)).await?;
@@ -157,7 +157,7 @@ async fn updates_changes_available_profiles(mut context: TestContext) -> TestRes
         0,
         post_get_next_profile_page(&account1.api(), iterator_id)
             .await?
-            .profiles
+            .items
             .len(),
     )
 }

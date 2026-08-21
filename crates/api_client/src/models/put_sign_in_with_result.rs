@@ -16,8 +16,9 @@ use serde::{Deserialize, Serialize};
 pub struct PutSignInWithResult {
     #[serde(rename = "error", skip_serializing_if = "Option::is_none")]
     pub error: Option<bool>,
+    /// Set when the sign in with history limit is reached. Contains the amount of seconds the client must wait before the oldest history entry expires and a new association change can be made.
     #[serde(rename = "error_history_limit_reached", skip_serializing_if = "Option::is_none")]
-    pub error_history_limit_reached: Option<bool>,
+    pub error_history_limit_reached: Option<i32>,
 }
 
 impl PutSignInWithResult {

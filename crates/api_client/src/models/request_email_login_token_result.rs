@@ -35,6 +35,9 @@ pub struct RequestEmailLoginTokenResult {
     /// This is true when email registration has been disabled for the client platform the user is using.
     #[serde(rename = "error_email_registration_platform_disabled", skip_serializing_if = "Option::is_none")]
     pub error_email_registration_platform_disabled: Option<bool>,
+    /// This is true when the email address is not supported for email registration. This can happen for example when the email address contains characters that are not accepted for registration.
+    #[serde(rename = "error_email_registration_unsupported_email", skip_serializing_if = "Option::is_none")]
+    pub error_email_registration_unsupported_email: Option<bool>,
     /// Minimum wait duration between token requests in seconds
     #[serde(rename = "resend_wait_seconds", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub resend_wait_seconds: Option<Option<i64>>,
@@ -54,6 +57,7 @@ impl RequestEmailLoginTokenResult {
             error_email_registration_ip_address_limit_reached: None,
             error_email_registration_limit_reached: None,
             error_email_registration_platform_disabled: None,
+            error_email_registration_unsupported_email: None,
             resend_wait_seconds: None,
             token_validity_seconds: None,
         }
