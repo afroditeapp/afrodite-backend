@@ -1,8 +1,8 @@
 use diesel::{insert_into, prelude::*, update};
 use error_stack::ResultExt;
 use model::{
-    AccountIdInternal, ClientLanguage, ClientType, DynamicClientFeaturesConfig,
-    DynamicClientFeaturesConfigHash, DynamicServerConfig, SyncVersion,
+    AccountIdInternal, AppAttestationResult, ClientLanguage, ClientType,
+    DynamicClientFeaturesConfig, DynamicClientFeaturesConfigHash, DynamicServerConfig, SyncVersion,
 };
 use simple_backend_utils::{Result, db::MyRunQueryDsl};
 
@@ -94,6 +94,43 @@ impl CurrentWriteCommonClientConfig<'_> {
             .on_conflict(account_id)
             .do_update()
             .set(client_platform.eq(value))
+            .execute_my_conn(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
+
+    pub fn update_app_attestation(
+        &mut self,
+        id: AccountIdInternal,
+        attestation: Option<AppAttestationResult>,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::login_session_info::dsl::*;
+
+        let (attestation_type, app_integrity, device_integrity) = attestation
+            .map(|a| {
+                (
+                    Some(a.attestation_type),
+                    Some(a.integrity.app_integrity),
+                    Some(a.integrity.device_integrity),
+                )
+            })
+            .unwrap_or((None, None, None));
+
+        insert_into(login_session_info)
+            .values((
+                account_id.eq(id.as_db_id()),
+                app_attestation_type_number.eq(attestation_type),
+                app_attestation_app_integrity.eq(app_integrity),
+                app_attestation_device_integrity.eq(device_integrity),
+            ))
+            .on_conflict(account_id)
+            .do_update()
+            .set((
+                app_attestation_type_number.eq(attestation_type),
+                app_attestation_app_integrity.eq(app_integrity),
+                app_attestation_device_integrity.eq(device_integrity),
+            ))
             .execute_my_conn(self.conn())
             .into_db_error(())?;
 

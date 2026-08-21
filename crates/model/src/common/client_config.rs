@@ -1,7 +1,13 @@
-use diesel::sql_types::{SmallInt, Text};
+use diesel::{
+    Selectable,
+    deserialize::Queryable,
+    sql_types::{SmallInt, Text},
+};
 use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{NonEmptyString, SimpleDieselEnum, diesel_non_empty_string_wrapper};
+use simple_backend_model::{
+    AppAttestationTypeNumber, NonEmptyString, SimpleDieselEnum, diesel_non_empty_string_wrapper,
+};
 use utoipa::ToSchema;
 
 use super::ClientConfigSyncVersion;
@@ -51,6 +57,16 @@ pub enum ClientType {
     Ios = WebSocketClientTypeNumber::Ios as i16,
     Web = WebSocketClientTypeNumber::Web as i16,
     Bot = WebSocketClientTypeNumber::Bot as i16,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Queryable, Selectable)]
+#[diesel(table_name = crate::schema::login_session_info)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct LoginSessionInfo {
+    pub client_platform: Option<ClientType>,
+    pub app_attestation_type_number: Option<AppAttestationTypeNumber>,
+    pub app_attestation_app_integrity: Option<bool>,
+    pub app_attestation_device_integrity: Option<bool>,
 }
 
 #[derive(

@@ -11,6 +11,7 @@ serde = { workspace = true }
 utoipa = { workspace = true }
 diesel = { workspace = true }
 chrono = { workspace = true }
+num_enum = { workspace = true }
 
 simple_backend_utils = { path = "../simple_backend_utils"}
 simple_diesel_enum_macro = { path = "../simple_diesel_enum_macro"}

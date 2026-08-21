@@ -28,7 +28,7 @@ use simple_backend::{
     create_counters,
     sign_in_with::{apple::AppleAccountInfo, google::GoogleAccountInfo},
 };
-use simple_backend_model::AppAttestation;
+use simple_backend_model::{AppAttestation, AppAttestationResult};
 use tokio::time::{Duration, timeout};
 
 use crate::{
@@ -282,12 +282,12 @@ async fn validate_email_registration_domain(
 /// Validate app attestation provided by the client against server config.
 ///
 /// If app attestation is not configured, attestation is not required and
-/// this always succeeds.
+/// this returns `Ok(None)`.
 pub(super) async fn validate_app_attestation(
     state: &S,
     client_type: ClientType,
     attestation: Option<&AppAttestation>,
-) -> Result<(), LoginResult> {
+) -> Result<Option<AppAttestationResult>, LoginResult> {
     let client_type = match client_type {
         ClientType::Android => Some(AppAttestationClientType::Android),
         _ => None,
@@ -336,15 +336,16 @@ pub async fn post_sign_in_with_login(
         return Ok(error.into());
     }
 
-    if let Err(error) = validate_app_attestation(
+    let attestation_result = match validate_app_attestation(
         &state,
         tokens.client_info.client_type,
         tokens.client_info.app_attestation.as_ref(),
     )
     .await
     {
-        return Ok(error.into());
-    }
+        Ok(result) => result,
+        Err(error) => return Ok(error.into()),
+    };
 
     let r = if let Some(apple) = tokens.apple {
         let nonce_bytes = base64::engine::general_purpose::URL_SAFE
@@ -375,7 +376,12 @@ pub async fn post_sign_in_with_login(
             cmds.common()
                 .client_config()
                 .client_login_session_platform(id, tokens.client_info.client_type)
-                .await
+                .await?;
+            cmds.common()
+                .client_config()
+                .app_attestation(id, attestation_result)
+                .await?;
+            Ok(())
         })?;
     }
 
@@ -874,15 +880,16 @@ async fn post_email_login_with_token_impl(
         return Ok(error.into());
     }
 
-    if let Err(error) = validate_app_attestation(
+    let attestation_result = match validate_app_attestation(
         &state,
         request.client_info.client_type,
         request.client_info.app_attestation.as_ref(),
     )
     .await
     {
-        return Ok(error.into());
-    }
+        Ok(result) => result,
+        Err(error) => return Ok(error.into()),
+    };
 
     let Ok(client_token) = request.client_token.bytes() else {
         return Ok(LoginResult::error_invalid_email_login_token().into());
@@ -922,7 +929,12 @@ async fn post_email_login_with_token_impl(
                 cmds.common()
                     .client_config()
                     .client_login_session_platform(id, request.client_info.client_type)
-                    .await
+                    .await?;
+                cmds.common()
+                    .client_config()
+                    .app_attestation(id, attestation_result)
+                    .await?;
+                Ok(())
             })?;
         }
 

@@ -178,15 +178,16 @@ pub async fn post_demo_account_login_to_account(
         return Ok(LoginResult::error_unsupported_client().into());
     }
 
-    if let Err(error) = validate_app_attestation(
+    let attestation_result = match validate_app_attestation(
         &state,
         info.client_info.client_type,
         info.client_info.app_attestation.as_ref(),
     )
     .await
     {
-        return Ok(error.into());
-    }
+        Ok(result) => result,
+        Err(error) => return Ok(error.into()),
+    };
 
     let accessible_accounts = state.demo().accessible_accounts(id).await?;
     accessible_accounts.contains(info.aid, state.read()).await?;
@@ -200,7 +201,12 @@ pub async fn post_demo_account_login_to_account(
             cmds.common()
                 .client_config()
                 .client_login_session_platform(id, info.client_info.client_type)
-                .await
+                .await?;
+            cmds.common()
+                .client_config()
+                .app_attestation(id, attestation_result)
+                .await?;
+            Ok(())
         })?;
     }
 

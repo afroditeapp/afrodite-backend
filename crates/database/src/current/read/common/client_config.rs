@@ -3,6 +3,7 @@ use error_stack::ResultExt;
 use model::{
     AccountIdInternal, ClientConfigSyncVersion, ClientLanguage, ClientType,
     DynamicClientFeaturesConfig, DynamicClientFeaturesConfigHash, DynamicServerConfig,
+    LoginSessionInfo,
 };
 use simple_backend_utils::Result;
 
@@ -21,6 +22,20 @@ impl CurrentReadCommonClientConfig<'_> {
             .filter(account_id.eq(id.as_db_id()))
             .select(client_config_sync_version)
             .first(self.conn())
+            .change_context(DieselDatabaseError::Execute)
+    }
+
+    pub fn login_session_info(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<Option<LoginSessionInfo>, DieselDatabaseError> {
+        use crate::schema::login_session_info::dsl::*;
+
+        login_session_info
+            .filter(account_id.eq(id.as_db_id()))
+            .select(LoginSessionInfo::as_select())
+            .first(self.conn())
+            .optional()
             .change_context(DieselDatabaseError::Execute)
     }
 

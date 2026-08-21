@@ -1,6 +1,7 @@
 use database::current::write::GetDbWriteCommandsCommon;
 use model::{
-    AccountIdInternal, ClientLanguage, ClientType, DynamicClientFeaturesConfig, DynamicServerConfig,
+    AccountIdInternal, AppAttestationResult, ClientLanguage, ClientType,
+    DynamicClientFeaturesConfig, DynamicServerConfig,
 };
 
 use crate::{
@@ -84,6 +85,18 @@ impl WriteCommandsCommonClientConfig<'_> {
             cmds.common()
                 .client_config()
                 .update_client_login_session_platform(id, value)
+        })
+    }
+
+    pub async fn app_attestation(
+        &self,
+        id: AccountIdInternal,
+        attestation: Option<AppAttestationResult>,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.common()
+                .client_config()
+                .update_app_attestation(id, attestation)
         })
     }
 

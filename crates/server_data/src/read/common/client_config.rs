@@ -1,5 +1,7 @@
 use database::current::read::GetDbReadCommandsCommon;
-use model::{AccountIdInternal, ClientConfigSyncVersion, ClientLanguage, ClientType};
+use model::{
+    AccountIdInternal, ClientConfigSyncVersion, ClientLanguage, ClientType, LoginSessionInfo,
+};
 
 use crate::{DataError, IntoDataError, define_cmd_wrapper_read, read::DbRead, result::Result};
 
@@ -11,6 +13,15 @@ impl ReadCommandsCommonClientConfig<'_> {
         id: AccountIdInternal,
     ) -> Result<ClientConfigSyncVersion, DataError> {
         self.db_read(move |mut cmds| cmds.common().client_config().client_config_sync_version(id))
+            .await
+            .into_error()
+    }
+
+    pub async fn login_session_info(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<Option<LoginSessionInfo>, DataError> {
+        self.db_read(move |mut cmds| cmds.common().client_config().login_session_info(id))
             .await
             .into_error()
     }

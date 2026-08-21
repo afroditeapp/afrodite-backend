@@ -3,7 +3,10 @@ use std::sync::Arc;
 use base64::Engine;
 use sha2::{Digest, Sha256};
 use simple_backend_config::SimpleBackendConfig;
-use simple_backend_model::{AppAttestation, DebugAppAttestationToken};
+use simple_backend_model::{
+    AppAttestation, AppAttestationResult, AppAttestationTypeNumber, AppIntegrityResult,
+    DebugAppAttestationToken,
+};
 
 use crate::app_attestation::play_integrity::{PlayIntegrityError, PlayIntegrityManager};
 
@@ -42,14 +45,14 @@ impl AppAttestationManager {
     /// Validate app attestation provided by the client against server config.
     ///
     /// If app attestation is not configured, attestation is not required and
-    /// this always succeeds.
+    /// this returns `None`.
     pub async fn validate(
         &self,
         client_type: Option<AppAttestationClientType>,
         attestation: Option<&AppAttestation>,
-    ) -> std::result::Result<(), AppAttestationError> {
+    ) -> std::result::Result<Option<AppAttestationResult>, AppAttestationError> {
         let Some(config) = self.config.app_attestation() else {
-            return Ok(());
+            return Ok(None);
         };
 
         let Some(attestation) = attestation else {
@@ -78,7 +81,13 @@ impl AppAttestationManager {
             if token.nonce != token_nonce {
                 return Err(AppAttestationError::Failed);
             }
-            return Ok(());
+            return Ok(Some(AppAttestationResult {
+                attestation_type: AppAttestationTypeNumber::Debug,
+                integrity: AppIntegrityResult {
+                    app_integrity: token.app_integrity,
+                    device_integrity: token.device_integrity,
+                },
+            }));
         }
 
         if let Some(play_integrity) = &attestation.play_integrity {
@@ -89,7 +98,7 @@ impl AppAttestationManager {
             let Some(play_integrity_config) = &config.play_integrity else {
                 return Err(AppAttestationError::Failed);
             };
-            return self
+            let integrity = self
                 .play_integrity
                 .validate(play_integrity, play_integrity_config)
                 .await
@@ -97,7 +106,11 @@ impl AppAttestationManager {
                     PlayIntegrityError::Failed => AppAttestationError::Failed,
                     PlayIntegrityError::DeviceIntegrity => AppAttestationError::DeviceIntegrity,
                     PlayIntegrityError::AppIntegrity => AppAttestationError::AppIntegrity,
-                });
+                })?;
+            return Ok(Some(AppAttestationResult {
+                attestation_type: AppAttestationTypeNumber::PlayIntegrity,
+                integrity,
+            }));
         }
 
         Err(AppAttestationError::Failed)

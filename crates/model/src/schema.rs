@@ -697,6 +697,9 @@ diesel::table! {
     login_session_info (account_id) {
         account_id -> Int8,
         client_platform -> Nullable<Int2>,
+        app_attestation_type_number -> Nullable<Int2>,
+        app_attestation_app_integrity -> Nullable<Bool>,
+        app_attestation_device_integrity -> Nullable<Bool>,
     }
 }
 

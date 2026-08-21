@@ -1,9 +1,9 @@
 use database::{DbReadMode, DieselDatabaseError, current::read::GetDbReadCommandsCommon};
 use model::{
     Account, AccountIdInternal, AdminNotification, AdminNotificationSettings, BotAccountType,
-    ClientConfigSyncVersion, ClientLanguage, ClientType, GetApiUsageStatisticsResult,
+    ClientConfigSyncVersion, ClientLanguage, GetApiUsageStatisticsResult,
     GetApiUsageStatisticsSettings, GetIpAddressStatisticsResult, InitialSetupCompletedTime,
-    OtherSharedState, PendingAppNotification, PushNotificationDbState, ReportId,
+    LoginSessionInfo, OtherSharedState, PendingAppNotification, PushNotificationDbState, ReportId,
     ReportIteratorQueryInternal, ReportProcessingState, ReportType, UnixTime,
 };
 use serde::Serialize;
@@ -125,7 +125,7 @@ impl DataExportReport {
 struct DataExportCommonState {
     pub client_config_sync_version: ClientConfigSyncVersion,
     pub push_notifications: PushNotificationDbState,
-    pub client_login_session_platform: Option<ClientType>,
+    pub login_session_info: Option<LoginSessionInfo>,
     pub client_language: Option<ClientLanguage>,
 }
 
@@ -143,10 +143,7 @@ impl DataExportCommonState {
                 .common()
                 .push_notification()
                 .push_notification_db_state(id)?,
-            client_login_session_platform: current
-                .common()
-                .client_config()
-                .client_login_session_platform(id)?,
+            login_session_info: current.common().client_config().login_session_info(id)?,
             client_language: current.common().client_config().client_language(id)?,
         })
     }

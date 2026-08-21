@@ -5715,6 +5715,7 @@ version = "0.0.0"
 dependencies = [
  "chrono",
  "diesel",
+ "num_enum",
  "serde",
  "simple_backend_utils",
  "simple_diesel_enum_macro",

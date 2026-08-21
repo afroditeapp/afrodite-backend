@@ -5,7 +5,7 @@ use fcm::yup_oauth2::{
     client::DefaultHyperClientBuilder,
 };
 use simple_backend_config::file::PlayIntegrityAppAttestationConfig;
-use simple_backend_model::PlayIntegrityAppAttestation;
+use simple_backend_model::{AppIntegrityResult, PlayIntegrityAppAttestation};
 use tracing::error;
 
 const PLAY_INTEGRITY_OAUTH_SCOPE: &str = "https://www.googleapis.com/auth/playintegrity";
@@ -54,7 +54,7 @@ impl PlayIntegrityManager {
         &self,
         attestation: &PlayIntegrityAppAttestation,
         config: &PlayIntegrityAppAttestationConfig,
-    ) -> Result<(), PlayIntegrityError> {
+    ) -> Result<AppIntegrityResult, PlayIntegrityError> {
         let Some(oauth) = &self.oauth else {
             return Err(PlayIntegrityError::Failed);
         };
@@ -122,18 +122,17 @@ impl PlayIntegrityManager {
         }
 
         // Verify device integrity.
-        if config.require_device_integrity
-            && !payload
-                .get("deviceIntegrity")
-                .and_then(|d| d.get("deviceRecognitionVerdict"))
-                .and_then(|v| v.as_array())
-                .map(|verdicts| {
-                    verdicts
-                        .iter()
-                        .any(|v| v.as_str() == Some("MEETS_DEVICE_INTEGRITY"))
-                })
-                .unwrap_or(false)
-        {
+        let device_integrity = payload
+            .get("deviceIntegrity")
+            .and_then(|d| d.get("deviceRecognitionVerdict"))
+            .and_then(|v| v.as_array())
+            .map(|verdicts| {
+                verdicts
+                    .iter()
+                    .any(|v| v.as_str() == Some("MEETS_DEVICE_INTEGRITY"))
+            })
+            .unwrap_or(false);
+        if config.require_device_integrity && !device_integrity {
             return Err(PlayIntegrityError::DeviceIntegrity);
         }
 
@@ -143,11 +142,15 @@ impl PlayIntegrityManager {
             .and_then(|d| d.get("appRecognitionVerdict"))
             .and_then(|v| v.as_str())
             .ok_or(PlayIntegrityError::Failed)?;
-        if config.require_app_integrity && app_recognition_verdict != "PLAY_RECOGNIZED" {
+        let app_integrity = app_recognition_verdict == "PLAY_RECOGNIZED";
+        if config.require_app_integrity && !app_integrity {
             return Err(PlayIntegrityError::AppIntegrity);
         }
 
-        Ok(())
+        Ok(AppIntegrityResult {
+            app_integrity,
+            device_integrity,
+        })
     }
 }
 
