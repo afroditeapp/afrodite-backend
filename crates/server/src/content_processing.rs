@@ -95,6 +95,10 @@ impl ContentProcessingManager {
                                 )
                                 .await;
                         }
+                        if let Ok(()) = quit_notification.try_recv() {
+                            // Server quit started
+                            return
+                        }
                     }
                 }
                 _ = quit_notification.recv() => {
