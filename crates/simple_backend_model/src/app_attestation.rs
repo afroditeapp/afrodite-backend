@@ -22,8 +22,7 @@ use crate::{SimpleDieselEnum, play_integrity::PlayIntegrityAppAttestation};
 #[diesel(sql_type = SmallInt)]
 #[repr(i16)]
 pub enum AppAttestationTypeNumber {
-    Debug = 0,
-    PlayIntegrity = 1,
+    PlayIntegrity = 0,
 }
 
 /// Result of a successful app attestation validation.
@@ -44,26 +43,5 @@ pub struct AppIntegrityResult {
 pub struct AppAttestation {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
-    pub debug: Option<DebugAppAttestation>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[schema(nullable = false)]
     pub play_integrity: Option<PlayIntegrityAppAttestation>,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, ToSchema)]
-pub struct DebugAppAttestation {
-    /// [DebugAppAttestationToken] as JSON
-    pub token: String,
-    /// Base64 URL (with possible padding) encoded nonce.
-    ///
-    /// The token contains Base64 URL (with possible padding) encoded SHA-256
-    /// of the nonce.
-    pub nonce: String,
-}
-
-#[derive(Deserialize)]
-pub struct DebugAppAttestationToken {
-    pub device_integrity: bool,
-    pub app_integrity: bool,
-    pub nonce: String,
 }

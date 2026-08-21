@@ -683,14 +683,7 @@ impl NsfwDetectionConfig {
 /// has its own table.
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct AppAttestationConfig {
-    pub debug: Option<DebugAppAttestationConfig>,
     pub play_integrity: Option<PlayIntegrityAppAttestationConfig>,
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct DebugAppAttestationConfig {
-    pub require_device_integrity: bool,
-    pub require_app_integrity: bool,
 }
 
 /// Google Play Integrity API attestation configuration.

@@ -205,8 +205,7 @@ CREATE TABLE IF NOT EXISTS login_session_info(
     -- 1 = iOS
     -- 2 = Web
     client_platform SMALLINT,
-    -- 0 = Debug
-    -- 1 = PlayIntegrity
+    -- 0 = PlayIntegrity
     app_attestation_type_number SMALLINT,
     app_attestation_app_integrity BOOLEAN,
     app_attestation_device_integrity BOOLEAN,

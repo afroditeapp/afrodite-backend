@@ -1,12 +1,7 @@
 use std::sync::Arc;
 
-use base64::Engine;
-use sha2::{Digest, Sha256};
 use simple_backend_config::SimpleBackendConfig;
-use simple_backend_model::{
-    AppAttestation, AppAttestationResult, AppAttestationTypeNumber, AppIntegrityResult,
-    DebugAppAttestationToken,
-};
+use simple_backend_model::{AppAttestation, AppAttestationResult, AppAttestationTypeNumber};
 
 use crate::app_attestation::play_integrity::{PlayIntegrityError, PlayIntegrityManager};
 
@@ -58,37 +53,6 @@ impl AppAttestationManager {
         let Some(attestation) = attestation else {
             return Err(AppAttestationError::Failed);
         };
-
-        if let Some(debug) = &attestation.debug {
-            let Some(debug_config) = &config.debug else {
-                return Err(AppAttestationError::Failed);
-            };
-            let Ok(token) = serde_json::from_str::<DebugAppAttestationToken>(&debug.token) else {
-                return Err(AppAttestationError::Failed);
-            };
-            if debug_config.require_device_integrity && !token.device_integrity {
-                return Err(AppAttestationError::DeviceIntegrity);
-            }
-            if debug_config.require_app_integrity && !token.app_integrity {
-                return Err(AppAttestationError::AppIntegrity);
-            }
-            let Ok(nonce_bytes) = base64::engine::general_purpose::URL_SAFE.decode(&debug.nonce)
-            else {
-                return Err(AppAttestationError::Failed);
-            };
-            let token_nonce =
-                base64::engine::general_purpose::URL_SAFE.encode(Sha256::digest(nonce_bytes));
-            if token.nonce != token_nonce {
-                return Err(AppAttestationError::Failed);
-            }
-            return Ok(Some(AppAttestationResult {
-                attestation_type: AppAttestationTypeNumber::Debug,
-                integrity: AppIntegrityResult {
-                    app_integrity: token.app_integrity,
-                    device_integrity: token.device_integrity,
-                },
-            }));
-        }
 
         if let Some(play_integrity) = &attestation.play_integrity {
             // Google Play Integrity API is only supported on Android clients.
