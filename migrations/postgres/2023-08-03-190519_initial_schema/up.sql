@@ -200,16 +200,16 @@ CREATE TABLE IF NOT EXISTS common_state(
 
 -- Login session related info for an account.
 CREATE TABLE IF NOT EXISTS login_session_info(
-    account_id                    BIGINT PRIMARY KEY  NOT NULL,
+    account_id                       BIGINT PRIMARY KEY  NOT NULL,
     -- 0 = Android
     -- 1 = iOS
     -- 2 = Web
-    client_platform SMALLINT,
+    client_platform                  SMALLINT,
     -- 0 = PlayIntegrity
-    app_attestation_type_number SMALLINT,
-    app_attestation_app_integrity BOOLEAN,
+    app_attestation_type_number      SMALLINT,
+    app_attestation_app_integrity    BOOLEAN,
     app_attestation_device_integrity BOOLEAN,
-    app_attestation_failed BOOLEAN,
+    app_attestation_failed           BOOLEAN,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE
