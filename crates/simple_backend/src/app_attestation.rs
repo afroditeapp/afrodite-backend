@@ -62,19 +62,32 @@ impl AppAttestationManager {
             let Some(play_integrity_config) = &config.play_integrity else {
                 return Err(AppAttestationError::Failed);
             };
-            let integrity = self
+            let nothing_required = !play_integrity_config.require_device_integrity
+                && !play_integrity_config.require_app_integrity;
+            match self
                 .play_integrity
                 .validate(play_integrity, play_integrity_config)
                 .await
-                .map_err(|error| match error {
-                    PlayIntegrityError::Failed => AppAttestationError::Failed,
-                    PlayIntegrityError::DeviceIntegrity => AppAttestationError::DeviceIntegrity,
-                    PlayIntegrityError::AppIntegrity => AppAttestationError::AppIntegrity,
-                })?;
-            return Ok(Some(AppAttestationResult {
-                attestation_type: AppAttestationTypeNumber::PlayIntegrity,
-                integrity,
-            }));
+            {
+                Ok(integrity) => {
+                    return Ok(Some(AppAttestationResult::Success {
+                        attestation_type: AppAttestationTypeNumber::PlayIntegrity,
+                        integrity,
+                    }));
+                }
+                Err(_) if nothing_required => {
+                    return Ok(Some(AppAttestationResult::Failure {
+                        attestation_type: AppAttestationTypeNumber::PlayIntegrity,
+                    }));
+                }
+                Err(error) => {
+                    return Err(match error {
+                        PlayIntegrityError::Failed => AppAttestationError::Failed,
+                        PlayIntegrityError::DeviceIntegrity => AppAttestationError::DeviceIntegrity,
+                        PlayIntegrityError::AppIntegrity => AppAttestationError::AppIntegrity,
+                    });
+                }
+            }
         }
 
         Err(AppAttestationError::Failed)

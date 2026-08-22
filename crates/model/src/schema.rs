@@ -700,6 +700,7 @@ diesel::table! {
         app_attestation_type_number -> Nullable<Int2>,
         app_attestation_app_integrity -> Nullable<Bool>,
         app_attestation_device_integrity -> Nullable<Bool>,
+        app_attestation_failed -> Nullable<Bool>,
     }
 }
 

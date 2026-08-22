@@ -25,11 +25,19 @@ pub enum AppAttestationTypeNumber {
     PlayIntegrity = 0,
 }
 
-/// Result of a successful app attestation validation.
+/// Result of an app attestation validation.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct AppAttestationResult {
-    pub attestation_type: AppAttestationTypeNumber,
-    pub integrity: AppIntegrityResult,
+pub enum AppAttestationResult {
+    /// Attestation token verification succeeded.
+    Success {
+        attestation_type: AppAttestationTypeNumber,
+        integrity: AppIntegrityResult,
+    },
+    /// Attestation token verification failed but login was still accepted
+    /// because nothing was required.
+    Failure {
+        attestation_type: AppAttestationTypeNumber,
+    },
 }
 
 /// App and device integrity results from app attestation.

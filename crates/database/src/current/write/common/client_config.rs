@@ -107,15 +107,21 @@ impl CurrentWriteCommonClientConfig<'_> {
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::login_session_info::dsl::*;
 
-        let (attestation_type, app_integrity, device_integrity) = attestation
-            .map(|a| {
-                (
-                    Some(a.attestation_type),
-                    Some(a.integrity.app_integrity),
-                    Some(a.integrity.device_integrity),
-                )
-            })
-            .unwrap_or((None, None, None));
+        let (attestation_type, app_integrity, device_integrity, failed) = match attestation {
+            Some(AppAttestationResult::Success {
+                attestation_type,
+                integrity,
+            }) => (
+                Some(attestation_type),
+                Some(integrity.app_integrity),
+                Some(integrity.device_integrity),
+                Some(false),
+            ),
+            Some(AppAttestationResult::Failure { attestation_type }) => {
+                (Some(attestation_type), Some(false), Some(false), Some(true))
+            }
+            None => (None, None, None, None),
+        };
 
         insert_into(login_session_info)
             .values((
@@ -123,6 +129,7 @@ impl CurrentWriteCommonClientConfig<'_> {
                 app_attestation_type_number.eq(attestation_type),
                 app_attestation_app_integrity.eq(app_integrity),
                 app_attestation_device_integrity.eq(device_integrity),
+                app_attestation_failed.eq(failed),
             ))
             .on_conflict(account_id)
             .do_update()
@@ -130,6 +137,7 @@ impl CurrentWriteCommonClientConfig<'_> {
                 app_attestation_type_number.eq(attestation_type),
                 app_attestation_app_integrity.eq(app_integrity),
                 app_attestation_device_integrity.eq(device_integrity),
+                app_attestation_failed.eq(failed),
             ))
             .execute_my_conn(self.conn())
             .into_db_error(())?;

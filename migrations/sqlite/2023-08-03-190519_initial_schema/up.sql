@@ -209,6 +209,7 @@ CREATE TABLE IF NOT EXISTS login_session_info(
     app_attestation_type_number SMALLINT,
     app_attestation_app_integrity BOOLEAN,
     app_attestation_device_integrity BOOLEAN,
+    app_attestation_failed BOOLEAN,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

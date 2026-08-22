@@ -67,6 +67,7 @@ pub struct LoginSessionInfo {
     pub app_attestation_type_number: Option<AppAttestationTypeNumber>,
     pub app_attestation_app_integrity: Option<bool>,
     pub app_attestation_device_integrity: Option<bool>,
+    pub app_attestation_failed: Option<bool>,
 }
 
 #[derive(
