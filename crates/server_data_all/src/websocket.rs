@@ -143,7 +143,7 @@ pub async fn sync_data_with_client_if_needed(
                 handle_account_data_sync(read_handle, write_handle, socket, id, version.version)
                     .await?;
             }
-            SyncCheckDataType::ReveivedLikes => {
+            SyncCheckDataType::ReceivedLikes => {
                 handle_chat_state_version_check(
                     write_handle,
                     socket,

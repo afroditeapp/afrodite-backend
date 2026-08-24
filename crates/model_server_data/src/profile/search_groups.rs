@@ -1,5 +1,5 @@
 bitflags::bitflags! {
-    /// Same as SearchGroups but as bitflags. The biflags are used in database.
+    /// Same as SearchGroups but as bitflags. The bitflags are used in database.
     #[derive(Clone, Copy, Debug, PartialEq)]
     pub struct SearchGroupFlags: i16 {
         const MAN_FOR_WOMAN = 0x1;

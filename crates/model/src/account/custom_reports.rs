@@ -83,7 +83,7 @@ impl CustomReportsConfig {
         let mut keys = HashSet::new();
         let mut ids = HashSet::new();
         let mut order_numbers = HashSet::new();
-        // Validate uniquenes of keys, IDs and order numbers.
+        // Validate uniqueness of keys, IDs and order numbers.
         for report in &self.reports {
             if keys.contains(&report.key) {
                 return Err(format!("Duplicate key {}", report.key));

@@ -605,8 +605,8 @@ pub enum AttributeDataType {
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, ToSchema)]
 pub enum AttributeValueOrderMode {
-    AlphabethicalKey,
-    AlphabethicalValue,
+    AlphabeticalKey,
+    AlphabeticalValue,
     OrderNumber,
 }
 

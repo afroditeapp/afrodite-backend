@@ -18,7 +18,7 @@ impl ProfileAttributesSchemaExport {
         let mut keys = HashSet::new();
         let mut ids = HashSet::new();
         let mut order_numbers = HashSet::new();
-        // Validate uniquenes of keys, IDs and order numbers.
+        // Validate uniqueness of keys, IDs and order numbers.
         for attribute in &self.attributes {
             if keys.contains(&attribute.key) {
                 return Err(format!("Duplicate key {}", attribute.key));

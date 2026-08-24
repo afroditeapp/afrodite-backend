@@ -4,7 +4,7 @@ use utoipa::ToSchema;
 
 /// My gender and what gender I'm searching for.
 ///
-/// Fileds should be read "I'm x and I'm searching for y".
+/// Fields should be read "I'm x and I'm searching for y".
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, PartialEq, Eq, Default)]
 pub struct SearchGroups {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")] // Skips false

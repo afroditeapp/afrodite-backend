@@ -28,7 +28,7 @@ impl SyncDataVersionFromClient {
 #[repr(u8)]
 pub enum SyncCheckDataType {
     Account = 0,
-    ReveivedLikes = 1,
+    ReceivedLikes = 1,
     ClientConfig = 2,
     Profile = 3,
     News = 4,
