@@ -2,7 +2,7 @@ use error_stack::ResultExt;
 use simple_backend_utils::{ContextExt, Result};
 
 use super::CsvFileError;
-use crate::file::ProfiletNameAllowlistConfig;
+use crate::file::ProfileNameAllowlistConfig;
 
 #[derive(Debug, Default)]
 pub struct ProfileNameAllowlistBuilder {
@@ -10,7 +10,7 @@ pub struct ProfileNameAllowlistBuilder {
 }
 
 impl ProfileNameAllowlistBuilder {
-    pub fn load(&mut self, config: &ProfiletNameAllowlistConfig) -> Result<(), CsvFileError> {
+    pub fn load(&mut self, config: &ProfileNameAllowlistConfig) -> Result<(), CsvFileError> {
         let delimiter: u8 = TryInto::<u8>::try_into(config.delimiter)
             .change_context(CsvFileError::UnsupportedDelimiterCharacter)
             .attach(config.delimiter.to_string())?;

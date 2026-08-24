@@ -173,7 +173,7 @@ pub struct ConfigFile {
     pub location: Option<LocationConfig>,
     pub demo_accounts: Option<Vec<DemoAccountConfig>>,
     pub limits: Option<LimitsConfig>,
-    pub profile_name_allowlists: Option<Vec<ProfiletNameAllowlistConfig>>,
+    pub profile_name_allowlists: Option<Vec<ProfileNameAllowlistConfig>>,
     pub manual_server_maintenance_info_for_another_server: Option<StringResourceInternal>,
     pub association: Option<AssociationServerConfig>,
 }
@@ -224,7 +224,7 @@ impl ConfigFile {
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct GeneralConfig {
-    /// Make sure to use higer value than the server process nice
+    /// Make sure to use higher value than the server process nice
     /// value as lower values require privileges.
     pub bot_process_nice_value: Option<i8>,
 }
@@ -316,7 +316,7 @@ pub struct LocationConfig {
     pub latitude_top_left: f64,
     /// "x-axis" angle for top left corner of the location index.
     pub longitude_top_left: f64,
-    /// Minimun "y-axis" angle for bottom right corner of the location index.
+    /// Minimum "y-axis" angle for bottom right corner of the location index.
     /// Index can in reality end further away.
     pub latitude_bottom_right: f64,
     /// Minimum "x-axis" angle for top left corner of the location index.
@@ -483,7 +483,7 @@ where
     })
 }
 
-/// Chat releated limits config
+/// Chat related limits config
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(default)]
 pub struct ChatLimitsConfig {
@@ -574,7 +574,7 @@ impl Default for ProfileLimitsConfig {
 pub struct DemoAccountConfig {
     pub database_id: DemoAccountId,
     pub username: String,
-    /// If this is quessed wrong, these demo account credentials will
+    /// If this is guessed wrong, these demo account credentials will
     /// be locked until server restarts.
     pub password: String,
     /// If true then all accounts are accessible.
@@ -595,7 +595,7 @@ impl DemoAccountConfig {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct ProfiletNameAllowlistConfig {
+pub struct ProfileNameAllowlistConfig {
     pub csv_file: PathBuf,
     pub delimiter: char,
     /// Column index starting from zero.
