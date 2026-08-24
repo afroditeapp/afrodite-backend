@@ -365,9 +365,6 @@ impl ScheduledTaskManager {
             .await
             .change_context(ScheduledTaskError::DatabaseError)?;
 
-        // TODO(prod): When subscription feature is added prevent requesting
-        //             deletion when subscription is active.
-
         if let Some(last_seen_time) = last_seen_time.last_seen_unix_time() {
             let inactive_account = last_seen_time.ut.add_seconds(
                 self.state

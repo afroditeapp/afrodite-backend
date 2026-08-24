@@ -120,8 +120,6 @@ CREATE TABLE IF NOT EXISTS account_permissions(
             ON UPDATE CASCADE
 );
 
--- TODO(prod): Add subscription level to shared_state
-
 -- Shared state between server components.
 -- If the data is located in this table it should be set through account
 -- server as it propagates the changes to other components.
