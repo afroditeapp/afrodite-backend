@@ -137,7 +137,7 @@ impl BotTestRunner {
             }
         }
 
-        drop(quit_handle); // Singnal quit to bots.
+        drop(quit_handle); // Signal quit to bots.
 
         // Wait that all bot_running_handles are dropped.
         loop {
