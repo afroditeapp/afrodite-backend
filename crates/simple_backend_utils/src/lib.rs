@@ -58,7 +58,7 @@ pub trait ContextExt: Context + 'static {
 impl<E: Context + Sized> ContextExt for E {}
 
 pub fn current_unix_time() -> i64 {
-    chrono::Utc::now().timestamp()
+    jiff::Timestamp::now().as_second()
 }
 
 pub trait ComponentError: Context {

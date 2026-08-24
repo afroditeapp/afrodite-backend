@@ -123,6 +123,8 @@
     "nrows",
     "displayer",
     "decryptor",
+    "subsec",
+    "strftime",
 
     // Finnish place names
     "Kilpisjärvi",

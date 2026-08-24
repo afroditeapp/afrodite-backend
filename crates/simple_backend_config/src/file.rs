@@ -7,7 +7,6 @@ use std::{
 };
 
 use base64::Engine;
-use chrono::{Datelike, Utc};
 use error_stack::{Report, ResultExt};
 use manager_model::ManagerInstanceName;
 use serde::{Deserialize, Deserializer, Serialize};
@@ -795,7 +794,7 @@ impl MaxMindDbDownloadUrlTemplate {
     }
 
     fn create_download_url(template: &str) -> std::result::Result<Url, String> {
-        let current_time = Utc::now();
+        let current_time = jiff::Timestamp::now().to_zoned(jiff::tz::TimeZone::UTC);
         let url = template
             .replace("{YYYY}", &current_time.year().to_string())
             .replace("{MM}", &format!("{:0>2}", current_time.month()));

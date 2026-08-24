@@ -43,7 +43,7 @@ impl ReadCommandsChatLimits<'_> {
             // in that case.
             let latest_reset = latest_reset.add_seconds(1);
             let latest_reset = latest_reset
-                .to_chrono_time()
+                .to_jiff_time()
                 .ok_or(DataError::Time.report())?;
             let next_reset: UnixTime =
                 next_possible_utc_date_time_value(latest_reset, config.reset_time)

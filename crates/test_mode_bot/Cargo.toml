@@ -19,7 +19,7 @@ rustls-platform-verifier = { workspace = true }
 
 async-trait = { workspace = true }
 async-openai = { workspace = true }
-chrono = { workspace = true }
+jiff = { workspace = true }
 rand = { workspace = true }
 rand_xoshiro = { workspace = true }
 image = { workspace = true }

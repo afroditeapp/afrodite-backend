@@ -72,17 +72,17 @@ impl From<SelectedWeekdays> for WeekdayFlags {
     }
 }
 
-impl From<chrono::Weekday> for WeekdayFlags {
-    fn from(value: chrono::Weekday) -> Self {
-        use chrono::Weekday;
+impl From<jiff::civil::Weekday> for WeekdayFlags {
+    fn from(value: jiff::civil::Weekday) -> Self {
+        use jiff::civil::Weekday;
         match value {
-            Weekday::Mon => WeekdayFlags::MONDAY,
-            Weekday::Tue => WeekdayFlags::TUESDAY,
-            Weekday::Wed => WeekdayFlags::WEDNESDAY,
-            Weekday::Thu => WeekdayFlags::THURSDAY,
-            Weekday::Fri => WeekdayFlags::FRIDAY,
-            Weekday::Sat => WeekdayFlags::SATURDAY,
-            Weekday::Sun => WeekdayFlags::SUNDAY,
+            Weekday::Monday => WeekdayFlags::MONDAY,
+            Weekday::Tuesday => WeekdayFlags::TUESDAY,
+            Weekday::Wednesday => WeekdayFlags::WEDNESDAY,
+            Weekday::Thursday => WeekdayFlags::THURSDAY,
+            Weekday::Friday => WeekdayFlags::FRIDAY,
+            Weekday::Saturday => WeekdayFlags::SATURDAY,
+            Weekday::Sunday => WeekdayFlags::SUNDAY,
         }
     }
 }

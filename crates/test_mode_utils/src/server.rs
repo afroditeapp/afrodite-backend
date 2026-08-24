@@ -2,7 +2,6 @@ use std::{
     env, num::NonZeroU8, os::unix::process::CommandExt, path::PathBuf, process::Stdio, sync::Arc,
 };
 
-use chrono::{Datelike, Timelike};
 use config::{
     args::{SelectedBenchmark, TestMode},
     file::{
@@ -215,7 +214,7 @@ impl ServerInstance {
         settings: AdditionalSettings,
     ) -> Self {
         let id = simple_backend_utils::UuidBase64Url::new_random_id();
-        let time = chrono::Utc::now();
+        let time = jiff::Timestamp::now().to_zoned(jiff::tz::TimeZone::UTC);
         let base_dir = if args_config.no_tmp_dir {
             DataDirUtils::create_data_dir_if_needed(args_config)
         } else {

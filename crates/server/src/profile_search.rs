@@ -1,6 +1,5 @@
 use std::time::Duration;
 
-use chrono::{Datelike, Utc};
 use config::file::AutomaticProfileSearchConfig;
 use model::{NotificationEvent, WeekdayFlags};
 use model_media::AutomaticProfileSearchIteratorSessionId;
@@ -164,7 +163,10 @@ impl ProfileSearchManager {
             .await
             .change_context(ProfileSearchError::DatabaseError)?;
 
-        let current_weekday: WeekdayFlags = Utc::now().weekday().into();
+        let current_weekday: WeekdayFlags = jiff::Timestamp::now()
+            .to_zoned(jiff::tz::TimeZone::UTC)
+            .weekday()
+            .into();
         let selected_weekdays: WeekdayFlags = settings.weekdays.into();
         if !selected_weekdays.contains(current_weekday) {
             return Ok(());

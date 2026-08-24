@@ -1,4 +1,3 @@
-use chrono::{Datelike, Timelike, Utc};
 use diesel::{
     prelude::*,
     sql_types::{Bool, Integer},
@@ -34,7 +33,7 @@ impl CurrentReadAccountAdminNotification<'_> {
     pub fn nearest_start_time(&mut self) -> Result<DayTimestamp, DieselDatabaseError> {
         use crate::schema::admin_notification_settings::dsl::*;
 
-        let current_time = Utc::now();
+        let current_time = jiff::Timestamp::now().to_zoned(jiff::tz::TimeZone::UTC);
         let current_hour = TryInto::<u8>::try_into(current_time.hour())
             .change_context(DieselDatabaseError::DataFormatConversion)?;
         let day_timestamp = DayTimestamp::from_hours(current_hour);
@@ -82,7 +81,7 @@ impl CurrentReadAccountAdminNotification<'_> {
             account_id, admin_notification_settings, admin_notification_subscriptions::dsl::*,
         };
 
-        let current_time = Utc::now();
+        let current_time = jiff::Timestamp::now().to_zoned(jiff::tz::TimeZone::UTC);
         let current_weekday: WeekdayFlags = current_time.weekday().into();
         let current_hour = TryInto::<u8>::try_into(current_time.hour())
             .change_context(DieselDatabaseError::DataFormatConversion)?;

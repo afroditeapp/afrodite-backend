@@ -15,7 +15,7 @@ base64 = { workspace = true }
 reqwest = { workspace = true }
 url = { workspace = true }
 
-chrono = { workspace = true }
+jiff = { workspace = true }
 lettre = { workspace = true }
 ipnet = { workspace = true }
 web-push = { workspace = true }

@@ -1,4 +1,3 @@
-use chrono::Utc;
 use model::{DataExportName, DataExportState, DataExportType};
 use server_api::app::DataExportManagerDataProvider;
 use server_data::{
@@ -88,7 +87,7 @@ impl DataExportManager {
                         })
                         .collect::<String>();
                     let age = p.profile.age.value();
-                    let time = Utc::now().format("%Y-%m-%d_%H-%M-%S");
+                    let time = jiff::Timestamp::now().strftime("%Y-%m-%d_%H-%M-%S");
                     let data_export_type = match cmd.data_export_type() {
                         DataExportType::User => "user",
                         DataExportType::Admin => "admin",

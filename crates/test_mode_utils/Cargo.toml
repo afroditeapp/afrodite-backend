@@ -15,7 +15,7 @@ hyper = { workspace = true }
 tokio = { workspace = true }
 
 nix = { workspace = true }
-chrono = { workspace = true }
+jiff = { workspace = true }
 toml = { workspace = true }
 serde = { workspace = true }
 

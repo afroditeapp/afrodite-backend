@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use chrono::{NaiveTime, Utc};
+use jiff::civil::{DateTime, Time};
 use serde::{Deserialize, Serialize};
 use tokio::time::sleep;
 use utoipa::ToSchema;
@@ -11,12 +11,18 @@ pub enum SleepUntilClockIsAtError {
     TargetTimeValueInvalid,
     #[error("Creating tomorrow's date failed")]
     DateCreationForTomorrowFailed,
+    #[error("Creating date time failed")]
+    DateTimeCreationFailed,
+    #[error("Converting to timezone failed")]
+    TimeZoneConversionFailed,
+    #[error("Computing time span failed")]
+    SpanComputationFailed,
 }
 
 pub async fn sleep_until_current_time_is_at(
     wanted_time: UtcTimeValue,
 ) -> Result<(), SleepUntilClockIsAtError> {
-    let current_time = Utc::now();
+    let current_time = jiff::Timestamp::now();
     let duration_seconds = Duration::from_secs(seconds_until_current_time_is_at_internal(
         current_time,
         wanted_time,
@@ -28,32 +34,48 @@ pub async fn sleep_until_current_time_is_at(
 pub fn seconds_until_current_time_is_at(
     wanted_time: UtcTimeValue,
 ) -> Result<u64, SleepUntilClockIsAtError> {
-    let current_time = Utc::now();
+    let current_time = jiff::Timestamp::now();
     let seconds = seconds_until_current_time_is_at_internal(current_time, wanted_time)?;
     Ok(seconds)
 }
 
 pub fn next_possible_utc_date_time_value_using_current_time(
     wanted_time: UtcTimeValue,
-) -> Result<chrono::DateTime<Utc>, SleepUntilClockIsAtError> {
-    next_possible_utc_date_time_value(Utc::now(), wanted_time)
+) -> Result<jiff::Timestamp, SleepUntilClockIsAtError> {
+    next_possible_utc_date_time_value(jiff::Timestamp::now(), wanted_time)
 }
 
 pub fn next_possible_utc_date_time_value(
-    current_time: chrono::DateTime<Utc>,
+    current_time: jiff::Timestamp,
     wanted_time: UtcTimeValue,
-) -> Result<chrono::DateTime<Utc>, SleepUntilClockIsAtError> {
-    let target_time =
-        NaiveTime::from_hms_opt(wanted_time.0.hours.into(), wanted_time.0.minutes.into(), 0)
-            .ok_or(SleepUntilClockIsAtError::TargetTimeValueInvalid)?;
+) -> Result<jiff::Timestamp, SleepUntilClockIsAtError> {
+    let target_time = Time::new(wanted_time.0.hours as i8, wanted_time.0.minutes as i8, 0, 0)
+        .map_err(|_| SleepUntilClockIsAtError::TargetTimeValueInvalid)?;
 
-    let today_date = Utc::now().date_naive();
+    let today_date = current_time.to_zoned(jiff::tz::TimeZone::UTC).date();
     let tomorrow_date = today_date
-        .succ_opt()
-        .ok_or(SleepUntilClockIsAtError::DateCreationForTomorrowFailed)?;
+        .tomorrow()
+        .map_err(|_| SleepUntilClockIsAtError::DateCreationForTomorrowFailed)?;
 
-    let today = today_date.and_time(target_time).and_utc();
-    let tomorrow = tomorrow_date.and_time(target_time).and_utc();
+    let to_timestamp =
+        |date: jiff::civil::Date| -> Result<jiff::Timestamp, SleepUntilClockIsAtError> {
+            Ok(DateTime::new(
+                date.year(),
+                date.month(),
+                date.day(),
+                target_time.hour(),
+                target_time.minute(),
+                target_time.second(),
+                target_time.subsec_nanosecond(),
+            )
+            .map_err(|_| SleepUntilClockIsAtError::DateTimeCreationFailed)?
+            .to_zoned(jiff::tz::TimeZone::UTC)
+            .map_err(|_| SleepUntilClockIsAtError::TimeZoneConversionFailed)?
+            .timestamp())
+        };
+
+    let today = to_timestamp(today_date)?;
+    let tomorrow = to_timestamp(tomorrow_date)?;
 
     if current_time <= today {
         Ok(today)
@@ -63,12 +85,15 @@ pub fn next_possible_utc_date_time_value(
 }
 
 fn seconds_until_current_time_is_at_internal(
-    current_time: chrono::DateTime<Utc>,
+    current_time: jiff::Timestamp,
     wanted_time: UtcTimeValue,
 ) -> Result<u64, SleepUntilClockIsAtError> {
     let next_time = next_possible_utc_date_time_value(current_time, wanted_time)?;
     let time_until_wanted_time = next_time - current_time;
-    Ok(time_until_wanted_time.abs().num_seconds() as u64)
+    Ok(time_until_wanted_time
+        .abs()
+        .total(jiff::Unit::Second)
+        .map_err(|_| SleepUntilClockIsAtError::SpanComputationFailed)? as u64)
 }
 
 /// UTC time value

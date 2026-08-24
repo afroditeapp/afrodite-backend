@@ -14,15 +14,13 @@ use api_client::{
     },
 };
 use async_trait::async_trait;
-use chrono::{DateTime, NaiveTime, Utc};
 use config::{bot_config_file::Gender, file::LocationConfig};
 use error_stack::ResultExt;
-use simple_backend_utils::Result;
+use simple_backend_utils::{Result, time::next_possible_utc_date_time_value};
 use test_mode_utils::{
     client::TestError,
     websocket_protocol::{ResponseNextProfilePage, ResponseResetProfilePaging},
 };
-use tracing::error;
 use utils::minimal_i64;
 
 use super::{BotAction, BotState, PreviousValue};
@@ -31,7 +29,7 @@ use crate::{actions::account::DEFAULT_AGE, utils::location::LocationConfigUtils}
 #[derive(Debug, Default)]
 pub struct ProfileState {
     profile_iterator_session_id: Option<ProfileIteratorSessionId>,
-    change_profile_text_daily: Option<DateTime<Utc>>,
+    change_profile_text_daily: Option<jiff::Timestamp>,
 }
 
 impl ProfileState {
@@ -101,28 +99,23 @@ impl BotAction for ChangeProfileTextDaily {
             return Ok(());
         };
 
-        let Some(time) = NaiveTime::from_hms_opt(config.0.hours.into(), config.0.minutes.into(), 0)
-        else {
-            error!("NaiveTime creation failed");
-            return Ok(());
-        };
-
-        let current_time = Utc::now();
-        let Some(next) = current_time.with_time(time).single() else {
-            error!("Next profile text update time creation failed");
-            return Ok(());
-        };
+        let current_time = jiff::Timestamp::now();
+        let current_date = current_time.to_zoned(jiff::tz::TimeZone::UTC).date();
+        let next = next_possible_utc_date_time_value(current_time, config)
+            .change_context(TestError::InvalidValue)?;
+        // If the next occurrence is tomorrow, today's target time has already passed.
+        let passed_today = next.to_zoned(jiff::tz::TimeZone::UTC).date() != current_date;
 
         let update = if let Some(previous) = state.profile.change_profile_text_daily {
-            previous.date_naive() != next.date_naive() && current_time > next
+            previous.to_zoned(jiff::tz::TimeZone::UTC).date() != current_date && passed_today
         } else {
-            current_time > next
+            passed_today
         };
 
         if update {
             state.profile.change_profile_text_daily = Some(current_time);
             let config = state.get_bot_config();
-            let time_text = current_time.to_rfc2822();
+            let time_text = current_time.to_string();
             let new_text = if let Some(text) = &config.text {
                 format!("{text}\n{time_text}")
             } else {

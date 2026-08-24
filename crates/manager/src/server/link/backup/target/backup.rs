@@ -5,7 +5,6 @@ use std::{
     time::SystemTime,
 };
 
-use chrono::Utc;
 use error_stack::ResultExt;
 use manager_config::Config;
 use manager_model::Sha256Bytes;
@@ -315,7 +314,7 @@ impl SaveFileBackup {
         let target_file_name = format!(
             "backup_{}_{}",
             backup_name,
-            Utc::now().format("%Y-%m-%d_%H-%M-%S")
+            jiff::Timestamp::now().strftime("%Y-%m-%d_%H-%M-%S")
         );
         let target_path = BackupDirUtils::new(&config).file_path(&target_file_name);
 

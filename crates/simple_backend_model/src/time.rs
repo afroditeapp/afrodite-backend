@@ -1,4 +1,3 @@
-use chrono::{Datelike, Timelike};
 use diesel::{AsExpression, FromSqlRow, sql_types::BigInt};
 use serde::{Deserialize, Serialize};
 use simple_backend_utils::{current_unix_time, time::DurationValue};
@@ -43,11 +42,13 @@ impl UnixTime {
     }
 
     pub fn year(&self) -> Option<i32> {
-        self.to_chrono_time().map(|v| v.year())
+        self.to_jiff_time()
+            .map(|v| v.to_zoned(jiff::tz::TimeZone::UTC).year().into())
     }
 
     pub fn hour(&self) -> Option<u32> {
-        self.to_chrono_time().map(|v| v.hour())
+        self.to_jiff_time()
+            .map(|v| v.to_zoned(jiff::tz::TimeZone::UTC).hour() as u32)
     }
 
     /// Return decremented time value (self.ut - 1). Implemented using
@@ -65,8 +66,8 @@ impl UnixTime {
         }
     }
 
-    pub fn to_chrono_time(&self) -> Option<chrono::DateTime<chrono::Utc>> {
-        chrono::DateTime::from_timestamp(self.ut, 0)
+    pub fn to_jiff_time(&self) -> Option<jiff::Timestamp> {
+        jiff::Timestamp::from_second(self.ut).ok()
     }
 
     pub fn duration_value_elapsed(&self, wait: DurationValue) -> bool {
@@ -90,10 +91,10 @@ impl AsRef<i64> for UnixTime {
 
 diesel_i64_wrapper!(UnixTime);
 
-impl From<chrono::DateTime<chrono::Utc>> for UnixTime {
-    fn from(value: chrono::DateTime<chrono::Utc>) -> Self {
+impl From<jiff::Timestamp> for UnixTime {
+    fn from(value: jiff::Timestamp) -> Self {
         Self {
-            ut: value.timestamp(),
+            ut: value.as_second(),
         }
     }
 }
