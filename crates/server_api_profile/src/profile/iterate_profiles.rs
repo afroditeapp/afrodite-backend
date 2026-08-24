@@ -16,7 +16,7 @@ const PATH_GET_AUTOMATIC_PROFILE_SEARCH_SETTINGS: &str =
     get,
     path = PATH_GET_AUTOMATIC_PROFILE_SEARCH_SETTINGS,
     responses(
-        (status = 200, description = "Successfull.", body = AutomaticProfileSearchSettings),
+        (status = 200, description = "Successful.", body = AutomaticProfileSearchSettings),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -44,7 +44,7 @@ const PATH_POST_AUTOMATIC_PROFILE_SEARCH_SETTINGS: &str =
     path = PATH_POST_AUTOMATIC_PROFILE_SEARCH_SETTINGS,
     request_body = AutomaticProfileSearchSettings,
     responses(
-        (status = 200, description = "Successfull."),
+        (status = 200, description = "Successful."),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),

@@ -26,7 +26,7 @@ const PATH_POST_REPORT_PROFILE_NAME: &str = "/profile_api/report_profile_name";
     path = PATH_POST_REPORT_PROFILE_NAME,
     request_body = UpdateProfileNameReport,
     responses(
-        (status = 200, description = "Successfull.", body = UpdateReportResult),
+        (status = 200, description = "Successful.", body = UpdateReportResult),
         (status = 401, description = "Unauthorized."),
         (status = 429, description = "Too many requests."),
         (status = 500, description = "Internal server error."),
@@ -69,7 +69,7 @@ const PATH_POST_REPORT_PROFILE_TEXT: &str = "/profile_api/report_profile_text";
     path = PATH_POST_REPORT_PROFILE_TEXT,
     request_body = UpdateProfileTextReport,
     responses(
-        (status = 200, description = "Successfull.", body = UpdateReportResult),
+        (status = 200, description = "Successful.", body = UpdateReportResult),
         (status = 401, description = "Unauthorized."),
         (status = 429, description = "Too many requests."),
         (status = 500, description = "Internal server error."),

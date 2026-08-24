@@ -148,7 +148,7 @@ const PATH_POST_GET_IP_COUNTRY_STATISTICS: &str = "/common_api/ip_country_statis
     path = PATH_POST_GET_IP_COUNTRY_STATISTICS,
     request_body = GetIpCountryStatisticsSettings,
     responses(
-        (status = 200, description = "Successfull.", body = GetIpCountryStatisticsResult),
+        (status = 200, description = "Successful.", body = GetIpCountryStatisticsResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),

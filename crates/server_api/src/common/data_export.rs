@@ -32,7 +32,7 @@ const PATH_GET_DATA_EXPORT_STATE: &str = "/common_api/data_export_state";
     get,
     path = PATH_GET_DATA_EXPORT_STATE,
     responses(
-        (status = 200, description = "Successfull.", body = DataExportState),
+        (status = 200, description = "Successful.", body = DataExportState),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -73,7 +73,7 @@ const PATH_POST_START_DATA_EXPORT: &str = "/common_api/start_data_export";
     path = PATH_POST_START_DATA_EXPORT,
     request_body = PostStartDataExport,
     responses(
-        (status = 200, description = "Successfull."),
+        (status = 200, description = "Successful."),
         (status = 401, description = "Unauthorized."),
         (status = 429, description = "Too many requests."),
         (status = 500, description = "Internal server error."),
@@ -142,7 +142,7 @@ const PATH_DELETE_DATA_EXPORT: &str = "/common_api/delete_data_export";
     delete,
     path = PATH_DELETE_DATA_EXPORT,
     responses(
-        (status = 200, description = "Successfull."),
+        (status = 200, description = "Successful."),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -182,7 +182,7 @@ const PATH_GET_DATA_EXPORT_ARCHIVE: &str = "/common_api/data_export_archive";
     path = PATH_GET_DATA_EXPORT_ARCHIVE,
     params(DataExportName),
     responses(
-        (status = 200, description = "Successfull.", body = inline(model::BinaryData), content_type = "application/zip"),
+        (status = 200, description = "Successful.", body = inline(model::BinaryData), content_type = "application/zip"),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),

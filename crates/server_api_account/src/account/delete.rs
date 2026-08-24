@@ -28,7 +28,7 @@ const PATH_POST_SET_ACCOUNT_DELETION_REQUEST_STATE: &str =
     request_body = BooleanSetting,
     params(AccountId),
     responses(
-        (status = 200, description = "Successfull."),
+        (status = 200, description = "Successful."),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -72,7 +72,7 @@ const PATH_GET_ACCOUNT_DELETION_REQUEST_STATE: &str =
     path = PATH_GET_ACCOUNT_DELETION_REQUEST_STATE,
     params(AccountId),
     responses(
-        (status = 200, description = "Successfull.", body = GetAccountDeletionRequestResult),
+        (status = 200, description = "Successful.", body = GetAccountDeletionRequestResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),

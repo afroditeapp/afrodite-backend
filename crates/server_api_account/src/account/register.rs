@@ -18,7 +18,7 @@ const PATH_ACCOUNT_COMPLETE_SETUP: &str = "/account_api/complete_setup";
     post,
     path = PATH_ACCOUNT_COMPLETE_SETUP,
     responses(
-        (status = 200, description = "Request successfull."),
+        (status = 200, description = "Request successful."),
         (status = 406, description = "Current state is not initial setup."),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error or current state is invalid for Normal state."),

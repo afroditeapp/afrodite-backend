@@ -14,7 +14,7 @@ const PATH_POST_GET_CLIENT_FEATURES_CONFIG: &str = "/account_api/client_features
     path = PATH_POST_GET_CLIENT_FEATURES_CONFIG,
     request_body = ClientFeaturesConfigHash,
     responses(
-        (status = 200, description = "Successfull.", body = GetClientFeaturesConfigResult),
+        (status = 200, description = "Successful.", body = GetClientFeaturesConfigResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -45,7 +45,7 @@ const PATH_POST_GET_DYNAMIC_CLIENT_FEATURES_CONFIG: &str =
     path = PATH_POST_GET_DYNAMIC_CLIENT_FEATURES_CONFIG,
     request_body = DynamicClientFeaturesConfigHash,
     responses(
-        (status = 200, description = "Successfull.", body = GetDynamicClientFeaturesConfigResult),
+        (status = 200, description = "Successful.", body = GetDynamicClientFeaturesConfigResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),

@@ -23,7 +23,7 @@ const PATH_POST_GET_CLIENT_VERSION_STATISTICS: &str = "/account_api/client_versi
     path = PATH_POST_GET_CLIENT_VERSION_STATISTICS,
     request_body = GetClientVersionStatisticsSettings,
     responses(
-        (status = 200, description = "Successfull.", body = GetClientVersionStatisticsResult),
+        (status = 200, description = "Successful.", body = GetClientVersionStatisticsResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),

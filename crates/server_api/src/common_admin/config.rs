@@ -25,7 +25,7 @@ const PATH_GET_BOT_CONFIG: &str = "/common_api/bot_config";
     get,
     path = PATH_GET_BOT_CONFIG,
     responses(
-        (status = 200, description = "Get was successfull.", body = BotConfig),
+        (status = 200, description = "Get was successful.", body = BotConfig),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -70,7 +70,7 @@ const PATH_POST_BOT_CONFIG: &str = "/common_api/bot_config";
     params(),
     request_body(content = BotConfig),
     responses(
-        (status = 200, description = "Save was successfull."),
+        (status = 200, description = "Save was successful."),
         (status = 400, description = "Invalid configuration."),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),

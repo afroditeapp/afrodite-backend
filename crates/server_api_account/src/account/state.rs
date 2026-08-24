@@ -16,7 +16,7 @@ const PATH_ACCOUNT_STATE: &str = "/account_api/state";
     get,
     path = PATH_ACCOUNT_STATE,
     responses(
-        (status = 200, description = "Request successfull.", body = Account),
+        (status = 200, description = "Request successful.", body = Account),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),

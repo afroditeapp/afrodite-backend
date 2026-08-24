@@ -16,7 +16,7 @@ const PATH_GET_LOCATION: &str = "/profile_api/location";
     get,
     path = PATH_GET_LOCATION,
     responses(
-        (status = 200, description = "Get successfull.", body = Location),
+        (status = 200, description = "Get successful.", body = Location),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -40,7 +40,7 @@ const PATH_PUT_LOCATION: &str = "/profile_api/location";
     path = PATH_PUT_LOCATION,
     request_body = Location,
     responses(
-        (status = 200, description = "Update successfull."),
+        (status = 200, description = "Update successful."),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),

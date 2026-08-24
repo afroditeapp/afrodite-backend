@@ -24,7 +24,7 @@ const PATH_GET_CLIENT_CONFIG: &str = "/common_api/client_config";
     get,
     path = PATH_GET_CLIENT_CONFIG,
     responses(
-        (status = 200, description = "Get successfull.", body = ClientConfig),
+        (status = 200, description = "Get successful.", body = ClientConfig),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -72,7 +72,7 @@ const PATH_GET_CLIENT_LANGUAGE: &str = "/common_api/client_language";
     get,
     path = PATH_GET_CLIENT_LANGUAGE,
     responses(
-        (status = 200, description = "Successfull.", body = GetClientLanguage),
+        (status = 200, description = "Successful.", body = GetClientLanguage),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -100,7 +100,7 @@ const PATH_POST_CLIENT_LANGUAGE: &str = "/common_api/client_language";
     path = PATH_POST_CLIENT_LANGUAGE,
     request_body = ClientLanguage,
     responses(
-        (status = 200, description = "Successfull."),
+        (status = 200, description = "Successful."),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),

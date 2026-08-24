@@ -26,7 +26,7 @@ const PATH_POST_GET_QUERY_PROFILE_ATTRIBUTES_CONFIG: &str =
     path = PATH_POST_GET_QUERY_PROFILE_ATTRIBUTES_CONFIG,
     request_body = ProfileAttributesConfigQuery,
     responses(
-        (status = 200, description = "Successfull.", body = ProfileAttributesConfigQueryResult),
+        (status = 200, description = "Successful.", body = ProfileAttributesConfigQueryResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -54,7 +54,7 @@ const PATH_GET_PROFILE_FILTERS: &str = "/profile_api/profile_filters";
     get,
     path = PATH_GET_PROFILE_FILTERS,
     responses(
-        (status = 200, description = "Successfull.", body = GetProfileFilters),
+        (status = 200, description = "Successful.", body = GetProfileFilters),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -77,7 +77,7 @@ const PATH_POST_PROFILE_FILTERS: &str = "/profile_api/profile_filters";
     path = PATH_POST_PROFILE_FILTERS,
     request_body = ProfileFiltersUpdate,
     responses(
-        (status = 200, description = "Successfull."),
+        (status = 200, description = "Successful."),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),

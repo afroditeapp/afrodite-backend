@@ -13,7 +13,7 @@ const PATH_POST_LOGOUT: &str = "/account_api/logout";
     post,
     path = PATH_POST_LOGOUT,
     responses(
-        (status = 200, description = "Successfull."),
+        (status = 200, description = "Successful."),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),

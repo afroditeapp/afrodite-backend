@@ -183,7 +183,7 @@ const PATH_POST_GET_CHAT_MESSAGE_REPORTS: &str = "/chat_api/get_chat_message_rep
     path = PATH_POST_GET_CHAT_MESSAGE_REPORTS,
     request_body = GetChatMessageReports,
     responses(
-        (status = 200, description = "Successfull.", body = GetReportList),
+        (status = 200, description = "Successful.", body = GetReportList),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),

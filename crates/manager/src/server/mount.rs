@@ -198,7 +198,7 @@ impl MountManager {
             .change_context(MountError::ProcessStartFailed)?;
 
         if status.success() {
-            info!("Mounting was successfull.");
+            info!("Mounting was successful.");
             Ok(())
         } else {
             error!("Mounting failed.");
@@ -234,7 +234,7 @@ impl MountManager {
             .change_context(MountError::ProcessStartFailed)?;
 
         if c.success() {
-            info!("Unmounting was successfull.");
+            info!("Unmounting was successful.");
             Ok(())
         } else {
             error!("Unmounting failed.");
@@ -301,7 +301,7 @@ impl MountManager {
             .change_context(MountError::ProcessStartFailed)?;
 
         if status.success() {
-            info!("Password change was successfull.");
+            info!("Password change was successful.");
             Ok(())
         } else {
             error!("Password change failed.");

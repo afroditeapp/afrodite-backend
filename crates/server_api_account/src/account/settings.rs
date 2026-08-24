@@ -24,7 +24,7 @@ const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile_vis
     path = PATH_SETTING_PROFILE_VISIBILITY,
     request_body(content = BooleanSetting),
     responses(
-        (status = 200, description = "Update successfull."),
+        (status = 200, description = "Update successful."),
         (status = 401, description = "Unauthorized."),
         (status = 403, description = "Forbidden."),
         (status = 500, description = "Internal server error."),
@@ -70,7 +70,7 @@ const PATH_SETTING_UNLIMITED_LIKES: &str = "/account_api/settings/unlimited_like
     path = PATH_SETTING_UNLIMITED_LIKES,
     request_body(content = BooleanSetting),
     responses(
-        (status = 200, description = "Update successfull."),
+        (status = 200, description = "Update successful."),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),

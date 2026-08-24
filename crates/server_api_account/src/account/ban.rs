@@ -26,7 +26,7 @@ const PATH_GET_ACCOUNT_BAN_TIME: &str = "/account_api/account_ban_time/{aid}";
     path = PATH_GET_ACCOUNT_BAN_TIME,
     params(AccountId),
     responses(
-        (status = 200, description = "Successfull.", body = GetAccountBanTimeResult),
+        (status = 200, description = "Successful.", body = GetAccountBanTimeResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),

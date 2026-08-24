@@ -22,7 +22,7 @@ const PATH_GET_ACCOUNT_ID_FROM_EMAIL: &str = "/account_api/get_account_id_from_e
     path = PATH_GET_ACCOUNT_ID_FROM_EMAIL,
     params(GetAccountIdFromEmailParams),
     responses(
-        (status = 200, description = "Successfull.", body = GetAccountIdFromEmailResult),
+        (status = 200, description = "Successful.", body = GetAccountIdFromEmailResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),

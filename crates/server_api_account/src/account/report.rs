@@ -24,7 +24,7 @@ const PATH_POST_CUSTOM_REPORT_EMPTY: &str = "/account_api/custom_report_empty";
     path = PATH_POST_CUSTOM_REPORT_EMPTY,
     request_body = UpdateCustomReportEmpty,
     responses(
-        (status = 200, description = "Successfull.", body = UpdateReportResult),
+        (status = 200, description = "Successful.", body = UpdateReportResult),
         (status = 401, description = "Unauthorized."),
         (status = 429, description = "Too many requests."),
         (status = 500, description = "Internal server error."),
@@ -62,7 +62,7 @@ const PATH_POST_GET_CUSTOM_REPORTS_CONFIG: &str = "/account_api/custom_reports_c
     path = PATH_POST_GET_CUSTOM_REPORTS_CONFIG,
     request_body = CustomReportsConfigHash,
     responses(
-        (status = 200, description = "Successfull.", body = GetCustomReportsConfigResult),
+        (status = 200, description = "Successful.", body = GetCustomReportsConfigResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),

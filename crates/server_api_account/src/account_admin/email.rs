@@ -28,7 +28,7 @@ pub const PATH_GET_EMAIL_ADDRESS_STATE_ADMIN: &str = "/account_api/email_address
     path = PATH_GET_EMAIL_ADDRESS_STATE_ADMIN,
     params(AccountId),
     responses(
-        (status = 200, description = "Successfull.", body = EmailAddressStateAdmin),
+        (status = 200, description = "Successful.", body = EmailAddressStateAdmin),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -128,7 +128,7 @@ pub const PATH_POST_ADMIN_INIT_EMAIL_CHANGE: &str = "/account_api/admin_init_ema
     path = PATH_POST_ADMIN_INIT_EMAIL_CHANGE,
     request_body = InitEmailChangeAdmin,
     responses(
-        (status = 200, description = "Successfull.", body = InitEmailChangeResult),
+        (status = 200, description = "Successful.", body = InitEmailChangeResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),

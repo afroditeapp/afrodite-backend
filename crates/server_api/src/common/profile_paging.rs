@@ -23,7 +23,7 @@ const PATH_POST_RESET_PROFILE_PAGING: &str = "/common_api/profile/page/reset";
     post,
     path = PATH_POST_RESET_PROFILE_PAGING,
     responses(
-        (status = 200, description = "Update successfull.", body = ProfileIteratorSessionId),
+        (status = 200, description = "Update successful.", body = ProfileIteratorSessionId),
         (status = 401, description = "Unauthorized."),
         (status = 429, description = "Too many requests."),
         (status = 500, description = "Internal server error."),
@@ -70,7 +70,7 @@ const PATH_POST_GET_NEXT_PROFILE_PAGE: &str = "/common_api/profile/page/next";
     path = PATH_POST_GET_NEXT_PROFILE_PAGE,
     request_body(content = ProfileIteratorSessionId),
     responses(
-        (status = 200, description = "Update successfull.", body = ProfilePage),
+        (status = 200, description = "Update successful.", body = ProfilePage),
         (status = 401, description = "Unauthorized."),
         (status = 429, description = "Too many requests."),
         (status = 500, description = "Internal server error."),
@@ -143,7 +143,7 @@ const PATH_POST_AUTOMATIC_PROFILE_SEARCH_RESET_PROFILE_PAGING: &str =
     post,
     path = PATH_POST_AUTOMATIC_PROFILE_SEARCH_RESET_PROFILE_PAGING,
     responses(
-        (status = 200, description = "Update successfull.", body = AutomaticProfileSearchIteratorSessionId),
+        (status = 200, description = "Update successful.", body = AutomaticProfileSearchIteratorSessionId),
         (status = 401, description = "Unauthorized."),
         (status = 429, description = "Too many requests."),
         (status = 500, description = "Internal server error."),
@@ -199,7 +199,7 @@ const PATH_POST_AUTOMATIC_PROFILE_SEARCH_GET_NEXT_PROFILE_PAGE: &str =
     path = PATH_POST_AUTOMATIC_PROFILE_SEARCH_GET_NEXT_PROFILE_PAGE,
     request_body(content = AutomaticProfileSearchIteratorSessionId),
     responses(
-        (status = 200, description = "Update successfull.", body = ProfilePage),
+        (status = 200, description = "Update successful.", body = ProfilePage),
         (status = 401, description = "Unauthorized."),
         (status = 429, description = "Too many requests."),
         (status = 500, description = "Internal server error."),

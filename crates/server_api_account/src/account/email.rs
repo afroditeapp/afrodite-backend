@@ -230,7 +230,7 @@ pub const PATH_POST_SEND_VERIFY_EMAIL_MESSAGE: &str = "/account_api/send_verify_
     post,
     path = PATH_POST_SEND_VERIFY_EMAIL_MESSAGE,
     responses(
-        (status = 200, description = "Successfull.", body = SendVerifyEmailMessageResult),
+        (status = 200, description = "Successful.", body = SendVerifyEmailMessageResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -593,7 +593,7 @@ pub const PATH_POST_INIT_EMAIL_CHANGE: &str = "/account_api/init_email_change";
     path = PATH_POST_INIT_EMAIL_CHANGE,
     request_body = InitEmailChange,
     responses(
-        (status = 200, description = "Successfull.", body = InitEmailChangeResult),
+        (status = 200, description = "Successful.", body = InitEmailChangeResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -622,7 +622,7 @@ const PATH_POST_INITIAL_EMAIL: &str = "/account_api/initial_email";
     path = PATH_POST_INITIAL_EMAIL,
     request_body(content = SetInitialEmail),
     responses(
-        (status = 200, description = "Request successfull."),
+        (status = 200, description = "Request successful."),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -692,7 +692,7 @@ pub const PATH_POST_SET_EMAIL_LOGIN_ENABLED: &str = "/account_api/set_email_logi
     path = PATH_POST_SET_EMAIL_LOGIN_ENABLED,
     request_body = SetEmailLoginEnabled,
     responses(
-        (status = 200, description = "Successfull."),
+        (status = 200, description = "Successful."),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -742,7 +742,7 @@ const PATH_GET_EMAIL_ADDRESS_STATE: &str = "/account_api/email_address_state";
     get,
     path = PATH_GET_EMAIL_ADDRESS_STATE,
     responses(
-        (status = 200, description = "Request successfull.", body = EmailAddressState),
+        (status = 200, description = "Request successful.", body = EmailAddressState),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),

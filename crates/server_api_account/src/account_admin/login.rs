@@ -26,7 +26,7 @@ const PATH_GET_ACCOUNT_LOCKED_STATE: &str = "/account_api/get_account_locked_sta
     path = PATH_GET_ACCOUNT_LOCKED_STATE,
     params(AccountId),
     responses(
-        (status = 200, description = "Successfull.", body = AccountLockedState),
+        (status = 200, description = "Successful.", body = AccountLockedState),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -68,7 +68,7 @@ const PATH_POST_SET_ACCOUNT_LOCKED_STATE: &str = "/account_api/set_account_locke
     params(AccountId),
     request_body = AccountLockedState,
     responses(
-        (status = 200, description = "Successfull."),
+        (status = 200, description = "Successful."),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),

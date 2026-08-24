@@ -26,7 +26,7 @@ const PATH_POST_PROFILE_CONTENT_REPORT: &str = "/media_api/profile_content_repor
     path = PATH_POST_PROFILE_CONTENT_REPORT,
     request_body = UpdateProfileContentReport,
     responses(
-        (status = 200, description = "Successfull.", body = UpdateReportResult),
+        (status = 200, description = "Successful.", body = UpdateReportResult),
         (status = 401, description = "Unauthorized."),
         (status = 429, description = "Too many requests."),
         (status = 500, description = "Internal server error."),

@@ -41,7 +41,7 @@ const PATH_POST_DEMO_ACCOUNT_LOGIN: &str = "/account_api/demo_account_login";
     path = PATH_POST_DEMO_ACCOUNT_LOGIN,
     request_body = DemoAccountLoginCredentials,
     responses(
-        (status = 200, description = "Successfull.", body = DemoAccountLoginResult),
+        (status = 200, description = "Successful.", body = DemoAccountLoginResult),
     ),
     security(),
 )]
@@ -69,7 +69,7 @@ const PATH_POST_DEMO_ACCOUNT_ACCESSIBLE_ACCOUNTS: &str =
     path = PATH_POST_DEMO_ACCOUNT_ACCESSIBLE_ACCOUNTS,
     request_body = DemoAccountToken,
     responses(
-        (status = 200, description = "Successfull.", body = Vec<AccessibleAccount>),
+        (status = 200, description = "Successful.", body = Vec<AccessibleAccount>),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -220,7 +220,7 @@ const PATH_POST_DEMO_ACCOUNT_LOGOUT: &str = "/account_api/demo_account_logout";
     path = PATH_POST_DEMO_ACCOUNT_LOGOUT,
     request_body = DemoAccountToken,
     responses(
-        (status = 200, description = "Successfull."),
+        (status = 200, description = "Successful."),
     ),
     security(),
 )]

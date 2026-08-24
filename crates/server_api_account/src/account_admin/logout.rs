@@ -25,7 +25,7 @@ const PATH_POST_ADMIN_LOGOUT: &str = "/account_api/admin_logout/{aid}";
     path = PATH_POST_ADMIN_LOGOUT,
     params(AccountId),
     responses(
-        (status = 200, description = "Successfull."),
+        (status = 200, description = "Successful."),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),

@@ -113,7 +113,7 @@ const PATH_GET_SOFTWARE_INFO: &str = "/common_api/software_info";
     path = PATH_GET_SOFTWARE_INFO,
     params(ManagerInstanceNameValue),
     responses(
-        (status = 200, description = "Get was successfull.", body = SoftwareUpdateStatus),
+        (status = 200, description = "Get was successful.", body = SoftwareUpdateStatus),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),

@@ -47,7 +47,7 @@ const PATH_POST_RESET_NEWS_PAGING: &str = "/account_api/reset_news_paging";
     post,
     path = PATH_POST_RESET_NEWS_PAGING,
     responses(
-        (status = 200, description = "Successfull.", body = ResetNewsIteratorResult),
+        (status = 200, description = "Successful.", body = ResetNewsIteratorResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),

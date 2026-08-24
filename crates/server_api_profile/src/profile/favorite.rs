@@ -19,7 +19,7 @@ const PATH_GET_FAVORITE_PROFILES: &str = "/profile_api/favorite_profiles";
     get,
     path = PATH_GET_FAVORITE_PROFILES,
     responses(
-        (status = 200, description = "Get successfull.", body = FavoriteProfilesPage),
+        (status = 200, description = "Get successful.", body = FavoriteProfilesPage),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -47,7 +47,7 @@ const PATH_POST_FAVORITE_PROFILE: &str = "/profile_api/favorite_profile";
     path = PATH_POST_FAVORITE_PROFILE,
     request_body(content = AccountId),
     responses(
-        (status = 200, description = "Request successfull.", body = AddFavoriteProfileResult),
+        (status = 200, description = "Request successful.", body = AddFavoriteProfileResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -77,7 +77,7 @@ const PATH_DELETE_FAVORITE_PROFILE: &str = "/profile_api/favorite_profile";
     path = PATH_DELETE_FAVORITE_PROFILE,
     request_body(content = AccountId),
     responses(
-        (status = 200, description = "Request successfull."),
+        (status = 200, description = "Request successful."),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),

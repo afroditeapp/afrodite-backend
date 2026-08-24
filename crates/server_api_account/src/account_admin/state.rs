@@ -25,7 +25,7 @@ const PATH_GET_ACCOUNT_STATE_ADMIN: &str = "/account_api/get_account_state_admin
     path = PATH_GET_ACCOUNT_STATE_ADMIN,
     params(AccountId),
     responses(
-        (status = 200, description = "Successfull.", body = Account),
+        (status = 200, description = "Successful.", body = Account),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),

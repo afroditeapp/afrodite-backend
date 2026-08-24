@@ -30,7 +30,7 @@ const MAX_REPORTED_MESSAGES_PER_REQUEST: usize = 10;
     path = PATH_POST_CHAT_MESSAGE_REPORTS,
     request_body = UpdateChatMessageReports,
     responses(
-        (status = 200, description = "Successfull.", body = UpdateReportResult),
+        (status = 200, description = "Successful.", body = UpdateReportResult),
         (status = 400, description = "Invalid request."),
         (status = 401, description = "Unauthorized."),
         (status = 429, description = "Too many requests."),

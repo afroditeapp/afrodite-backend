@@ -15,7 +15,7 @@ const PATH_GET_INITIAL_MATCHES_ITERATOR_STATE: &str = "/chat_api/matches/initial
     get,
     path = PATH_GET_INITIAL_MATCHES_ITERATOR_STATE,
     responses(
-        (status = 200, description = "Successfull.", body = MatchesIteratorState),
+        (status = 200, description = "Successful.", body = MatchesIteratorState),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),

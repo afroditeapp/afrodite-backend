@@ -27,7 +27,7 @@ const PATH_GET_PERMISSIONS: &str = "/account_api/get_permissions/{aid}";
     path = PATH_GET_PERMISSIONS,
     params(AccountId),
     responses(
-        (status = 200, description = "Successfull.", body = Permissions),
+        (status = 200, description = "Successful.", body = Permissions),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -62,7 +62,7 @@ const PATH_GET_ALL_ADMINS: &str = "/account_api/get_all_admins";
     get,
     path = PATH_GET_ALL_ADMINS,
     responses(
-        (status = 200, description = "Successfull.", body = GetAllAdminsResult),
+        (status = 200, description = "Successful.", body = GetAllAdminsResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -101,7 +101,7 @@ const PATH_POST_SET_PERMISSIONS: &str = "/account_api/set_permissions/{aid}";
     params(AccountId),
     request_body = Permissions,
     responses(
-        (status = 200, description = "Successfull."),
+        (status = 200, description = "Successful."),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),

@@ -185,7 +185,7 @@ const PATH_POST_RESET_NEW_RECEIVED_LIKES_COUNT: &str = "/chat_api/reset_new_rece
     post,
     path = PATH_POST_RESET_NEW_RECEIVED_LIKES_COUNT,
     responses(
-        (status = 200, description = "Successfull.", body = NewReceivedLikesCountResult),
+        (status = 200, description = "Successful.", body = NewReceivedLikesCountResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -210,7 +210,7 @@ const PATH_POST_RESET_RECEIVED_LIKES_PAGING: &str = "/chat_api/received_likes/re
     post,
     path = PATH_POST_RESET_RECEIVED_LIKES_PAGING,
     responses(
-        (status = 200, description = "Successfull.", body = ResetReceivedLikesIteratorResult),
+        (status = 200, description = "Successful.", body = ResetReceivedLikesIteratorResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -269,7 +269,7 @@ const PATH_POST_MARK_RECEIVED_LIKES_VIEWED: &str = "/chat_api/mark_received_like
     path = PATH_POST_MARK_RECEIVED_LIKES_VIEWED,
     request_body(content = MarkReceivedLikesViewed),
     responses(
-        (status = 200, description = "Successfull."),
+        (status = 200, description = "Successful."),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
