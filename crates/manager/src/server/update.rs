@@ -90,15 +90,15 @@ pub enum UpdateError {
     GitHubApi,
 
     #[error("Software download failed. More than one matching file name found.")]
-    SotwareDownloadFailedAmbiguousFileName,
+    SoftwareDownloadFailedAmbiguousFileName,
 
     #[error("Latest software with matching file name not found from GitHub")]
     SoftwareDownloadFailedNoMatchingFile,
 
     #[error("Software download failed. Unknown file uploader.")]
-    SotwareDownloadFailedUnknownFileUploader,
+    SoftwareDownloadFailedUnknownFileUploader,
 
-    #[error("Software downaload failed")]
+    #[error("Software download failed")]
     SoftwareDownloadFailed,
 
     #[error("Blocking task failed")]

@@ -50,7 +50,7 @@ pub enum BackupMessageType {
     ContentListSyncDone = 5,
     /// Start file backup transfer. Backup source client sends this
     /// after the last [BackupMessageType::ContentList]. When file name
-    /// is empty all files are backuped.
+    /// is empty all files are backed up.
     ///
     /// Data:
     ///

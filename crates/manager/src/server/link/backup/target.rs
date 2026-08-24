@@ -43,7 +43,7 @@ enum BackupTargetError {
     #[error("Deserialize")]
     Deserialize,
 
-    #[error("Portocol")]
+    #[error("Protocol")]
     Protocol,
 
     #[error("Invalid account ID")]

@@ -107,7 +107,7 @@ impl GitHubApi<'_> {
 
             if name.ends_with(&config.github.file_name_ending) {
                 if let Some(selected) = selected_asset {
-                    return Err(UpdateError::SotwareDownloadFailedAmbiguousFileName
+                    return Err(UpdateError::SoftwareDownloadFailedAmbiguousFileName
                         .into_report()
                         .attach(selected.name.to_string())
                         .attach(name.to_string()));
@@ -115,7 +115,7 @@ impl GitHubApi<'_> {
                     if let Some(required_uploader) = &config.github.uploader
                         && uploader != required_uploader
                     {
-                        return Err(UpdateError::SotwareDownloadFailedUnknownFileUploader
+                        return Err(UpdateError::SoftwareDownloadFailedUnknownFileUploader
                             .into_report()
                             .attach(format!(
                                 "uploader: {uploader}, expected: {required_uploader}"

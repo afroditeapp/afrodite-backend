@@ -201,7 +201,7 @@ impl ScheduledTaskManager {
         mut quit_notification: ServerQuitWatcher,
         config: ScheduledTasksConfig,
     ) {
-        let manager = ScheduledTaksManagerInternal {
+        let manager = ScheduledTasksManagerInternal {
             config: config.clone(),
             internal_state: self.internal_state,
             state: self.state,
@@ -252,13 +252,13 @@ impl ScheduledTaskManager {
     }
 }
 
-struct ScheduledTaksManagerInternal {
+struct ScheduledTasksManagerInternal {
     internal_state: Arc<Mutex<ManagerApiScheduledTaskStatus>>,
     state: S,
     config: ScheduledTasksConfig,
 }
 
-impl ScheduledTaksManagerInternal {
+impl ScheduledTasksManagerInternal {
     async fn run_scheduled_tasks(&self) {
         let mut state = self.internal_state.lock().await;
         let result = if state.system_reboot.is_some() {

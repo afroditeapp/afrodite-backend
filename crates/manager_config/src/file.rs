@@ -186,7 +186,7 @@ impl ConfigFile {
 pub struct ManagerConfig {
     /// API key for manager API. All managers instances must use the same key.
     ///
-    /// If the key is wrong the API access is denied untill manager is restarted.
+    /// If the key is wrong the API access is denied until manager is restarted.
     pub api_key: String,
     pub name: ManagerInstanceName,
 }
@@ -319,7 +319,7 @@ pub struct ManualTasksConfig {
     pub allow_backend_data_reset: Option<BackendDataResetConfig>,
     /// Allow manual backend restart
     pub allow_backend_restart: bool,
-    /// Allow manaual system reboot
+    /// Allow manual system reboot
     pub allow_system_reboot: bool,
     /// Allow manual system shutdown
     pub allow_system_shutdown: bool,

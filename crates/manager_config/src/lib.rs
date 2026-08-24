@@ -36,8 +36,8 @@ pub enum GetConfigError {
     LoadFileError,
     #[error("Load config file")]
     LoadConfig,
-    #[error("Check config file existance error")]
-    CheckConfigFileExistanceError,
+    #[error("Check config file existence error")]
+    CheckConfigFileExistenceError,
     #[error("File path related error")]
     FilePathError,
     #[error("Change directory failed")]
@@ -88,7 +88,7 @@ impl Config {
     /// Server should run in debug mode.
     ///
     /// Debug mode changes:
-    /// * Disabling HTTPS is possbile.
+    /// * Disabling HTTPS is possible.
     /// * Checking available scripts is disabled.
     /// * Reboot command will not run.
     pub fn debug_mode(&self) -> bool {
