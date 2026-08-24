@@ -13,8 +13,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AppAttestation {
-    #[serde(rename = "debug", skip_serializing_if = "Option::is_none")]
-    pub debug: Option<models::DebugAppAttestation>,
     #[serde(rename = "play_integrity", skip_serializing_if = "Option::is_none")]
     pub play_integrity: Option<models::PlayIntegrityAppAttestation>,
 }
@@ -22,7 +20,6 @@ pub struct AppAttestation {
 impl AppAttestation {
     pub fn new() -> AppAttestation {
         AppAttestation {
-            debug: None,
             play_integrity: None,
         }
     }

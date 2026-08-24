@@ -14,10 +14,10 @@ use serde::{Deserialize, Serialize};
 /// 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum AttributeValueOrderMode {
-    #[serde(rename = "AlphabethicalKey")]
-    AlphabethicalKey,
-    #[serde(rename = "AlphabethicalValue")]
-    AlphabethicalValue,
+    #[serde(rename = "AlphabeticalKey")]
+    AlphabeticalKey,
+    #[serde(rename = "AlphabeticalValue")]
+    AlphabeticalValue,
     #[serde(rename = "OrderNumber")]
     OrderNumber,
 
@@ -26,8 +26,8 @@ pub enum AttributeValueOrderMode {
 impl std::fmt::Display for AttributeValueOrderMode {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Self::AlphabethicalKey => write!(f, "AlphabethicalKey"),
-            Self::AlphabethicalValue => write!(f, "AlphabethicalValue"),
+            Self::AlphabeticalKey => write!(f, "AlphabeticalKey"),
+            Self::AlphabeticalValue => write!(f, "AlphabeticalValue"),
             Self::OrderNumber => write!(f, "OrderNumber"),
         }
     }
@@ -35,7 +35,7 @@ impl std::fmt::Display for AttributeValueOrderMode {
 
 impl Default for AttributeValueOrderMode {
     fn default() -> AttributeValueOrderMode {
-        Self::AlphabethicalKey
+        Self::AlphabeticalKey
     }
 }
 

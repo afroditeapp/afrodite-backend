@@ -145,7 +145,6 @@ src/models/data_export_name.rs
 src/models/data_export_state.rs
 src/models/data_export_state_type.rs
 src/models/data_export_type.rs
-src/models/debug_app_attestation.rs
 src/models/delivery_info_type.rs
 src/models/demo_account_login_credentials.rs
 src/models/demo_account_login_result.rs
@@ -433,6 +432,7 @@ src/models/typing_indicator_config.rs
 src/models/unix_time.rs
 src/models/unread_news_count.rs
 src/models/unread_news_count_result.rs
+src/models/unsigned_integer_attribute_config.rs
 src/models/update_association_membership.rs
 src/models/update_association_membership_type.rs
 src/models/update_chat_message_reports.rs

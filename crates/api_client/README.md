@@ -68,7 +68,7 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**post_sign_in_with_login**](docs/AccountApi.md#post_sign_in_with_login) | **POST** /account_api/sign_in_with_login | Start new session with sign in with Apple or Google.
 *AccountApi* | [**post_verify_email**](docs/AccountApi.md#post_verify_email) | **POST** /verify_email | Verify email address using the token from the form submission.
 *AccountApi* | [**post_verify_new_email**](docs/AccountApi.md#post_verify_new_email) | **POST** /verify_new_email | Verify new email address using the token from the form submission.
-*AccountApi* | [**put_setting_profile_visiblity**](docs/AccountApi.md#put_setting_profile_visiblity) | **PUT** /account_api/settings/profile_visibility | Update current profile visiblity value.
+*AccountApi* | [**put_setting_profile_visibility**](docs/AccountApi.md#put_setting_profile_visibility) | **PUT** /account_api/settings/profile_visibility | Update current profile visibility value.
 *AccountApi* | [**put_setting_unlimited_likes**](docs/AccountApi.md#put_setting_unlimited_likes) | **PUT** /account_api/settings/unlimited_likes | 
 *AccountApi* | [**put_sign_in_with_apple**](docs/AccountApi.md#put_sign_in_with_apple) | **PUT** /account_api/sign_in_with_apple | Associate or disassociate Apple sign in with account.
 *AccountApi* | [**put_sign_in_with_google**](docs/AccountApi.md#put_sign_in_with_google) | **PUT** /account_api/sign_in_with_google | Associate or disassociate Google sign in with account.
@@ -400,7 +400,6 @@ Class | Method | HTTP request | Description
  - [DataExportState](docs/DataExportState.md)
  - [DataExportStateType](docs/DataExportStateType.md)
  - [DataExportType](docs/DataExportType.md)
- - [DebugAppAttestation](docs/DebugAppAttestation.md)
  - [DeliveryInfoType](docs/DeliveryInfoType.md)
  - [DemoAccountLoginCredentials](docs/DemoAccountLoginCredentials.md)
  - [DemoAccountLoginResult](docs/DemoAccountLoginResult.md)
@@ -687,6 +686,7 @@ Class | Method | HTTP request | Description
  - [UnixTime](docs/UnixTime.md)
  - [UnreadNewsCount](docs/UnreadNewsCount.md)
  - [UnreadNewsCountResult](docs/UnreadNewsCountResult.md)
+ - [UnsignedIntegerAttributeConfig](docs/UnsignedIntegerAttributeConfig.md)
  - [UpdateAssociationMembership](docs/UpdateAssociationMembership.md)
  - [UpdateAssociationMembershipType](docs/UpdateAssociationMembershipType.md)
  - [UpdateChatMessageReports](docs/UpdateChatMessageReports.md)

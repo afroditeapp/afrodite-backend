@@ -25,8 +25,10 @@ pub struct Attribute {
     /// String unique identifier for the attribute.
     #[serde(rename = "key")]
     pub key: String,
+    /// Must be 2 when current mode is [AttributeMode::UnsignedInteger].
     #[serde(rename = "max_filters", skip_serializing_if = "Option::is_none")]
     pub max_filters: Option<i32>,
+    /// Must be 1 when current mode is [AttributeMode::UnsignedInteger].
     #[serde(rename = "max_selected", skip_serializing_if = "Option::is_none")]
     pub max_selected: Option<i32>,
     /// Mode of the attribute.
@@ -44,10 +46,13 @@ pub struct Attribute {
     /// Translations for attribute name and attribute values.
     #[serde(rename = "translations", skip_serializing_if = "Option::is_none")]
     pub translations: Option<Vec<models::Language>>,
+    /// Config for unsigned integer mode attributes. The config must exist when attribute's mode is [AttributeMode::UnsignedInteger].
+    #[serde(rename = "unsigned_integer_config", skip_serializing_if = "Option::is_none")]
+    pub unsigned_integer_config: Option<models::UnsignedIntegerAttributeConfig>,
     /// Attribute value ordering mode for client to determine in what order the values should be displayed.
     #[serde(rename = "value_order")]
     pub value_order: models::AttributeValueOrderMode,
-    /// Top level values for the attribute.  Values are sorted by AttributeValue ID. Indexing with it is not possible as ID might be a bitflag value.
+    /// Top level values for the attribute.  Values are sorted by AttributeValue ID. Indexing with it is not possible as ID might be a bitflag value.  Must be empty when current mode is [AttributeMode::UnsignedInteger].
     #[serde(rename = "values")]
     pub values: Vec<models::AttributeValue>,
     /// Client should show this attribute when viewing a profile.
@@ -69,6 +74,7 @@ impl Attribute {
             order_number,
             required: None,
             translations: None,
+            unsigned_integer_config: None,
             value_order,
             values,
             visible: None,

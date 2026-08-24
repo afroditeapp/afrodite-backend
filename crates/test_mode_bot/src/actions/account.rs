@@ -459,7 +459,7 @@ pub struct SetProfileVisibility(pub bool);
 #[async_trait]
 impl BotAction for SetProfileVisibility {
     async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        account_api::put_setting_profile_visiblity(&state.api(), BooleanSetting::new(self.0))
+        account_api::put_setting_profile_visibility(&state.api(), BooleanSetting::new(self.0))
             .await
             .change_context(TestError::ApiRequest)?;
 

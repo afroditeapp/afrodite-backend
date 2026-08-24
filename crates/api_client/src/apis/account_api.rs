@@ -389,10 +389,10 @@ pub enum PostVerifyNewEmailError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`put_setting_profile_visiblity`]
+/// struct for typed errors of method [`put_setting_profile_visibility`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum PutSettingProfileVisiblityError {
+pub enum PutSettingProfileVisibilityError {
     Status401(),
     Status403(),
     Status500(),
@@ -1884,8 +1884,8 @@ pub async fn post_verify_new_email(configuration: &configuration::Configuration,
     }
 }
 
-/// NOTE: Client uses this in initial setup.  # Limits - When [AccountState::Banned], the visiblity can only be set to private.
-pub async fn put_setting_profile_visiblity(configuration: &configuration::Configuration, boolean_setting: models::BooleanSetting) -> Result<(), Error<PutSettingProfileVisiblityError>> {
+/// NOTE: Client uses this in initial setup.  # Limits - When [AccountState::Banned], the visibility can only be set to private.
+pub async fn put_setting_profile_visibility(configuration: &configuration::Configuration, boolean_setting: models::BooleanSetting) -> Result<(), Error<PutSettingProfileVisibilityError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_boolean_setting = boolean_setting;
 
@@ -1909,7 +1909,7 @@ pub async fn put_setting_profile_visiblity(configuration: &configuration::Config
         Ok(())
     } else {
         let content = resp.text().await?;
-        let entity: Option<PutSettingProfileVisiblityError> = serde_json::from_str(&content).ok();
+        let entity: Option<PutSettingProfileVisibilityError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

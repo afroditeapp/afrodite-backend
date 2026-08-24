@@ -20,6 +20,8 @@ pub enum AttributeMode {
     OneLevel,
     #[serde(rename = "TwoLevel")]
     TwoLevel,
+    #[serde(rename = "UnsignedInteger")]
+    UnsignedInteger,
 
 }
 
@@ -29,6 +31,7 @@ impl std::fmt::Display for AttributeMode {
             Self::Bitflag => write!(f, "Bitflag"),
             Self::OneLevel => write!(f, "OneLevel"),
             Self::TwoLevel => write!(f, "TwoLevel"),
+            Self::UnsignedInteger => write!(f, "UnsignedInteger"),
         }
     }
 }

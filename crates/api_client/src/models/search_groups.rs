@@ -11,7 +11,7 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// SearchGroups : My gender and what gender I'm searching for.  Fileds should be read \"I'm x and I'm searching for y\".
+/// SearchGroups : My gender and what gender I'm searching for.  Fields should be read \"I'm x and I'm searching for y\".
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SearchGroups {
     #[serde(rename = "man_for_man", skip_serializing_if = "Option::is_none")]
@@ -35,7 +35,7 @@ pub struct SearchGroups {
 }
 
 impl SearchGroups {
-    /// My gender and what gender I'm searching for.  Fileds should be read \"I'm x and I'm searching for y\".
+    /// My gender and what gender I'm searching for.  Fields should be read \"I'm x and I'm searching for y\".
     pub fn new() -> SearchGroups {
         SearchGroups {
             man_for_man: None,
