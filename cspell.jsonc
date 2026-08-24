@@ -3,10 +3,6 @@
   "version": "0.2",
   "language": "en",
   "ignorePaths": [
-    "target/**",
-    "data/**",
-    "tmp_data/**",
-    "config/**",
     "crates/api_client/**",
     "crates/model/src/schema.rs",
     "**/*.lock"
