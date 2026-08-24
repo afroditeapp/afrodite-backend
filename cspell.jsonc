@@ -124,6 +124,7 @@
     "ncols",
     "nrows",
     "displayer",
+    "decryptor",
 
     // Finnish place names
     "Kilpisjärvi",

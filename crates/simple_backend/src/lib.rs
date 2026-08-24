@@ -106,7 +106,7 @@ pub trait BusinessLogic: Sized + Send + Sync + 'static {
         + Clone
         + 'static;
 
-    /// Access prerformance counter list
+    /// Access performance counter list
     fn all_counters(&self) -> AllCounters {
         &[]
     }

@@ -207,7 +207,7 @@ async fn check_ip_allowlist(
     accept_language: Option<TypedHeader<AcceptLanguage>>,
 ) -> Result<(), (StatusCode, TypedHeader<ContentType>, Body)> {
     if let Some(config) = state.config().simple_backend().file_package() {
-        if is_ip_address_accepted(state, address, &config.acccess).await {
+        if is_ip_address_accepted(state, address, &config.access).await {
             Ok(())
         } else {
             Err(create_access_denied_response(

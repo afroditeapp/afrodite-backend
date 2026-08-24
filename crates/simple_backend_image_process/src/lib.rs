@@ -75,7 +75,7 @@ pub enum ImageProcessError {
 /// * String length (u32, little-endian)
 /// * String bytes
 ///
-/// The image process processs the JSON and responds with
+/// The image process processes the JSON and responds with
 /// writing [ImageProcessingInfo] to standard output if the message is
 /// [ImageProcessMessage::ProcessImage].
 #[derive(Debug, Deserialize, Serialize)]

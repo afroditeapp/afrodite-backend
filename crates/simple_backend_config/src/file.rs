@@ -538,7 +538,7 @@ pub struct ManualTlsConfig {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct LetsEncryptConfig {
     pub domains: Vec<String>,
-    /// Email for receiving sertificate related notifications
+    /// Email for receiving certificate related notifications
     /// from Let's Encrypt.
     pub email: String,
     /// Use Let's Encrypt's production servers for certificate generation.
@@ -559,7 +559,7 @@ pub struct StaticFilePackageHostingConfig {
     /// is selected as the primary version.
     pub package_dir: Option<PathBuf>,
     #[serde(flatten)]
-    pub acccess: IpAddressAccessConfig,
+    pub access: IpAddressAccessConfig,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
@@ -638,7 +638,7 @@ pub struct ImageProcessingStaticConfig {
     pub(crate) jpeg_quality: u8,
     pub seetaface: Option<SeetaFaceConfig>,
     pub nsfw_detection: Option<NsfwDetectionConfig>,
-    /// Make sure to use higer value than the server process nice
+    /// Make sure to use higher value than the server process nice
     /// value as lower values require privileges.
     pub process_nice_value: Option<i8>,
 }

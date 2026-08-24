@@ -134,7 +134,7 @@ enum KeyStatus<'a> {
 struct ApplePublicKeys {
     keys: JwkSet,
     downloading_time: Instant,
-    /// There is no cahce info about keys, so this prevents
+    /// There is no cache info about keys, so this prevents
     /// attackers from triggering unlimited amount of public key downloads.
     unknown_key_refresh_done: bool,
 }

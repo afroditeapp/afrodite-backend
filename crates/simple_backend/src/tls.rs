@@ -38,7 +38,7 @@ impl TlsManager {
     ) -> (Self, TlsManagerQuitHandle) {
         if let Some(tls_config) = config.public_api_tls_config() {
             let manager = Self {
-                config: Some(SimpleBackendTlsConfig::ManualSertificates {
+                config: Some(SimpleBackendTlsConfig::ManualCertificates {
                     tls_config: tls_config.clone(),
                 }),
             };
@@ -115,7 +115,7 @@ impl TlsManager {
 }
 
 pub enum SimpleBackendTlsConfig {
-    ManualSertificates {
+    ManualCertificates {
         tls_config: Arc<ServerConfig>,
     },
     LetsEncrypt {
@@ -136,7 +136,7 @@ impl SimpleBackendTlsConfig {
 
     pub fn tls_config(&self) -> Arc<ServerConfig> {
         match self {
-            Self::ManualSertificates { tls_config } | Self::LetsEncrypt { tls_config, .. } => {
+            Self::ManualCertificates { tls_config } | Self::LetsEncrypt { tls_config, .. } => {
                 tls_config.clone()
             }
         }

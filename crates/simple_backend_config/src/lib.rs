@@ -156,7 +156,7 @@ impl SimpleBackendConfig {
     ///
     /// Debug mode changes:
     /// * Swagger UI is enabled on local bot API port.
-    /// * Disabling HTTPS is possbile.
+    /// * Disabling HTTPS is possible.
     /// * SQLite in RAM mode is allowed.
     /// * Atomic boolean `RUNNING_IN_DEBUG_MODE` is set to `true`.
     pub fn debug_mode(&self) -> bool {
@@ -449,7 +449,7 @@ pub fn get_config(
 const APPLE_PUBLIC_KEY_URL: &str = "https://appleid.apple.com/auth/keys";
 const GOOGLE_PUBLIC_KEY_URL: &str = "https://www.googleapis.com/oauth2/v3/certs";
 
-/// This exists to avoid URL parsing erros when backend is running.
+/// This exists to avoid URL parsing errors when backend is running.
 #[derive(Debug, Clone)]
 pub struct SignInWithUrls {
     /// Request to this should return JwkSet.

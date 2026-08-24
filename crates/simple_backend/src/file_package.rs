@@ -24,7 +24,7 @@ pub enum FilePackageError {
     #[error("File package contains invalid UTF-8")]
     InvalidUtf8,
     #[error("File package contains unknown file type")]
-    PackageContainsUnknonwFileType,
+    PackageContainsUnknownFileType,
     #[error("Invalid MIME type string in source code")]
     InvalidMimeType,
     #[error("Package contains multiple index.html files")]
@@ -245,7 +245,7 @@ impl FilePackageManager {
         } else if path.ends_with("/NOTICES") {
             mime::TEXT_PLAIN_UTF_8.into()
         } else {
-            return Err(FilePackageError::PackageContainsUnknonwFileType
+            return Err(FilePackageError::PackageContainsUnknownFileType
                 .report()
                 .attach(path.to_string()));
         };

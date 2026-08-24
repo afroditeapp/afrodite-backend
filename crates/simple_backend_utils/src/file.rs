@@ -21,7 +21,7 @@ pub enum OverwriteFileError {
     #[error("Getting file metadata failed")]
     IoFileMetadata,
 
-    #[error("File overwriteing failed")]
+    #[error("File overwriting failed")]
     FileOverwritingFailed,
 }
 

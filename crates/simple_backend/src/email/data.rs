@@ -16,7 +16,7 @@ pub struct Counter {
     pub previous_reset: UnixTime,
 }
 
-/// Save emal sender limit states before closing the server.
+/// Save email sender limit states before closing the server.
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
 pub struct EmailLimitStateStorage {
     pub emails_sent_per_minute: Counter,
