@@ -87,7 +87,7 @@ impl ConcurrentWriteCommandHandle {
         }
     }
 
-    pub async fn accquire(&self, account: AccountId) -> ConcurrentWriteSelectorHandle {
+    pub async fn acquire(&self, account: AccountId) -> ConcurrentWriteSelectorHandle {
         let lock = self.account_write_locks.lock_account(account).await;
 
         ConcurrentWriteSelectorHandle {
@@ -111,7 +111,7 @@ impl fmt::Debug for ConcurrentWriteSelectorHandle {
 }
 
 impl ConcurrentWriteSelectorHandle {
-    pub async fn accquire_image<
+    pub async fn acquire_image<
         R,
         A: FnOnce(ConcurrentWriteContentHandle) -> OutputFuture<R> + Send + 'static,
     >(

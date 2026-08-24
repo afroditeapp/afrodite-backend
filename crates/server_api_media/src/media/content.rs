@@ -414,7 +414,7 @@ pub async fn put_upload_content(
     let content_info = state
         .write_concurrent(account_id.as_id(), move |cmds| async move {
             let out: ConcurrentWriteAction<crate::result::Result<_, DataError>> = cmds
-                .accquire_image(move |cmds: ConcurrentWriteContentHandle| {
+                .acquire_image(move |cmds: ConcurrentWriteContentHandle| {
                     Box::new(
                         async move { cmds.save_to_tmp(account_id, stream, upload_permit).await },
                     )

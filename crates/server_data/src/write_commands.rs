@@ -116,7 +116,7 @@ impl WriteCommandRunnerHandle {
             .ok_or(DataError::ServerClosingInProgress.report())?;
         drop(quit_lock_storage);
 
-        let lock = self.concurrent_write.accquire(account).await;
+        let lock = self.concurrent_write.acquire(account).await;
         let action = write_cmd(lock).await;
 
         let handle = tokio::spawn(async move {
@@ -150,7 +150,7 @@ impl WriteCommandRunnerHandle {
 
         let lock = self
             .concurrent_write
-            .accquire(account)
+            .acquire(account)
             .await
             .profile_blocking()
             .await;
