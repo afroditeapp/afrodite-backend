@@ -79,6 +79,8 @@ test:
 unit-test:
 	mkdir -p database/sqlite/current
 	DATABASE_URL="sqlite:database/sqlite/current/current.db" cargo test
+spell-check:
+	cspell --config cspell.jsonc .
 
 update-api-bindings-step-update-binary:
 	cargo build --bin afrodite-backend
