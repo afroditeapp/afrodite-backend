@@ -262,7 +262,7 @@ impl WriteCommandsMedia<'_> {
                 .media_content()
                 .increment_media_content_sync_version(content_id.content_owner())?;
 
-            // Face verified is public info and ususally profile contains at
+            // Face verified is public info and usually profile contains at
             // least one face picture. Also security content verified is public
             // info.
             let modification = ProfileContentModificationMetadata::generate();

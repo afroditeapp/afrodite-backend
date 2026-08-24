@@ -541,7 +541,7 @@ impl WriteCommandsChat<'_> {
                 }
             };
 
-            let push_notification_allowd = if recipient_acknowledgements_missing <= 1 {
+            let push_notification_allowed = if recipient_acknowledgements_missing <= 1 {
                 // Update new message notification twice so that notification
                 // displays singular or plural text correctly.
                 Some(PushNotificationAllowed)
@@ -551,7 +551,7 @@ impl WriteCommandsChat<'_> {
 
             Ok((
                 SendMessageResult::successful(message_values, remaining_conversation_messages),
-                push_notification_allowd,
+                push_notification_allowed,
             ))
         })
     }

@@ -80,6 +80,7 @@
     "imageops",
     "Exif",
     "Seedable",
+    "signinwithapple",
 
     // Technical terms
     "starttls",

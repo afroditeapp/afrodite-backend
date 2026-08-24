@@ -51,7 +51,7 @@ impl<'a> WriteCommandsAccount<'a> {
         report::WriteCommandsAccountReport::new(self.0)
     }
 
-    pub fn client_featues(self) -> client_features::WriteCommandsAccountClientFeatures<'a> {
+    pub fn client_features(self) -> client_features::WriteCommandsAccountClientFeatures<'a> {
         client_features::WriteCommandsAccountClientFeatures::new(self.0)
     }
 

@@ -41,7 +41,7 @@ pub enum FileError {
     #[error("Serde serialization failed")]
     SerdeSerialize,
     #[error("Serde deserialization failed")]
-    SerdeDerialize,
+    SerdeDeserialize,
 
     #[error("AccountId parsing error")]
     AccountIdParsing,

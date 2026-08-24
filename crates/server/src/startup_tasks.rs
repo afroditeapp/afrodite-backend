@@ -93,7 +93,7 @@ impl StartupTasks {
 
         db_write_raw!(state, move |cmds| {
             cmds.account()
-                .client_featues()
+                .client_features()
                 .update_client_features_sha256_and_sync_versions(hash)
                 .await
         })

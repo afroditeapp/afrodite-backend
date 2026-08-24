@@ -25,7 +25,7 @@ pub enum TokenCheckResult {
 define_cmd_wrapper_write!(WriteCommandsAccountEmail);
 
 impl WriteCommandsAccountEmail<'_> {
-    pub async fn inital_setup_account_email_change(
+    pub async fn initial_setup_account_email_change(
         &self,
         id: AccountIdInternal,
         email: EmailAddress,

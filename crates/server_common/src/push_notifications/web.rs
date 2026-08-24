@@ -138,7 +138,7 @@ impl<T: PushNotificationStateProvider + Send + Sync + 'static> WebPushManager<T>
 
         for n in notifications {
             if n.title().is_none() {
-                // Hiding notfications is not supported on web
+                // Hiding notifications is not supported on web
                 continue;
             }
 

@@ -59,7 +59,7 @@ pub async fn complete_initial_setup(
 
     write_handle
         .write(move |cmds| async move {
-            // Second account state check as db_write quarantees synchronous
+            // Second account state check as db_write guarantees synchronous
             // access.
             let account_state = cmds.read().common().account(id).await?.state();
             if account_state != AccountState::InitialSetup {

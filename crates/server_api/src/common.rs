@@ -145,7 +145,7 @@ pub use utils::api::PATH_CONNECT;
 ///
 /// The new access token is valid until this WebSocket is closed or the
 /// server detects a timeout. To prevent the timeout the client must
-/// send a WebScoket ping message before 6 minutes elapses from connection
+/// send a WebSocket ping message before 6 minutes elapses from connection
 /// establishment or previous ping message.
 ///
 /// `Sec-WebSocket-Protocol` header must have the following values:
@@ -477,7 +477,7 @@ async fn handle_socket_result(
                     COMMON.websocket_refresh_token_not_found.incr();
                     // Returning error does the logout, so it is not needed here.
                     // For this case the logout is needed to prevent refresh
-                    // token quessing.
+                    // token guessing.
                     return Err(WebSocketError::ReceiveWrongRefreshToken.report());
                 }
             }

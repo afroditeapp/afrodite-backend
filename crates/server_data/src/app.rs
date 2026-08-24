@@ -65,7 +65,7 @@ pub trait ProfileStatisticsCacheProvider {
 
 pub trait EventManagerProvider {
     /// Prefer calling this method only in write data closures
-    /// as API handers might not run completely if connection to client
+    /// as API handlers might not run completely if connection to client
     /// breaks.
     fn event_manager(&self) -> EventManagerWithCacheReference<'_>;
 }

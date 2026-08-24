@@ -672,7 +672,7 @@ pub async fn post_initial_email(
     db_write!(state, move |cmds| {
         cmds.account()
             .email()
-            .inital_setup_account_email_change(api_caller_account_id, email.email)
+            .initial_setup_account_email_change(api_caller_account_id, email.email)
             .await
     })?;
 

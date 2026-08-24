@@ -249,7 +249,7 @@ async fn create_bot_account(
             .await?;
         cmds.account()
             .email()
-            .inital_setup_account_email_change(new_account_id, email)
+            .initial_setup_account_email_change(new_account_id, email)
             .await
     })?;
 

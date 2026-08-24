@@ -36,7 +36,7 @@ impl ReadCommandsChatLimits<'_> {
             .db_read(move |mut cmds| cmds.chat().limits().daily_likes_left(id))
             .await?;
         let reset = if let Some(latest_reset) = limit.latest_limit_reset_unix_time {
-            // Avoid reseting the time again after reset done by
+            // Avoid resetting the time again after reset done by
             // DailyLikesManager because most likely after that
             // the latest_reset matches config.reset_time and
             // next_possible_utc_date_time_value will return the latest_reset

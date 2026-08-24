@@ -321,7 +321,7 @@ impl FcmSendingLogic {
                         RecomendedAction::CheckIosAndWebCredentials
                         | RecomendedAction::CheckSenderIdEquality,
                     ) => {
-                        error!("Disabling FCM support because of recomended action: {action:?}");
+                        error!("Disabling FCM support because of recommended action: {action:?}");
                         NextAction::UnusualAction(UnusualAction::DisablePushNotificationSupport)
                     }
                     Some(RecomendedAction::FixMessageContent) => {
@@ -349,7 +349,7 @@ impl FcmSendingLogic {
                             NextAction::NextMessage
                         } else {
                             error!(
-                                "Disabling FCM support because of recomended action: {:?}",
+                                "Disabling FCM support because of recommended action: {:?}",
                                 action
                             );
                             NextAction::UnusualAction(UnusualAction::DisablePushNotificationSupport)

@@ -72,7 +72,7 @@ impl LocationIndexManager {
     pub fn new(config: Arc<Config>) -> Self {
         let coordinates = CoordinateManager::new(config.location().clone());
         // Create index also if profile features are disabled.
-        // This way accidential index access will not crash the server.
+        // This way accidental index access will not crash the server.
         // The default index should not consume memory that much.
         let (width, height) = (
             coordinates.width().try_into().unwrap(),

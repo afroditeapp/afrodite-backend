@@ -18,7 +18,7 @@ fn calculate_longitude_one_km_in_degrees() -> f64 {
 const LATITUDE_FOR_LONGITUDE_CORRECTION: f64 = 59.8 + (70.1 - 59.8) / 2.0;
 
 /// OpenStreetMap zoom levels and map tile side length in kilometers.
-/// Data is from GitHub Codepilot.
+/// Data is from GitHub Copilot.
 pub const ZOOM_LEVEL_AND_TILE_LENGTH: &[(u8, f64)] = &[
     (9, 305.0),
     (10, 153.0),

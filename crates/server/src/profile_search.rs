@@ -48,7 +48,7 @@ impl ProfileSearchManagerQuitHandle {
         match self.task.await {
             Ok(()) => (),
             Err(e) => {
-                warn!("ProfileSearchkManager quit failed. Error: {:?}", e);
+                warn!("ProfileSearchManager quit failed. Error: {:?}", e);
             }
         }
     }

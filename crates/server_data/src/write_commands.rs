@@ -175,7 +175,7 @@ impl WriteCmdWatcher {
         Self { receiver }
     }
 
-    pub async fn wait_untill_all_writing_ends(mut self) {
+    pub async fn wait_until_all_writing_ends(mut self) {
         let mut quit_lock_storage = get_quit_lock().lock().await;
         let quit_lock = quit_lock_storage.take();
         drop(quit_lock);

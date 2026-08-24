@@ -268,8 +268,8 @@ async fn handle_chat_state_version_check<T: SyncVersionUtils>(
             .write(move |cmds| async move {
                 cmds.chat()
                     .modify_chat_state(id, move |s| {
-                        let version_to_be_reseted = getter(s);
-                        *version_to_be_reseted = Default::default();
+                        let version_to_reset = getter(s);
+                        *version_to_reset = Default::default();
                     })
                     .await
             })

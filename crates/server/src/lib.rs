@@ -558,7 +558,7 @@ impl BusinessLogic for DatingAppBusinessLogic {
 
         self.write_cmd_waiter
             .expect("Not initialized")
-            .wait_untill_all_writing_ends()
+            .wait_until_all_writing_ends()
             .await;
         self.database_manager
             .expect("Not initialized")
