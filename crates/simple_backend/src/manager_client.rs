@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use manager_api::{
     ClientConfig, ClientError, ManagerClient, ManagerClientWithRequestRecipient,
-    ServerEventListerner, TlsConfig, backup::BackupSourceClient,
+    ServerEventListener, TlsConfig, backup::BackupSourceClient,
 };
 use manager_model::{ManagerInstanceName, ServerEventType};
 use simple_backend_config::{
@@ -105,7 +105,7 @@ impl ManagerApiClient {
         }
     }
 
-    pub async fn listen_events(&self) -> Result<ServerEventListerner, ClientError> {
+    pub async fn listen_events(&self) -> Result<ServerEventListener, ClientError> {
         if let Some((c, _, _)) = self.manager.clone() {
             let c = ManagerClient::connect(c).await?.listen_events().await?;
             Ok(c)

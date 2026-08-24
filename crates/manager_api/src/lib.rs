@@ -245,12 +245,12 @@ impl ManagerClient {
             .change_context(ClientError::Write)
     }
 
-    pub async fn listen_events(mut self) -> Result<ServerEventListerner, ClientError> {
+    pub async fn listen_events(mut self) -> Result<ServerEventListener, ClientError> {
         self.writer
             .send_u8(ManagerProtocolMode::ListenServerEvents as u8)
             .await
             .change_context(ClientError::Write)?;
-        Ok(ServerEventListerner {
+        Ok(ServerEventListener {
             reader: self.reader,
         })
     }
@@ -331,11 +331,11 @@ impl ManagerClient {
     }
 }
 
-pub struct ServerEventListerner {
+pub struct ServerEventListener {
     reader: Box<dyn ClientConnectionReadSend>,
 }
 
-impl ServerEventListerner {
+impl ServerEventListener {
     pub async fn next_event(&mut self) -> Result<ServerEvent, ClientError> {
         self.reader
             .receive_server_event()
