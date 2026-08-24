@@ -13,7 +13,7 @@ use simple_backend::{
     app::{FilePackageProvider, MaxMindDbDataProvider},
     create_counters,
 };
-use simple_backend_config::file::IpAddressAccessConfig;
+use simple_backend_config::file::{FilePackageHeadersConfig, IpAddressAccessConfig};
 
 use crate::{S, utils::IfNoneMatchExtensions};
 
@@ -89,6 +89,90 @@ impl ServiceWorkerAllowed {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct XRobotsTag(HeaderValue);
+
+impl Header for XRobotsTag {
+    fn name() -> &'static HeaderName {
+        static NAME: HeaderName = HeaderName::from_static("x-robots-tag");
+        &NAME
+    }
+
+    fn decode<'i, I>(_values: &mut I) -> Result<Self, headers::Error>
+    where
+        I: Iterator<Item = &'i HeaderValue>,
+    {
+        // Not needed for response-only header
+        Err(headers::Error::invalid())
+    }
+
+    fn encode<E: Extend<HeaderValue>>(&self, values: &mut E) {
+        values.extend(std::iter::once(self.0.clone()));
+    }
+}
+
+impl XRobotsTag {
+    pub fn noindex_nofollow() -> Self {
+        Self(HeaderValue::from_static("noindex, nofollow"))
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct XContentTypeOptions(HeaderValue);
+
+impl Header for XContentTypeOptions {
+    fn name() -> &'static HeaderName {
+        static NAME: HeaderName = HeaderName::from_static("x-content-type-options");
+        &NAME
+    }
+
+    fn decode<'i, I>(_values: &mut I) -> Result<Self, headers::Error>
+    where
+        I: Iterator<Item = &'i HeaderValue>,
+    {
+        // Not needed for response-only header
+        Err(headers::Error::invalid())
+    }
+
+    fn encode<E: Extend<HeaderValue>>(&self, values: &mut E) {
+        values.extend(std::iter::once(self.0.clone()));
+    }
+}
+
+impl XContentTypeOptions {
+    pub fn nosniff() -> Self {
+        Self(HeaderValue::from_static("nosniff"))
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ReferrerPolicy(HeaderValue);
+
+impl Header for ReferrerPolicy {
+    fn name() -> &'static HeaderName {
+        static NAME: HeaderName = HeaderName::from_static("referrer-policy");
+        &NAME
+    }
+
+    fn decode<'i, I>(_values: &mut I) -> Result<Self, headers::Error>
+    where
+        I: Iterator<Item = &'i HeaderValue>,
+    {
+        // Not needed for response-only header
+        Err(headers::Error::invalid())
+    }
+
+    fn encode<E: Extend<HeaderValue>>(&self, values: &mut E) {
+        values.extend(std::iter::once(self.0.clone()));
+    }
+}
+
+impl ReferrerPolicy {
+    pub fn no_referrer() -> Self {
+        Self(HeaderValue::from_static("no-referrer"))
+    }
+}
+
 pub const PATH_FILE_PACKAGE_ACCESS: &str = "/app/{*path}";
 
 pub async fn get_file_package_access(
@@ -137,6 +221,7 @@ pub async fn get_file_package_access(
         TypedHeader(file.content_type),
         file.content_encoding.map(TypedHeader),
         service_worker_header,
+        security_headers(&state),
         file.data,
     )
         .into_response())
@@ -196,6 +281,7 @@ async fn return_index_html(
         TypedHeader(cache_control),
         TypedHeader(file.content_type),
         file.content_encoding.map(TypedHeader),
+        security_headers(&state),
         file.data,
     )
         .into_response())
@@ -223,6 +309,32 @@ async fn check_ip_allowlist(
             Body::empty(),
         ))
     }
+}
+
+type SecurityHeaders = (
+    Option<TypedHeader<XRobotsTag>>,
+    Option<TypedHeader<XContentTypeOptions>>,
+    Option<TypedHeader<ReferrerPolicy>>,
+);
+
+fn security_headers(state: &S) -> SecurityHeaders {
+    let config = state
+        .config()
+        .simple_backend()
+        .file_package_headers()
+        .cloned()
+        .unwrap_or_else(FilePackageHeadersConfig::default);
+    (
+        config
+            .x_robots_tag_noindex_nofollow
+            .then(|| TypedHeader(XRobotsTag::noindex_nofollow())),
+        config
+            .x_content_type_options_nosniff
+            .then(|| TypedHeader(XContentTypeOptions::nosniff())),
+        config
+            .referrer_policy_no_referrer
+            .then(|| TypedHeader(ReferrerPolicy::no_referrer())),
+    )
 }
 
 pub async fn is_ip_address_accepted(

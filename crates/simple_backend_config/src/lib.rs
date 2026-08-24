@@ -242,6 +242,13 @@ impl SimpleBackendConfig {
         self.file.static_file_package_hosting.as_ref()
     }
 
+    pub fn file_package_headers(&self) -> Option<&file::FilePackageHeadersConfig> {
+        self.file
+            .static_file_package_hosting
+            .as_ref()
+            .map(|c| &c.http_headers)
+    }
+
     pub fn image_process_static_config(&self) -> ImageProcessingStaticConfig {
         self.file.image_processing.clone().unwrap_or_default()
     }

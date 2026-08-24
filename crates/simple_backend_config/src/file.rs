@@ -108,6 +108,11 @@ local_bot_api_port = 3001
 # disable_ip_allowlist = false # optional
 # ip_allowlist = [] # optional
 
+# [static_file_package_hosting.http_headers]
+# x_robots_tag_noindex_nofollow = true # optional, enabled by default
+# x_content_type_options_nosniff = true # optional, enabled by default
+# referrer_policy_no_referrer = true # optional, enabled by default
+
 # [image_processing]
 # jpeg_quality = 60 # optional
 
@@ -560,6 +565,32 @@ pub struct StaticFilePackageHostingConfig {
     pub package_dir: Option<PathBuf>,
     #[serde(flatten)]
     pub access: IpAddressAccessConfig,
+    #[serde(default)]
+    pub http_headers: FilePackageHeadersConfig,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(default)]
+pub struct FilePackageHeadersConfig {
+    /// Add `X-Robots-Tag: noindex, nofollow` header to responses.
+    /// Enabled by default.
+    pub x_robots_tag_noindex_nofollow: bool,
+    /// Add `X-Content-Type-Options: nosniff` header to responses.
+    /// Enabled by default.
+    pub x_content_type_options_nosniff: bool,
+    /// Add `Referrer-Policy: no-referrer` header to responses.
+    /// Enabled by default.
+    pub referrer_policy_no_referrer: bool,
+}
+
+impl Default for FilePackageHeadersConfig {
+    fn default() -> Self {
+        Self {
+            x_robots_tag_noindex_nofollow: true,
+            x_content_type_options_nosniff: true,
+            referrer_policy_no_referrer: true,
+        }
+    }
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
