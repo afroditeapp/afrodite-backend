@@ -10,7 +10,7 @@ use test_mode_bot::actions::account::SetProfileVisibility;
 use test_mode_test_utils::prelude::*;
 
 #[server_test]
-async fn visiblity_updates_in_initial_setup_state(mut context: TestContext) -> TestResult {
+async fn visibility_updates_in_initial_setup_state(mut context: TestContext) -> TestResult {
     let mut account = context.new_account_in_initial_setup_state().await?;
     assert_eq(
         ProfileVisibility::Private,
@@ -29,7 +29,7 @@ async fn visiblity_updates_in_initial_setup_state(mut context: TestContext) -> T
 }
 
 #[server_test]
-async fn visiblity_updates_in_normal_state(mut context: TestContext) -> TestResult {
+async fn visibility_updates_in_normal_state(mut context: TestContext) -> TestResult {
     let mut account = context.new_account().await?;
     assert_eq(
         ProfileVisibility::Private,

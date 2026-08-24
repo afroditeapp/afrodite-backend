@@ -38,13 +38,13 @@ that the first moderation request is moderated, the client will start setup the
 profile on the profile server. First the client will update current profile text
 and image content IDs using HTTP POST to `/profile_api/profile`. The server will
 validate the content IDs using internal API call. After successful HTTP response
-the client can update the profile visiblity value using HTTP PUT to
+the client can update the profile visibility value using HTTP PUT to
 `/account_api/settings/profile_visibility`. The server will do internal API
-request to both media and profile servers to update current visiblity status of
+request to both media and profile servers to update current visibility status of
 account's profile content.
 
-Setting profile visiblity also updates the location index, so that profile is
-removed or added depending on the visiblity. By default the profile location is
+Setting profile visibility also updates the location index, so that profile is
+removed or added depending on the visibility. By default the profile location is
 at (0,0) of the location index. When client changes the location using HTTP PUT
 to `/profile_api/location` coordinates are converted to location index key. The
 client updates the location before changing the profile visibility.
@@ -199,7 +199,7 @@ from the latest likes.
 
 #### Block account
 
-To block visiblity and interactions to specific account use HTTP POST to
+To block visibility and interactions to specific account use HTTP POST to
 `/account_api/block/{account_id}`. Block can be reverted using HTTP DELETE to
 that same address.
 

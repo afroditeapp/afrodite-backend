@@ -13,12 +13,12 @@ use crate::{
 
 const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile_visibility";
 
-/// Update current profile visiblity value.
+/// Update current profile visibility value.
 ///
 /// NOTE: Client uses this in initial setup.
 ///
 /// # Limits
-/// - When [AccountState::Banned], the visiblity can only be set to private.
+/// - When [AccountState::Banned], the visibility can only be set to private.
 #[utoipa::path(
     put,
     path = PATH_SETTING_PROFILE_VISIBILITY,
@@ -31,13 +31,13 @@ const PATH_SETTING_PROFILE_VISIBILITY: &str = "/account_api/settings/profile_vis
     ),
     security(("access_token" = [])),
 )]
-pub async fn put_setting_profile_visiblity(
+pub async fn put_setting_profile_visibility(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
     Extension(account_state): Extension<AccountState>,
     Json(new_value): Json<BooleanSetting>,
 ) -> Result<(), StatusCode> {
-    ACCOUNT.put_setting_profile_visiblity.incr();
+    ACCOUNT.put_setting_profile_visibility.incr();
 
     if new_value.value && account_state == AccountState::Banned {
         return Err(StatusCode::FORBIDDEN);
@@ -93,7 +93,7 @@ pub async fn put_setting_unlimited_likes(
 
 create_open_api_router!(
         fn router_settings,
-        put_setting_profile_visiblity,
+        put_setting_profile_visibility,
         put_setting_unlimited_likes,
 );
 
@@ -101,6 +101,6 @@ create_counters!(
     AccountCounters,
     ACCOUNT,
     ACCOUNT_SETTINGS_COUNTERS_LIST,
-    put_setting_profile_visiblity,
+    put_setting_profile_visibility,
     put_setting_unlimited_likes,
 );
