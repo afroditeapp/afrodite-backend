@@ -193,7 +193,7 @@ fn img_for_bot(
 
 #[async_trait]
 impl BotAction for SendImageToSlot {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let events_enabled = state.are_events_enabled();
         if !events_enabled {
             state.enable_events();
@@ -214,7 +214,7 @@ pub struct SetContent {
 
 #[async_trait]
 impl BotAction for SetContent {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         if let Some(i) = self.security_content_slot_i {
             let content_id = state.media.slots[i].clone().unwrap();
             put_security_content_info(&state.api(), content_id)

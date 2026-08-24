@@ -143,7 +143,7 @@ impl ModerateContentModerationRequest {
 
 #[async_trait]
 impl BotAction for ModerateContentModerationRequest {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         loop {
             let list = media_admin_api::get_media_content_moderation_queue_page(
                 &state.api(),

@@ -231,8 +231,8 @@ impl Account {
             test_context.reqwest_client.clone(),
         );
 
-        Register.excecute_impl(&mut state).await?;
-        Login.excecute_impl(&mut state).await?;
+        Register.execute_impl(&mut state).await?;
+        Login.execute_impl(&mut state).await?;
 
         let connections = state.connections.unwrap_account_connections();
         test_context.add_account_connections(connections).await;
@@ -253,12 +253,12 @@ impl Account {
     }
 
     pub async fn run<T: BotAction>(&mut self, action: T) -> Result<(), TestError> {
-        action.excecute(&mut self.bot_state).await
+        action.execute(&mut self.bot_state).await
     }
 
     pub async fn run_actions(&mut self, actions: &[&dyn BotAction]) -> Result<(), TestError> {
         for action in actions.iter() {
-            action.excecute(&mut self.bot_state).await?;
+            action.execute(&mut self.bot_state).await?;
         }
         Ok(())
     }

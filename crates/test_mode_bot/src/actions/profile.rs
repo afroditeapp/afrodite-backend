@@ -54,7 +54,7 @@ pub struct ChangeProfileText {
 
 #[async_trait]
 impl BotAction for ChangeProfileText {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let id = state.account_id_string()?;
         let current_profile = get_profile(&state.api(), &id, None, None)
             .await
@@ -96,7 +96,7 @@ pub struct ChangeProfileTextDaily;
 
 #[async_trait]
 impl BotAction for ChangeProfileTextDaily {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let Some(config) = state.get_bot_config().change_profile_text_time() else {
             return Ok(());
         };
@@ -131,7 +131,7 @@ impl BotAction for ChangeProfileTextDaily {
             ChangeProfileText {
                 mode: ProfileText::String(new_text),
             }
-            .excecute_impl(state)
+            .execute_impl(state)
             .await?;
         }
 
@@ -144,7 +144,7 @@ pub struct GetProfile;
 
 #[async_trait]
 impl BotAction for GetProfile {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let profile = get_profile(&state.api(), &state.account_id_string()?, None, None)
             .await
             .change_context(TestError::ApiRequest)?
@@ -164,7 +164,7 @@ pub struct UpdateLocation(pub Location);
 
 #[async_trait]
 impl BotAction for UpdateLocation {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         profile_api::put_location(&state.api(), self.0)
             .await
             .change_context(TestError::ApiRequest)?;
@@ -177,7 +177,7 @@ pub struct GetLocation;
 
 #[async_trait]
 impl BotAction for GetLocation {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let location = get_location(&state.api())
             .await
             .change_context(TestError::ApiRequest)?;
@@ -222,7 +222,7 @@ impl UpdateLocationRandomOrConfigured {
 
 #[async_trait]
 impl BotAction for UpdateLocationRandomOrConfigured {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let config = self
             .config
             .clone()
@@ -255,7 +255,7 @@ pub struct ResetProfileIterator;
 
 #[async_trait]
 impl BotAction for ResetProfileIterator {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let request_id = state.next_ws_request_id();
         let response = wait_response_reset_profile_paging(
             state,
@@ -281,7 +281,7 @@ pub struct GetProfileList;
 
 #[async_trait]
 impl BotAction for GetProfileList {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let iterator_session_id = state
             .profile
             .profile_iterator_session_id
@@ -381,7 +381,7 @@ pub struct ChangeBotAgeAndOtherSettings {
 
 #[async_trait]
 impl BotAction for ChangeBotAgeAndOtherSettings {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let bot_config = state.get_bot_config();
         let age = bot_config.age.unwrap_or(DEFAULT_AGE);
 

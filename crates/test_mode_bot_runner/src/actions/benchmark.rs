@@ -29,7 +29,7 @@ pub struct GetProfile;
 
 #[async_trait]
 impl BotAction for GetProfile {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         get_profile(&state.api(), &state.account_id_string()?, None, None)
             .await
             .change_context(TestError::ApiRequest)?;
@@ -42,8 +42,8 @@ pub struct GetProfileListBenchmark;
 
 #[async_trait]
 impl BotAction for GetProfileListBenchmark {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let result = GetProfileList.excecute_impl(state).await;
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+        let result = GetProfileList.execute_impl(state).await;
         COUNTERS.inc_sub();
         result
     }
@@ -58,7 +58,7 @@ pub struct GetProfileFromDatabase;
 
 #[async_trait]
 impl BotAction for GetProfileFromDatabase {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         get_profile_from_database_debug_mode_benchmark(&state.api(), &state.account_id_string()?)
             .await
             .change_context(TestError::ApiRequest)?;
@@ -71,11 +71,11 @@ pub struct PostProfile;
 
 #[async_trait]
 impl BotAction for PostProfile {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         ChangeProfileText {
             mode: ProfileText::Random,
         }
-        .excecute(state)
+        .execute(state)
         .await?;
         Ok(())
     }
@@ -86,7 +86,7 @@ pub struct PostProfileToDatabase;
 
 #[async_trait]
 impl BotAction for PostProfileToDatabase {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         // Uuid has same string size every time.
         let profile = simple_backend_utils::UuidBase64Url::new_random_id();
         let profile = ProfileUpdate {
@@ -107,7 +107,7 @@ pub struct ActionsBeforeIteration;
 
 #[async_trait]
 impl BotAction for ActionsBeforeIteration {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         state.benchmark.action_duration = Instant::now();
         Ok(())
     }
@@ -118,7 +118,7 @@ pub struct ActionsAfterIteration;
 
 #[async_trait]
 impl BotAction for ActionsAfterIteration {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         COUNTERS.inc_main();
 
         if state.benchmark.print_benchmark_info && state.benchmark.print_info_timer.passed() {

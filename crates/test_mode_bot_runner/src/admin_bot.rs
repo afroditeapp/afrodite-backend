@@ -127,7 +127,7 @@ impl AdminBot {
     async fn run_admin_initial_logic(state: &mut BotState) -> Result<(), TestError> {
         for action in action_array![Register, Login, DoInitialSetupIfNeeded { admin: true }].iter()
         {
-            action.excecute(state).await?;
+            action.execute(state).await?;
         }
 
         Ok(())

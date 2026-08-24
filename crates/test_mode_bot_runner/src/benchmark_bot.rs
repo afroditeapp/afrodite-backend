@@ -131,14 +131,14 @@ impl BenchmarkBot {
         };
 
         // Setup
-        Register.excecute(state).await?;
-        Login.excecute(state).await?;
+        Register.execute(state).await?;
+        Login.execute(state).await?;
 
         // Benchmark loop
         loop {
-            ActionsBeforeIteration.excecute(state).await?;
-            GetProfile.excecute(state).await?;
-            ActionsAfterIteration.excecute(state).await?;
+            ActionsBeforeIteration.execute(state).await?;
+            GetProfile.execute(state).await?;
+            ActionsAfterIteration.execute(state).await?;
         }
     }
 
@@ -150,14 +150,14 @@ impl BenchmarkBot {
         };
 
         // Setup
-        Register.excecute(state).await?;
-        Login.excecute(state).await?;
+        Register.execute(state).await?;
+        Login.execute(state).await?;
 
         // Benchmark loop
         loop {
-            ActionsBeforeIteration.excecute(state).await?;
-            GetProfileFromDatabase.excecute(state).await?;
-            ActionsAfterIteration.excecute(state).await?;
+            ActionsBeforeIteration.execute(state).await?;
+            GetProfileFromDatabase.execute(state).await?;
+            ActionsAfterIteration.execute(state).await?;
         }
     }
 
@@ -199,17 +199,17 @@ impl BenchmarkBot {
         ];
 
         for action in SETUP.iter() {
-            action.excecute(state).await?;
+            action.execute(state).await?;
         }
 
         // Benchmark loop
         loop {
-            ActionsBeforeIteration.excecute(state).await?;
-            ResetProfileIterator.excecute(state).await?;
+            ActionsBeforeIteration.execute(state).await?;
+            ResetProfileIterator.execute(state).await?;
             RepeatUntilFn(|v, _| v.profile_count(), 0, &GetProfileListBenchmark)
-                .excecute(state)
+                .execute(state)
                 .await?;
-            ActionsAfterIteration.excecute(state).await?;
+            ActionsAfterIteration.execute(state).await?;
         }
     }
 
@@ -218,15 +218,15 @@ impl BenchmarkBot {
             RunActions, TO_ADMIN_NORMAL_STATE, admin::content::ModerateContentModerationRequest,
         };
 
-        RunActions(TO_ADMIN_NORMAL_STATE).excecute(state).await?;
+        RunActions(TO_ADMIN_NORMAL_STATE).execute(state).await?;
         UpdateLocationRandomOrConfigured::new_deterministic(Some(
             DEFAULT_LOCATION_CONFIG_BENCHMARK,
         ))
-        .excecute(state)
+        .execute(state)
         .await?;
-        SetProfileVisibility(true).excecute(state).await?;
+        SetProfileVisibility(true).execute(state).await?;
         ModerateContentModerationRequest::moderate_all_initial_content()
-            .excecute(state)
+            .execute(state)
             .await?;
 
         BENCHMARK_GET_PROFILE_LIST_INDEX_READY.store(true, Ordering::Relaxed);
@@ -240,13 +240,13 @@ impl BenchmarkBot {
         };
 
         // Setup
-        RunActions(TO_NORMAL_STATE).excecute(state).await?;
+        RunActions(TO_NORMAL_STATE).execute(state).await?;
 
         // Benchmark loop
         loop {
-            ActionsBeforeIteration.excecute(state).await?;
-            PostProfile.excecute(state).await?;
-            ActionsAfterIteration.excecute(state).await?;
+            ActionsBeforeIteration.execute(state).await?;
+            PostProfile.execute(state).await?;
+            ActionsAfterIteration.execute(state).await?;
         }
     }
 
@@ -258,14 +258,14 @@ impl BenchmarkBot {
         };
 
         // Setup
-        Register.excecute(state).await?;
-        Login.excecute(state).await?;
+        Register.execute(state).await?;
+        Login.execute(state).await?;
 
         // Benchmark loop
         loop {
-            ActionsBeforeIteration.excecute(state).await?;
-            PostProfileToDatabase.excecute(state).await?;
-            ActionsAfterIteration.excecute(state).await?;
+            ActionsBeforeIteration.execute(state).await?;
+            PostProfileToDatabase.execute(state).await?;
+            ActionsAfterIteration.execute(state).await?;
         }
     }
 }

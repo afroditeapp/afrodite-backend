@@ -116,7 +116,7 @@ impl UserBot {
         ];
 
         for action in SETUP.iter() {
-            action.excecute(state).await?;
+            action.execute(state).await?;
         }
 
         Ok(())
@@ -148,7 +148,7 @@ impl UserBot {
         loop {
             interval.tick().await;
             for action in ACTION_LOOP.iter() {
-                action.excecute(state).await?;
+                action.execute(state).await?;
             }
         }
     }

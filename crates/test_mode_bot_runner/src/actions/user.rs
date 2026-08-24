@@ -44,7 +44,7 @@ pub struct DoInitialSetupIfNeeded {
 
 #[async_trait]
 impl BotAction for DoInitialSetupIfNeeded {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let account_state = get_account_state(&state.api())
             .await
             .change_context(TestError::ApiRequest)?;
@@ -55,7 +55,7 @@ impl BotAction for DoInitialSetupIfNeeded {
             } else {
                 SetInitialEmailAction::new()
             }
-            .excecute_impl(state)
+            .execute_impl(state)
             .await?;
 
             const ACTIONS1: ActionArray = action_array!(
@@ -69,16 +69,16 @@ impl BotAction for DoInitialSetupIfNeeded {
                     content_0_slot_i: Some(0),
                 },
             );
-            RunActions(ACTIONS1).excecute_impl(state).await?;
+            RunActions(ACTIONS1).execute_impl(state).await?;
             ChangeBotAgeAndOtherSettings { admin: self.admin }
-                .excecute_impl(state)
+                .execute_impl(state)
                 .await?;
             const ACTIONS2: ActionArray = action_array!(
                 SetBotPublicKey,
                 CompleteAccountSetup,
                 AssertAccountState::account(AccountState::Normal),
             );
-            RunActions(ACTIONS2).excecute_impl(state).await?;
+            RunActions(ACTIONS2).execute_impl(state).await?;
         }
 
         Ok(())
@@ -136,7 +136,7 @@ impl SetBotPublicKey {
 
 #[async_trait]
 impl BotAction for SetBotPublicKey {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         Self::setup_bot_keys_if_needed(state).await?;
         Ok(())
     }
@@ -147,7 +147,7 @@ pub struct AcceptReceivedLikesAndSendMessage;
 
 #[async_trait]
 impl BotAction for AcceptReceivedLikesAndSendMessage {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let r = post_reset_received_likes_paging(&state.api())
             .await
             .change_context(TestError::ApiRequest)?;
@@ -188,7 +188,7 @@ pub struct AnswerReceivedMessages;
 
 #[async_trait]
 impl BotAction for AnswerReceivedMessages {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let messages = get_pending_messages(&state.api())
             .await
             .change_context(TestError::ApiRequest)?
@@ -399,7 +399,7 @@ pub struct SendLikeIfNeeded;
 
 #[async_trait]
 impl BotAction for SendLikeIfNeeded {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         if let Some(account_id) = state.get_bot_config().send_like_to_account_id {
             let account_id = AccountId::new(account_id.to_string());
             let r = post_send_like(

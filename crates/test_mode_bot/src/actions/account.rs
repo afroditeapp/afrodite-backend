@@ -47,7 +47,7 @@ pub struct Register;
 
 #[async_trait]
 impl BotAction for Register {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         if state.id.is_some() {
             return Ok(());
         }
@@ -65,7 +65,7 @@ pub struct Login;
 
 #[async_trait]
 impl BotAction for Login {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         if state.api.is_access_token_available() {
             return Ok(());
         }
@@ -385,7 +385,7 @@ impl AssertAccountState {
 
 #[async_trait]
 impl BotAction for AssertAccountState {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let state = get_account_state(&state.api())
             .await
             .change_context(TestError::ApiRequest)?;
@@ -421,7 +421,7 @@ impl Default for SetInitialEmailAction {
 
 #[async_trait]
 impl BotAction for SetInitialEmailAction {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let email = if self.admin {
             ADMIN_BOT_EMAIL.to_string()
         } else {
@@ -444,7 +444,7 @@ pub struct CompleteAccountSetup;
 
 #[async_trait]
 impl BotAction for CompleteAccountSetup {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         post_complete_setup(&state.api())
             .await
             .change_context(TestError::ApiRequest)?;
@@ -458,7 +458,7 @@ pub struct SetProfileVisibility(pub bool);
 
 #[async_trait]
 impl BotAction for SetProfileVisibility {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         account_api::put_setting_profile_visiblity(&state.api(), BooleanSetting::new(self.0))
             .await
             .change_context(TestError::ApiRequest)?;
@@ -472,7 +472,7 @@ pub struct GetAccount;
 
 #[async_trait]
 impl BotAction for GetAccount {
-    async fn excecute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
+    async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let account = get_account_state(&state.api())
             .await
             .change_context(TestError::ApiRequest)?;
