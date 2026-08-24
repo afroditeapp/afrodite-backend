@@ -27,7 +27,7 @@ use simple_backend_utils::{
 // latitude_top_left = 70.1
 // longitude_top_left = 19.5
 
-// Suomen eteläisin kärki (Hanko) ja Suomen itäisin piste
+// Southernmost tip of Finland (Hanko) and easternmost point of Finland
 // latitude_bottom_right = 59.8
 // longitude_bottom_right = 31.58
 
