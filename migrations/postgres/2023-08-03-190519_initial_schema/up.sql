@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS account_id(
     id    BIGINT PRIMARY KEY                NOT NULL,
     -- Main UUID for account.
     -- This is used internally in the server, client and API level.
-    -- Also this should be not used as somekind of secret as it
+    -- Also this should be not used as some kind of secret as it
     -- can be seen from filesystem.
     uuid  BYTEA                             NOT NULL  UNIQUE,
     FOREIGN KEY (id)
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS account_id(
 CREATE TABLE IF NOT EXISTS login_session(
     account_id              BIGINT PRIMARY KEY  NOT NULL,
     -- Rust HashMap guarantees access token uniqueness, so
-    -- UNIQUE constrait is not needed here.
+    -- UNIQUE constraint is not needed here.
     access_token            BYTEA               NOT NULL,
     access_token_unix_time  BIGINT              NOT NULL,
     access_token_previous   BYTEA,
@@ -1055,7 +1055,7 @@ CREATE TABLE IF NOT EXISTS current_account_media(
     profile_content_id_3         BIGINT,
     profile_content_id_4         BIGINT,
     profile_content_id_5         BIGINT,
-    -- Image's max square size multipler.
+    -- Image's max square size multiplier.
     -- Value 1.0 is the max size and the size of the original image.
     grid_crop_size       REAL                NOT NULL DEFAULT 1.0,
     -- X coordinate for square top left corner.

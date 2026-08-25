@@ -125,6 +125,7 @@
     "decryptor",
     "subsec",
     "strftime",
+    "regclass",
 
     // Finnish place names
     "Kilpisjärvi",
