@@ -111,9 +111,11 @@ pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
                 DataViewSubMode::ImageProcessingConfig => {
                     handle_view_image_processing_config(&reader).await
                 }
-                DataViewSubMode::ProfileAttributes { attributes, print } => {
-                    handle_view_profile_attributes(&reader, attributes, print).await
-                }
+                DataViewSubMode::ProfileAttributes {
+                    attributes,
+                    print,
+                    optimize,
+                } => handle_view_profile_attributes(&reader, attributes, print, optimize).await,
                 DataViewSubMode::DynamicClientFeatures => {
                     handle_view_dynamic_client_features(&reader).await
                 }
@@ -279,6 +281,7 @@ async fn handle_view_profile_attributes(
     reader: &DbReaderRaw<'_>,
     attributes: Vec<String>,
     print: Option<ProfileAttributesPrintField>,
+    optimize: bool,
 ) {
     let manager = load_profile_attributes_from_db(reader).await.unwrap();
 
@@ -296,6 +299,8 @@ async fn handle_view_profile_attributes(
             .collect();
         ProfileAttributesSchemaExport::from_attributes(export.attribute_order(), filtered)
     };
+
+    let export = if optimize { export.optimize() } else { export };
 
     match print {
         Some(ProfileAttributesPrintField::AttributeKey) => {

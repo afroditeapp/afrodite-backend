@@ -403,6 +403,10 @@ pub enum DataViewSubMode {
         /// Print only the given field of the exported attributes instead of TOML.
         #[arg(long = "print", value_name = "FIELD")]
         print: Option<ProfileAttributesPrintField>,
+        /// Remove redundant translations where the translated value is the
+        /// same as the attribute's or attribute value's default name.
+        #[arg(long)]
+        optimize: bool,
     },
     /// View dynamic client features config
     DynamicClientFeatures,

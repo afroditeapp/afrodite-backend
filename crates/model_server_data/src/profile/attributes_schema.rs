@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use model::{
     Attribute, AttributeId, AttributeOrderMode, PartialProfileAttributesConfig,
@@ -30,6 +30,31 @@ impl ProfileAttributesSchemaExport {
 
     pub fn attribute_order(&self) -> AttributeOrderMode {
         self.attribute_order
+    }
+
+    /// Remove redundant translations where the translated value is the same
+    /// as the attribute's or attribute value's default name.
+    pub fn optimize(mut self) -> Self {
+        for attribute in &mut self.attributes {
+            let mut default_names: HashMap<String, String> = HashMap::new();
+            default_names.insert(attribute.key.clone(), attribute.name.clone());
+            for value in &attribute.values {
+                default_names.insert(value.key.clone(), value.name.clone());
+                for group_value in &value.group_values {
+                    default_names.insert(group_value.key.clone(), group_value.name.clone());
+                }
+            }
+
+            for language in &mut attribute.translations {
+                language
+                    .values
+                    .retain(|t| default_names.get(&t.key) != Some(&t.name));
+            }
+            attribute
+                .translations
+                .retain(|language| !language.values.is_empty());
+        }
+        self
     }
 
     fn validate_attributes(mut self) -> Result<(AttributeOrderMode, Vec<Attribute>), String> {
