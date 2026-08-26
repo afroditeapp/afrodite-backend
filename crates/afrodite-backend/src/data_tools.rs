@@ -1,4 +1,4 @@
-use std::{path::PathBuf, sync::Arc};
+use std::{collections::HashSet, path::PathBuf, sync::Arc};
 
 use config::{
     GetConfigError,
@@ -10,7 +10,7 @@ use database::{
 };
 use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia};
 use error_stack::IntoReport;
-use model::{AccountId, BotConfig, DynamicServerConfig, ImageProcessingDynamicConfig};
+use model::{AccountId, Attribute, BotConfig, DynamicServerConfig, ImageProcessingDynamicConfig};
 use model_server_data::ProfileAttributesSchemaExport;
 use server_data::{
     db_manager::{DatabaseManager, InternalWriting, RouterDatabaseWriteHandle},
@@ -108,7 +108,9 @@ pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
                 DataViewSubMode::ImageProcessingConfig => {
                     handle_view_image_processing_config(&reader).await
                 }
-                DataViewSubMode::ProfileAttributes => handle_view_profile_attributes(&reader).await,
+                DataViewSubMode::ProfileAttributes { attributes } => {
+                    handle_view_profile_attributes(&reader, attributes).await
+                }
                 DataViewSubMode::DynamicClientFeatures => {
                     handle_view_dynamic_client_features(&reader).await
                 }
@@ -270,10 +272,23 @@ async fn handle_load_profile_attributes(writer: &DbWriter<'_>, file: PathBuf) {
     );
 }
 
-async fn handle_view_profile_attributes(reader: &DbReaderRaw<'_>) {
+async fn handle_view_profile_attributes(reader: &DbReaderRaw<'_>, attributes: Vec<String>) {
     let manager = load_profile_attributes_from_db(reader).await.unwrap();
 
     let export = manager.read().await.export();
+
+    let export = if attributes.is_empty() {
+        export
+    } else {
+        let keys: HashSet<&str> = attributes.iter().map(String::as_str).collect();
+        let filtered: Vec<Attribute> = export
+            .attributes()
+            .iter()
+            .filter(|a| keys.contains(a.key.as_str()))
+            .cloned()
+            .collect();
+        ProfileAttributesSchemaExport::from_attributes(export.attribute_order(), filtered)
+    };
 
     println!("{}", toml::to_string_pretty(&export).unwrap());
 }

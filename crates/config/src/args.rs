@@ -393,7 +393,14 @@ pub enum DataViewSubMode {
     /// View image processing config
     ImageProcessingConfig,
     /// View profile attributes
-    ProfileAttributes,
+    ProfileAttributes {
+        /// Export only the given profile attributes (by key).
+        ///
+        /// Can be specified multiple times. When no attributes are given,
+        /// all attributes are exported.
+        #[arg(long = "attribute")]
+        attributes: Vec<String>,
+    },
     /// View dynamic client features config
     DynamicClientFeatures,
     /// View dynamic server config

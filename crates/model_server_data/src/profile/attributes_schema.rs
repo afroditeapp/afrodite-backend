@@ -14,6 +14,24 @@ pub struct ProfileAttributesSchemaExport {
 }
 
 impl ProfileAttributesSchemaExport {
+    pub fn from_attributes(
+        attribute_order: AttributeOrderMode,
+        attributes: Vec<Attribute>,
+    ) -> Self {
+        Self {
+            attribute_order,
+            attributes,
+        }
+    }
+
+    pub fn attributes(&self) -> &[Attribute] {
+        &self.attributes
+    }
+
+    pub fn attribute_order(&self) -> AttributeOrderMode {
+        self.attribute_order
+    }
+
     fn validate_attributes(mut self) -> Result<(AttributeOrderMode, Vec<Attribute>), String> {
         let mut keys = HashSet::new();
         let mut ids = HashSet::new();
