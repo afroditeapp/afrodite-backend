@@ -2,7 +2,10 @@ use std::{collections::HashSet, path::PathBuf, sync::Arc};
 
 use config::{
     GetConfigError,
-    args::{DataEditSubMode, DataLoadSubMode, DataMode, DataModeSubMode, DataViewSubMode},
+    args::{
+        DataEditSubMode, DataLoadSubMode, DataMode, DataModeSubMode, DataViewSubMode,
+        ProfileAttributesPrintField,
+    },
 };
 use database::{
     DbReaderRaw, DbWriter,
@@ -108,8 +111,8 @@ pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
                 DataViewSubMode::ImageProcessingConfig => {
                     handle_view_image_processing_config(&reader).await
                 }
-                DataViewSubMode::ProfileAttributes { attributes } => {
-                    handle_view_profile_attributes(&reader, attributes).await
+                DataViewSubMode::ProfileAttributes { attributes, print } => {
+                    handle_view_profile_attributes(&reader, attributes, print).await
                 }
                 DataViewSubMode::DynamicClientFeatures => {
                     handle_view_dynamic_client_features(&reader).await
@@ -272,7 +275,11 @@ async fn handle_load_profile_attributes(writer: &DbWriter<'_>, file: PathBuf) {
     );
 }
 
-async fn handle_view_profile_attributes(reader: &DbReaderRaw<'_>, attributes: Vec<String>) {
+async fn handle_view_profile_attributes(
+    reader: &DbReaderRaw<'_>,
+    attributes: Vec<String>,
+    print: Option<ProfileAttributesPrintField>,
+) {
     let manager = load_profile_attributes_from_db(reader).await.unwrap();
 
     let export = manager.read().await.export();
@@ -290,7 +297,14 @@ async fn handle_view_profile_attributes(reader: &DbReaderRaw<'_>, attributes: Ve
         ProfileAttributesSchemaExport::from_attributes(export.attribute_order(), filtered)
     };
 
-    println!("{}", toml::to_string_pretty(&export).unwrap());
+    match print {
+        Some(ProfileAttributesPrintField::AttributeKey) => {
+            for attribute in export.attributes() {
+                println!("{}", attribute.key);
+            }
+        }
+        None => println!("{}", toml::to_string_pretty(&export).unwrap()),
+    }
 }
 
 async fn handle_load_dynamic_client_features(

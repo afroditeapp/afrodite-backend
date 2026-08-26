@@ -400,11 +400,20 @@ pub enum DataViewSubMode {
         /// all attributes are exported.
         #[arg(long = "attribute")]
         attributes: Vec<String>,
+        /// Print only the given field of the exported attributes instead of TOML.
+        #[arg(long = "print", value_name = "FIELD")]
+        print: Option<ProfileAttributesPrintField>,
     },
     /// View dynamic client features config
     DynamicClientFeatures,
     /// View dynamic server config
     DynamicServerConfig,
+}
+
+#[derive(ValueEnum, Debug, Clone)]
+pub enum ProfileAttributesPrintField {
+    /// Print attribute keys separated with newlines
+    AttributeKey,
 }
 
 #[derive(Parser, Debug, Clone)]
