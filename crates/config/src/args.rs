@@ -350,6 +350,9 @@ pub enum DataLoadSubMode {
     ProfileAttributes {
         /// Path to profile attributes file
         file: PathBuf,
+        /// Append attributes to existing ones instead of replacing them
+        #[arg(long)]
+        append: bool,
     },
     /// Load dynamic client features config from file
     DynamicClientFeatures {

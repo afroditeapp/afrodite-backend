@@ -40,7 +40,7 @@ pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
                 *file = abs_path_for_directory_or_file_which_might_not_exists(&*file)
                     .map_err(|_| GetConfigError::GetWorkingDir.into_report())?;
             }
-            DataLoadSubMode::ProfileAttributes { file } => {
+            DataLoadSubMode::ProfileAttributes { file, .. } => {
                 *file = abs_path_for_directory_or_file_which_might_not_exists(&*file)
                     .map_err(|_| GetConfigError::GetWorkingDir.into_report())?;
             }
@@ -133,8 +133,8 @@ pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
                     DataLoadSubMode::ImageProcessingConfig { file } => {
                         handle_load_image_processing_config(&writer, file).await
                     }
-                    DataLoadSubMode::ProfileAttributes { file } => {
-                        handle_load_profile_attributes(&writer, file).await
+                    DataLoadSubMode::ProfileAttributes { file, append } => {
+                        handle_load_profile_attributes(&reader, &writer, file, append).await
                     }
                     DataLoadSubMode::DynamicClientFeatures { file } => {
                         handle_load_dynamic_client_features(&write_handle, file).await
@@ -235,7 +235,12 @@ async fn handle_view_image_processing_config(reader: &DbReaderRaw<'_>) {
     println!("{}", toml::to_string_pretty(&config).unwrap());
 }
 
-async fn handle_load_profile_attributes(writer: &DbWriter<'_>, file: PathBuf) {
+async fn handle_load_profile_attributes(
+    reader: &DbReaderRaw<'_>,
+    writer: &DbWriter<'_>,
+    file: PathBuf,
+    append: bool,
+) {
     let content = std::fs::read_to_string(&file)
         .unwrap_or_else(|e| panic!("Failed to read file {:?}: {}", file, e));
 
@@ -248,28 +253,82 @@ async fn handle_load_profile_attributes(writer: &DbWriter<'_>, file: PathBuf) {
 
     let attr_count = profile_attrs.attributes().len();
 
-    writer
-        .db_transaction_raw(move |mut cmds| {
-            cmds.common()
-                .profile_attributes()
-                .delete_all_profile_attributes()?;
-            for attr in profile_attrs.attributes() {
+    if append {
+        // Read existing attributes and order mode, then combine them with the
+        // new ones so the combined set still passes schema validation.
+        // The existing order mode is preserved.
+        let (existing, existing_order_mode) = reader
+            .db_read(|mut mode| {
+                Ok((
+                    mode.common()
+                        .profile_attributes()
+                        .all_profile_attributes()?,
+                    mode.common()
+                        .profile_attributes()
+                        .attribute_order_mode()?
+                        .unwrap_or_default(),
+                ))
+            })
+            .await
+            .unwrap();
+
+        let mut combined = existing;
+        combined.extend(
+            profile_attrs
+                .attributes()
+                .iter()
+                .map(|a| a.attribute().clone()),
+        );
+
+        let combined_export =
+            ProfileAttributesSchemaExport::from_attributes(existing_order_mode, combined);
+        let combined_attrs = combined_export
+            .validate()
+            .unwrap_or_else(|e| panic!("Combined schema validation failed: {}", e));
+
+        writer
+            .db_transaction_raw(move |mut cmds| {
+                for attr in combined_attrs.attributes() {
+                    cmds.common()
+                        .profile_attributes()
+                        .upsert_profile_attribute(attr.attribute())?;
+                }
                 cmds.common()
                     .profile_attributes()
-                    .upsert_profile_attribute(attr.attribute())?;
-            }
-            cmds.common()
-                .profile_attributes()
-                .upsert_profile_attributes_order_mode(profile_attrs.attribute_order())?;
+                    .upsert_profile_attributes_order_mode(combined_attrs.attribute_order())?;
 
-            cmds.common()
-                .client_config()
-                .increment_client_config_sync_version_for_every_account()?;
+                cmds.common()
+                    .client_config()
+                    .increment_client_config_sync_version_for_every_account()?;
 
-            Ok(())
-        })
-        .await
-        .unwrap();
+                Ok(())
+            })
+            .await
+            .unwrap();
+    } else {
+        writer
+            .db_transaction_raw(move |mut cmds| {
+                cmds.common()
+                    .profile_attributes()
+                    .delete_all_profile_attributes()?;
+                for attr in profile_attrs.attributes() {
+                    cmds.common()
+                        .profile_attributes()
+                        .upsert_profile_attribute(attr.attribute())?;
+                }
+                cmds.common()
+                    .profile_attributes()
+                    .upsert_profile_attributes_order_mode(profile_attrs.attribute_order())?;
+
+                cmds.common()
+                    .client_config()
+                    .increment_client_config_sync_version_for_every_account()?;
+
+                Ok(())
+            })
+            .await
+            .unwrap();
+    }
 
     println!(
         "Successfully loaded {} profile attributes into database",
