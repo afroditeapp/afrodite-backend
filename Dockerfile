@@ -2,7 +2,7 @@ FROM rust:slim AS builder
 WORKDIR /usr/src/afrodite-backend
 COPY . .
 RUN apt-get update && \
- apt-get install -y git build-essential pkg-config libssl-dev libsqlite3-dev libpq-dev && \
+ apt-get install -y git build-essential pkg-config libsqlite3-dev libpq-dev && \
  rm -rf /var/lib/apt/lists/*
 RUN cd crates/afrodite-backend && cargo install --path .
 
