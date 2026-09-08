@@ -88,6 +88,10 @@ impl AccountRoutes {
                 post(api::account::post_email_login_with_token),
             )
             .route(
+                api::account::PATH_GET_EMAIL_REGISTRATION_PLATFORMS,
+                get(api::account::get_email_registration_platforms),
+            )
+            .route(
                 api::account::PATH_GET_VERIFY_EMAIL,
                 get(api::account::get_verify_email),
             )
