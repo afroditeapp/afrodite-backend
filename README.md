@@ -72,6 +72,12 @@ sudo apt install git build-essential pkg-config libsqlite3-dev libpq-dev
 2. Install other dependencies.
 
 ```
+brew install libpq
+```
+
+3. For running `make reset-database` command, PostgreSQL is required.
+
+```
 brew install postgresql
 ```
 
@@ -80,14 +86,14 @@ brew install postgresql
 Command `make reset-database` requires `diesel_cli`.
 
 ```
-cargo install diesel_cli --no-default-features --features sqlite
+cargo install diesel_cli --locked --no-default-features --features postgres
 ```
 
 Command `make update-api-bindings` requires `openapi-generator-cli`.
 
-1. Install node version manager (nvm) <https://github.com/nvm-sh/nvm>
-2. Install latest node LTS with nvm. For example `nvm install 18`
-3. Install openapi-generator from npm.
+1. Install latest node LTS using node version manager (nvm) <https://github.com/nvm-sh/nvm>
+   or from your package manager.
+2. Install openapi-generator from npm.
    `npm install @openapitools/openapi-generator-cli -g`
 
 ## Config files
