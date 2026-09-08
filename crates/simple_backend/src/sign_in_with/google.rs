@@ -132,17 +132,20 @@ impl SignInWithGoogleManager {
             // Mobile clients support audience
             let mut validate_aud = Validation::new(not_validated_header.alg);
             validate_aud.set_required_spec_claims(&["aud"]);
-            validate_aud.set_audience(&[&google_config.client_id_server]);
+            validate_aud.set_audience(&[&google_config.client_id_web]);
             let _: TokenData<GoogleTokenClaims> =
                 jsonwebtoken::decode::<GoogleTokenClaims>(&token, &key, &validate_aud)
                     .change_context(SignInWithGoogleError::InvalidToken)?;
 
             let valid_client_ids = [
-                google_config.client_id_android.as_str(),
-                google_config.client_id_ios.as_str(),
+                google_config.client_id_android.as_deref(),
+                google_config.client_id_ios.as_deref(),
             ];
 
-            valid_client_ids.into_iter().any(|id| id == data.claims.azp)
+            valid_client_ids
+                .into_iter()
+                .flatten()
+                .any(|id| id == data.claims.azp)
         };
 
         if !azp_valid {
