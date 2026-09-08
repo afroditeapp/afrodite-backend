@@ -96,6 +96,8 @@ impl WriteCommandsCommon<'_> {
             permissions.admin_verify_account = true;
             permissions.admin_process_reports = true;
             permissions.admin_ban_account = true;
+            permissions.admin_edit_media_content_face_verified_value = true;
+            permissions.admin_delete_media_content = true;
         };
 
         let new_account = db_transaction!(self, move |mut cmds| {
