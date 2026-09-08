@@ -35,7 +35,7 @@ local_bot_api_port = 3001
 # history = "postgres://user:password@localhost/history_db"
 
 # [manager]
-# manager_name = "default"
+# name = "default"
 # address = "tls://localhost:4000"
 # api_key = "TODO"
 
