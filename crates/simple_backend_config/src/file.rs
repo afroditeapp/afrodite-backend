@@ -81,6 +81,7 @@ local_bot_api_port = 3001
 # username = "username"
 # password = "password"
 # email_from_header = "Example <no-reply@example.com>"
+# send_limit_per_second = 1, # optional, by default no limit
 # send_limit_per_minute = 1, # optional, by default no limit
 # send_limit_per_day = 10,   # optional, by default no limit
 
@@ -484,6 +485,7 @@ pub struct EmailSendingConfig {
     pub password: String,
     /// Email `From` header, for example `Example <no-reply@example.com>`
     pub email_from_header: EmailFromHeader,
+    pub send_limit_per_second: Option<NonZeroU32>,
     pub send_limit_per_minute: Option<NonZeroU32>,
     pub send_limit_per_day: Option<NonZeroU32>,
     #[serde(default)]

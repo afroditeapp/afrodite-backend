@@ -19,6 +19,7 @@ pub struct Counter {
 /// Save email sender limit states before closing the server.
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
 pub struct EmailLimitStateStorage {
+    pub emails_sent_per_second: Counter,
     pub emails_sent_per_minute: Counter,
     pub emails_sent_per_day: Counter,
 }

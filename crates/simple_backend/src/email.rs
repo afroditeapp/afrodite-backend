@@ -98,6 +98,9 @@ impl SmtpClient {
             None => return,
         };
         logic
+            .send_count_per_second
+            .load(state.emails_sent_per_second);
+        logic
             .send_count_per_minute
             .load(state.emails_sent_per_minute);
         logic.send_count_per_day.load(state.emails_sent_per_day);
@@ -109,6 +112,7 @@ impl SmtpClient {
             None => return,
         };
         let state = EmailLimitStateStorage {
+            emails_sent_per_second: logic.send_count_per_second.to_count(),
             emails_sent_per_minute: logic.send_count_per_minute.to_count(),
             emails_sent_per_day: logic.send_count_per_day.to_count(),
         };
@@ -141,6 +145,7 @@ impl SmtpClient {
 struct EmailSendingLogic {
     sender: AsyncSmtpTransport<Tokio1Executor>,
     config: EmailSendingConfig,
+    send_count_per_second: SendCounter,
     send_count_per_minute: SendCounter,
     send_count_per_day: SendCounter,
 }
@@ -150,6 +155,7 @@ impl EmailSendingLogic {
         Self {
             sender,
             config,
+            send_count_per_second: SendCounter::new(Duration::from_secs(1)),
             send_count_per_day: SendCounter::new(Duration::from_secs(60 * 60 * 24)),
             send_count_per_minute: SendCounter::new(Duration::from_secs(60)),
         }
@@ -190,6 +196,9 @@ impl EmailSendingLogic {
     }
 
     async fn send_raw(&mut self, message: Message) -> Result<(), EmailError> {
+        self.send_count_per_second
+            .wait_until_allowed(self.config.send_limit_per_second)
+            .await;
         self.send_count_per_minute
             .wait_until_allowed(self.config.send_limit_per_minute)
             .await;
@@ -197,6 +206,8 @@ impl EmailSendingLogic {
             .wait_until_allowed(self.config.send_limit_per_day)
             .await;
 
+        self.send_count_per_second
+            .increment(self.config.send_limit_per_second);
         self.send_count_per_minute
             .increment(self.config.send_limit_per_minute);
         self.send_count_per_day
