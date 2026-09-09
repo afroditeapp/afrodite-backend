@@ -31,7 +31,7 @@ default = "Footer"
 default = "Verify your email address"
 
 [email_verification.body]
-default = "Please verify your email address by opening this link: https://example.com/verify_email/{{token}}"
+default = "Please verify your email address by opening this link: https://example.com/verify_email?token={{token}}"
 
 # New message
 
@@ -79,7 +79,7 @@ default = "Your account will be deleted. This is the final reminder."
 default = "Verify your new email address"
 
 [email_change_verification.body]
-default = "Please verify your new email address by opening this link: https://example.com/verify_new_email/{{token}}"
+default = "Please verify your new email address by opening this link: https://example.com/verify_new_email?token={{token}}"
 
 # Email change notification
 
@@ -313,7 +313,7 @@ impl<'a> EmailStringGetter<'a> {
         self.render_body_and_apply_template(
             &self.config.email_verification,
             "Verify your email address",
-            "Please verify your email address by opening this link: https://example.com/verify_email/{{token}}",
+            "Please verify your email address by opening this link: https://example.com/verify_email?token={{token}}",
             HashMap::from_iter([("token", token)]),
         )
     }
@@ -362,7 +362,7 @@ impl<'a> EmailStringGetter<'a> {
         self.render_body_and_apply_template(
             &self.config.email_change_verification,
             "Verify your new email address",
-            "Please verify your new email address by opening this link: https://example.com/verify_new_email/{{token}}",
+            "Please verify your new email address by opening this link: https://example.com/verify_new_email?token={{token}}",
             HashMap::from_iter([("token", token)]),
         )
     }
