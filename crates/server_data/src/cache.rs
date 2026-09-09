@@ -1,7 +1,7 @@
 use std::{
     collections::{HashMap, hash_map::Entry},
     fmt::Debug,
-    net::SocketAddr,
+    net::{IpAddr, SocketAddr},
     sync::Arc,
 };
 
@@ -171,13 +171,13 @@ impl DatabaseCache {
     pub async fn access_token_and_ip_is_valid(
         &self,
         access_token: &AccessToken,
-        connection: SocketAddr,
+        ip: IpAddr,
     ) -> Option<(AccountIdInternal, Permissions, AccountState)> {
         let tokens = self.access_tokens.read().await;
         if let Some(entry) = tokens.get(access_token) {
             let r = entry.account_entry.cache.read().await;
             let is_valid = r.common.is_login_session_valid_for_access_token_type(
-                connection.ip(),
+                ip,
                 entry.access_token_type,
                 false,
             );

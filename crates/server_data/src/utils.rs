@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use std::net::IpAddr;
 
 use model::{
     AccessToken, AccessTokenType, AccountId, AccountIdInternal, AccountState, Permissions,
@@ -29,11 +29,9 @@ impl<'a> AccessTokenManager<'a> {
     pub async fn access_token_and_ip_is_valid(
         &self,
         token: &AccessToken,
-        connection: SocketAddr,
+        ip: IpAddr,
     ) -> Option<(AccountIdInternal, Permissions, AccountState)> {
-        self.cache
-            .access_token_and_ip_is_valid(token, connection)
-            .await
+        self.cache.access_token_and_ip_is_valid(token, ip).await
     }
 }
 

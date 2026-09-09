@@ -371,6 +371,16 @@ pub struct StateForRouterCreation {
     pub allow_only_bots: bool,
 }
 
+impl GetConfig for StateForRouterCreation {
+    fn config(&self) -> &Config {
+        self.s.config()
+    }
+
+    fn config_arc(&self) -> Arc<Config> {
+        self.s.config_arc()
+    }
+}
+
 #[macro_export]
 macro_rules! create_open_api_router {
     (

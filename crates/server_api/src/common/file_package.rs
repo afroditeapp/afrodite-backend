@@ -1,8 +1,8 @@
-use std::{net::SocketAddr, time::Duration};
+use std::{net::IpAddr, time::Duration};
 
 use axum::{
     body::Body,
-    extract::{ConnectInfo, Path, State},
+    extract::{Path, State},
     response::{IntoResponse, Response},
 };
 use axum_extra::TypedHeader;
@@ -15,7 +15,10 @@ use simple_backend::{
 };
 use simple_backend_config::file::{FilePackageHeadersConfig, IpAddressAccessConfig};
 
-use crate::{S, utils::IfNoneMatchExtensions};
+use crate::{
+    S,
+    utils::{ClientIp, IfNoneMatchExtensions},
+};
 
 #[derive(Debug, Clone)]
 pub struct AcceptLanguage(String);
@@ -178,7 +181,7 @@ pub const PATH_FILE_PACKAGE_ACCESS: &str = "/app/{*path}";
 pub async fn get_file_package_access(
     State(state): State<S>,
     Path(path_parts): Path<Vec<String>>,
-    ConnectInfo(address): ConnectInfo<SocketAddr>,
+    ClientIp(address): ClientIp,
     accept_language: Option<TypedHeader<AcceptLanguage>>,
     browser_etag: Option<TypedHeader<IfNoneMatch>>,
 ) -> Result<Response, (StatusCode, TypedHeader<ContentType>, Body)> {
@@ -231,7 +234,7 @@ pub const PATH_FILE_PACKAGE_ACCESS_ROOT: &str = "/";
 
 pub async fn get_file_package_access_root(
     State(state): State<S>,
-    ConnectInfo(address): ConnectInfo<SocketAddr>,
+    ClientIp(address): ClientIp,
     accept_language: Option<TypedHeader<AcceptLanguage>>,
     browser_etag: Option<TypedHeader<IfNoneMatch>>,
 ) -> Result<Response, (StatusCode, TypedHeader<ContentType>, Body)> {
@@ -243,7 +246,7 @@ pub const PATH_FILE_PACKAGE_ACCESS_PWA_INDEX_HTML: &str = "/app/index.html";
 
 pub async fn get_file_package_access_pwa_index_html(
     State(state): State<S>,
-    ConnectInfo(address): ConnectInfo<SocketAddr>,
+    ClientIp(address): ClientIp,
     accept_language: Option<TypedHeader<AcceptLanguage>>,
     browser_etag: Option<TypedHeader<IfNoneMatch>>,
 ) -> Result<Response, (StatusCode, TypedHeader<ContentType>, Body)> {
@@ -253,7 +256,7 @@ pub async fn get_file_package_access_pwa_index_html(
 
 async fn return_index_html(
     state: S,
-    address: SocketAddr,
+    address: IpAddr,
     accept_language: Option<TypedHeader<AcceptLanguage>>,
     browser_etag: Option<TypedHeader<IfNoneMatch>>,
 ) -> Result<Response, (StatusCode, TypedHeader<ContentType>, Body)> {
@@ -289,7 +292,7 @@ async fn return_index_html(
 
 async fn check_ip_allowlist(
     state: &S,
-    address: SocketAddr,
+    address: IpAddr,
     accept_language: Option<TypedHeader<AcceptLanguage>>,
 ) -> Result<(), (StatusCode, TypedHeader<ContentType>, Body)> {
     if let Some(config) = state.config().simple_backend().file_package() {
@@ -339,17 +342,17 @@ fn security_headers(state: &S) -> SecurityHeaders {
 
 pub async fn is_ip_address_accepted(
     state: &S,
-    address: SocketAddr,
+    address: IpAddr,
     config: &IpAddressAccessConfig,
 ) -> bool {
-    if config.allow_all_ip_addresses || config.ip_allowlist.iter().any(|v| *v == address.ip()) {
+    if config.allow_all_ip_addresses || config.ip_allowlist.contains(&address) {
         return true;
     }
 
     if !config.ip_country_allowlist.is_empty() {
         let ip_db = state.maxmind_db().current_db_ref().await;
         if let Some(ip_db) = ip_db.as_ref()
-            && let Some(country) = ip_db.get_country_ref(address.ip())
+            && let Some(country) = ip_db.get_country_ref(address)
             && config
                 .ip_country_allowlist
                 .iter()
@@ -364,14 +367,14 @@ pub async fn is_ip_address_accepted(
 
 fn create_access_denied_response(
     state: &S,
-    ip_address: SocketAddr,
+    ip_address: IpAddr,
     accept_language: Option<TypedHeader<AcceptLanguage>>,
 ) -> (StatusCode, TypedHeader<ContentType>, Body) {
     let web_config = state.config().web_content();
     let language = accept_language.as_ref().map(|h| h.language());
     let page = web_config
         .get(language.as_ref())
-        .access_denied(&ip_address.ip().to_string());
+        .access_denied(&ip_address.to_string());
 
     match page {
         Ok(page) => {

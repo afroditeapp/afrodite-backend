@@ -1,4 +1,8 @@
-use std::{collections::HashMap, net::SocketAddr, time::Instant};
+use std::{
+    collections::HashMap,
+    net::{IpAddr, SocketAddr},
+    time::Instant,
+};
 
 use axum::{
     Form,
@@ -34,7 +38,7 @@ use tokio::time::{Duration, timeout};
 use crate::{
     account::login::register::request_email_registration_token,
     app::{GetAccounts, ReadData, WriteData},
-    utils::{Json, StatusCode},
+    utils::{ClientIp, Json, StatusCode},
 };
 
 pub mod register;
@@ -558,7 +562,7 @@ pub const PATH_POST_REQUEST_EMAIL_LOGIN_TOKEN: &str = "/account_api/request_emai
 )]
 pub async fn post_request_email_login_token(
     State(state): State<S>,
-    ConnectInfo(address): ConnectInfo<SocketAddr>,
+    ClientIp(address): ClientIp,
     Json(request): Json<RequestEmailLoginToken>,
 ) -> Result<Json<RequestEmailLoginTokenResult>, StatusCode> {
     ACCOUNT.post_request_email_login_token.incr();
@@ -616,7 +620,7 @@ pub async fn post_request_email_login_token(
     }
 }
 
-async fn is_ip_from_common_country(state: &S, address: SocketAddr) -> bool {
+async fn is_ip_from_common_country(state: &S, address: IpAddr) -> bool {
     let common_countries = state
         .config()
         .limits_account()
@@ -628,7 +632,7 @@ async fn is_ip_from_common_country(state: &S, address: SocketAddr) -> bool {
     let ip_db = state.maxmind_db().current_db_ref().await;
     match ip_db
         .as_ref()
-        .and_then(|ip_db| ip_db.get_country_ref(address.ip()))
+        .and_then(|ip_db| ip_db.get_country_ref(address))
     {
         Some(country) => common_countries.iter().any(|v| v == country.as_str()),
         None => false,
@@ -637,7 +641,7 @@ async fn is_ip_from_common_country(state: &S, address: SocketAddr) -> bool {
 
 async fn handle_login_token_sending(
     state: &S,
-    address: SocketAddr,
+    address: IpAddr,
     request: RequestEmailLoginToken,
 ) -> Result<EmailLoginResultInternal, StatusCode> {
     if !request.login_only {
@@ -674,7 +678,7 @@ async fn handle_login_token_sending(
 
         if state
             .email_registration_rate_limiter()
-            .check_and_increment(address.ip(), ip_limit)
+            .check_and_increment(address, ip_limit)
             .await
         {
             return Ok(

@@ -22,7 +22,7 @@ use utils::api::{ADMIN_BOT_EMAIL, USER_BOT_EMAIL_PREFIX, USER_BOT_EMAIL_SUFFIX};
 use super::account::login_impl;
 use crate::{
     app::{GetAccounts, ReadData, WriteData},
-    utils::{Json, StatusCode},
+    utils::{ClientIp, Json, StatusCode},
 };
 
 pub const PATH_BOT_LOGIN: &str = "/account_api/bot_login";
@@ -90,12 +90,12 @@ pub const PATH_BOT_REGISTER: &str = "/account_api/bot_register";
 )]
 pub async fn post_bot_register(
     State(state): State<S>,
-    ConnectInfo(address): ConnectInfo<SocketAddr>,
+    ClientIp(address): ClientIp,
 ) -> Result<Json<AccountId>, StatusCode> {
     ACCOUNT_BOT.post_bot_register.incr();
     let RegisterImplResult::Ok(new_account_id) = state
         .data_all_access()
-        .register_impl(SignInWithInfo::default(), None, address.ip())
+        .register_impl(SignInWithInfo::default(), None, address)
         .await?
     else {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
@@ -128,10 +128,10 @@ pub const PATH_GET_BOTS: &str = "/account_api/get_bots";
 )]
 pub async fn post_get_bots(
     State(state): State<S>,
-    ConnectInfo(address): ConnectInfo<SocketAddr>,
+    ClientIp(address): ClientIp,
 ) -> Result<Json<GetBotsResult>, StatusCode> {
     ACCOUNT_BOT.post_get_bots.incr();
-    get_or_create_bots_impl(&state, address.ip()).await
+    get_or_create_bots_impl(&state, address).await
 }
 
 pub const PATH_REMOTE_GET_BOTS: &str = "/account_api/remote_get_bots";
@@ -153,7 +153,7 @@ pub const PATH_REMOTE_GET_BOTS: &str = "/account_api/remote_get_bots";
 )]
 pub async fn post_remote_get_bots(
     State(state): State<S>,
-    ConnectInfo(address): ConnectInfo<SocketAddr>,
+    ClientIp(address): ClientIp,
     Json(info): Json<RemoteBotPassword>,
 ) -> Result<Json<GetBotsResult>, StatusCode> {
     ACCOUNT_BOT.post_remote_get_bots.incr();
@@ -174,7 +174,7 @@ pub async fn post_remote_get_bots(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    get_or_create_bots_impl(&state, address.ip()).await
+    get_or_create_bots_impl(&state, address).await
 }
 
 /// Get or create bot accounts based on server configuration.
@@ -288,7 +288,7 @@ pub async fn post_remote_bot_login(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     };
 
-    if !is_ip_address_accepted(&state, address, config.access()).await {
+    if !is_ip_address_accepted(&state, address.ip(), config.access()).await {
         return Err(StatusCode::NOT_FOUND);
     }
 

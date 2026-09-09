@@ -1,4 +1,4 @@
-use std::{net::SocketAddr, sync::Arc};
+use std::{net::IpAddr, sync::Arc};
 
 use config::{Config, file::ConfigFileError};
 use error_stack::ResultExt;
@@ -254,12 +254,12 @@ impl GetAccessTokens for S {
     async fn access_token_and_ip_is_valid(
         &self,
         token: &AccessToken,
-        connection: SocketAddr,
+        ip: IpAddr,
     ) -> Option<(AccountIdInternal, Permissions, AccountState)> {
         self.state
             .database
             .access_token_manager()
-            .access_token_and_ip_is_valid(token, connection)
+            .access_token_and_ip_is_valid(token, ip)
             .await
     }
 }

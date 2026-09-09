@@ -1,11 +1,11 @@
 //! Backup transfer routes for transferring data between clients
 //!
 
-use std::{collections::HashMap, net::SocketAddr, sync::OnceLock, time::Duration};
+use std::{collections::HashMap, net::IpAddr, sync::OnceLock, time::Duration};
 
 use axum::{
     extract::{
-        ConnectInfo, State, WebSocketUpgrade,
+        State, WebSocketUpgrade,
         ws::{Message, WebSocket},
     },
     response::IntoResponse,
@@ -18,7 +18,7 @@ use sha2::{Digest, Sha256};
 use simple_backend::create_counters;
 use simple_backend_utils::consts::KIB_IN_BYTES;
 
-use super::super::utils::StatusCode;
+use super::super::utils::{ClientIp, StatusCode};
 
 mod source;
 mod target;
@@ -77,7 +77,7 @@ pub async fn get_backup_transfer(
     State(state): State<S>,
     websocket: WebSocketUpgrade,
     header_map: HeaderMap,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    ClientIp(addr): ClientIp,
 ) -> std::result::Result<impl IntoResponse, StatusCode> {
     TRANSFER.get_backup_transfer.incr();
 
@@ -161,7 +161,7 @@ fn get_pending_transfers() -> &'static tokio::sync::RwLock<PendingConnections> {
     PENDING_TRANSFERS.get_or_init(|| tokio::sync::RwLock::new(PendingConnections::new()))
 }
 
-async fn handle_transfer_socket(mut socket: WebSocket, addr: SocketAddr, state: S) {
+async fn handle_transfer_socket(mut socket: WebSocket, addr: IpAddr, state: S) {
     let role_message = match tokio::time::timeout(Duration::from_secs(10), socket.recv()).await {
         Ok(Some(Ok(Message::Text(text)))) => text,
         _ => {

@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use std::net::IpAddr;
 
 use config::file::ConfigFileError;
 use model::{
@@ -24,7 +24,7 @@ pub trait GetAccessTokens {
     fn access_token_and_ip_is_valid(
         &self,
         token: &AccessToken,
-        connection: SocketAddr,
+        connection: IpAddr,
     ) -> impl std::future::Future<Output = Option<(AccountIdInternal, Permissions, AccountState)>> + Send;
 }
 

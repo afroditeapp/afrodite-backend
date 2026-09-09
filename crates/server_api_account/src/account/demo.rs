@@ -25,7 +25,7 @@ use simple_backend::create_counters;
 use super::{login::validate_app_attestation, login_impl};
 use crate::{
     app::WriteData,
-    utils::{Json, StatusCode},
+    utils::{ClientIp, Json, StatusCode},
 };
 
 const PATH_POST_DEMO_ACCOUNT_LOGIN: &str = "/account_api/demo_account_login";
@@ -107,7 +107,7 @@ const PATH_POST_DEMO_ACCOUNT_REGISTER_ACCOUNT: &str = "/account_api/demo_account
 )]
 pub async fn post_demo_account_register_account(
     State(state): State<S>,
-    ConnectInfo(address): ConnectInfo<SocketAddr>,
+    ClientIp(address): ClientIp,
     Json(token): Json<DemoAccountToken>,
 ) -> Result<Json<DemoAccountRegisterAccountResult>, StatusCode> {
     ACCOUNT.post_demo_account_register_account.incr();
@@ -130,7 +130,7 @@ pub async fn post_demo_account_register_account(
 
     let RegisterImplResult::Ok(id) = state
         .data_all_access()
-        .register_impl(SignInWithInfo::default(), None, address.ip())
+        .register_impl(SignInWithInfo::default(), None, address)
         .await?
     else {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);

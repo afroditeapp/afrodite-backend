@@ -526,6 +526,9 @@ pub enum PublicApiTlsConfig {
     LetsEncrypt(LetsEncryptConfig),
     /// Allow public API without TLS, for setups where TLS
     /// termination is handled by a reverse proxy.
+    ///
+    /// When true, server gets client IP address from X-Forwarded-For HTTP
+    /// header if available. Rightmost IP is used as the client IP.
     #[serde(rename = "disable")]
     Disable(bool),
 }

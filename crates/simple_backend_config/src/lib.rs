@@ -203,6 +203,13 @@ impl SimpleBackendConfig {
         self.public_api_tls_config.as_ref()
     }
 
+    pub fn public_api_tls_disabled(&self) -> bool {
+        matches!(
+            &self.file.tls.public_api,
+            Some(file::PublicApiTlsConfig::Disable(true))
+        )
+    }
+
     pub fn lets_encrypt_config(&self) -> Option<&file::LetsEncryptConfig> {
         match &self.file.tls.public_api {
             Some(file::PublicApiTlsConfig::LetsEncrypt(config)) => Some(config),

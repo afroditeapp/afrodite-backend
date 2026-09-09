@@ -1,8 +1,11 @@
-use std::{net::SocketAddr, time::Duration};
+use std::{
+    net::{IpAddr, SocketAddr},
+    time::Duration,
+};
 
 use axum::{
     body::Body,
-    extract::{ConnectInfo, FromRequest, State, rejection::JsonRejection},
+    extract::{ConnectInfo, FromRequest, FromRequestParts, State, rejection::JsonRejection},
     middleware::Next,
     response::{IntoResponse, Response},
 };
@@ -10,10 +13,14 @@ use axum_extra::TypedHeader;
 use headers::{
     Authorization, CacheControl, ETag, HeaderMapExt, IfNoneMatch, authorization::Bearer,
 };
+use http::request::Parts;
 use hyper::Request;
 use model::AccessToken;
 use serde::Serialize;
-use server_data::{app::ReadData, read::GetReadCommandsCommon};
+use server_data::{
+    app::{GetConfig, ReadData},
+    read::GetReadCommandsCommon,
+};
 pub use server_state::utils::StatusCode;
 use server_state::{StateForRouterCreation, app::GetAccessTokens};
 use simple_backend::create_counters;
@@ -38,7 +45,7 @@ use utoipa::{
 /// to handlers is possible.
 pub async fn authenticate_with_access_token(
     State(state): State<StateForRouterCreation>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    ClientIp(addr): ClientIp,
     mut req: Request<Body>,
     next: Next,
 ) -> Result<Response, StatusCode> {
@@ -107,6 +114,55 @@ impl<T> From<T> for Json<T> {
 impl<T: Serialize> IntoResponse for Json<T> {
     fn into_response(self) -> Response {
         axum::Json(self.0).into_response()
+    }
+}
+
+/// Extractor which returns only the client's IP address.
+///
+/// This is an alternative to [`ConnectInfo<SocketAddr>`] for setups where the
+/// server is behind a reverse proxy (such as Caddy) which terminates TLS.
+///
+/// When the server's public API TLS is disabled (see
+/// `[tls.public_api] disable = true`), the real client IP address is only
+/// available via the `X-Forwarded-For` HTTP header set by the reverse proxy.
+///
+/// In that case the rightmost IP address in the `X-Forwarded-For` header is
+/// used, as it is the one added by the trusted reverse proxy closest to the
+/// server. When TLS is not disabled, the header is ignored and the IP address
+/// from the actual TCP connection is used instead.
+#[derive(Debug, Clone, Copy)]
+pub struct ClientIp(pub IpAddr);
+
+impl<S> FromRequestParts<S> for ClientIp
+where
+    S: Send + Sync + GetConfig,
+{
+    type Rejection = StatusCode;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let connect_info = ConnectInfo::<SocketAddr>::from_request_parts(parts, state)
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+        let ip = if state.config().simple_backend().public_api_tls_disabled() {
+            // TLS is terminated by a reverse proxy, so the real client IP
+            // is only available via the X-Forwarded-For header. Use the
+            // rightmost IP address, which is the one added by the trusted reverse
+            // proxy closest to the server.
+            const X_FORWARDED_FOR: &str = "x-forwarded-for";
+            parts
+                .headers
+                .get(X_FORWARDED_FOR)
+                .and_then(|v| v.to_str().ok())
+                .and_then(|v| v.rsplit(',').next())
+                .map(str::trim)
+                .and_then(|v| v.parse::<IpAddr>().ok())
+                .unwrap_or(connect_info.ip())
+        } else {
+            connect_info.ip()
+        };
+
+        Ok(Self(ip))
     }
 }
 
