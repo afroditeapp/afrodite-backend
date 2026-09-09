@@ -262,6 +262,10 @@ impl Config {
         &self.file.api
     }
 
+    pub fn allowed_web_origins(&self) -> &[String] {
+        &self.file.api.allowed_web_origins
+    }
+
     pub fn remote_bot_login(&self) -> Option<&RemoteBotLoginConfig> {
         self.file.remote_bot_login.as_ref()
     }

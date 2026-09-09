@@ -163,6 +163,7 @@ pub use utils::api::PATH_CONNECT;
     responses(
         (status = 101, description = "Switching protocols."),
         (status = 401, description = "Unauthorized."),
+        (status = 403, description = "Forbidden."),
         (status = 500, description = "Internal server error."),
     ),
     security(),
@@ -243,6 +244,18 @@ pub async fn get_connect_websocket(
                 },
             })
         })?;
+
+    if info.client_type == WebSocketClientTypeNumber::Web {
+        let allowed_origins = state.config().allowed_web_origins();
+        let origin = header_map
+            .get(http::header::ORIGIN)
+            .and_then(|v| v.to_str().ok())
+            .ok_or(StatusCode::FORBIDDEN)?;
+
+        if !allowed_origins.iter().any(|v| v == origin) {
+            return Err(StatusCode::FORBIDDEN);
+        }
+    }
 
     let id = state
         .access_token_with_type_exists(&access_token, AccessTokenType::Current)

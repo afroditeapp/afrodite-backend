@@ -33,6 +33,11 @@ use simple_backend_utils::{
 
 pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 
+# WebSocket connections from web clients are rejected unless the Origin
+# header matches one of these values.
+# [api]
+# allowed_web_origins = ["https://example.com"]
+
 # [grant_admin_access]
 # email = "admin@example.com"
 
@@ -240,6 +245,10 @@ pub struct ApiConfig {
     pub min_client_version: Option<MinClientVersion>,
     pub client_version_tracking: Option<ClientVersionTrackingConfig>,
     pub app_update_available: Option<AppUpdateAvailableConfig>,
+    /// Allowed `Origin` header values for WebSocket connections from web
+    /// clients. Web connections are rejected unless the `Origin` header
+    /// matches one of these values.
+    pub allowed_web_origins: Vec<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
