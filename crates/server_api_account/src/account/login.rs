@@ -1,14 +1,6 @@
-use std::{
-    collections::HashMap,
-    net::{IpAddr, SocketAddr},
-    time::Instant,
-};
+use std::{collections::HashMap, net::IpAddr, time::Instant};
 
-use axum::{
-    Form,
-    extract::{ConnectInfo, State},
-    response::Redirect,
-};
+use axum::{Form, extract::State, response::Redirect};
 use base64::Engine;
 use model::{AccountIdInternal, ClientType, EmailLoginToken, UnixTime};
 use model_account::{
@@ -38,14 +30,14 @@ use tokio::time::{Duration, timeout};
 use crate::{
     account::login::register::request_email_registration_token,
     app::{GetAccounts, ReadData, WriteData},
-    utils::{ClientIp, Json, StatusCode},
+    utils::{ClientConnectionId, ClientIp, ConnectionId, Json, StatusCode},
 };
 
 pub mod register;
 
 pub async fn login_impl(
     id: AccountId,
-    address: SocketAddr,
+    connection: ConnectionId,
     state: &S,
 ) -> Result<LoginResult, StatusCode> {
     let id = state.get_internal_id(id).await?;
@@ -74,7 +66,7 @@ pub async fn login_impl(
             .await?;
         cmds.cache()
             .websocket_cache_cmds()
-            .init_login_session(id.into(), tokens_clone, address, false)
+            .init_login_session(id.into(), tokens_clone, connection, false)
             .await
             .into_error()?;
         Ok(())
@@ -322,7 +314,7 @@ pub(super) async fn validate_app_attestation(
 )]
 pub async fn post_sign_in_with_login(
     State(state): State<S>,
-    ConnectInfo(address): ConnectInfo<SocketAddr>,
+    ClientConnectionId(connection): ClientConnectionId,
     Json(tokens): Json<SignInWithLoginInfo>,
 ) -> Result<Json<LoginResult>, StatusCode> {
     ACCOUNT.post_sign_in_with_login.incr();
@@ -356,7 +348,7 @@ pub async fn post_sign_in_with_login(
             .sign_in_with_manager()
             .validate_apple_token(apple.token, nonce_bytes)
             .await?;
-        handle_sign_in_with_info(&state, address, tokens.client_info.client_type, info).await
+        handle_sign_in_with_info(&state, connection, tokens.client_info.client_type, info).await
     } else if let Some(google) = tokens.google {
         let nonce_bytes = base64::engine::general_purpose::URL_SAFE
             .decode(google.nonce)
@@ -365,7 +357,7 @@ pub async fn post_sign_in_with_login(
             .sign_in_with_manager()
             .validate_google_token(google.token, nonce_bytes)
             .await?;
-        handle_sign_in_with_info(&state, address, tokens.client_info.client_type, info).await
+        handle_sign_in_with_info(&state, connection, tokens.client_info.client_type, info).await
     } else {
         Err(StatusCode::INTERNAL_SERVER_ERROR)
     }?;
@@ -391,7 +383,7 @@ pub async fn post_sign_in_with_login(
 
 async fn handle_sign_in_with_info(
     state: &S,
-    address: SocketAddr,
+    connection: ConnectionId,
     client_type: ClientType,
     info: impl SignInWithInfoTrait,
 ) -> Result<LoginResult, StatusCode> {
@@ -402,7 +394,7 @@ async fn handle_sign_in_with_info(
     let already_existing_account = info.already_existing_account(state).await?;
 
     if let Some(already_existing_account) = already_existing_account {
-        login_impl(already_existing_account.as_id(), address, state).await
+        login_impl(already_existing_account.as_id(), connection, state).await
     } else {
         if let Err(error) = validate_registration_platform(state, client_type).await {
             return Ok(error);
@@ -415,7 +407,7 @@ async fn handle_sign_in_with_info(
 
         let id = match state
             .data_all_access()
-            .register_impl(info.sign_in_with_info(), Some(email), address.ip())
+            .register_impl(info.sign_in_with_info(), Some(email), connection.ip())
             .await?
         {
             RegisterImplResult::Ok(id) => id,
@@ -423,7 +415,7 @@ async fn handle_sign_in_with_info(
                 return Ok(LoginResult::error_email_already_used());
             }
         };
-        login_impl(id.as_id(), address, state).await
+        login_impl(id.as_id(), connection, state).await
     }
 }
 
@@ -851,14 +843,14 @@ pub const PATH_POST_EMAIL_LOGIN_WITH_TOKEN: &str = "/account_api/email_login_wit
 )]
 pub async fn post_email_login_with_token(
     State(state): State<S>,
-    ConnectInfo(address): ConnectInfo<SocketAddr>,
+    ClientConnectionId(connection): ClientConnectionId,
     Json(request): Json<EmailLogin>,
 ) -> Result<Json<LoginResult>, StatusCode> {
     ACCOUNT.post_email_login_with_token.incr();
 
     let wait_until = Instant::now() + Duration::from_secs(5);
 
-    let r = post_email_login_with_token_impl(state, address, request).await;
+    let r = post_email_login_with_token_impl(state, connection, request).await;
 
     // Wait until at least 5 seconds have elapsed
     tokio::time::sleep_until(wait_until.into()).await;
@@ -868,7 +860,7 @@ pub async fn post_email_login_with_token(
 
 async fn post_email_login_with_token_impl(
     state: S,
-    address: SocketAddr,
+    connection: ConnectionId,
     request: EmailLogin,
 ) -> Result<Json<LoginResult>, StatusCode> {
     if let Some(min_version) = state.config().min_client_version()
@@ -922,7 +914,7 @@ async fn post_email_login_with_token_impl(
 
     if let Some(account_id) = account_id {
         // Login token was valid
-        let r = login_impl(account_id.as_id(), address, &state).await?;
+        let r = login_impl(account_id.as_id(), connection, &state).await?;
 
         if let Some(aid) = r.aid() {
             let id = state.get_internal_id(aid).await?;
@@ -942,8 +934,9 @@ async fn post_email_login_with_token_impl(
         return Ok(r.into());
     }
 
-    let r = register::email_registration_with_token_impl(state, address, client_token, email_token)
-        .await?;
+    let r =
+        register::email_registration_with_token_impl(state, connection, client_token, email_token)
+            .await?;
 
     Ok(r.into())
 }

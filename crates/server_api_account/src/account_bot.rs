@@ -1,6 +1,6 @@
-use std::net::{IpAddr, SocketAddr};
+use std::net::IpAddr;
 
-use axum::extract::{ConnectInfo, State};
+use axum::extract::State;
 use model::{BotAccountType, ClientType};
 use model_account::{
     AccountId, BotAccount, EmailAddress, GetBotsResult, LoginResult, RemoteBotLogin,
@@ -22,7 +22,7 @@ use utils::api::{ADMIN_BOT_EMAIL, USER_BOT_EMAIL_PREFIX, USER_BOT_EMAIL_SUFFIX};
 use super::account::login_impl;
 use crate::{
     app::{GetAccounts, ReadData, WriteData},
-    utils::{ClientIp, Json, StatusCode},
+    utils::{ClientConnectionId, ClientIp, Json, StatusCode},
 };
 
 pub const PATH_BOT_LOGIN: &str = "/account_api/bot_login";
@@ -43,7 +43,7 @@ pub const PATH_BOT_LOGIN: &str = "/account_api/bot_login";
 )]
 pub async fn post_bot_login(
     State(state): State<S>,
-    ConnectInfo(address): ConnectInfo<SocketAddr>,
+    ClientConnectionId(connection): ClientConnectionId,
     Json(id): Json<AccountId>,
 ) -> Result<Json<LoginResult>, StatusCode> {
     ACCOUNT_BOT.post_bot_login.incr();
@@ -54,7 +54,7 @@ pub async fn post_bot_login(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let r = login_impl(id, address, &state).await?;
+    let r = login_impl(id, connection, &state).await?;
 
     if let Some(aid) = r.aid() {
         // Login successful
@@ -275,7 +275,7 @@ pub const PATH_REMOTE_BOT_LOGIN: &str = "/account_api/remote_bot_login";
 )]
 pub async fn post_remote_bot_login(
     State(state): State<S>,
-    ConnectInfo(address): ConnectInfo<SocketAddr>,
+    ClientConnectionId(connection): ClientConnectionId,
     Json(info): Json<RemoteBotLogin>,
 ) -> Result<Json<LoginResult>, StatusCode> {
     ACCOUNT_BOT.post_remote_bot_login.incr();
@@ -288,7 +288,7 @@ pub async fn post_remote_bot_login(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     };
 
-    if !is_ip_address_accepted(&state, address.ip(), config.access()).await {
+    if !is_ip_address_accepted(&state, connection.ip(), config.access()).await {
         return Err(StatusCode::NOT_FOUND);
     }
 
@@ -302,7 +302,7 @@ pub async fn post_remote_bot_login(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let r = login_impl(info.aid, address, &state).await?;
+    let r = login_impl(info.aid, connection, &state).await?;
 
     if let Some(aid) = r.aid() {
         // Login successful

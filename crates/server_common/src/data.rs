@@ -7,6 +7,7 @@ use simple_backend_utils::Context;
 use crate::result::WrappedReport;
 
 pub mod cache;
+pub mod connection_id;
 pub mod file;
 pub mod index;
 

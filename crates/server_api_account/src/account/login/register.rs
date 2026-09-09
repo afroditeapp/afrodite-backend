@@ -1,12 +1,14 @@
-use std::net::SocketAddr;
-
 use model_account::{LoginResult, RequestEmailLoginToken, SignInWithInfo};
 use server_api::{S, TokenData, app::GetConfig, db_write};
 use server_data::app::RegisterImplResult;
 use server_data_account::write::GetWriteCommandsAccount;
 
 use super::login_impl;
-use crate::{account::login::EmailLoginResultInternal, app::WriteData, utils::StatusCode};
+use crate::{
+    account::login::EmailLoginResultInternal,
+    app::WriteData,
+    utils::{ConnectionId, StatusCode},
+};
 
 pub(super) async fn request_email_registration_token(
     state: &S,
@@ -34,7 +36,7 @@ pub(super) async fn request_email_registration_token(
 
 pub(super) async fn email_registration_with_token_impl(
     state: S,
-    address: SocketAddr,
+    connection: ConnectionId,
     client_token: Vec<u8>,
     email_token: Vec<u8>,
 ) -> Result<LoginResult, StatusCode> {
@@ -56,7 +58,7 @@ pub(super) async fn email_registration_with_token_impl(
 
     let id = match state
         .data_all_access()
-        .register_impl(SignInWithInfo::default(), Some(email), address.ip())
+        .register_impl(SignInWithInfo::default(), Some(email), connection.ip())
         .await?
     {
         RegisterImplResult::Ok(id) => id,
@@ -76,5 +78,5 @@ pub(super) async fn email_registration_with_token_impl(
 
     // email_verified: no need to send events as user hasn't yet logged in
 
-    login_impl(id.as_id(), address, &state).await
+    login_impl(id.as_id(), connection, &state).await
 }

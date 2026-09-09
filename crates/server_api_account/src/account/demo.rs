@@ -1,9 +1,6 @@
-use std::{
-    net::SocketAddr,
-    time::{Duration, Instant},
-};
+use std::time::{Duration, Instant};
 
-use axum::extract::{ConnectInfo, State};
+use axum::extract::State;
 use model_account::{AccessibleAccount, DemoAccountLoginToAccount, LoginResult, SignInWithInfo};
 use model_server_state::{
     DemoAccountLoginCredentials, DemoAccountLoginResult, DemoAccountRegisterAccountResult,
@@ -25,7 +22,7 @@ use simple_backend::create_counters;
 use super::{login::validate_app_attestation, login_impl};
 use crate::{
     app::WriteData,
-    utils::{ClientIp, Json, StatusCode},
+    utils::{ClientConnectionId, ClientIp, Json, StatusCode},
 };
 
 const PATH_POST_DEMO_ACCOUNT_LOGIN: &str = "/account_api/demo_account_login";
@@ -159,7 +156,7 @@ const PATH_POST_DEMO_ACCOUNT_LOGIN_TO_ACCOUNT: &str = "/account_api/demo_account
 )]
 pub async fn post_demo_account_login_to_account(
     State(state): State<S>,
-    ConnectInfo(address): ConnectInfo<SocketAddr>,
+    ClientConnectionId(connection): ClientConnectionId,
     Json(info): Json<DemoAccountLoginToAccount>,
 ) -> Result<Json<LoginResult>, StatusCode> {
     ACCOUNT.post_demo_account_login_to_account.incr();
@@ -192,7 +189,7 @@ pub async fn post_demo_account_login_to_account(
     let accessible_accounts = state.demo().accessible_accounts(id).await?;
     accessible_accounts.contains(info.aid, state.read()).await?;
 
-    let r = login_impl(info.aid, address, &state).await?;
+    let r = login_impl(info.aid, connection, &state).await?;
 
     if let Some(aid) = r.aid() {
         // Login successful

@@ -1,12 +1,12 @@
 //! Common routes
 //!
 
-use std::{net::SocketAddr, time::Duration};
+use std::time::Duration;
 
 use axum::{
     body::Bytes,
     extract::{
-        ConnectInfo, State, WebSocketUpgrade,
+        State, WebSocketUpgrade,
         ws::{Message, WebSocket},
     },
     response::IntoResponse,
@@ -37,7 +37,7 @@ use server_state::{
 use simple_backend::{create_counters, web_socket::WebSocketManager};
 use tracing::{error, info};
 
-use super::utils::StatusCode;
+use super::utils::{ClientConnectionId, ConnectionId, StatusCode};
 use crate::{
     S,
     common::websocket::{
@@ -171,7 +171,7 @@ pub async fn get_connect_websocket(
     State(state): State<S>,
     websocket: WebSocketUpgrade,
     header_map: HeaderMap,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    ClientConnectionId(connection): ClientConnectionId,
     ws_manager: WebSocketManager,
 ) -> std::result::Result<impl IntoResponse, StatusCode> {
     COMMON.get_connect_websocket.incr();
@@ -255,21 +255,21 @@ pub async fn get_connect_websocket(
             .await;
         state
             .ip_address_usage_tracker()
-            .mark_ip_used(id.id, addr.ip())
+            .mark_ip_used(id.id, connection.ip())
             .await;
     } else {
         COMMON.websocket_access_token_not_found.incr();
     }
 
     let response = websocket.protocols(["v1"]).on_upgrade(move |socket| {
-        handle_socket_basic_errors(socket, addr, id, state, ws_manager, info)
+        handle_socket_basic_errors(socket, connection, id, state, ws_manager, info)
     });
     Ok(response)
 }
 
 async fn handle_socket_basic_errors(
     mut socket: WebSocket,
-    address: SocketAddr,
+    connection: ConnectionId,
     id: Option<AccountIdInternal>,
     state: S,
     ws_manager: WebSocketManager,
@@ -305,7 +305,7 @@ async fn handle_socket_basic_errors(
             }
         };
         if is_supported_client {
-            handle_socket(socket, address, id, state, ws_manager, info).await
+            handle_socket(socket, connection, id, state, ws_manager, info).await
         } else {
             let _ = socket.send(Message::Binary(Bytes::from_static(&[2]))).await;
         }
@@ -316,7 +316,7 @@ async fn handle_socket_basic_errors(
 
 async fn handle_socket(
     socket: WebSocket,
-    address: SocketAddr,
+    connection: ConnectionId,
     id: AccountIdInternal,
     state: S,
     mut ws_manager: WebSocketManager,
@@ -326,7 +326,7 @@ async fn handle_socket(
         info!(
             "handle_socket for '{}', address: {}",
             id.id.as_ref(),
-            address
+            connection
         );
     }
 
@@ -345,21 +345,21 @@ async fn handle_socket(
                 .read()
                 .cache_read_write_access()
                 .websocket_cache_cmds()
-                .delete_connection(id.into(), address)
+                .delete_connection(id.into(), connection)
                 .await;
 
             if let Err(e) = result {
                 error!("delete_connection failed, {e:?}");
             }
         },
-        r = handle_socket_result(socket, address, id, &state, info) => {
+        r = handle_socket_result(socket, connection, id, &state, info) => {
             match r {
                 Ok(()) => {
                     let result = state
                         .read()
                         .cache_read_write_access()
                         .websocket_cache_cmds()
-                        .delete_connection(id.into(), address)
+                        .delete_connection(id.into(), connection)
                         .await;
 
                     if let Err(e) = result {
@@ -368,7 +368,7 @@ async fn handle_socket(
                 },
                 Err(e) => {
                     if state.config().api().debug_websocket_logging {
-                        error!("handle_socket_result returned error {e:?} for '{}', address: {}", id.id.as_ref(), address);
+                        error!("handle_socket_result returned error {e:?} for '{}', address: {}", id.id.as_ref(), connection);
                     }
 
                     let result = state.write(move |cmds| async move {
@@ -394,7 +394,7 @@ async fn handle_socket(
         info!(
             "Connection for '{}' closed, address: {}",
             id.id.as_ref(),
-            address
+            connection
         );
     }
 
@@ -403,7 +403,7 @@ async fn handle_socket(
 
 async fn handle_socket_result(
     mut socket: WebSocket,
-    address: SocketAddr,
+    connection: ConnectionId,
     id: AccountIdInternal,
     state: &S,
     info: WebSocketClientInfo,
@@ -445,7 +445,7 @@ async fn handle_socket_result(
     let is_session_valid = state
         .read()
         .common()
-        .is_current_access_token_valid_for_websocket_connection(id, address.ip())
+        .is_current_access_token_valid_for_websocket_connection(id, connection.ip())
         .await
         .change_context(WebSocketError::DatabaseAccessTokenIpAddress)?;
 
@@ -504,7 +504,7 @@ async fn handle_socket_result(
                     access: new_access_token,
                     refresh: new_refresh_token,
                 },
-                address,
+                connection,
                 true,
             )
             .await
@@ -522,7 +522,7 @@ async fn handle_socket_result(
             .read()
             .cache_read_write_access()
             .websocket_cache_cmds()
-            .init_login_session_using_existing_tokens(id.into(), address)
+            .init_login_session_using_existing_tokens(id.into(), connection)
             .await
             .change_context(WebSocketError::EventChannelCreationFailed)?;
 
@@ -651,7 +651,7 @@ async fn handle_socket_result(
                     None => {
                         // New connection created another event receiver.
                         if state.config().api().debug_websocket_logging {
-                            error!("Event receiver channel broken: id: {}, address: {}", id.id.as_ref(), address);
+                            error!("Event receiver channel broken: id: {}, address: {}", id.id.as_ref(), connection);
                         }
                         break;
                     },
@@ -660,7 +660,7 @@ async fn handle_socket_result(
             _ = timeout_timer.wait_timeout() => {
                 // Connection timeout
                 if state.config().api().debug_websocket_logging {
-                    info!("Connection timeout for '{}', address: {}", id.id.as_ref(), address);
+                    info!("Connection timeout for '{}', address: {}", id.id.as_ref(), connection);
                 }
                 break;
             }
@@ -681,7 +681,7 @@ async fn handle_socket_result(
                                 info!(
                                     "Pending chat notification flag still set after timeout for '{}', address: {}. Closing websocket.",
                                     id.id.as_ref(),
-                                    address
+                                    connection
                                 );
                             }
                             break;
@@ -692,7 +692,7 @@ async fn handle_socket_result(
                             error!(
                                 "Failed to check pending push notification flags for '{}', address: {}, error: {e:?}",
                                 id.id.as_ref(),
-                                address,
+                                connection,
                             );
                         }
                     }

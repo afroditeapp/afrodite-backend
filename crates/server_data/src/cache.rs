@@ -1,7 +1,7 @@
 use std::{
     collections::{HashMap, hash_map::Entry},
     fmt::Debug,
-    net::{IpAddr, SocketAddr},
+    net::IpAddr,
     sync::Arc,
 };
 
@@ -17,6 +17,7 @@ use model::{
 use model_server_data::{AuthPair, LocationIndexProfileData};
 use profile::CacheProfile;
 pub use server_common::data::cache::CacheError;
+use server_common::data::connection_id::ConnectionId;
 use simple_backend_utils::Result;
 use tokio::sync::RwLock;
 
@@ -367,7 +368,7 @@ impl WebSocketCacheCmds<'_> {
         &self,
         id: AccountId,
         new_tokens: AuthPair,
-        address: SocketAddr,
+        connection: ConnectionId,
         new_event_channel: bool,
     ) -> Result<Option<EventReceiver>, CacheError> {
         let cache_entry = self
@@ -404,7 +405,7 @@ impl WebSocketCacheCmds<'_> {
                 let (sender, receiver) = event_channel();
                 let mut write = cache_entry.cache.write().await;
                 write.common.current_connection = Some(ConnectionInfo {
-                    connection: address,
+                    connection,
                     event_sender: sender,
                 });
                 write
@@ -418,7 +419,9 @@ impl WebSocketCacheCmds<'_> {
 
             let new_access_token = new_tokens.access.clone();
             let mut lock = cache_entry.cache.write().await;
-            let previous_access_token = lock.common.update_tokens(new_tokens, address.ip().into());
+            let previous_access_token = lock
+                .common
+                .update_tokens(new_tokens, connection.ip().into());
             lock.common.pending_push_notification_flags = PushNotificationFlags::empty();
             drop(lock);
             tokens.insert(
@@ -448,7 +451,7 @@ impl WebSocketCacheCmds<'_> {
     pub async fn init_login_session_using_existing_tokens(
         &self,
         id: AccountId,
-        address: SocketAddr,
+        connection: ConnectionId,
     ) -> Result<EventReceiver, CacheError> {
         let cache_entry = self
             .cache
@@ -462,7 +465,7 @@ impl WebSocketCacheCmds<'_> {
         let (sender, event_receiver) = event_channel();
         let mut write = cache_entry.cache.write().await;
         write.common.current_connection = Some(ConnectionInfo {
-            connection: address,
+            connection,
             event_sender: sender,
         });
         write.common.pending_push_notification_flags = PushNotificationFlags::empty();
@@ -476,7 +479,7 @@ impl WebSocketCacheCmds<'_> {
     pub async fn delete_connection(
         &self,
         id: AccountId,
-        connection: SocketAddr,
+        connection: ConnectionId,
     ) -> Result<(), CacheError> {
         self.cache
             .write_cache(id, |e| {
@@ -559,7 +562,7 @@ impl<I: InternalWriting> CacheWriteCommon for I {
 
 #[derive(Debug)]
 pub struct ConnectionInfo {
-    pub connection: SocketAddr,
+    pub connection: ConnectionId,
     pub event_sender: EventSender,
 }
 
