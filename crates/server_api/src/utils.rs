@@ -23,7 +23,7 @@ use server_data::{
 };
 pub use server_state::utils::StatusCode;
 use server_state::{StateForRouterCreation, app::GetAccessTokens};
-use simple_backend::create_counters;
+use simple_backend::{create_counters, utils::client_ip_from_http_header_if_possible};
 use simple_backend_config::RUNNING_IN_DEBUG_MODE;
 use utoipa::{
     Modify,
@@ -145,19 +145,7 @@ where
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
         let ip = if state.config().simple_backend().public_api_tls_disabled() {
-            // TLS is terminated by a reverse proxy, so the real client IP
-            // is only available via the X-Forwarded-For header. Use the
-            // rightmost IP address, which is the one added by the trusted reverse
-            // proxy closest to the server.
-            const X_FORWARDED_FOR: &str = "x-forwarded-for";
-            parts
-                .headers
-                .get(X_FORWARDED_FOR)
-                .and_then(|v| v.to_str().ok())
-                .and_then(|v| v.rsplit(',').next())
-                .map(str::trim)
-                .and_then(|v| v.parse::<IpAddr>().ok())
-                .unwrap_or(connect_info.ip())
+            client_ip_from_http_header_if_possible(&parts.headers, *connect_info)
         } else {
             connect_info.ip()
         };

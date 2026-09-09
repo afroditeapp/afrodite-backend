@@ -83,6 +83,7 @@ use self::web_socket::WebSocketManager;
 use crate::{
     ip_country::IpCountryTracker,
     perf::{PerfMetricsManager, PerfMetricsManagerData},
+    utils::client_ip_from_http_header_if_possible,
 };
 
 pub const HTTPS_DEFAULT_PORT: u16 = 443;
@@ -373,7 +374,11 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         }
     }
 
-    fn common_layers(router: Router, ip_country_tracker: IpCountryTracker) -> Router {
+    fn common_layers(
+        router: Router,
+        ip_country_tracker: IpCountryTracker,
+        config: &SimpleBackendConfig,
+    ) -> Router {
         #[derive(Clone)]
         struct TextContentType;
 
@@ -394,7 +399,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         router.layer(
             ServiceBuilder::new()
                 .layer(middleware::from_fn_with_state(
-                    ip_country_tracker.clone(),
+                    (ip_country_tracker.clone(), config.public_api_tls_disabled()),
                     track_http_request_country,
                 ))
                 .layer(
@@ -421,7 +426,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         server_name: &'static str,
         ip_country_tracker: IpCountryTracker,
     ) -> JoinHandle<()> {
-        let router = Self::common_layers(router, ip_country_tracker.clone());
+        let router = Self::common_layers(router, ip_country_tracker.clone(), &self.config);
         let router = if self.config.debug_mode() {
             router.route_layer(TraceLayer::new_for_http())
         } else {
@@ -463,7 +468,7 @@ impl<T: BusinessLogic> SimpleBackend<T> {
         ip_country_tracker: IpCountryTracker,
     ) -> JoinHandle<()> {
         let router = self.logic.local_bot_api_router(web_socket_manager, state);
-        let router = Self::common_layers(router, ip_country_tracker.clone());
+        let router = Self::common_layers(router, ip_country_tracker.clone(), &self.config);
         let router = if self.config.debug_mode() {
             if let Some(swagger) = self.logic.create_swagger_ui(state) {
                 router.merge(swagger)
@@ -815,13 +820,18 @@ impl Listener for TcpListenerWithConnectionTracking {
     }
 }
 
-pub async fn track_http_request_country(
-    State(state): State<IpCountryTracker>,
+async fn track_http_request_country(
+    State((state, public_api_tls_disabled)): State<(IpCountryTracker, bool)>,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     req: Request<Body>,
     next: Next,
 ) -> Response {
-    state.increment_http_requests(addr.ip()).await;
+    let ip = if public_api_tls_disabled {
+        client_ip_from_http_header_if_possible(req.headers(), addr)
+    } else {
+        addr.ip()
+    };
+    state.increment_http_requests(ip).await;
     next.run(req).await
 }
 
