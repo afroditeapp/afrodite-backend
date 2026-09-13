@@ -455,6 +455,12 @@ impl AdminBotContentModerationLogic {
     ) -> Result<Option<ModerationResult>, TestError> {
         let config = &llm.config;
         let expected_response_lowercase = llm.config.db.base.expected_response.to_lowercase();
+        let expected_nsfw_response_lowercase = llm
+            .config
+            .db
+            .expected_nsfw_response
+            .as_ref()
+            .map(|v| v.as_str().to_lowercase());
 
         let image = ChatCompletionRequestMessageContentPartImage {
             image_url: ImageUrl {
@@ -515,11 +521,20 @@ impl AdminBotContentModerationLogic {
         let response_lowercase = response.trim().to_lowercase();
         let response_first_line = response_lowercase.lines().next().unwrap_or_default();
         let accepted = response_first_line.contains(&expected_response_lowercase);
+        let nsfw = expected_nsfw_response_lowercase
+            .as_ref()
+            .is_some_and(|expected| response_first_line.contains(expected));
         if config.llm.debug_log_results {
             info!("LLM image moderation result: '{}'", response);
         }
 
-        if config.db.delete_accepted && accepted {
+        if nsfw {
+            if config.db.ignore_nsfw {
+                return Ok(None);
+            }
+            if config.db.move_nsfw_to_human_moderation {
+                return Ok(Some(ModerationResult::move_to_human(Some(response))));
+            }
             return Ok(Some(ModerationResult::delete()));
         }
 

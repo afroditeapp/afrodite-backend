@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use simple_backend_model::NonEmptyString;
 use utoipa::ToSchema;
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema, Default)]
@@ -392,20 +393,29 @@ pub struct AdminBotNsfwDetectionConfig {
 pub struct AdminBotContentModerationLlmConfig {
     #[serde(flatten)]
     pub base: AdminBotBaseLlmConfig,
+    /// If LLM response starts with this text or the first
+    /// line of the response contains this text, the content
+    /// is moderated as NSFW which deletes the content from server.
+    /// The comparisons are case insensitive. If this is None,
+    /// NSFW detection is disabled.
+    pub expected_nsfw_response: Option<NonEmptyString>,
     /// Overrides [Self::move_rejected_to_human_moderation]
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub ignore_rejected: bool,
-    /// Overrides [Self::move_accepted_to_human_moderation]
+    /// Overrides [Self::move_nsfw_to_human_moderation]
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
-    pub delete_accepted: bool,
+    pub ignore_nsfw: bool,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub move_accepted_to_human_moderation: bool,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub move_rejected_to_human_moderation: bool,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub move_nsfw_to_human_moderation: bool,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub add_llm_output_to_user_visible_rejection_details: bool,
@@ -415,13 +425,15 @@ impl Default for AdminBotContentModerationLlmConfig {
     fn default() -> Self {
         Self {
             base: AdminBotBaseLlmConfig::new(
-                "You are a dating app image moderator. Output 'accepted' when the image is safe for a dating app. Output 'rejected' when it's not.".to_string(),
+                "You are a dating app image moderator. Output 'accepted' when the image is safe for a dating app. Output 'rejected' when it's not. Output 'nsfw' when the image contains NSFW content.".to_string(),
                 "accepted".to_string(),
             ),
+            expected_nsfw_response: NonEmptyString::from_string("nsfw".to_string()),
             ignore_rejected: false,
-            delete_accepted: false,
+            ignore_nsfw: false,
             move_accepted_to_human_moderation: false,
             move_rejected_to_human_moderation: false,
+            move_nsfw_to_human_moderation: false,
             add_llm_output_to_user_visible_rejection_details: false,
         }
     }
