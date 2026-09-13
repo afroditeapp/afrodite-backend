@@ -35,6 +35,7 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**get_association_members_only_info**](docs/AccountApi.md#get_association_members_only_info) | **GET** /account_api/association_members_only_info | Get association members-only info markdown text.
 *AccountApi* | [**get_association_membership**](docs/AccountApi.md#get_association_membership) | **GET** /account_api/association_membership | Get current association membership.
 *AccountApi* | [**get_email_address_state**](docs/AccountApi.md#get_email_address_state) | **GET** /account_api/email_address_state | 
+*AccountApi* | [**get_email_registration_platforms**](docs/AccountApi.md#get_email_registration_platforms) | **GET** /account_api/email_registration_platforms | Get email registration platforms from dynamic server config.
 *AccountApi* | [**get_news_item**](docs/AccountApi.md#get_news_item) | **GET** /account_api/news_item/{nid} | Get news item content using specific locale and fallback to locale \"en\" if news translation is not found.
 *AccountApi* | [**get_sign_in_with_info**](docs/AccountApi.md#get_sign_in_with_info) | **GET** /account_api/sign_in_with_info | Get current sign in with Apple and Google state.
 *AccountApi* | [**get_verify_email**](docs/AccountApi.md#get_verify_email) | **GET** /verify_email | Show email verification form page. Token is passed via query parameter to prevent email scanners from accidentally verifying the email.

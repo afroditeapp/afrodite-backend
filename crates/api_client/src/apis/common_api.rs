@@ -47,6 +47,7 @@ pub enum GetClientLanguageError {
 #[serde(untagged)]
 pub enum GetConnectWebsocketError {
     Status401(),
+    Status403(),
     Status500(),
     UnknownValue(serde_json::Value),
 }

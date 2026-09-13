@@ -20,14 +20,19 @@ pub struct AdminBotContentModerationLlmConfig {
     pub system_text: String,
     #[serde(rename = "add_llm_output_to_user_visible_rejection_details", skip_serializing_if = "Option::is_none")]
     pub add_llm_output_to_user_visible_rejection_details: Option<bool>,
-    /// Overrides [Self::move_accepted_to_human_moderation]
-    #[serde(rename = "delete_accepted", skip_serializing_if = "Option::is_none")]
-    pub delete_accepted: Option<bool>,
+    /// If LLM response starts with this text or the first line of the response contains this text, the content is moderated as NSFW which deletes the content from server. The comparisons are case insensitive. If this is None, NSFW detection is disabled.
+    #[serde(rename = "expected_nsfw_response", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub expected_nsfw_response: Option<Option<String>>,
+    /// Overrides [Self::move_nsfw_to_human_moderation]
+    #[serde(rename = "ignore_nsfw", skip_serializing_if = "Option::is_none")]
+    pub ignore_nsfw: Option<bool>,
     /// Overrides [Self::move_rejected_to_human_moderation]
     #[serde(rename = "ignore_rejected", skip_serializing_if = "Option::is_none")]
     pub ignore_rejected: Option<bool>,
     #[serde(rename = "move_accepted_to_human_moderation", skip_serializing_if = "Option::is_none")]
     pub move_accepted_to_human_moderation: Option<bool>,
+    #[serde(rename = "move_nsfw_to_human_moderation", skip_serializing_if = "Option::is_none")]
+    pub move_nsfw_to_human_moderation: Option<bool>,
     #[serde(rename = "move_rejected_to_human_moderation", skip_serializing_if = "Option::is_none")]
     pub move_rejected_to_human_moderation: Option<bool>,
 }
@@ -38,9 +43,11 @@ impl AdminBotContentModerationLlmConfig {
             expected_response,
             system_text,
             add_llm_output_to_user_visible_rejection_details: None,
-            delete_accepted: None,
+            expected_nsfw_response: None,
+            ignore_nsfw: None,
             ignore_rejected: None,
             move_accepted_to_human_moderation: None,
+            move_nsfw_to_human_moderation: None,
             move_rejected_to_human_moderation: None,
         }
     }
