@@ -471,6 +471,9 @@ const PATH_DELETE_CONTENT: &str = "/media_api/content/{aid}/{cid}";
 /// # Admin
 /// Admin can remove content without restrictions with
 /// permission `admin_delete_media_content`.
+///
+/// When bot removes the content, the unallowed content notification is
+/// sent to content owner.
 #[utoipa::path(
     delete,
     path = PATH_DELETE_CONTENT,
@@ -530,6 +533,8 @@ pub async fn delete_content(
         MEDIA.delete_content_for_admin.incr();
     }
 
+    let caller_is_bot = state.read().common().is_bot(api_caller_account_id).await?;
+
     db_write!(state, move |cmds| {
         let r = cmds.media().delete_content(content_id).await?;
 
@@ -542,8 +547,8 @@ pub async fn delete_content(
                 .await?;
         }
 
-        if content.moderation_state.is_in_moderation() {
-            // Removed content was in moderation.
+        if content.moderation_state.is_in_moderation() && caller_is_bot {
+            // Removed content was in moderation and it was removed by a bot.
 
             cmds.common()
                 .notification()
