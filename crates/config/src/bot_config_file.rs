@@ -8,7 +8,9 @@ use serde::{Deserialize, Deserializer};
 use simple_backend_model::NonEmptyString;
 pub use simple_backend_model::NsfwDetectionThresholds;
 use simple_backend_utils::{
-    Result, dir::abs_path_for_directory_or_file_which_might_not_exists, time::UtcTimeValue,
+    Result,
+    dir::abs_path_for_directory_or_file_which_might_not_exists,
+    time::{DurationValue, UtcTimeValue},
 };
 use url::Url;
 
@@ -27,6 +29,8 @@ const DEFAULT_BOT_CONFIG: &str = r#"
 
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct BotConfigFile {
+    #[serde(default)]
+    pub generic: GenericBotConfig,
     #[serde(default)]
     pub image_dir: ImageDirConfig,
     /// Config for user bots
@@ -290,6 +294,22 @@ pub struct BaseBotConfig {
     change_visibility: Option<bool>,
     change_location: Option<bool>,
     change_profile_text_time: Option<UtcTimeValue>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct GenericBotConfig {
+    /// How often the bot sends a WebSocket ping message to keep the
+    /// connection alive.
+    ///
+    /// Default value is 60 seconds.
+    websocket_ping_time: Option<DurationValue>,
+}
+
+impl GenericBotConfig {
+    pub fn websocket_ping_time(&self) -> DurationValue {
+        self.websocket_ping_time
+            .unwrap_or(DurationValue::from_seconds(60))
+    }
 }
 
 impl BaseBotConfig {

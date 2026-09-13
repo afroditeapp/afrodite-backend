@@ -17,7 +17,7 @@ use futures::SinkExt;
 use headers::HeaderValue;
 use rustls_platform_verifier::ConfigVerifierExt;
 use simple_backend_model::VersionNumber;
-use simple_backend_utils::Result;
+use simple_backend_utils::{Result, time::DurationValue};
 use test_mode_utils::{
     client::{ApiClient, TestError},
     websocket_protocol::parse_server_event_to_client_for_test_mode,
@@ -102,8 +102,14 @@ impl BotAction for Login {
             .api_url
             .join(PATH_CONNECT)
             .change_context(TestError::WebSocket)?;
-        let connection: Option<WsConnection> =
-            connect_websocket(auth_pair, url, event_sender, state.api.clone()).into();
+        let connection: Option<WsConnection> = connect_websocket(
+            auth_pair,
+            url,
+            event_sender,
+            state.api.clone(),
+            state.bot_config_file.generic.websocket_ping_time(),
+        )
+        .into();
 
         state.connections.set_connections(ApiConnection {
             connection,
@@ -119,13 +125,15 @@ fn connect_websocket(
     url: Url,
     mut events: EventSenderAndQuitWatcher,
     api_client: ApiClient,
+    websocket_ping_time: DurationValue,
 ) -> WsConnection {
     let task = tokio::spawn(async move {
         let mut stream = connect_websocket_internal(&mut auth, url.clone(), &api_client)
             .await
             .unwrap_or_else(|e| panic!("Connecting websocket failed, error: {e}"));
 
-        let mut ping_timer = tokio::time::interval(Duration::from_secs(60));
+        let ping_time = Duration::from_secs(websocket_ping_time.seconds.into());
+        let mut ping_timer = tokio::time::interval(ping_time);
         ping_timer.tick().await; // skip the initial tick
         let mut reconnect_timer = tokio::time::interval(Duration::from_secs(8 * 24 * 60 * 60));
         reconnect_timer.tick().await; // skip the initial tick
