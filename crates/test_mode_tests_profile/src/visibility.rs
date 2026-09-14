@@ -6,7 +6,7 @@ use api_client::{
     },
     models::{ProfileVisibility, SearchAgeRange, SearchGroups},
 };
-use test_mode_bot::actions::account::SetProfileVisibility;
+use test_mode_bot::actions::account::{CompleteAccountSetup, SetProfileVisibility};
 use test_mode_test_utils::prelude::*;
 
 #[server_test]
@@ -51,29 +51,56 @@ async fn visibility_updates_in_normal_state(mut context: TestContext) -> TestRes
 async fn initial_setup_visibility_change_does_not_change_available_profiles(
     mut context: TestContext,
 ) -> TestResult {
-    let mut account1 = context.new_account_in_initial_setup_state().await?;
-    post_search_groups(
-        &account1.api(),
-        SearchGroups {
-            man_for_man: Some(true),
-            ..SearchGroups::default()
-        },
-    )
-    .await?;
-    post_search_age_range(&account1.api(), SearchAgeRange { min: 18, max: 99 }).await?;
-    let iterator_id = post_reset_profile_paging(&account1.api()).await?;
+    let groups = SearchGroups {
+        man_for_man: Some(true),
+        ..SearchGroups::default()
+    };
+    let range = SearchAgeRange { min: 18, max: 99 };
+
+    let mut account1 = context
+        .new_account_in_configured_initial_setup_state()
+        .await?;
+    post_search_groups(&account1.api(), groups.clone()).await?;
+    post_search_age_range(&account1.api(), range.clone()).await?;
+
+    let account2 = context.new_account().await?;
+    post_search_groups(&account2.api(), groups).await?;
+    post_search_age_range(&account2.api(), range).await?;
+
+    let iterator_id = post_reset_profile_paging(&account2.api()).await?;
     assert_eq(
         0,
-        post_get_next_profile_page(&account1.api(), iterator_id)
+        post_get_next_profile_page(&account2.api(), iterator_id)
             .await?
             .items
             .len(),
     )?;
     account1.run(SetProfileVisibility(true)).await?;
-    let iterator_id = post_reset_profile_paging(&account1.api()).await?;
+    let iterator_id = post_reset_profile_paging(&account2.api()).await?;
     assert_eq(
         0,
-        post_get_next_profile_page(&account1.api(), iterator_id)
+        post_get_next_profile_page(&account2.api(), iterator_id)
+            .await?
+            .items
+            .len(),
+    )?;
+
+    account1.run(SetProfileVisibility(false)).await?;
+    account1.run(CompleteAccountSetup).await?;
+
+    let iterator_id = post_reset_profile_paging(&account2.api()).await?;
+    assert_eq(
+        0,
+        post_get_next_profile_page(&account2.api(), iterator_id)
+            .await?
+            .items
+            .len(),
+    )?;
+    account1.run(SetProfileVisibility(true)).await?;
+    let iterator_id = post_reset_profile_paging(&account2.api()).await?;
+    assert_eq(
+        1,
+        post_get_next_profile_page(&account2.api(), iterator_id)
             .await?
             .items
             .len(),

@@ -74,12 +74,27 @@ impl TestContext {
         Account::register_and_login(self, false).await
     }
 
-    /// Account with Normal state, age 30 and name "Test".
-    pub async fn new_account(&mut self) -> Result<Account, TestError> {
-        self.new_account_internal(30, "Test").await
+    /// Account with InitialSetup state, age 30 and name "Test".
+    ///
+    /// Account is ready for completing initial setup with
+    /// CompleteAccountSetup action.
+    pub async fn new_account_in_configured_initial_setup_state(
+        &mut self,
+    ) -> Result<Account, TestError> {
+        self.new_account_internal(30, "Test", false).await
     }
 
-    async fn new_account_internal(&mut self, age: i32, name: &str) -> Result<Account, TestError> {
+    /// Account with Normal state, age 30 and name "Test".
+    pub async fn new_account(&mut self) -> Result<Account, TestError> {
+        self.new_account_internal(30, "Test", true).await
+    }
+
+    async fn new_account_internal(
+        &mut self,
+        age: i32,
+        name: &str,
+        complete_initial_setup: bool,
+    ) -> Result<Account, TestError> {
         let mut account = Account::register_and_login(self, false).await?;
         account
             .run_actions(action_array![
@@ -102,9 +117,9 @@ impl TestContext {
             .await
             .change_context(TestError::ApiRequest)?;
 
-        account
-            .run_actions(action_array![CompleteAccountSetup,])
-            .await?;
+        if complete_initial_setup {
+            account.run(CompleteAccountSetup).await?;
+        }
 
         Ok(account)
     }
@@ -117,7 +132,7 @@ impl TestContext {
         max_age: i32,
         groups: SearchGroups,
     ) -> Result<Account, TestError> {
-        let account = self.new_account_internal(age, name).await?;
+        let account = self.new_account_internal(age, name, true).await?;
 
         let range = SearchAgeRange {
             min: min_age,
