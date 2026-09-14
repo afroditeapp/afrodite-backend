@@ -1,4 +1,4 @@
-use model::{AccountId, UnixTime};
+use model::{AccountId, LoginSessionInfo, UnixTime};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -47,4 +47,11 @@ pub struct SetAccountBanState {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct AccountLockedState {
     pub locked: bool,
+}
+
+#[derive(Debug, Clone, Default, Serialize, ToSchema)]
+pub struct GetAccountLoginSessionInfo {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub info: Option<LoginSessionInfo>,
 }

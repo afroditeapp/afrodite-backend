@@ -3,7 +3,7 @@ use axum::{
     extract::{Path, State},
 };
 use model::{AccountId, Permissions};
-use model_account::AccountLockedState;
+use model_account::{AccountLockedState, GetAccountLoginSessionInfo};
 use server_api::{
     S,
     app::{GetAccounts, ReadData, WriteData},
@@ -20,7 +20,7 @@ const PATH_GET_ACCOUNT_LOCKED_STATE: &str = "/account_api/get_account_locked_sta
 ///
 /// # Access
 ///
-/// Permission [model::Permissions::admin_edit_login] is required.
+/// Permission [model::Permissions::admin_view_login] is required.
 #[utoipa::path(
     get,
     path = PATH_GET_ACCOUNT_LOCKED_STATE,
@@ -39,7 +39,7 @@ pub async fn get_account_locked_state(
 ) -> Result<Json<AccountLockedState>, StatusCode> {
     ACCOUNT_ADMIN.get_account_locked_state.incr();
 
-    if !permissions.admin_edit_login {
+    if !permissions.admin_view_login {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
@@ -98,7 +98,57 @@ pub async fn post_set_account_locked_state(
     Ok(())
 }
 
-create_open_api_router!(fn router_admin_login, get_account_locked_state, post_set_account_locked_state,);
+const PATH_GET_ACCOUNT_LOGIN_SESSION_INFO: &str =
+    "/account_api/get_account_login_session_info/{aid}";
+
+/// Get login session info for specific account.
+///
+/// This includes the client platform and app attestation details of the
+/// last login session.
+///
+/// # Access
+///
+/// Permission [model::Permissions::admin_view_login] is required.
+#[utoipa::path(
+    get,
+    path = PATH_GET_ACCOUNT_LOGIN_SESSION_INFO,
+    params(AccountId),
+    responses(
+        (status = 200, description = "Successful.", body = GetAccountLoginSessionInfo),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_account_login_session_info(
+    State(state): State<S>,
+    Extension(permissions): Extension<Permissions>,
+    Path(account_id): Path<AccountId>,
+) -> Result<Json<GetAccountLoginSessionInfo>, StatusCode> {
+    ACCOUNT_ADMIN.get_account_login_session_info.incr();
+
+    if !permissions.admin_view_login {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    let internal_id = state.get_internal_id(account_id).await?;
+
+    let info = state
+        .read()
+        .account_admin()
+        .login()
+        .login_session_info(internal_id)
+        .await?;
+
+    Ok(GetAccountLoginSessionInfo { info }.into())
+}
+
+create_open_api_router!(
+    fn router_admin_login,
+    get_account_locked_state,
+    post_set_account_locked_state,
+    get_account_login_session_info,
+);
 
 create_counters!(
     AccountAdminCounters,
@@ -106,4 +156,5 @@ create_counters!(
     ACCOUNT_ADMIN_LOGIN_COUNTERS_LIST,
     get_account_locked_state,
     post_set_account_locked_state,
+    get_account_login_session_info,
 );

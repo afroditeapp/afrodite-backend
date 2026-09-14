@@ -1,5 +1,5 @@
 use database_account::current::read::GetDbReadCommandsAccount;
-use model::AccountIdInternal;
+use model::{AccountIdInternal, LoginSessionInfo};
 use model_account::AccountLockedState;
 use server_data::{
     DataError, IntoDataError, define_cmd_wrapper_read, read::DbRead, result::Result,
@@ -13,6 +13,15 @@ impl ReadCommandsAccountLockAdmin<'_> {
         id: AccountIdInternal,
     ) -> Result<AccountLockedState, DataError> {
         self.db_read(move |mut cmds| cmds.account_admin().login().account_locked_state(id))
+            .await
+            .into_error()
+    }
+
+    pub async fn login_session_info(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<Option<LoginSessionInfo>, DataError> {
+        self.db_read(move |mut cmds| cmds.account_admin().login().login_session_info(id))
             .await
             .into_error()
     }

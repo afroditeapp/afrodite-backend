@@ -220,6 +220,7 @@ define_permissions!(
     /// View public and private profiles.
     admin_view_all_profiles,
     admin_view_account_state,
+    admin_view_login,
     admin_view_account_api_usage,
     admin_view_account_ip_address_usage,
     admin_view_profile_history,

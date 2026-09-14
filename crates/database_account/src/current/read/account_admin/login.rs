@@ -1,6 +1,6 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
-use model::AccountIdInternal;
+use model::{AccountIdInternal, LoginSessionInfo};
 use model_account::AccountLockedState;
 use simple_backend_utils::Result;
 
@@ -21,5 +21,19 @@ impl CurrentReadAccountLock<'_> {
             .first(self.conn())
             .into_db_error(id)
             .map(|locked| AccountLockedState { locked })
+    }
+
+    pub fn login_session_info(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<Option<LoginSessionInfo>, DieselDatabaseError> {
+        use crate::schema::login_session_info::dsl::*;
+
+        login_session_info
+            .filter(account_id.eq(id.as_db_id()))
+            .select(LoginSessionInfo::as_select())
+            .first(self.conn())
+            .optional()
+            .into_db_error(id)
     }
 }

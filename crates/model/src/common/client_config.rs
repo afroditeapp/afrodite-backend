@@ -59,7 +59,7 @@ pub enum ClientType {
     Bot = WebSocketClientTypeNumber::Bot as i16,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Queryable, Selectable)]
+#[derive(Debug, Clone, Default, Serialize, ToSchema, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::login_session_info)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct LoginSessionInfo {
