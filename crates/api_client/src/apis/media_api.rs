@@ -150,7 +150,7 @@ pub enum PutUploadContentError {
 }
 
 
-/// # Own account Content can be deleted after specific time has passed since removing all usage of it (content is not assigned as security or profile content).  # Admin Admin can remove content without restrictions with permission `admin_delete_media_content`.
+/// # Own account Content can be deleted after specific time has passed since removing all usage of it (content is not assigned as security or profile content).  # Admin Admin can remove content without restrictions with permission `admin_delete_media_content`.  When bot removes the content, the unallowed content notification is sent to content owner.
 pub async fn delete_content(configuration: &configuration::Configuration, aid: &str, cid: &str) -> Result<(), Error<DeleteContentError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_aid = aid;

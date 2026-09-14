@@ -73,6 +73,7 @@ src/models/age_verification_platforms.rs
 src/models/api_usage_count.rs
 src/models/api_usage_statistics.rs
 src/models/app_attestation.rs
+src/models/app_attestation_type_number.rs
 src/models/association_config.rs
 src/models/association_member.rs
 src/models/association_members_page.rs
@@ -170,6 +171,7 @@ src/models/first_image_config.rs
 src/models/get_account_ban_time_result.rs
 src/models/get_account_deletion_request_result.rs
 src/models/get_account_id_from_email_result.rs
+src/models/get_account_login_session_info.rs
 src/models/get_account_verification_queue_next_item_result.rs
 src/models/get_all_admins_result.rs
 src/models/get_api_usage_statistics_result.rs
@@ -234,6 +236,7 @@ src/models/likes_config.rs
 src/models/limited_action_status.rs
 src/models/location.rs
 src/models/login_result.rs
+src/models/login_session_info.rs
 src/models/maintenance_task.rs
 src/models/manager_instance_name_list.rs
 src/models/manual_association_membership_registry.rs

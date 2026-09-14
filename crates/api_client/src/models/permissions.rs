@@ -116,6 +116,8 @@ pub struct Permissions {
     pub admin_view_association_membership: Option<bool>,
     #[serde(rename = "admin_view_email_address", skip_serializing_if = "Option::is_none")]
     pub admin_view_email_address: Option<bool>,
+    #[serde(rename = "admin_view_login", skip_serializing_if = "Option::is_none")]
+    pub admin_view_login: Option<bool>,
     #[serde(rename = "admin_view_permissions", skip_serializing_if = "Option::is_none")]
     pub admin_view_permissions: Option<bool>,
     #[serde(rename = "admin_view_profile_history", skip_serializing_if = "Option::is_none")]
@@ -175,6 +177,7 @@ impl Permissions {
             admin_view_all_profiles: None,
             admin_view_association_membership: None,
             admin_view_email_address: None,
+            admin_view_login: None,
             admin_view_permissions: None,
             admin_view_profile_history: None,
         }
