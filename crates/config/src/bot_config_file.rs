@@ -303,12 +303,21 @@ pub struct GenericBotConfig {
     ///
     /// Default value is 60 seconds.
     websocket_ping_time: Option<DurationValue>,
+    /// If true, all bots quit when a single bot fails.
+    ///
+    /// Default value is false, meaning only the failed bot quits and the
+    /// other bots continue running.
+    quit_all_bots_if_single_fails: Option<bool>,
 }
 
 impl GenericBotConfig {
     pub fn websocket_ping_time(&self) -> DurationValue {
         self.websocket_ping_time
             .unwrap_or(DurationValue::from_seconds(60))
+    }
+
+    pub fn quit_all_bots_if_single_fails(&self) -> bool {
+        self.quit_all_bots_if_single_fails.unwrap_or(false)
     }
 }
 

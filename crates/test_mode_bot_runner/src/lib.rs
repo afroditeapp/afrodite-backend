@@ -131,7 +131,15 @@ impl BotTestRunner {
                 value = wait_all_bots.recv() => {
                     match value {
                         None => break,
-                        Some(state) => bot_states.push(state),
+                        Some(state) => {
+                            bot_states.push(state);
+                            if self
+                                .bot_config_file
+                                .generic
+                                .quit_all_bots_if_single_fails() {
+                                break;
+                            }
+                        }
                     }
                 }
             }
