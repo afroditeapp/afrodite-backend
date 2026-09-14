@@ -1,5 +1,5 @@
 use axum::{Extension, extract::State};
-use model::{AccountIdInternal, ProfileIteratorPageItem, ProfileLink};
+use model::{AccountIdInternal, AccountState, ProfileIteratorPageItem, ProfileLink};
 use model_server_data::{
     AutomaticProfileSearchIteratorSessionId, ProfileIteratorSessionId, ProfilePage,
 };
@@ -51,6 +51,10 @@ pub async fn reset_profile_paging(
         .profile()
         .post_reset_profile_paging()
         .await?;
+
+    if !account_state_is_normal(state, account_id).await {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
 
     let iterator_session_id: ProfileIteratorSessionId = state
         .concurrent_write_profile_blocking(account_id.as_id(), move |cmds| {
@@ -123,6 +127,10 @@ pub async fn get_next_profile_page_data(
         .post_get_next_profile_page()
         .await?;
 
+    if !account_state_is_normal(state, account_id).await {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
     let data = state
         .concurrent_write_profile_blocking(account_id.as_id(), move |cmds| {
             cmds.next_profiles(account_id, iterator_session_id)
@@ -179,6 +187,10 @@ pub async fn automatic_profile_search_reset_profile_paging(
         .profile()
         .post_reset_profile_paging()
         .await?;
+
+    if !account_state_is_normal(state, account_id).await {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
 
     let iterator_session_id: AutomaticProfileSearchIteratorSessionId = state
         .concurrent_write_profile_blocking(account_id.as_id(), move |cmds| {
@@ -258,6 +270,10 @@ pub async fn automatic_profile_search_get_next_profile_page_data(
         .post_get_next_profile_page()
         .await?;
 
+    if !account_state_is_normal(state, account_id).await {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
     let automatic_profile_search_happened_at_least_once = state
         .read()
         .common()
@@ -275,6 +291,17 @@ pub async fn automatic_profile_search_get_next_profile_page_data(
         .await??;
 
     Ok(data)
+}
+
+/// Check that the account is in [model::AccountState::Normal] state
+async fn account_state_is_normal(state: &S, account_id: AccountIdInternal) -> bool {
+    state
+        .read()
+        .common()
+        .account(account_id)
+        .await
+        .map(|account| account.state() == AccountState::Normal)
+        .unwrap_or(false)
 }
 
 create_open_api_router!(

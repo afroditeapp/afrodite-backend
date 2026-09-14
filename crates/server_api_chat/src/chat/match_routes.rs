@@ -1,7 +1,7 @@
 //! Match related routes
 
 use axum::{Extension, extract::State};
-use model_chat::{AccountIdInternal, MatchesIteratorState, MatchesPage};
+use model_chat::{AccountIdInternal, AccountState, MatchesIteratorState, MatchesPage};
 use server_api::{S, create_open_api_router};
 use server_data_chat::read::GetReadChatCommands;
 use simple_backend::create_counters;
@@ -23,8 +23,14 @@ const PATH_GET_INITIAL_MATCHES_ITERATOR_STATE: &str = "/chat_api/matches/initial
 )]
 pub async fn get_initial_matches_iterator_state(
     State(state): State<S>,
+    Extension(account_state): Extension<AccountState>,
 ) -> Result<Json<MatchesIteratorState>, StatusCode> {
     CHAT.get_initial_matches_iterator_state.incr();
+
+    if account_state != AccountState::Normal {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
     let iterator_state = state
         .read()
         .chat()
@@ -52,9 +58,15 @@ const PATH_POST_GET_MATCHES_ITERATOR_PAGE: &str = "/chat_api/matches";
 pub async fn post_get_matches_iterator_page(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
+    Extension(account_state): Extension<AccountState>,
     Json(iterator_state): Json<MatchesIteratorState>,
 ) -> Result<Json<MatchesPage>, StatusCode> {
     CHAT.post_get_matches_iterator_page.incr();
+
+    if account_state != AccountState::Normal {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
     let profiles = state
         .read()
         .chat()
