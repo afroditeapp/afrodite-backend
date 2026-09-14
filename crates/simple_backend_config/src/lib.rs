@@ -148,6 +148,10 @@ impl SimpleBackendConfig {
         &self.file.socket
     }
 
+    pub fn allowed_web_origins(&self) -> &[String] {
+        &self.file.api.allowed_web_origins
+    }
+
     pub fn sqlite_in_ram(&self) -> bool {
         self.sqlite_in_ram
     }

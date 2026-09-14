@@ -169,6 +169,7 @@ fn new_config(config: &TestMode, bot_api_port: u16) -> (ConfigFile, SimpleBacken
             local_bot_api_port: Some(bot_api_port),
             debug_local_bot_api_ip: None,
         },
+        api: Default::default(),
         push_notifications: PushNotificationConfig::default(),
         sign_in_with: SignInWithConfig::default(),
         tls: TlsConfig::default(),

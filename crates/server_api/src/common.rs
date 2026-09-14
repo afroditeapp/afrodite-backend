@@ -246,7 +246,7 @@ pub async fn get_connect_websocket(
         })?;
 
     if info.client_type == WebSocketClientTypeNumber::Web {
-        let allowed_origins = state.config().allowed_web_origins();
+        let allowed_origins = state.config().simple_backend().allowed_web_origins();
         let origin = header_map
             .get(http::header::ORIGIN)
             .and_then(|v| v.to_str().ok())

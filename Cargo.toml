@@ -131,7 +131,7 @@ hyper-util = { version = "0.1.20", features = ["full"] }
 axum = { version = "0.8.9", features = ["ws", "macros", "http2"] }
 axum-extra = { version = "0.12.6", features = ["typed-header"] }
 tower = "0.5.3"
-tower-http = { version = "0.6.11", features = ["trace", "compression-br", "compression-gzip", "compression-zstd"] }
+tower-http = { version = "0.6.11", features = ["trace", "cors", "compression-br", "compression-gzip", "compression-zstd"] }
 
 # Email sending
 lettre = { version = "0.11.23", default-features = false, features = ["smtp-transport", "pool", "hostname", "builder", "tokio1-rustls", "aws-lc-rs", "rustls-platform-verifier"] }

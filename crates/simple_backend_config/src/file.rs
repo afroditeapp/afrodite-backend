@@ -24,6 +24,12 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 public_api = "127.0.0.1:3000"
 local_bot_api_port = 3001
 
+# HTTP responses include Access-Control-Allow-Origin header when the request
+# Origin header matches one of these values. WebSocket connections from web
+# clients are rejected unless the Origin header matches one of these values.
+# [api]
+# allowed_web_origins = ["https://example.com"]
+
 # Use SQLite with default settings
 [database.sqlite]
 
@@ -168,6 +174,8 @@ pub struct SimpleBackendConfigFile {
     #[serde(default)]
     pub socket: SocketConfig,
     #[serde(default)]
+    pub api: ApiConfig,
+    #[serde(default)]
     pub push_notifications: PushNotificationConfig,
     #[serde(default)]
     pub sign_in_with: SignInWithConfig,
@@ -190,6 +198,19 @@ pub struct SimpleBackendConfigFile {
     pub video_calling: VideoCallingConfig,
 }
 
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+#[serde(default)]
+pub struct ApiConfig {
+    /// Allowed `Origin` header values for requests from web clients.
+    ///
+    /// HTTP responses include `Access-Control-Allow-Origin` header when the
+    /// request `Origin` header matches one of these values.
+    ///
+    /// WebSocket connections from web clients are rejected unless the
+    /// `Origin` header matches one of these values.
+    pub allowed_web_origins: Vec<String>,
+}
+
 impl SimpleBackendConfigFile {
     pub fn minimal_config_for_api_doc_json() -> Self {
         Self {
@@ -199,6 +220,7 @@ impl SimpleBackendConfigFile {
                 local_bot_api_port: None,
                 debug_local_bot_api_ip: None,
             },
+            api: ApiConfig::default(),
             database: DatabaseConfig::sqlite(),
             push_notifications: PushNotificationConfig::default(),
             sign_in_with: SignInWithConfig::default(),

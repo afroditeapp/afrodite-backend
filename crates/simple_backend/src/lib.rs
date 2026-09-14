@@ -31,6 +31,7 @@ use std::{
     net::{IpAddr, Ipv4Addr, SocketAddr},
     pin::Pin,
     sync::Arc,
+    time::Duration,
 };
 
 use app::{
@@ -47,6 +48,10 @@ use axum::{
 };
 use futures::future::poll_fn;
 use headers::{CacheControl, HeaderMapExt};
+use http::{
+    Method,
+    header::{AUTHORIZATION, CONTENT_TYPE},
+};
 use hyper::{body::Incoming, header::CACHE_CONTROL};
 use hyper_util::rt::{TokioExecutor, TokioIo};
 use image::ImageProcess;
@@ -73,6 +78,7 @@ use tower::{Service, ServiceBuilder};
 use tower_http::{
     CompressionLevel,
     compression::{CompressionLayer, Predicate, predicate::SizeAbove},
+    cors::{AllowOrigin, CorsLayer},
     trace::TraceLayer,
 };
 use tracing::{debug, error, info, warn};
@@ -402,6 +408,18 @@ impl<T: BusinessLogic> SimpleBackend<T> {
                     (ip_country_tracker.clone(), config.public_api_tls_disabled()),
                     track_http_request_country,
                 ))
+                .layer(
+                    CorsLayer::new()
+                        .allow_origin(AllowOrigin::list(
+                            config
+                                .allowed_web_origins()
+                                .iter()
+                                .filter_map(|origin| origin.parse().ok()),
+                        ))
+                        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
+                        .allow_headers([AUTHORIZATION, CONTENT_TYPE])
+                        .max_age(Duration::from_hours(1)),
+                )
                 .layer(
                     CompressionLayer::new()
                         .quality(CompressionLevel::Fastest)
