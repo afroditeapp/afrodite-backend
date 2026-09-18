@@ -430,9 +430,12 @@ diesel_i64_wrapper!(AccessTokenUnixTime);
 
 /// Email login token is a 128 bit token used for email-based authentication
 /// where client receives one token via API and another is sent via email.
+///
+/// The token's string representation can be selected as a single word with
+/// a double click.
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone, Eq, Hash, PartialEq)]
 pub struct EmailLoginToken {
-    /// Base64 URL safe without padding
+    /// Base64 URL safe without padding where `-` is encoded as `_a` and `_` as `_b`.
     token: String,
 }
 
@@ -441,7 +444,7 @@ impl EmailLoginToken {
         // Generate 128 bit token
         let token = random_128_bits();
         let email_token = Self {
-            token: base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(token),
+            token: Self::encode(&token),
         };
         (email_token, token.to_vec())
     }
@@ -464,12 +467,51 @@ impl EmailLoginToken {
 
     pub fn from_bytes(data: &[u8]) -> Self {
         Self {
-            token: base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(data),
+            token: Self::encode(data),
         }
     }
 
     pub fn bytes(&self) -> Result<Vec<u8>, base64::DecodeError> {
-        base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(&self.token)
+        Self::decode(&self.token)
+    }
+
+    /// Encode bytes as a copyable base64url string without padding.
+    ///
+    /// `-` is replaced with `_a` and `_` with `_b` so that the resulting
+    /// string only contains word characters and can be selected as a single
+    /// word on all platforms.
+    fn encode(data: &[u8]) -> String {
+        let encoded = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(data);
+        let mut result = String::with_capacity(encoded.len());
+        for c in encoded.chars() {
+            match c {
+                '-' => result.push_str("_a"),
+                '_' => result.push_str("_b"),
+                c => result.push(c),
+            }
+        }
+        result
+    }
+
+    /// Decode a copyable base64url string back to bytes.
+    ///
+    /// Reverses [`Self::encode`] by mapping `_a` back to `-` and `_b` back to
+    /// `_` before base64url decoding.
+    fn decode(token: &str) -> Result<Vec<u8>, base64::DecodeError> {
+        let mut base64url = String::with_capacity(token.len());
+        let mut chars = token.chars();
+        while let Some(c) = chars.next() {
+            if c == '_' {
+                match chars.next() {
+                    Some('a') => base64url.push('-'),
+                    Some('b') => base64url.push('_'),
+                    _ => return Err(base64::DecodeError::InvalidByte(0, 0)),
+                }
+            } else {
+                base64url.push(c);
+            }
+        }
+        base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(base64url)
     }
 }
 
@@ -686,10 +728,14 @@ impl From<Account> for AccountStateRelatedSharedState {
 mod tests {
     use base64::Engine;
 
-    use crate::{AccessToken, RefreshToken};
+    use crate::{AccessToken, EmailLoginToken, RefreshToken};
 
     fn is_base64url_no_padding_character(c: char) -> bool {
         c.is_ascii_alphanumeric() || c == '-' || c == '_'
+    }
+
+    fn is_word_character(c: char) -> bool {
+        c.is_ascii_alphanumeric() || c == '_'
     }
 
     fn is_base64_character(c: char) -> bool {
@@ -732,5 +778,30 @@ mod tests {
         for c in token.token.chars() {
             assert!(is_base64_character(c));
         }
+    }
+
+    #[test]
+    fn email_login_token_encode_and_decode_roundtrip() {
+        // `-` (base64url index 62) and `_` (index 63) are the only base64url
+        // characters that are not word characters, so exercise both.
+        let bytes = [0xfb, 0xff, 0xff];
+        let token = EmailLoginToken::from_bytes(&bytes);
+        assert_eq!(token.as_str(), "_a_b_b_b");
+        assert_eq!(token.bytes().unwrap(), bytes);
+        assert_eq!(
+            EmailLoginToken::new("_a_b_b_b".to_string())
+                .bytes()
+                .unwrap(),
+            bytes
+        );
+    }
+
+    #[test]
+    fn email_login_token_generated_contains_only_word_characters_and_roundtrips() {
+        let (generated, generated_bytes) = EmailLoginToken::generate_new_with_bytes();
+        for c in generated.as_str().chars() {
+            assert!(is_word_character(c), "unexpected character: {c:?}");
+        }
+        assert_eq!(generated.bytes().unwrap(), generated_bytes);
     }
 }

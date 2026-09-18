@@ -126,6 +126,7 @@
     "subsec",
     "strftime",
     "regclass",
+    "roundtrips",
 
     // Finnish place names
     "Kilpisjärvi",
