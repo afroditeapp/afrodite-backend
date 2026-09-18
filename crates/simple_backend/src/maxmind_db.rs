@@ -329,7 +329,9 @@ impl MaxMindDbManager {
     async fn load_db_file_to_ram(&self) -> Result<(), MaxMindDbError> {
         let db = self.db_file()?;
         let db = tokio::task::spawn_blocking(|| {
-            maxminddb::Reader::open_readfile(db).change_context(MaxMindDbError::Read)
+            let db = maxminddb::Reader::open_readfile(db).change_context(MaxMindDbError::Read)?;
+            validate_country_code_case(&db);
+            Ok::<_, error_stack::Report<MaxMindDbError>>(db)
         })
         .await
         .change_context(MaxMindDbError::Read)??;
@@ -337,5 +339,44 @@ impl MaxMindDbManager {
         self.data.replace_db(db).await;
 
         Ok(())
+    }
+}
+
+/// Validates that the MaxMind DB contains uppercase ASCII country codes.
+///
+/// Some databases use lowercase (non-ISO-compatible) country codes. This
+/// checks the first entry with country data and logs an error if its code is not
+/// all-uppercase ASCII.
+fn validate_country_code_case(db: &maxminddb::Reader<Vec<u8>>) {
+    let networks = match db.networks(Default::default()) {
+        Ok(networks) => networks,
+        Err(e) => {
+            error!("MaxMind DB validation failed: {}", e);
+            return;
+        }
+    };
+
+    for result in networks {
+        let lookup = match result {
+            Ok(lookup) => lookup,
+            Err(e) => {
+                error!("MaxMind DB validation failed: {}", e);
+                return;
+            }
+        };
+
+        let Some(country) = lookup.decode::<maxminddb::geoip2::Country>().ok().flatten() else {
+            continue;
+        };
+
+        if let Some(iso_code) = country.country.iso_code {
+            if !iso_code.chars().all(|c| c.is_ascii_uppercase()) {
+                error!(
+                    "MaxMind DB contains non-uppercase ASCII country code: {:?}",
+                    iso_code
+                );
+            }
+            return;
+        }
     }
 }
