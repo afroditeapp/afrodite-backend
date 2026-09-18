@@ -23,7 +23,7 @@ email_body_template = """
 email_body_content_type_is_html = false
 
 [custom_keys.footer]
-default = "Footer"
+default = "This is automatic message sent by a dating app."
 
 # Email verification
 
