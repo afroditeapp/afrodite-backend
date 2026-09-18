@@ -1,11 +1,9 @@
 use std::{collections::HashMap, io::Write, path::Path};
 
 use error_stack::ResultExt;
-use handlebars::Handlebars;
 use model::StringResourceInternal;
 use serde::Deserialize;
-use serde_json::json;
-use simple_backend_utils::Result;
+use simple_backend_utils::{Result, render_template};
 use toml::map::Map;
 
 use crate::file::ConfigFileError;
@@ -14,9 +12,9 @@ const DEFAULT_WEB_CONTENT: &str = r#"
 # Web page template (non-translatable, required)
 # Available variables: title, body
 web_page_template = """
-{{title}}
+{title}
 
-{{body}}
+{body}
 """
 
 web_page_content_type_is_html = false
@@ -27,10 +25,10 @@ web_page_content_type_is_html = false
 default = "Access Denied"
 
 [access_denied.body]
-default = "Sorry, access to this application is not allowed from your current IP address.\n\nYour IP: {{ip_address}}\n\nIf you believe this is an error, please contact the system administrator."
+default = "Sorry, access to this application is not allowed from your current IP address.\n\nYour IP: {ip_address}\n\nIf you believe this is an error, please contact the system administrator."
 
 # Email Verification Form Page
-# This page must be HTML (is forced). Template variables: {{title}}, {{body}}, {{button}}, {{token}}.
+# This page must be HTML (is forced). Template variables: {title}, {body}, {button}, {token}.
 
 [email_verification]
 web_page_template = """
@@ -40,11 +38,11 @@ web_page_template = """
 <meta charset="utf-8">
 </head>
 <body>
-<h1>{{title}}</h1>
-<p>{{body}}</p>
+<h1>{title}</h1>
+<p>{body}</p>
 <form action="" method="POST">
-<input type="hidden" name="token" value="{{token}}">
-<button type="submit">{{button}}</button>
+<input type="hidden" name="token" value="{token}">
+<button type="submit">{button}</button>
 </form>
 </body>
 </html>
@@ -107,9 +105,9 @@ pub struct WebContentFile {
 }
 
 const DEFAULT_TEMPLATE: &str = "
-{{title}}
+{title}
 
-{{body}}
+{body}
 ";
 
 impl Default for WebContentFile {
@@ -151,23 +149,12 @@ impl WebContentFile {
             ));
         }
 
-        // Validate that template can be parsed
-        if let Err(e) = Handlebars::new().render_template_with_context_to_write(
-            &config.web_page_template,
-            &handlebars::Context::null(),
-            &mut std::io::sink(),
-        ) {
-            return Err(ConfigFileError::InvalidConfig)
-                .attach(format!("Template parsing error: {e}"));
-        }
-
-        // Validate email_verification template contains {{token}}
+        // Validate email_verification template contains {token}
         if let Some(ref v) = config.email_verification
-            && !v.web_page_template.contains("{{token}}")
+            && !v.web_page_template.contains("{token}")
         {
-            return Err(ConfigFileError::InvalidConfig).attach(
-                "email_verification.web_page_template must contain '{{token}}'".to_string(),
-            );
+            return Err(ConfigFileError::InvalidConfig)
+                .attach("email_verification.web_page_template must contain '{token}'".to_string());
         }
 
         Ok(config)
@@ -217,20 +204,15 @@ impl<'a> WebStringGetter<'a> {
             .cloned()
             .unwrap_or_else(|| default_body.to_string());
 
-        let rendered_body = Handlebars::new()
-            .render_template(&body, &body_data)
-            .change_context(ConfigFileError::InvalidConfig)
-            .attach_opaque_with(|| "Body template rendering error".to_string())?;
+        let rendered_body = render_template(
+            &body,
+            &body_data.iter().map(|(k, v)| (*k, *v)).collect::<Vec<_>>(),
+        );
 
-        let data = json!({
-            "title": title,
-            "body": rendered_body,
-        });
-
-        let rendered = Handlebars::new()
-            .render_template(&self.config.web_page_template, &data)
-            .change_context(ConfigFileError::InvalidConfig)
-            .attach_opaque_with(|| "Template rendering error".to_string())?;
+        let rendered = render_template(
+            &self.config.web_page_template,
+            &[("title", &title), ("body", &rendered_body)],
+        );
 
         Ok(WebContent {
             content: rendered,
@@ -242,7 +224,7 @@ impl<'a> WebStringGetter<'a> {
         self.render_body_and_web_page(
             &self.config.access_denied,
             "Access Denied",
-            "Sorry, access to this application is not allowed from your current IP address.\n\nYour IP: {{ip_address}}\n\nIf you believe this is an error, please contact the system administrator.",
+            "Sorry, access to this application is not allowed from your current IP address.\n\nYour IP: {ip_address}\n\nIf you believe this is an error, please contact the system administrator.",
             HashMap::from_iter([("ip_address", ip_address)]),
         )
     }
@@ -278,17 +260,15 @@ impl<'a> WebStringGetter<'a> {
             .map(|v| v.web_page_template.as_str())
             .unwrap_or_default();
 
-        let data = json!({
-            "title": title,
-            "body": body,
-            "button": button,
-            "token": token,
-        });
-
-        let rendered = Handlebars::new()
-            .render_template(template, &data)
-            .change_context(ConfigFileError::InvalidConfig)
-            .attach_opaque_with(|| "Template rendering error".to_string())?;
+        let rendered = render_template(
+            template,
+            &[
+                ("title", title.as_str()),
+                ("body", body.as_str()),
+                ("button", button.as_str()),
+                ("token", token),
+            ],
+        );
 
         Ok(WebContent {
             content: rendered,

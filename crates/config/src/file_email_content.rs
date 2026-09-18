@@ -1,23 +1,21 @@
 use std::{collections::HashMap, io::Write, path::Path};
 
 use error_stack::ResultExt;
-use handlebars::Handlebars;
 use model::StringResourceInternal;
 use serde::Deserialize;
-use serde_json::json;
-use simple_backend_utils::Result;
+use simple_backend_utils::{Result, render_template};
 
 use crate::file::ConfigFileError;
 
 const DEFAULT_EMAIL_CONTENT: &str = r#"
-# Common template for all emails (non-translatable, required)
-# All custom keys plus "subject" and "body" are available in the template
+# Common template for all emails (non-translatable, required).
+# All custom keys plus "subject" and "body" are available in the template.
 email_body_template = """
-{{subject}}
+{subject}
 
-{{body}}
+{body}
 
-{{footer}}
+{footer}
 """
 
 email_body_content_type_is_html = false
@@ -31,7 +29,7 @@ default = "This is automatic message sent by a dating app."
 default = "Verify your email address"
 
 [email_verification.body]
-default = "Please verify your email address by opening this link: https://example.com/verify_email?token={{token}}"
+default = "Please verify your email address by opening this link: https://example.com/verify_email?token={token}"
 
 # New message
 
@@ -79,7 +77,7 @@ default = "Your account will be deleted. This is the final reminder."
 default = "Verify your new email address"
 
 [email_change_verification.body]
-default = "Please verify your new email address by opening this link: https://example.com/verify_new_email?token={{token}}"
+default = "Please verify your new email address by opening this link: https://example.com/verify_new_email?token={token}"
 
 # Email change notification
 
@@ -95,7 +93,7 @@ default = "Your account's email address will be changed. If you did not request 
 default = "Your login code"
 
 [email_login.body]
-default = "Here is your login code: {{token}}"
+default = "Here is your login code: {token}"
 
 "#;
 
@@ -118,26 +116,26 @@ pub struct EmailContentFile {
     email_body_content_type_is_html: bool,
     #[serde(default)]
     custom_keys: HashMap<String, StringResourceInternal>,
-    /// "{{token}}" is replaced with email verification token
+    /// "{token}" is replaced with email verification token
     email_verification: Option<EmailContentStrings>,
     new_message: Option<EmailContentStrings>,
     new_like: Option<EmailContentStrings>,
     account_deletion_remainder_first: Option<EmailContentStrings>,
     account_deletion_remainder_second: Option<EmailContentStrings>,
     account_deletion_remainder_third: Option<EmailContentStrings>,
-    /// "{{token}}" is replaced with email change verification token
+    /// "{token}" is replaced with email change verification token
     email_change_verification: Option<EmailContentStrings>,
     email_change_notification: Option<EmailContentStrings>,
-    /// "{{token}}" is replaced with email login token
+    /// "{token}" is replaced with email login token
     email_login: Option<EmailContentStrings>,
     #[serde(flatten)]
     other: toml::Table,
 }
 
 const DEFAULT_EMAIL_TEMPLATE: &str = "
-{{subject}}
+{subject}
 
-{{body}}
+{body}
 ";
 
 impl Default for EmailContentFile {
@@ -185,25 +183,14 @@ impl EmailContentFile {
             ));
         }
 
-        // Validate that template can be parsed
-        if let Err(e) = Handlebars::new().render_template_with_context_to_write(
-            &config.email_body_template,
-            &handlebars::Context::null(),
-            &mut std::io::sink(),
-        ) {
-            return Err(ConfigFileError::InvalidConfig)
-                .attach(format!("Template parsing error: {e}"));
-        }
-
         // Find all variable references in the template
         let mut referenced_keys = std::collections::HashSet::new();
         for line in config.email_body_template.lines() {
-            for cap in line.match_indices("{{") {
-                if let Some(end_pos) = line[cap.0..].find("}}") {
-                    let var_content = &line[cap.0 + 2..cap.0 + end_pos].trim();
-                    // Extract variable name (handle helpers and paths)
+            for cap in line.match_indices("{") {
+                if let Some(end_pos) = line[cap.0..].find("}") {
+                    let var_content = &line[cap.0 + 1..cap.0 + end_pos].trim();
+                    // Extract variable name
                     let var_name = var_content.split_whitespace().next().unwrap_or("");
-                    let var_name = var_name.trim_start_matches('#').trim_start_matches('/');
                     if !var_name.is_empty() && var_name != "subject" && var_name != "body" {
                         referenced_keys.insert(var_name.to_string());
                     }
@@ -221,10 +208,10 @@ impl EmailContentFile {
         }
 
         if let Some(email_verification) = &config.email_verification
-            && !email_verification.body.all_strings_contain("{{token}}")
+            && !email_verification.body.all_strings_contain("{token}")
         {
             return Err(ConfigFileError::InvalidConfig)
-                .attach("'{{token}}' is missing from email_verification body text".to_string());
+                .attach("'{token}' is missing from email_verification body text".to_string());
         }
 
         Ok(config)
@@ -278,29 +265,25 @@ impl<'a> EmailStringGetter<'a> {
             .cloned()
             .unwrap_or_else(|| default_body.to_string());
 
-        let rendered_body = Handlebars::new()
-            .render_template(&body, &body_data)
-            .change_context(ConfigFileError::InvalidConfig)
-            .attach_opaque_with(|| "Template rendering error".to_string())?;
+        let rendered_body = render_template(
+            &body,
+            &body_data.iter().map(|(k, v)| (*k, *v)).collect::<Vec<_>>(),
+        );
 
-        let mut data = json!({
-            "subject": subject,
-            "body": rendered_body,
-        });
-
-        // Add custom keys
+        // Build the full data set: subject, rendered body, and custom keys
+        let mut data = vec![
+            ("subject", subject.as_str()),
+            ("body", rendered_body.as_str()),
+        ];
         for (key, resource) in &self.config.custom_keys {
             let value = resource
                 .translations
                 .get(self.language)
                 .unwrap_or(&resource.default);
-            data[key] = json!(value);
+            data.push((key.as_str(), value.as_str()));
         }
 
-        let rendered = Handlebars::new()
-            .render_template(&self.config.email_body_template, &data)
-            .change_context(ConfigFileError::InvalidConfig)
-            .attach_opaque_with(|| "Template rendering error".to_string())?;
+        let rendered = render_template(&self.config.email_body_template, &data);
 
         Ok(EmailContent {
             subject,
@@ -313,7 +296,7 @@ impl<'a> EmailStringGetter<'a> {
         self.render_body_and_apply_template(
             &self.config.email_verification,
             "Verify your email address",
-            "Please verify your email address by opening this link: https://example.com/verify_email?token={{token}}",
+            "Please verify your email address by opening this link: https://example.com/verify_email?token={token}",
             HashMap::from_iter([("token", token)]),
         )
     }
@@ -362,7 +345,7 @@ impl<'a> EmailStringGetter<'a> {
         self.render_body_and_apply_template(
             &self.config.email_change_verification,
             "Verify your new email address",
-            "Please verify your new email address by opening this link: https://example.com/verify_new_email?token={{token}}",
+            "Please verify your new email address by opening this link: https://example.com/verify_new_email?token={token}",
             HashMap::from_iter([("token", token)]),
         )
     }
@@ -379,7 +362,7 @@ impl<'a> EmailStringGetter<'a> {
         self.render_body_and_apply_template(
             &self.config.email_login,
             "Your login code",
-            "Here is your login code: {{token}}",
+            "Here is your login code: {token}",
             HashMap::from_iter([("token", token)]),
         )
     }

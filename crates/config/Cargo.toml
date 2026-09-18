@@ -15,8 +15,6 @@ regex = { workspace = true }
 serde = { workspace = true }
 toml = { workspace = true }
 csv = { workspace = true }
-handlebars = { workspace = true }
-serde_json = { workspace = true }
 
 reqwest = { workspace = true }
 url = { workspace = true }

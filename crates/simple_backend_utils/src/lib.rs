@@ -17,6 +17,7 @@ pub mod string;
 pub mod time;
 mod uuid;
 
+pub use string::render_template;
 pub use uuid::{UuidBase64Url, UuidBase64UrlToml};
 
 pub type Result<T, C> = std::result::Result<T, Report<C>>;

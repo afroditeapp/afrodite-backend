@@ -84,11 +84,46 @@ impl<'de> Deserialize<'de> for NonEmptyString {
     }
 }
 
+/// Replace `{key}` placeholders in a template with the given values.
+/// This is a plain string substitution (no HTML escaping), consistent with
+/// the rest of the backend's templating convention.
+///
+/// Values are substituted in the order they appear in `values`. Each value
+/// replaces the first remaining occurrence of its `{key}` placeholder.
+pub fn render_template(template: &str, values: &[(&str, &str)]) -> String {
+    let mut result = template.to_string();
+    for (key, value) in values {
+        result = result.replace(&format!("{{{key}}}"), value);
+    }
+    result
+}
+
 #[cfg(test)]
 mod tests {
     use serde_json;
 
     use super::*;
+
+    #[test]
+    fn test_render_template() {
+        let rendered = render_template(
+            "Hello {name}, your token is {token}",
+            &[("name", "Alice"), ("token", "abc123")],
+        );
+        assert_eq!(rendered, "Hello Alice, your token is abc123");
+    }
+
+    #[test]
+    fn test_render_template_missing_placeholder() {
+        let rendered = render_template("Hello {name}", &[("other", "x")]);
+        assert_eq!(rendered, "Hello {name}");
+    }
+
+    #[test]
+    fn test_render_template_repeated_placeholder() {
+        let rendered = render_template("{a} and {a}", &[("a", "1")]);
+        assert_eq!(rendered, "1 and 1");
+    }
 
     #[test]
     fn test_non_empty_string_creation() {
