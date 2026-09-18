@@ -40,9 +40,11 @@ pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
                 *file = abs_path_for_directory_or_file_which_might_not_exists(&*file)
                     .map_err(|_| GetConfigError::GetWorkingDir.into_report())?;
             }
-            DataLoadSubMode::ProfileAttributes { file, .. } => {
-                *file = abs_path_for_directory_or_file_which_might_not_exists(&*file)
-                    .map_err(|_| GetConfigError::GetWorkingDir.into_report())?;
+            DataLoadSubMode::ProfileAttributes { files, .. } => {
+                for file in files {
+                    *file = abs_path_for_directory_or_file_which_might_not_exists(&*file)
+                        .map_err(|_| GetConfigError::GetWorkingDir.into_report())?;
+                }
             }
             DataLoadSubMode::DynamicClientFeatures { file } => {
                 *file = abs_path_for_directory_or_file_which_might_not_exists(&*file)
@@ -134,10 +136,10 @@ pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
                         handle_load_image_processing_config(&writer, file).await
                     }
                     DataLoadSubMode::ProfileAttributes {
-                        file,
+                        files,
                         partial_merge,
                     } => {
-                        handle_load_profile_attributes(&reader, &writer, file, partial_merge).await
+                        handle_load_profile_attributes(&reader, &writer, files, partial_merge).await
                     }
                     DataLoadSubMode::DynamicClientFeatures { file } => {
                         handle_load_dynamic_client_features(&write_handle, file).await
@@ -241,14 +243,40 @@ async fn handle_view_image_processing_config(reader: &DbReaderRaw<'_>) {
 async fn handle_load_profile_attributes(
     reader: &DbReaderRaw<'_>,
     writer: &DbWriter<'_>,
-    file: PathBuf,
+    files: Vec<PathBuf>,
     partial_merge: bool,
 ) {
-    let content = std::fs::read_to_string(&file)
-        .unwrap_or_else(|e| panic!("Failed to read file {:?}: {}", file, e));
+    // Load and merge all provided schema files. The attribute order mode comes
+    // from the first file and attributes are merged by unique ID with the
+    // latest file winning on conflicts.
+    let mut file_content = None;
+    for file in &files {
+        let content = std::fs::read_to_string(file)
+            .unwrap_or_else(|e| panic!("Failed to read file {:?}: {}", file, e));
 
-    let file_content: ProfileAttributesSchemaExport =
-        toml::from_str(&content).unwrap_or_else(|e| panic!("Failed to parse TOML: {}", e));
+        let parsed: ProfileAttributesSchemaExport =
+            toml::from_str(&content).unwrap_or_else(|e| panic!("Failed to parse TOML: {}", e));
+
+        match &mut file_content {
+            None => file_content = Some(parsed),
+            Some(merged) => {
+                let mut attributes = merged.attributes().to_vec();
+                for provided in parsed.attributes() {
+                    if let Some(existing) = attributes.iter_mut().find(|a| a.id == provided.id) {
+                        *existing = provided.clone();
+                    } else {
+                        attributes.push(provided.clone());
+                    }
+                }
+                *merged = ProfileAttributesSchemaExport::from_attributes(
+                    merged.attribute_order(),
+                    attributes,
+                );
+            }
+        }
+    }
+
+    let file_content = file_content.expect("At least one file must be provided");
 
     let attr_count = file_content.attributes().len();
 

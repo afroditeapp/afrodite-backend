@@ -346,10 +346,14 @@ pub enum DataLoadSubMode {
         /// Path to image processing config file
         file: PathBuf,
     },
-    /// Load profile attributes from file
+    /// Load profile attributes from one or more files
     ProfileAttributes {
-        /// Path to profile attributes file
-        file: PathBuf,
+        /// Paths to profile attributes files
+        ///
+        /// When multiple files are given, they are merged together first:
+        /// the attribute order mode comes from the first file and attributes
+        /// are merged by unique ID with the latest file winning on conflicts.
+        files: Vec<PathBuf>,
         /// Partially merge the provided attributes schema with the existing one
         /// instead of replacing it.
         ///
