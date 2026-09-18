@@ -9,7 +9,8 @@ use std::{
 use base64::Engine;
 use error_stack::{Report, ResultExt};
 use manager_model::ManagerInstanceName;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
+use simple_backend_model::IsoCountryCode;
 use simple_backend_utils::{ContextExt, Result, byte::ByteCount, time::DurationValue};
 use url::Url;
 
@@ -625,20 +626,9 @@ pub struct IpAddressAccessConfig {
     pub ip_allowlist: Vec<IpAddr>,
     /// Allow access from specific IP countries.
     ///
-    /// All strings are converted to uppercase as it is assumed that
+    /// Country codes are normalized to uppercase as it is assumed that
     /// MaxMind DB contains uppercase country codes.
-    #[serde(deserialize_with = "ip_country_allowlist_from_vec_string")]
-    pub ip_country_allowlist: Vec<String>,
-}
-
-pub fn ip_country_allowlist_from_vec_string<'de, D: Deserializer<'de>>(
-    d: D,
-) -> std::result::Result<Vec<String>, D::Error> {
-    Vec::<String>::deserialize(d).map(|v| {
-        v.iter()
-            .map(|v| v.to_ascii_uppercase())
-            .collect::<Vec<String>>()
-    })
+    pub ip_country_allowlist: Vec<IsoCountryCode>,
 }
 
 /// Absolute path with no whitespace.

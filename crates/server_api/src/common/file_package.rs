@@ -356,7 +356,7 @@ pub async fn is_ip_address_accepted(
             && config
                 .ip_country_allowlist
                 .iter()
-                .any(|v| v == country.as_str())
+                .any(|v| v.as_str() == country.as_str())
         {
             return true;
         }

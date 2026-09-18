@@ -626,7 +626,9 @@ async fn is_ip_from_common_country(state: &S, address: IpAddr) -> bool {
         .as_ref()
         .and_then(|ip_db| ip_db.get_country_ref(address))
     {
-        Some(country) => common_countries.iter().any(|v| v == country.as_str()),
+        Some(country) => common_countries
+            .iter()
+            .any(|v| v.as_str() == country.as_str()),
         None => false,
     }
 }

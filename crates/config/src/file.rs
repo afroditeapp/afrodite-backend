@@ -12,7 +12,7 @@ pub use model_server_data::EmailAddress;
 use model_server_state::DemoAccountId;
 use serde::{Deserialize, Serialize};
 use simple_backend_config::file::IpAddressAccessConfig;
-use simple_backend_model::VersionNumber;
+use simple_backend_model::{IsoCountryCode, VersionNumber};
 use simple_backend_utils::{
     Result,
     byte::ByteCount,
@@ -429,8 +429,7 @@ pub struct AccountLimitsConfig {
     pub email_registration_max_per_day_per_ip_common_country: u16,
     /// Country codes which get the less restrictive
     /// per IP limit. Empty by default which disables this feature.
-    #[serde(deserialize_with = "email_registration_common_countries_from_vec_string")]
-    pub email_registration_common_countries: Vec<String>,
+    pub email_registration_common_countries: Vec<IsoCountryCode>,
     pub email_registration_max_per_day: u16,
     pub post_account_verification_queue_item_daily_max_count: u16,
     pub account_verification_queue_max_length: u16,
@@ -468,19 +467,6 @@ impl Default for AccountLimitsConfig {
             custom_email_send_draft_to_my_email_address_monthly_max_count: 10,
         }
     }
-}
-
-fn email_registration_common_countries_from_vec_string<'de, D>(
-    d: D,
-) -> std::result::Result<Vec<String>, D::Error>
-where
-    D: serde::de::Deserializer<'de>,
-{
-    Vec::<String>::deserialize(d).map(|v| {
-        v.iter()
-            .map(|v| v.to_ascii_uppercase())
-            .collect::<Vec<String>>()
-    })
 }
 
 /// Chat related limits config

@@ -21,6 +21,9 @@ pub use time::*;
 pub mod ip;
 pub use ip::*;
 
+pub mod iso_country_code;
+pub use iso_country_code::*;
+
 pub mod version;
 pub use version::*;
 
