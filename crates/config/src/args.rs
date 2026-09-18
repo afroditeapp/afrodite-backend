@@ -350,9 +350,16 @@ pub enum DataLoadSubMode {
     ProfileAttributes {
         /// Path to profile attributes file
         file: PathBuf,
-        /// Append attributes to existing ones instead of replacing them
+        /// Partially merge the provided attributes schema with the existing one
+        /// instead of replacing it.
+        ///
+        /// The provided schema is loaded without validation (it only needs
+        /// to deserialize successfully). The existing and provided schemas are
+        /// merged: the attribute order mode from the existing schema is used,
+        /// and provided attributes with overlapping IDs replace the existing ones.
+        /// The merged schema is then validated normally before saving to DB.
         #[arg(long)]
-        append: bool,
+        partial_merge: bool,
     },
     /// Load dynamic client features config from file
     DynamicClientFeatures {

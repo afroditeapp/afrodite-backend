@@ -133,8 +133,11 @@ pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
                     DataLoadSubMode::ImageProcessingConfig { file } => {
                         handle_load_image_processing_config(&writer, file).await
                     }
-                    DataLoadSubMode::ProfileAttributes { file, append } => {
-                        handle_load_profile_attributes(&reader, &writer, file, append).await
+                    DataLoadSubMode::ProfileAttributes {
+                        file,
+                        partial_merge,
+                    } => {
+                        handle_load_profile_attributes(&reader, &writer, file, partial_merge).await
                     }
                     DataLoadSubMode::DynamicClientFeatures { file } => {
                         handle_load_dynamic_client_features(&write_handle, file).await
@@ -239,7 +242,7 @@ async fn handle_load_profile_attributes(
     reader: &DbReaderRaw<'_>,
     writer: &DbWriter<'_>,
     file: PathBuf,
-    append: bool,
+    partial_merge: bool,
 ) {
     let content = std::fs::read_to_string(&file)
         .unwrap_or_else(|e| panic!("Failed to read file {:?}: {}", file, e));
@@ -247,13 +250,9 @@ async fn handle_load_profile_attributes(
     let file_content: ProfileAttributesSchemaExport =
         toml::from_str(&content).unwrap_or_else(|e| panic!("Failed to parse TOML: {}", e));
 
-    let profile_attrs = file_content
-        .validate()
-        .unwrap_or_else(|e| panic!("Validation failed: {}", e));
+    let attr_count = file_content.attributes().len();
 
-    let attr_count = profile_attrs.attributes().len();
-
-    if append {
+    if partial_merge {
         // Read existing attributes and order mode, then combine them with the
         // new ones so the combined set still passes schema validation.
         // The existing order mode is preserved.
@@ -273,12 +272,13 @@ async fn handle_load_profile_attributes(
             .unwrap();
 
         let mut combined = existing;
-        combined.extend(
-            profile_attrs
-                .attributes()
-                .iter()
-                .map(|a| a.attribute().clone()),
-        );
+        for provided in file_content.attributes() {
+            if let Some(existing) = combined.iter_mut().find(|a| a.id == provided.id) {
+                *existing = provided.clone();
+            } else {
+                combined.push(provided.clone());
+            }
+        }
 
         let combined_export =
             ProfileAttributesSchemaExport::from_attributes(existing_order_mode, combined);
@@ -306,6 +306,10 @@ async fn handle_load_profile_attributes(
             .await
             .unwrap();
     } else {
+        let profile_attrs = file_content
+            .validate()
+            .unwrap_or_else(|e| panic!("Validation failed: {}", e));
+
         writer
             .db_transaction_raw(move |mut cmds| {
                 cmds.common()
