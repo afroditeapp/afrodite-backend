@@ -402,6 +402,11 @@ pub enum DataLoadSubMode {
 
 #[derive(Parser, Debug, Clone)]
 pub enum DataViewSubMode {
+    /// View account ID from email address
+    AccountIdFromEmail {
+        /// Email address
+        email: String,
+    },
     /// View bot config
     BotConfig,
     /// View image processing config

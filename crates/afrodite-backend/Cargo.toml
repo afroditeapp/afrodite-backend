@@ -34,6 +34,7 @@ simple_backend_utils = { path = "../simple_backend_utils" }
 model = { path = "../model" }
 model_server_data = { path = "../model_server_data" }
 database = { path = "../database" }
+database_account = { path = "../database_account" }
 database_media = { path = "../database_media" }
 
 [build-dependencies]

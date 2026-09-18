@@ -11,10 +11,11 @@ use database::{
     DbReaderRaw, DbWriter,
     current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon},
 };
+use database_account::current::read::GetDbReadCommandsAccount;
 use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia};
 use error_stack::IntoReport;
 use model::{AccountId, Attribute, BotConfig, DynamicServerConfig, ImageProcessingDynamicConfig};
-use model_server_data::ProfileAttributesSchemaExport;
+use model_server_data::{EmailAddress, ProfileAttributesSchemaExport};
 use server_data::{
     db_manager::{DatabaseManager, InternalWriting, RouterDatabaseWriteHandle},
     profile_attributes::load_profile_attributes_from_db,
@@ -109,6 +110,9 @@ pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
 
         match mode.mode {
             DataModeSubMode::View { mode: view_mode } => match view_mode {
+                DataViewSubMode::AccountIdFromEmail { email } => {
+                    handle_view_account_id_from_email(&reader, email).await
+                }
                 DataViewSubMode::BotConfig => handle_view_bot_config(&reader).await,
                 DataViewSubMode::ImageProcessingConfig => {
                     handle_view_image_processing_config(&reader).await
@@ -214,6 +218,25 @@ async fn handle_load_image_processing_config(writer: &DbWriter<'_>, file: PathBu
         })
         .await
         .unwrap();
+}
+
+async fn handle_view_account_id_from_email(reader: &DbReaderRaw<'_>, email: String) {
+    let email = EmailAddress::try_from(email).unwrap();
+    let account_id = reader
+        .db_read(move |mut cmds| {
+            Ok(cmds
+                .account()
+                .email()
+                .account_id_from_email(email)?
+                .map(AccountId::from))
+        })
+        .await
+        .unwrap();
+
+    match account_id {
+        Some(account_id) => println!("{account_id}"),
+        None => println!("email not found"),
+    }
 }
 
 async fn handle_view_bot_config(reader: &DbReaderRaw<'_>) {

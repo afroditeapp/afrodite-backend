@@ -96,6 +96,7 @@ dependencies = [
  "config",
  "csv",
  "database",
+ "database_account",
  "database_media",
  "error-stack",
  "manager",
