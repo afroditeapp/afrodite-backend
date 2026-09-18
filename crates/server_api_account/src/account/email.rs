@@ -94,6 +94,10 @@ async fn handle_get_verify_email(
         }
     };
 
+    if AccessToken::new(token.clone()).bytes().is_err() {
+        return create_invalid_token_response(state, accept_language);
+    }
+
     let web_config = state.config().web_content();
     let language = accept_language.as_ref().map(|h| h.language());
     match web_config.get(language.as_ref()).email_verification(&token) {
