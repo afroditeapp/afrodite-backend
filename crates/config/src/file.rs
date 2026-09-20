@@ -66,7 +66,6 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # email_login_token_validity_duration = "15m"
 # email_login_resend_min_wait_duration = "15m"
 # email_login_emails_per_month = 10
-# email_registration_token_validity_duration = "15m"
 # email_registration_max_per_day_per_ip = 1
 # email_registration_max_per_day_per_ip_common_country = 10
 # email_registration_common_countries = ["FI"]
@@ -422,7 +421,6 @@ pub struct AccountLimitsConfig {
     pub email_login_token_validity_duration: DurationValue,
     pub email_login_resend_min_wait_duration: DurationValue,
     pub email_login_emails_per_month: u16,
-    pub email_registration_token_validity_duration: DurationValue,
     pub email_registration_max_per_day_per_ip: u16,
     /// Less restrictive per IP limit used when the requesting IP is
     /// from a country in [Self::email_registration_common_countries].
@@ -456,7 +454,6 @@ impl Default for AccountLimitsConfig {
             email_login_token_validity_duration: DurationValue::from_seconds(15 * 60),
             email_login_resend_min_wait_duration: DurationValue::from_seconds(15 * 60),
             email_login_emails_per_month: 10,
-            email_registration_token_validity_duration: DurationValue::from_seconds(15 * 60),
             email_registration_max_per_day_per_ip: 1,
             email_registration_max_per_day_per_ip_common_country: 10,
             email_registration_common_countries: Vec::new(),

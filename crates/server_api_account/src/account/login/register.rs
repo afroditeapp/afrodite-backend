@@ -1,4 +1,4 @@
-use model_account::{LoginResult, RequestEmailLoginToken, SignInWithInfo};
+use model_account::{EmailAddress, LoginResult, RequestEmailLoginToken, SignInWithInfo};
 use server_api::{S, TokenData, app::GetConfig, db_write};
 use server_data::app::RegisterImplResult;
 use server_data_account::write::GetWriteCommandsAccount;
@@ -21,7 +21,7 @@ pub(super) async fn request_email_registration_token(
             state
                 .config()
                 .limits_account()
-                .email_registration_token_validity_duration,
+                .email_login_token_validity_duration,
         )
         .await;
 
@@ -37,25 +37,8 @@ pub(super) async fn request_email_registration_token(
 pub(super) async fn email_registration_with_token_impl(
     state: S,
     connection: ConnectionId,
-    client_token: Vec<u8>,
-    email_token: Vec<u8>,
+    email: EmailAddress,
 ) -> Result<LoginResult, StatusCode> {
-    let email = match state
-        .email_registration_tokens()
-        .consume(
-            &client_token,
-            &email_token,
-            state
-                .config()
-                .limits_account()
-                .email_registration_token_validity_duration,
-        )
-        .await
-    {
-        Some(TokenData::Email(email)) => email,
-        _ => return Ok(LoginResult::error_invalid_email_login_token()),
-    };
-
     let id = match state
         .data_all_access()
         .register_impl(SignInWithInfo::default(), Some(email), connection.ip())

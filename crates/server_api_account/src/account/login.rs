@@ -894,53 +894,47 @@ async fn post_email_login_with_token_impl(
         return Ok(LoginResult::error_invalid_email_login_token().into());
     };
 
-    let client_token_clone = client_token.clone();
-    let email_token_clone = email_token.clone();
-
-    // First try login token from RAM store (existing account)
-    let account_id = match state
+    let token_data = state
         .email_registration_tokens()
         .consume(
-            &client_token_clone,
-            &email_token_clone,
+            &client_token,
+            &email_token,
             state
                 .config()
                 .limits_account()
                 .email_login_token_validity_duration,
         )
-        .await
-    {
-        Some(TokenData::Account(id)) => Some(id),
-        _ => None,
-    };
+        .await;
 
-    if let Some(account_id) = account_id {
-        // Login token was valid
-        let r = login_impl(account_id.as_id(), connection, &state).await?;
+    match token_data {
+        Some(TokenData::Account(account_id)) => {
+            // Existing account login
+            let r = login_impl(account_id.as_id(), connection, &state).await?;
 
-        if let Some(aid) = r.aid() {
-            let id = state.get_internal_id(aid).await?;
-            db_write!(state, move |cmds| {
-                cmds.common()
-                    .client_config()
-                    .client_login_session_platform(id, request.client_info.client_type)
-                    .await?;
-                cmds.common()
-                    .client_config()
-                    .app_attestation(id, attestation_result)
-                    .await?;
-                Ok(())
-            })?;
+            if let Some(aid) = r.aid() {
+                let id = state.get_internal_id(aid).await?;
+                db_write!(state, move |cmds| {
+                    cmds.common()
+                        .client_config()
+                        .client_login_session_platform(id, request.client_info.client_type)
+                        .await?;
+                    cmds.common()
+                        .client_config()
+                        .app_attestation(id, attestation_result)
+                        .await?;
+                    Ok(())
+                })?;
+            }
+
+            Ok(r.into())
         }
-
-        return Ok(r.into());
+        Some(TokenData::Email(email)) => {
+            // New account registration
+            let r = register::email_registration_with_token_impl(state, connection, email).await?;
+            Ok(r.into())
+        }
+        None => Ok(LoginResult::error_invalid_email_login_token().into()),
     }
-
-    let r =
-        register::email_registration_with_token_impl(state, connection, client_token, email_token)
-            .await?;
-
-    Ok(r.into())
 }
 
 create_counters!(
