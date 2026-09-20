@@ -50,9 +50,9 @@ use futures::future::poll_fn;
 use headers::{CacheControl, HeaderMapExt};
 use http::{
     Method,
-    header::{AUTHORIZATION, CONTENT_TYPE},
+    header::{AUTHORIZATION, CACHE_CONTROL, CONTENT_TYPE, ETAG},
 };
-use hyper::{body::Incoming, header::CACHE_CONTROL};
+use hyper::body::Incoming;
 use hyper_util::rt::{TokioExecutor, TokioIo};
 use image::ImageProcess;
 use manager_client::{ManagerApiClient, ManagerConnectionManager, ManagerEventHandler};
@@ -418,6 +418,8 @@ impl<T: BusinessLogic> SimpleBackend<T> {
                         ))
                         .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
                         .allow_headers([AUTHORIZATION, CONTENT_TYPE])
+                        // Allow web client to access content quality info
+                        .expose_headers([ETAG])
                         .max_age(Duration::from_hours(1)),
                 )
                 .layer(
