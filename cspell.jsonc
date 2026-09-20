@@ -127,6 +127,7 @@
     "strftime",
     "regclass",
     "roundtrips",
+    "safelisted",
 
     // Finnish place names
     "Kilpisjärvi",

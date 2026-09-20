@@ -416,7 +416,8 @@ impl<T: BusinessLogic> SimpleBackend<T> {
                                 .iter()
                                 .filter_map(|origin| origin.parse().ok()),
                         ))
-                        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
+                        // GET and POST aren't here because those are CORS-safelisted
+                        .allow_methods([Method::PUT, Method::DELETE])
                         .allow_headers([AUTHORIZATION, CONTENT_TYPE])
                         // Allow web client to access content quality info
                         .expose_headers([ETAG])
