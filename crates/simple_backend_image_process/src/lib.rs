@@ -15,7 +15,8 @@ use simple_backend_utils::{Result, consts::MIB_IN_BYTES};
 mod face_detection;
 mod nsfw_detection;
 
-const SOURCE_IMG_MIN_WIDTH_AND_HEIGHT: u32 = 512;
+// 480 is VGA resolution width
+const SOURCE_IMG_MIN_WIDTH_AND_HEIGHT: u32 = 480;
 
 /// RGB image with 200 000 000 pixels and 8-bits per color is about 573 MiB
 const SOURCE_IMG_DECODED_MAX_BYTES: u64 = (573 * MIB_IN_BYTES) as u64;
