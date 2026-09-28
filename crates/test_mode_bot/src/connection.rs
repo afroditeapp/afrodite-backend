@@ -183,7 +183,7 @@ impl BotConnections {
     }
 
     pub fn disable_events(&self) {
-        self.enable_event_sending.store(true, Ordering::Relaxed);
+        self.enable_event_sending.store(false, Ordering::Relaxed);
     }
 
     pub fn unwrap_account_connections(&mut self) -> ApiConnection {
