@@ -11,6 +11,7 @@ use crate::file::ConfigFileError;
 const DEFAULT_WEB_CONTENT: &str = r#"
 # Web page template (non-translatable, required)
 # Available variables: title, body
+# Each page can override the fields after [web_page].
 [web_page]
 template = """
 {title}
@@ -82,6 +83,8 @@ pub struct WebContent {
 struct WebContentStrings {
     title: StringResourceInternal,
     body: StringResourceInternal,
+    #[serde(default, flatten)]
+    web_page_config: Option<WebPageConfigOptional>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -115,6 +118,13 @@ struct WebPageConfig {
     content_type_is_html: bool,
 }
 
+#[derive(Debug, Default, Deserialize)]
+#[serde(default)]
+struct WebPageConfigOptional {
+    template: Option<String>,
+    content_type_is_html: Option<bool>,
+}
+
 impl Default for WebContentFile {
     fn default() -> Self {
         Self {
@@ -129,6 +139,22 @@ impl Default for WebContentFile {
             other: Map::new(),
         }
     }
+}
+
+/// Merge the global web page config with a per-page override, returning the effective
+/// template and content type.
+fn effective_web_page_config(
+    global: &WebPageConfig,
+    resource: &Option<WebContentStrings>,
+) -> (String, bool) {
+    let page_config = resource.as_ref().and_then(|r| r.web_page_config.as_ref());
+    let template = page_config
+        .and_then(|c| c.template.clone())
+        .unwrap_or_else(|| global.template.clone());
+    let content_type_is_html = page_config
+        .and_then(|c| c.content_type_is_html)
+        .unwrap_or(global.content_type_is_html);
+    (template, content_type_is_html)
 }
 
 impl WebContentFile {
@@ -216,14 +242,14 @@ impl<'a> WebStringGetter<'a> {
             &body_data.iter().map(|(k, v)| (*k, *v)).collect::<Vec<_>>(),
         );
 
-        let rendered = render_template(
-            &self.config.web_page.template,
-            &[("title", &title), ("body", &rendered_body)],
-        );
+        let (template, content_type_is_html) =
+            effective_web_page_config(&self.config.web_page, resource);
+
+        let rendered = render_template(&template, &[("title", &title), ("body", &rendered_body)]);
 
         Ok(WebContent {
             content: rendered,
-            is_html: self.config.web_page.content_type_is_html,
+            is_html: content_type_is_html,
         })
     }
 
