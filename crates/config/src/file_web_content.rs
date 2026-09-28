@@ -11,13 +11,13 @@ use crate::file::ConfigFileError;
 const DEFAULT_WEB_CONTENT: &str = r#"
 # Web page template (non-translatable, required)
 # Available variables: title, body
-web_page_template = """
+[web_page]
+template = """
 {title}
 
 {body}
 """
-
-web_page_content_type_is_html = false
+content_type_is_html = false
 
 # Access Denied Page
 
@@ -94,8 +94,7 @@ struct EmailVerificationStrings {
 
 #[derive(Debug, Deserialize)]
 pub struct WebContentFile {
-    web_page_template: String,
-    web_page_content_type_is_html: bool,
+    web_page: WebPageConfig,
     access_denied: Option<WebContentStrings>,
     email_verification: Option<EmailVerificationStrings>,
     email_verified: Option<WebContentStrings>,
@@ -110,11 +109,19 @@ const DEFAULT_TEMPLATE: &str = "
 {body}
 ";
 
+#[derive(Debug, Deserialize)]
+struct WebPageConfig {
+    template: String,
+    content_type_is_html: bool,
+}
+
 impl Default for WebContentFile {
     fn default() -> Self {
         Self {
-            web_page_template: DEFAULT_TEMPLATE.to_string(),
-            web_page_content_type_is_html: false,
+            web_page: WebPageConfig {
+                template: DEFAULT_TEMPLATE.to_string(),
+                content_type_is_html: false,
+            },
             access_denied: None,
             email_verification: None,
             email_verified: None,
@@ -210,13 +217,13 @@ impl<'a> WebStringGetter<'a> {
         );
 
         let rendered = render_template(
-            &self.config.web_page_template,
+            &self.config.web_page.template,
             &[("title", &title), ("body", &rendered_body)],
         );
 
         Ok(WebContent {
             content: rendered,
-            is_html: self.config.web_page_content_type_is_html,
+            is_html: self.config.web_page.content_type_is_html,
         })
     }
 
