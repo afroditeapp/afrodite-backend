@@ -179,7 +179,7 @@ pub fn handle_data_tools(mut mode: DataMode) -> Result<(), GetConfigError> {
                 let writer = DbWriter::new(write_handle.current_write_handle());
 
                 match edit_mode {
-                    DataEditSubMode::GrantAdminEditPermissions { account_id } => {
+                    DataEditSubMode::GrantFullAdminAccess { account_id } => {
                         handle_grant_admin_edit_permissions(&reader, &writer, account_id).await
                     }
                 }
@@ -521,6 +521,7 @@ async fn handle_grant_admin_edit_permissions(
             let account = cmds.read().common().account(internal_id)?;
             let new_permissions = model::Permissions {
                 admin_edit_permissions: true,
+                admin_view_permissions: true,
                 ..account.permissions()
             };
 

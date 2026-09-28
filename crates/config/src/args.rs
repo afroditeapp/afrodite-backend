@@ -326,8 +326,9 @@ fn parse_account_id(input: &str) -> Result<AccountId, String> {
 
 #[derive(Parser, Debug, Clone)]
 pub enum DataEditSubMode {
-    /// Grant Permissions::admin_edit_permissions for account
-    GrantAdminEditPermissions {
+    /// Grant Permissions::admin_edit_permissions and
+    /// Permissions::admin_view_permissions for account.
+    GrantFullAdminAccess {
         /// Account ID
         #[arg(value_parser = parse_account_id)]
         account_id: AccountId,
