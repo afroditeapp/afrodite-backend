@@ -135,8 +135,6 @@ fn connect_websocket(
         let ping_time = Duration::from_secs(websocket_ping_time.seconds.into());
         let mut ping_timer = tokio::time::interval(ping_time);
         ping_timer.tick().await; // skip the initial tick
-        let mut reconnect_timer = tokio::time::interval(Duration::from_secs(8 * 24 * 60 * 60));
-        reconnect_timer.tick().await; // skip the initial tick
 
         loop {
             tokio::select! {
@@ -153,12 +151,6 @@ fn connect_websocket(
                 }
                 event = stream.next() => {
                     handle_connection_event(event, &events.event_sender).await;
-                }
-                _ = reconnect_timer.tick() => {
-                    let new_stream = connect_websocket_internal(&mut auth, url.clone(), &api_client)
-                        .await
-                        .unwrap_or_else(|e| panic!("Reconnecting websocket failed, error: {e}"));
-                    stream = new_stream;
                 }
                 _ = ping_timer.tick() => {
                     match stream
