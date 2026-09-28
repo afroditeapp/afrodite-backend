@@ -10,6 +10,7 @@ use crate::file::ConfigFileError;
 const DEFAULT_EMAIL_CONTENT: &str = r#"
 # Common template for all emails (non-translatable, required).
 # All custom keys plus "subject" and "body" are available in the template.
+# Each email message can override the fields after [email].
 [email]
 template = """
 {subject}
@@ -108,6 +109,8 @@ pub struct EmailContent {
 struct EmailContentStrings {
     subject: StringResourceInternal,
     body: StringResourceInternal,
+    #[serde(default, flatten)]
+    email_config: Option<EmailConfigOptional>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -135,6 +138,14 @@ struct EmailConfig {
     content_type_is_html: bool,
     #[serde(default)]
     custom_keys: HashMap<String, StringResourceInternal>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(default)]
+struct EmailConfigOptional {
+    template: Option<String>,
+    content_type_is_html: Option<bool>,
+    custom_keys: Option<HashMap<String, StringResourceInternal>>,
 }
 
 const DEFAULT_EMAIL_TEMPLATE: &str = "
@@ -165,6 +176,58 @@ impl Default for EmailContentFile {
     }
 }
 
+/// Merge the global email config with a per-message override, returning the effective
+/// template, content type, and custom keys.
+fn effective_email_config(
+    global: &EmailConfig,
+    resource: &Option<EmailContentStrings>,
+) -> (String, bool, HashMap<String, StringResourceInternal>) {
+    let msg = resource.as_ref().and_then(|r| r.email_config.as_ref());
+    let template = msg
+        .and_then(|c| c.template.clone())
+        .unwrap_or_else(|| global.template.clone());
+    let content_type_is_html = msg
+        .and_then(|c| c.content_type_is_html)
+        .unwrap_or(global.content_type_is_html);
+    let custom_keys = msg
+        .and_then(|c| c.custom_keys.clone())
+        .unwrap_or_else(|| global.custom_keys.clone());
+    (template, content_type_is_html, custom_keys)
+}
+
+/// Validate that all custom keys are referenced in the template.
+fn validate_custom_keys(
+    template: &str,
+    custom_keys: &HashMap<String, StringResourceInternal>,
+    context: &str,
+) -> Result<(), ConfigFileError> {
+    // Find all variable references in the template
+    let mut referenced_keys = std::collections::HashSet::new();
+    for line in template.lines() {
+        for cap in line.match_indices("{") {
+            if let Some(end_pos) = line[cap.0..].find("}") {
+                let var_content = &line[cap.0 + 1..cap.0 + end_pos].trim();
+                // Extract variable name
+                let var_name = var_content.split_whitespace().next().unwrap_or("");
+                if !var_name.is_empty() && var_name != "subject" && var_name != "body" {
+                    referenced_keys.insert(var_name.to_string());
+                }
+            }
+        }
+    }
+
+    // Check if all custom keys are referenced in the template
+    for custom_key in custom_keys.keys() {
+        if !referenced_keys.contains(custom_key) {
+            return Err(ConfigFileError::InvalidConfig).attach(format!(
+                "In email '{context}': custom key '{custom_key}' is defined but not referenced in the template",
+            ));
+        }
+    }
+
+    Ok(())
+}
+
 impl EmailContentFile {
     pub const CONFIG_FILE_NAME: &str = "email_content.toml";
     pub fn load(
@@ -190,28 +253,39 @@ impl EmailContentFile {
             ));
         }
 
-        // Find all variable references in the template
-        let mut referenced_keys = std::collections::HashSet::new();
-        for line in config.email.template.lines() {
-            for cap in line.match_indices("{") {
-                if let Some(end_pos) = line[cap.0..].find("}") {
-                    let var_content = &line[cap.0 + 1..cap.0 + end_pos].trim();
-                    // Extract variable name
-                    let var_name = var_content.split_whitespace().next().unwrap_or("");
-                    if !var_name.is_empty() && var_name != "subject" && var_name != "body" {
-                        referenced_keys.insert(var_name.to_string());
-                    }
-                }
-            }
-        }
+        // Validate custom keys for the global config and each email's effective config
+        let (template, _, custom_keys) = effective_email_config(&config.email, &None);
+        validate_custom_keys(&template, &custom_keys, "global")?;
 
-        // Check if all custom keys are referenced in the template
-        for custom_key in config.email.custom_keys.keys() {
-            if !referenced_keys.contains(custom_key) {
-                return Err(ConfigFileError::InvalidConfig).attach(format!(
-                    "Custom key '{custom_key}' is defined but not referenced in the template",
-                ));
-            }
+        let emails: [(&str, &Option<EmailContentStrings>); 9] = [
+            ("email_verification", &config.email_verification),
+            ("new_message", &config.new_message),
+            ("new_like", &config.new_like),
+            (
+                "account_deletion_remainder_first",
+                &config.account_deletion_remainder_first,
+            ),
+            (
+                "account_deletion_remainder_second",
+                &config.account_deletion_remainder_second,
+            ),
+            (
+                "account_deletion_remainder_third",
+                &config.account_deletion_remainder_third,
+            ),
+            (
+                "email_change_verification",
+                &config.email_change_verification,
+            ),
+            (
+                "email_change_notification",
+                &config.email_change_notification,
+            ),
+            ("email_login", &config.email_login),
+        ];
+        for (name, resource) in emails {
+            let (template, _, custom_keys) = effective_email_config(&config.email, resource);
+            validate_custom_keys(&template, &custom_keys, name)?;
         }
 
         if let Some(email_verification) = &config.email_verification
@@ -277,12 +351,13 @@ impl<'a> EmailStringGetter<'a> {
             &body_data.iter().map(|(k, v)| (*k, *v)).collect::<Vec<_>>(),
         );
 
-        // Build the full data set: subject, rendered body, and custom keys
+        let (template, content_type_is_html, custom_keys) =
+            effective_email_config(&self.config.email, resource);
         let mut data = vec![
             ("subject", subject.as_str()),
             ("body", rendered_body.as_str()),
         ];
-        for (key, resource) in &self.config.email.custom_keys {
+        for (key, resource) in &custom_keys {
             let value = resource
                 .translations
                 .get(self.language)
@@ -290,12 +365,12 @@ impl<'a> EmailStringGetter<'a> {
             data.push((key.as_str(), value.as_str()));
         }
 
-        let rendered = render_template(&self.config.email.template, &data);
+        let rendered = render_template(&template, &data);
 
         Ok(EmailContent {
             subject,
             body: rendered,
-            body_is_html: self.config.email.content_type_is_html,
+            body_is_html: content_type_is_html,
         })
     }
 
