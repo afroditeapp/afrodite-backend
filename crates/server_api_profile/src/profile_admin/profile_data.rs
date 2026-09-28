@@ -24,15 +24,16 @@ const PATH_GET_PROFILE_AGE_AND_NAME: &str = "/profile_api/get_profile_age_and_na
 /// Get profile age and name
 ///
 /// # Access
+///
+/// Admin bot required permissions:
+/// - Permission [model::Permissions::admin_verify_account]
+///
+/// Client required permissions:
 /// - Permission [model::Permissions::admin_edit_profile_name]
-/// - Permission [model::Permissions::admin_find_account_by_email_address]
-/// - Permission [model::Permissions::admin_view_permissions]
-/// - Permission [model::Permissions::admin_moderate_media_content]
-/// - Permission [model::Permissions::admin_moderate_profile_names]
-/// - Permission [model::Permissions::admin_moderate_profile_texts]
+///
+/// Required by both admin bot and client:
 /// - Permission [model::Permissions::admin_edit_profile_age_range_verified_value]
 /// - Permission [model::Permissions::admin_edit_profile_name_verified_value]
-/// - Permission [model::Permissions::admin_verify_account]
 #[utoipa::path(
     get,
     path = PATH_GET_PROFILE_AGE_AND_NAME,
@@ -55,11 +56,6 @@ pub async fn get_profile_age_and_name(
     PROFILE.get_profile_age_and_name.incr();
 
     let access_allowed = permissions.admin_edit_profile_name
-        || permissions.admin_find_account_by_email_address
-        || permissions.admin_view_permissions
-        || permissions.admin_moderate_media_content
-        || permissions.admin_moderate_profile_names
-        || permissions.admin_moderate_profile_texts
         || permissions.admin_edit_profile_age_range_verified_value
         || permissions.admin_edit_profile_name_verified_value
         || permissions.admin_verify_account;
