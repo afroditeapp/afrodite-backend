@@ -22,12 +22,13 @@ use test_mode_utils::{
     client::{ApiClient, TestError},
     websocket_protocol::parse_server_event_to_client_for_test_mode,
 };
+use tokio::sync::oneshot;
 use tokio_stream::StreamExt;
 use tokio_tungstenite::{
     Connector,
     tungstenite::{Message, client::IntoClientRequest},
 };
-use tracing::warn;
+use tracing::{error, warn};
 use url::Url;
 use utils::api::{ADMIN_BOT_EMAIL, PATH_CONNECT, USER_BOT_EMAIL_PREFIX, USER_BOT_EMAIL_SUFFIX};
 
@@ -66,105 +67,146 @@ pub struct Login;
 #[async_trait]
 impl BotAction for Login {
     async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        if state.api.is_access_token_available() {
-            return Ok(());
-        }
-        let login_result = if let Some(password) = state.remote_bot_password() {
-            post_remote_bot_login(
-                &state.api(),
-                RemoteBotLogin::new(state.account_id()?, password),
-            )
+        login(state, None).await
+    }
+}
+
+/// Login and connect the WebSocket. If `internal_quit_handle` is provided,
+/// the WebSocket task signals it when the connection breaks, so the bot can
+/// shut down gracefully.
+pub async fn login(
+    state: &mut BotState,
+    internal_quit_handle: Option<oneshot::Sender<()>>,
+) -> Result<(), TestError> {
+    if state.api.is_access_token_available() {
+        return Ok(());
+    }
+    let login_result = if let Some(password) = state.remote_bot_password() {
+        post_remote_bot_login(
+            &state.api(),
+            RemoteBotLogin::new(state.account_id()?, password),
+        )
+        .await
+        .change_context(TestError::ApiRequest)?
+    } else {
+        post_bot_login(&state.api(), state.account_id()?)
             .await
             .change_context(TestError::ApiRequest)?
-        } else {
-            post_bot_login(&state.api(), state.account_id()?)
-                .await
-                .change_context(TestError::ApiRequest)?
-        };
+    };
 
-        let auth_pair = if let Some(auth_pair) = login_result.tokens {
-            auth_pair.clone()
-        } else {
-            return Err(TestError::ApiRequest.report());
-        };
+    let auth_pair = if let Some(auth_pair) = login_result.tokens {
+        auth_pair.clone()
+    } else {
+        return Err(TestError::ApiRequest.report());
+    };
 
-        state.api.set_access_token(auth_pair.access.token.clone());
+    state.api.set_access_token(auth_pair.access.token.clone());
 
-        let (event_sender, event_receiver, client_message_sender, quit_handle) =
-            create_event_channel(state.connections.event_info_handle());
-        state.connections.set_events(event_receiver);
-        state
-            .connections
-            .set_client_message_sender(client_message_sender);
+    let (event_sender, event_receiver, client_message_sender, quit_handle) =
+        create_event_channel(state.connections.event_info_handle());
+    state.connections.set_events(event_receiver);
+    state
+        .connections
+        .set_client_message_sender(client_message_sender);
 
-        let url = state
-            .api_urls
-            .api_url
-            .join(PATH_CONNECT)
-            .change_context(TestError::WebSocket)?;
-        let connection: Option<WsConnection> = connect_websocket(
-            auth_pair,
-            url,
-            event_sender,
-            state.api.clone(),
-            state.bot_config_file.generic.websocket_ping_time(),
-        )
-        .into();
+    let url = state
+        .api_urls
+        .api_url
+        .join(PATH_CONNECT)
+        .change_context(TestError::WebSocket)?;
+    let connection: Option<WsConnection> = connect_websocket(
+        auth_pair,
+        url,
+        event_sender,
+        internal_quit_handle,
+        state.api.clone(),
+        state.bot_config_file.generic.websocket_ping_time(),
+    )
+    .into();
 
-        state.connections.set_connections(ApiConnection {
-            connection,
-            quit_handle,
-        });
+    state.connections.set_connections(ApiConnection {
+        connection,
+        quit_handle,
+    });
 
-        Ok(())
-    }
+    Ok(())
 }
 
 fn connect_websocket(
     mut auth: auth_pair::AuthPair,
     url: Url,
     mut events: EventSenderAndQuitWatcher,
+    internal_quit_handle: Option<oneshot::Sender<()>>,
     api_client: ApiClient,
     websocket_ping_time: DurationValue,
 ) -> WsConnection {
     let task = tokio::spawn(async move {
-        let mut stream = connect_websocket_internal(&mut auth, url.clone(), &api_client)
-            .await
-            .unwrap_or_else(|e| panic!("Connecting websocket failed, error: {e}"));
-
-        let ping_time = Duration::from_secs(websocket_ping_time.seconds.into());
-        let mut ping_timer = tokio::time::interval(ping_time);
-        ping_timer.tick().await; // skip the initial tick
-
-        loop {
-            tokio::select! {
-                _ = events.quit_watcher.recv() => break,
-                message_from_client = events.client_message_receiver.recv() => {
-                    match message_from_client {
-                        Some(message) => {
-                            if let Err(e) = stream.send(Message::Binary(message.into())).await {
-                                panic!("Sending WebSocket binary message failed, error: {e}");
-                            }
-                        }
-                        None => break,
-                    }
-                }
-                event = stream.next() => {
-                    handle_connection_event(event, &events.event_sender).await;
-                }
-                _ = ping_timer.tick() => {
-                    match stream
-                        .send(Message::Ping(vec![].into()))
-                        .await {
-                            Ok(_) => (),
-                            Err(e) => panic!("Sending ping message to websocket failed, error: {e}"),
-                        }
-                }
-            }
-        }
+        run_websocket(
+            &mut auth,
+            url,
+            &mut events,
+            &api_client,
+            websocket_ping_time,
+        )
+        .await;
+        // Dropping the sender signals the receiver that the websocket task exited.
+        drop(internal_quit_handle);
     });
 
     WsConnection::new(task)
+}
+
+async fn run_websocket(
+    auth: &mut auth_pair::AuthPair,
+    url: Url,
+    events: &mut EventSenderAndQuitWatcher,
+    api_client: &ApiClient,
+    websocket_ping_time: DurationValue,
+) {
+    let mut stream = match connect_websocket_internal(auth, url, api_client).await {
+        Ok(stream) => stream,
+        Err(e) => {
+            error!("Connecting websocket failed: {e:?}");
+            return;
+        }
+    };
+
+    let ping_time = Duration::from_secs(websocket_ping_time.seconds.into());
+    let mut ping_timer = tokio::time::interval(ping_time);
+    ping_timer.tick().await; // skip the initial tick
+
+    loop {
+        tokio::select! {
+            _ = events.quit_watcher.recv() => break,
+            message_from_client = events.client_message_receiver.recv() => {
+                match message_from_client {
+                    Some(message) => {
+                        if let Err(e) = stream.send(Message::Binary(message.into())).await {
+                            error!("Sending WebSocket binary message failed: {e:?}");
+                            break;
+                        }
+                    }
+                    None => break,
+                }
+            }
+            event = stream.next() => {
+                if handle_connection_event(event, &events.event_sender).await.is_err() {
+                    break;
+                }
+            }
+            _ = ping_timer.tick() => {
+                match stream
+                    .send(Message::Ping(vec![].into()))
+                    .await {
+                        Ok(_) => (),
+                        Err(e) => {
+                            error!("Sending ping message to websocket failed: {e:?}");
+                            break;
+                        }
+                    }
+            }
+        }
+    }
 }
 
 async fn connect_websocket_internal(
@@ -275,29 +317,41 @@ async fn connect_websocket_internal(
 async fn handle_connection_event(
     event: Option<std::result::Result<Message, tokio_tungstenite::tungstenite::Error>>,
     sender: &EventSender,
-) {
+) -> std::result::Result<(), ()> {
     match event {
         Some(event) => match event {
-            Ok(Message::Text(_)) => panic!("Unexpected WebSocket message type"),
+            Ok(Message::Text(_)) => {
+                error!("Unexpected WebSocket message type");
+                Err(())
+            }
             // Connection test message, which does not need a response
-            Ok(Message::Binary(data)) if data.is_empty() => (),
+            Ok(Message::Binary(data)) if data.is_empty() => Ok(()),
             Ok(Message::Binary(data)) => {
                 match parse_server_event_to_client_for_test_mode(data.as_ref()) {
-                    Ok(None) => (),
-                    Ok(Some(event)) => sender.send_if_sending_enabled(event).await,
-                    Err(error) => warn!("Failed to parse WebSocket binary event: {error}"),
+                    Ok(None) => Ok(()),
+                    Ok(Some(event)) => {
+                        sender.send_if_sending_enabled(event).await;
+                        Ok(())
+                    }
+                    Err(error) => {
+                        warn!("Failed to parse WebSocket binary event: {error}");
+                        Ok(())
+                    }
                 }
             }
-            Ok(Message::Pong(_)) => (),
+            Ok(Message::Pong(_)) => Ok(()),
             Ok(_) => {
-                panic!("Unexpected WebSocket message type");
+                error!("Unexpected WebSocket message type");
+                Err(())
             }
             Err(e) => {
-                panic!("Unexpected WebSocket error, {e}");
+                error!("Unexpected WebSocket error: {e}");
+                Err(())
             }
         },
         None => {
-            panic!("Unexpected WebSocket connection closing");
+            error!("Unexpected WebSocket connection closing");
+            Err(())
         }
     }
 }

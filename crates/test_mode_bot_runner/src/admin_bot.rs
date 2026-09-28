@@ -5,8 +5,11 @@ use config::{BotConfig, args::TestMode, bot_config_file::BotConfigFile};
 use error_stack::ResultExt;
 use simple_backend_utils::Result;
 use test_mode_bot::{
-    BotState, action_array,
-    actions::account::{Login, Register},
+    BotState,
+    actions::{
+        BotAction,
+        account::{Register, login},
+    },
     connection::BotConnections,
 };
 use test_mode_utils::{
@@ -16,7 +19,7 @@ use test_mode_utils::{
 };
 use tokio::{
     select,
-    sync::{mpsc, watch},
+    sync::{mpsc, oneshot, watch},
 };
 use tracing::{error, info};
 
@@ -96,8 +99,10 @@ impl AdminBot {
     pub async fn run(mut self, mut bot_quit_receiver: watch::Receiver<()>) {
         info!("Admin bot started - Task {}", self.state.task_id,);
 
+        let (internal_quit_handle, internal_quit_watcher) = oneshot::channel();
+
         select! {
-            result = Self::run_admin_initial_logic(&mut self.state) => {
+            result = Self::run_admin_initial_logic(&mut self.state, internal_quit_handle) => {
                 if let Err(e) = result {
                     error!("Admin bot logic error: {:?}", e);
                     Self::handle_quit(self.state.persistent_state(), self.bot_running_handle).await;
@@ -113,7 +118,7 @@ impl AdminBot {
         // Admin bot persistent state does not change after initial logic
         let persistent_state = self.state.persistent_state();
         select! {
-            result = Self::run_admin_logic(self.state) => {
+            result = Self::run_admin_logic(self.state, internal_quit_watcher) => {
                 if let Err(e) = result {
                     error!("Admin bot logic error: {:?}", e);
                 }
@@ -124,16 +129,23 @@ impl AdminBot {
         Self::handle_quit(persistent_state, self.bot_running_handle).await;
     }
 
-    async fn run_admin_initial_logic(state: &mut BotState) -> Result<(), TestError> {
-        for action in action_array![Register, Login, DoInitialSetupIfNeeded { admin: true }].iter()
-        {
-            action.execute(state).await?;
-        }
+    async fn run_admin_initial_logic(
+        state: &mut BotState,
+        internal_quit_handle: oneshot::Sender<()>,
+    ) -> Result<(), TestError> {
+        Register.execute(state).await?;
+        login(state, Some(internal_quit_handle)).await?;
+        DoInitialSetupIfNeeded { admin: true }
+            .execute(state)
+            .await?;
 
         Ok(())
     }
 
-    async fn run_admin_logic(state: BotState) -> Result<(), TestError> {
+    async fn run_admin_logic(
+        state: BotState,
+        internal_quit_watcher: oneshot::Receiver<()>,
+    ) -> Result<(), TestError> {
         let bot_config_api = api_client::apis::common_admin_api::get_bot_config(&state.api.api())
             .await
             .change_context(TestError::Reqwest)?;
@@ -216,6 +228,7 @@ impl AdminBot {
         select! {
             result = Self::run_admin_main_logic(
                 state.connections,
+                internal_quit_watcher,
                 content_sender,
                 profile_name_sender,
                 profile_text_sender,
@@ -262,8 +275,10 @@ impl AdminBot {
         Ok(())
     }
 
+    #[allow(clippy::too_many_arguments)]
     async fn run_admin_main_logic(
         mut connections: BotConnections,
+        mut internal_quit_watcher: oneshot::Receiver<()>,
         content_sender: NotificationSender,
         profile_name_sender: NotificationSender,
         profile_text_sender: NotificationSender,
@@ -318,6 +333,10 @@ impl AdminBot {
                     face_verification_sender.notify().await;
                     account_verification_sender.notify().await;
                     report_processing_sender.notify().await;
+                }
+                // Internal bot quit signal - websocket task exited
+                _ = &mut internal_quit_watcher => {
+                    return Ok(());
                 }
             }
         }

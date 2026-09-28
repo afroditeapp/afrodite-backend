@@ -6,8 +6,8 @@ use simple_backend_utils::Result;
 use test_mode_bot::{
     BotState, action_array,
     actions::{
-        ActionArray, RunActionsIf,
-        account::{Login, Register, SetProfileVisibility},
+        ActionArray, BotAction, RunActionsIf,
+        account::{Register, SetProfileVisibility, login},
         profile::{ChangeProfileTextDaily, GetProfile, UpdateLocationRandomOrConfigured},
     },
 };
@@ -17,7 +17,7 @@ use test_mode_utils::{
 };
 use tokio::{
     select,
-    sync::{mpsc, watch},
+    sync::{mpsc, oneshot, watch},
     time::{self, Duration},
 };
 use tracing::error;
@@ -79,8 +79,10 @@ impl UserBot {
     }
 
     pub async fn run(mut self, mut bot_quit_receiver: watch::Receiver<()>) {
+        let (internal_quit_handle, mut internal_quit_watcher) = oneshot::channel();
+
         select! {
-            result = Self::run_bot_setup_logic(&mut self.state) => {
+            result = Self::run_bot_setup_logic(&mut self.state, internal_quit_handle) => {
                 if let Err(e) = result {
                     error!("User bot setup logic error: {:?}", e);
                     Self::handle_quit(self.state.persistent_state(), self.bot_running_handle).await;
@@ -94,7 +96,7 @@ impl UserBot {
         };
 
         select! {
-            result = Self::run_user_action_loop(&mut self.state) => {
+            result = Self::run_user_action_loop(&mut self.state, &mut internal_quit_watcher) => {
                 if let Err(e) = result {
                     error!("User bot action loop error: {:?}", e);
                 }
@@ -105,24 +107,28 @@ impl UserBot {
         Self::handle_quit(self.state.persistent_state(), self.bot_running_handle).await;
     }
 
-    async fn run_bot_setup_logic(state: &mut BotState) -> Result<(), TestError> {
-        const SETUP: ActionArray = action_array![
-            Register,
-            Login,
-            DoInitialSetupIfNeeded { admin: false },
-            UpdateLocationRandomOrConfigured::new(None),
-            SetProfileVisibility(true),
-            SendLikeIfNeeded,
-        ];
-
-        for action in SETUP.iter() {
-            action.execute(state).await?;
-        }
+    async fn run_bot_setup_logic(
+        state: &mut BotState,
+        internal_quit_handle: oneshot::Sender<()>,
+    ) -> Result<(), TestError> {
+        Register.execute(state).await?;
+        login(state, Some(internal_quit_handle)).await?;
+        DoInitialSetupIfNeeded { admin: false }
+            .execute(state)
+            .await?;
+        UpdateLocationRandomOrConfigured::new(None)
+            .execute(state)
+            .await?;
+        SetProfileVisibility(true).execute(state).await?;
+        SendLikeIfNeeded.execute(state).await?;
 
         Ok(())
     }
 
-    async fn run_user_action_loop(state: &mut BotState) -> Result<(), TestError> {
+    async fn run_user_action_loop(
+        state: &mut BotState,
+        internal_quit_watcher: &mut oneshot::Receiver<()>,
+    ) -> Result<(), TestError> {
         const ACTION_LOOP: ActionArray = action_array![
             GetProfile,
             RunActionsIf(
@@ -146,9 +152,16 @@ impl UserBot {
         let mut interval = time::interval(Duration::from_secs(5));
 
         loop {
-            interval.tick().await;
-            for action in ACTION_LOOP.iter() {
-                action.execute(state).await?;
+            tokio::select! {
+                _ = interval.tick() => {
+                    for action in ACTION_LOOP.iter() {
+                        action.execute(state).await?;
+                    }
+                }
+                // Internal bot quit signal - websocket task exited
+                _ = &mut *internal_quit_watcher => {
+                    return Ok(());
+                }
             }
         }
     }
