@@ -78,9 +78,6 @@ pub async fn login(
     state: &mut BotState,
     internal_quit_handle: Option<oneshot::Sender<()>>,
 ) -> Result<(), TestError> {
-    if state.api.is_access_token_available() {
-        return Ok(());
-    }
     let login_result = if let Some(password) = state.remote_bot_password() {
         post_remote_bot_login(
             &state.api(),

@@ -133,15 +133,6 @@ impl ApiClient {
         clone.bearer_access_token = Some(token);
         *lock = Arc::new(clone);
     }
-
-    pub fn is_access_token_available(&self) -> bool {
-        self.api
-            .lock()
-            .expect(Self::MUTEX_ERROR)
-            .bearer_access_token
-            .clone()
-            .is_some()
-    }
 }
 
 pub fn get_api_url(url: &Option<Url>) -> Result<Url, TestError> {
