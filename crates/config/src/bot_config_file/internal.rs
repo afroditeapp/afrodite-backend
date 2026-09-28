@@ -495,6 +495,8 @@ impl ReportProcessingConfigInternal {
             return None;
         }
 
+        let base_llm = file.llm.clone().merge_base_with(base_llm);
+
         Some(Self {
             profile_name: Self::new_per_type_profile_string(
                 db.profile_name.llm,

@@ -454,6 +454,24 @@ impl BaseLlmConfig {
                 .unwrap_or_default(),
         })
     }
+
+    /// Merges this config with a base config, keeping this config's values
+    /// where both are set. Unlike [`Self::merge_with`], the result is still a
+    /// [`BaseLlmConfig`] so it can be used as a base for further merging.
+    pub fn merge_base_with(self, base: BaseLlmConfig) -> BaseLlmConfig {
+        BaseLlmConfig {
+            openai_api_url: self.openai_api_url.or(base.openai_api_url),
+            model: self.model.or(base.model),
+            temperature: self.temperature.or(base.temperature),
+            seed: self.seed.or(base.seed),
+            max_tokens: self.max_tokens.or(base.max_tokens),
+            reasoning_effort: self.reasoning_effort.or(base.reasoning_effort),
+            debug_log_results: self.debug_log_results.or(base.debug_log_results),
+            retry_wait_times_in_seconds: self
+                .retry_wait_times_in_seconds
+                .or(base.retry_wait_times_in_seconds),
+        }
+    }
 }
 
 /// Reasoning effort for LLM models that support it.
@@ -564,6 +582,9 @@ pub struct ReportProcessingTypeFileConfig {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default)]
 pub struct ReportProcessingFileConfig {
+    /// Common LLM config for all report processing types. More specific
+    /// per-type configs have priority over this.
+    pub llm: BaseLlmConfig,
     pub profile_name: ReportProcessingTypeFileConfig,
     pub profile_text: ReportProcessingTypeFileConfig,
     pub profile_content: ReportProcessingTypeFileConfig,
@@ -575,6 +596,7 @@ pub struct ReportProcessingFileConfig {
 impl Default for ReportProcessingFileConfig {
     fn default() -> Self {
         Self {
+            llm: BaseLlmConfig::default(),
             profile_name: ReportProcessingTypeFileConfig::default(),
             profile_text: ReportProcessingTypeFileConfig::default(),
             profile_content: ReportProcessingTypeFileConfig::default(),
