@@ -10,17 +10,17 @@ use crate::file::ConfigFileError;
 const DEFAULT_EMAIL_CONTENT: &str = r#"
 # Common template for all emails (non-translatable, required).
 # All custom keys plus "subject" and "body" are available in the template.
-email_body_template = """
+[email]
+template = """
 {subject}
 
 {body}
 
 {footer}
 """
+content_type_is_html = false
 
-email_body_content_type_is_html = false
-
-[custom_keys.footer]
+[email.custom_keys.footer]
 default = "This is automatic message sent by a dating app."
 
 # Email verification
@@ -112,10 +112,7 @@ struct EmailContentStrings {
 
 #[derive(Debug, Deserialize)]
 pub struct EmailContentFile {
-    email_body_template: String,
-    email_body_content_type_is_html: bool,
-    #[serde(default)]
-    custom_keys: HashMap<String, StringResourceInternal>,
+    email: EmailConfig,
     /// "{token}" is replaced with email verification token
     email_verification: Option<EmailContentStrings>,
     new_message: Option<EmailContentStrings>,
@@ -132,6 +129,14 @@ pub struct EmailContentFile {
     other: toml::Table,
 }
 
+#[derive(Debug, Deserialize)]
+struct EmailConfig {
+    template: String,
+    content_type_is_html: bool,
+    #[serde(default)]
+    custom_keys: HashMap<String, StringResourceInternal>,
+}
+
 const DEFAULT_EMAIL_TEMPLATE: &str = "
 {subject}
 
@@ -141,9 +146,11 @@ const DEFAULT_EMAIL_TEMPLATE: &str = "
 impl Default for EmailContentFile {
     fn default() -> Self {
         Self {
-            email_body_template: DEFAULT_EMAIL_TEMPLATE.to_string(),
-            email_body_content_type_is_html: false,
-            custom_keys: HashMap::new(),
+            email: EmailConfig {
+                template: DEFAULT_EMAIL_TEMPLATE.to_string(),
+                content_type_is_html: false,
+                custom_keys: HashMap::new(),
+            },
             email_verification: None,
             new_message: None,
             new_like: None,
@@ -185,7 +192,7 @@ impl EmailContentFile {
 
         // Find all variable references in the template
         let mut referenced_keys = std::collections::HashSet::new();
-        for line in config.email_body_template.lines() {
+        for line in config.email.template.lines() {
             for cap in line.match_indices("{") {
                 if let Some(end_pos) = line[cap.0..].find("}") {
                     let var_content = &line[cap.0 + 1..cap.0 + end_pos].trim();
@@ -199,7 +206,7 @@ impl EmailContentFile {
         }
 
         // Check if all custom keys are referenced in the template
-        for custom_key in config.custom_keys.keys() {
+        for custom_key in config.email.custom_keys.keys() {
             if !referenced_keys.contains(custom_key) {
                 return Err(ConfigFileError::InvalidConfig).attach(format!(
                     "Custom key '{custom_key}' is defined but not referenced in the template",
@@ -218,7 +225,7 @@ impl EmailContentFile {
     }
 
     pub fn email_body_content_type_is_html(&self) -> bool {
-        self.email_body_content_type_is_html
+        self.email.content_type_is_html
     }
 
     pub fn get<'a, T: AsRef<str>>(&'a self, language: Option<&'a T>) -> EmailStringGetter<'a> {
@@ -275,7 +282,7 @@ impl<'a> EmailStringGetter<'a> {
             ("subject", subject.as_str()),
             ("body", rendered_body.as_str()),
         ];
-        for (key, resource) in &self.config.custom_keys {
+        for (key, resource) in &self.config.email.custom_keys {
             let value = resource
                 .translations
                 .get(self.language)
@@ -283,12 +290,12 @@ impl<'a> EmailStringGetter<'a> {
             data.push((key.as_str(), value.as_str()));
         }
 
-        let rendered = render_template(&self.config.email_body_template, &data);
+        let rendered = render_template(&self.config.email.template, &data);
 
         Ok(EmailContent {
             subject,
             body: rendered,
-            body_is_html: self.config.email_body_content_type_is_html,
+            body_is_html: self.config.email.content_type_is_html,
         })
     }
 
