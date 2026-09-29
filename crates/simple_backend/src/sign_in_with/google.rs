@@ -125,27 +125,23 @@ impl SignInWithGoogleManager {
         let data = jsonwebtoken::decode::<GoogleTokenClaims>(&token, &key, &v)
             .change_context(SignInWithGoogleError::InvalidToken)?;
 
-        let azp_valid = if data.claims.azp == google_config.client_id_web {
+        let azp_valid = if google_config.client_id_web.contains(&data.claims.azp) {
             // Sign in with Google happened on the web client
             true
         } else {
             // Mobile clients support audience
             let mut validate_aud = Validation::new(not_validated_header.alg);
             validate_aud.set_required_spec_claims(&["aud"]);
-            validate_aud.set_audience(&[&google_config.client_id_web]);
+            validate_aud.set_audience(&google_config.client_id_web);
             let _: TokenData<GoogleTokenClaims> =
                 jsonwebtoken::decode::<GoogleTokenClaims>(&token, &key, &validate_aud)
                     .change_context(SignInWithGoogleError::InvalidToken)?;
 
-            let valid_client_ids = [
-                google_config.client_id_android.as_deref(),
-                google_config.client_id_ios.as_deref(),
-            ];
-
-            valid_client_ids
-                .into_iter()
-                .flatten()
-                .any(|id| id == data.claims.azp)
+            google_config
+                .client_id_android
+                .iter()
+                .chain(google_config.client_id_ios.iter())
+                .any(|id| id == &data.claims.azp)
         };
 
         if !azp_valid {

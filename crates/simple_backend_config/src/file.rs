@@ -64,9 +64,9 @@ local_bot_api_port = 3001
 # android_package_id = "id"
 
 # [sign_in_with.google]
-# client_id_android = "id" # optional
-# client_id_ios = "id" # optional
-# client_id_web = "id"
+# client_id_android = ["id"] # optional
+# client_id_ios = ["id"] # optional
+# client_id_web = ["id"]
 
 # [push_notifications.fcm]
 # service_account_key_path = "server_config/service_account_key.json"
@@ -444,9 +444,11 @@ pub struct SignInWithAppleConfig {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct SignInWithGoogleConfig {
-    pub client_id_android: Option<String>,
-    pub client_id_ios: Option<String>,
-    pub client_id_web: String,
+    #[serde(default)]
+    pub client_id_android: Vec<String>,
+    #[serde(default)]
+    pub client_id_ios: Vec<String>,
+    pub client_id_web: Vec<String>,
 }
 
 /// Firebase Cloud Messaging config
