@@ -77,32 +77,42 @@ struct BanAction {
     target: AccountId,
     ban_until: UnixTime,
     reason_category: i32,
+    reason_details: Option<String>,
+    reason_details_visible_to_user: bool,
 }
 
 struct BanConfig {
     enabled: bool,
     day_counts: AutomaticBanningDayCountConfig,
+    save_reason_details: bool,
+    reason_details_visible_to_user: bool,
 }
 
 impl BanConfig {
     fn from_profile_string(c: &ReportProcessingProfileStringConfigInternal) -> Self {
         Self {
             enabled: c.automatic_banning_enabled,
-            day_counts: c.automatic_banning_day_counts.clone(),
+            day_counts: c.automatic_banning.day_counts.clone(),
+            save_reason_details: c.automatic_banning.save_reason_details,
+            reason_details_visible_to_user: c.automatic_banning.reason_details_visible_to_user,
         }
     }
 
     fn from_profile_content(c: &ReportProcessingProfileContentConfigInternal) -> Self {
         Self {
             enabled: c.automatic_banning_enabled,
-            day_counts: c.automatic_banning_day_counts.clone(),
+            day_counts: c.automatic_banning.day_counts.clone(),
+            save_reason_details: c.automatic_banning.save_reason_details,
+            reason_details_visible_to_user: c.automatic_banning.reason_details_visible_to_user,
         }
     }
 
     fn from_messages(c: &ReportProcessingMessagesConfigInternal) -> Self {
         Self {
             enabled: c.automatic_banning_enabled,
-            day_counts: c.automatic_banning_day_counts.clone(),
+            day_counts: c.automatic_banning.day_counts.clone(),
+            save_reason_details: c.automatic_banning.save_reason_details,
+            reason_details_visible_to_user: c.automatic_banning.reason_details_visible_to_user,
         }
     }
 }
@@ -110,6 +120,20 @@ impl BanConfig {
 struct ProcessedReportWithBans {
     processed: Vec<ProcessReport>,
     ban: Option<BanAction>,
+}
+
+struct ReportDecision {
+    accepted: bool,
+    severity: Option<ReportSeverity>,
+    llm_response: Option<String>,
+    ban_config: Option<BanConfig>,
+}
+
+impl ReportDecision {
+    fn add_ban_config(mut self, ban_config: Option<BanConfig>) -> Self {
+        self.ban_config = ban_config;
+        self
+    }
 }
 
 #[derive(Clone)]
@@ -326,59 +350,56 @@ impl AdminBotReportProcessingLogic {
             }
         };
 
-        let (accepted, severity, per_type_cfg): (bool, Option<ReportSeverity>, Option<BanConfig>) =
-            match report {
-                ReportInternal::ProfileName(r) => {
-                    let cfg = config.profile_name.as_ref();
-                    if let Some(text) = r.content.profile_name.as_ref()
-                        && let Some(llm) = profile_name_llm
-                    {
-                        let (a, s) = Self::llm_profile_string_decision(text, llm).await?;
-                        (a, s, cfg.map(BanConfig::from_profile_string))
-                    } else {
-                        Self::default_decision_from_opt(cfg.map(|v| v.default_action))
-                    }
+        let decision = match report {
+            ReportInternal::ProfileName(r) => {
+                let cfg = config.profile_name.as_ref();
+                if let Some(text) = r.content.profile_name.as_ref()
+                    && let Some(llm) = profile_name_llm
+                {
+                    Self::llm_profile_string_decision(text, llm)
+                        .await?
+                        .add_ban_config(cfg.map(BanConfig::from_profile_string))
+                } else {
+                    Self::default_decision_from_opt(cfg.map(|v| v.default_action))
                 }
-                ReportInternal::ProfileText(r) => {
-                    let cfg = config.profile_text.as_ref();
-                    if let Some(text) = r.content.profile_text.as_ref()
-                        && let Some(llm) = profile_text_llm
-                    {
-                        let (a, s) = Self::llm_profile_string_decision(text, llm).await?;
-                        (a, s, cfg.map(BanConfig::from_profile_string))
-                    } else {
-                        Self::default_decision_from_opt(cfg.map(|v| v.default_action))
-                    }
+            }
+            ReportInternal::ProfileText(r) => {
+                let cfg = config.profile_text.as_ref();
+                if let Some(text) = r.content.profile_text.as_ref()
+                    && let Some(llm) = profile_text_llm
+                {
+                    Self::llm_profile_string_decision(text, llm)
+                        .await?
+                        .add_ban_config(cfg.map(BanConfig::from_profile_string))
+                } else {
+                    Self::default_decision_from_opt(cfg.map(|v| v.default_action))
                 }
-                ReportInternal::ProfileContent(r) => {
-                    let cfg = config.profile_content.as_ref();
-                    if let Some(content_id) = r.content.profile_content.as_ref()
-                        && let Some(llm) = profile_content_llm
-                    {
-                        let (a, s) = Self::llm_profile_content_decision(
-                            api,
-                            content_id,
-                            &r.info.target,
-                            llm,
-                        )
-                        .await?;
-                        (a, s, cfg.map(BanConfig::from_profile_content))
-                    } else {
-                        Self::default_decision_from_opt(cfg.map(|v| v.default_action))
-                    }
+            }
+            ReportInternal::ProfileContent(r) => {
+                let cfg = config.profile_content.as_ref();
+                if let Some(content_id) = r.content.profile_content.as_ref()
+                    && let Some(llm) = profile_content_llm
+                {
+                    Self::llm_profile_content_decision(api, content_id, &r.info.target, llm)
+                        .await?
+                        .add_ban_config(cfg.map(BanConfig::from_profile_content))
+                } else {
+                    Self::default_decision_from_opt(cfg.map(|v| v.default_action))
                 }
-                ReportInternal::Conversation { messages } => {
-                    let cfg = config.messages.as_ref();
-                    if !messages.is_empty()
-                        && let Some(llm) = messages_llm
-                    {
-                        let (a, s) = Self::llm_conversation_decision(messages, llm).await?;
-                        (a, s, cfg.map(BanConfig::from_messages))
-                    } else {
-                        Self::default_decision_from_opt(cfg.map(|v| v.default_action))
-                    }
+            }
+            ReportInternal::Conversation { messages } => {
+                let cfg = config.messages.as_ref();
+                if !messages.is_empty()
+                    && let Some(llm) = messages_llm
+                {
+                    Self::llm_conversation_decision(messages, llm)
+                        .await?
+                        .add_ban_config(cfg.map(BanConfig::from_messages))
+                } else {
+                    Self::default_decision_from_opt(cfg.map(|v| v.default_action))
                 }
-            };
+            }
+        };
 
         // Build ProcessReports from originals without consuming
         let processed: Vec<ProcessReport> = match report {
@@ -386,7 +407,7 @@ impl AdminBotReportProcessingLogic {
             | ReportInternal::ProfileText(r)
             | ReportInternal::ProfileContent(r) => {
                 vec![ProcessReport::new(
-                    accepted,
+                    decision.accepted,
                     r.content.clone(),
                     r.info.creator.clone(),
                     r.info.report_type.clone(),
@@ -397,7 +418,7 @@ impl AdminBotReportProcessingLogic {
                 .iter()
                 .map(|msg| {
                     ProcessReport::new(
-                        accepted,
+                        decision.accepted,
                         msg.report.content.clone(),
                         msg.report.info.creator.clone(),
                         msg.report.info.report_type.clone(),
@@ -407,9 +428,9 @@ impl AdminBotReportProcessingLogic {
                 .collect(),
         };
 
-        let ban = if accepted
-            && let Some(severity) = severity
-            && let Some(cfg) = per_type_cfg
+        let ban = if decision.accepted
+            && let Some(severity) = decision.severity
+            && let Some(cfg) = decision.ban_config
             && cfg.enabled
             && let Some(target) = report_target
         {
@@ -418,6 +439,12 @@ impl AdminBotReportProcessingLogic {
                 ReportInternal::ProfileText(_) => 1,
                 ReportInternal::ProfileContent(_) => 2,
                 ReportInternal::Conversation { .. } => 3,
+            };
+
+            let reason_details = if cfg.save_reason_details {
+                decision.llm_response
+            } else {
+                None
             };
 
             let now = std::time::SystemTime::now()
@@ -430,6 +457,8 @@ impl AdminBotReportProcessingLogic {
                 target,
                 ban_until,
                 reason_category,
+                reason_details,
+                reason_details_visible_to_user: cfg.reason_details_visible_to_user,
             })
         } else {
             None
@@ -470,7 +499,11 @@ impl AdminBotReportProcessingLogic {
                         reason_category: Some(api_client::models::AccountBanReasonCategory::new(
                             ban.reason_category,
                         )),
-                        reason_details: None,
+                        reason_details: ban
+                            .reason_details
+                            .filter(|s| !s.trim().is_empty())
+                            .map(api_client::models::AccountBanReasonDetails::new),
+                        reason_details_visible_to_user: Some(ban.reason_details_visible_to_user),
                     },
                 )
                 .await
@@ -481,20 +514,23 @@ impl AdminBotReportProcessingLogic {
         Ok(())
     }
 
-    fn default_decision_from_opt(
-        default_action: Option<AcceptOrReject>,
-    ) -> (bool, Option<ReportSeverity>, Option<BanConfig>) {
+    fn default_decision_from_opt(default_action: Option<AcceptOrReject>) -> ReportDecision {
         let accepted = match default_action {
             None | Some(AcceptOrReject::Reject) => false,
             Some(AcceptOrReject::Accept) => true,
         };
-        (accepted, None, None)
+        ReportDecision {
+            accepted,
+            severity: None,
+            llm_response: None,
+            ban_config: None,
+        }
     }
 
     async fn llm_profile_string_decision(
         text: &str,
         llm: &ProfileStringLlmConfigAndClient,
-    ) -> Result<(bool, Option<ReportSeverity>), TestError> {
+    ) -> Result<ReportDecision, TestError> {
         let config = &llm.config;
         let expected_response_lowercase = config.db.base.expected_response.to_lowercase();
         let user_text = config.db.base.user_text_template.replace(
@@ -539,7 +575,7 @@ impl AdminBotReportProcessingLogic {
         content_id: &api_client::models::ContentId,
         target: &api_client::models::AccountId,
         llm: &ProfileContentLlmConfigAndClient,
-    ) -> Result<(bool, Option<ReportSeverity>), TestError> {
+    ) -> Result<ReportDecision, TestError> {
         let image_data = api_client::apis::media_api::get_content(
             &api.api(),
             &target.aid,
@@ -607,7 +643,7 @@ impl AdminBotReportProcessingLogic {
     async fn llm_conversation_decision(
         messages: &[MessageInternal],
         llm: &MessagesLlmConfigAndClient,
-    ) -> Result<(bool, Option<ReportSeverity>), TestError> {
+    ) -> Result<ReportDecision, TestError> {
         let config = &llm.config;
         let expected_response_lowercase = config.db.base.expected_response.to_lowercase();
 
@@ -676,7 +712,7 @@ impl AdminBotReportProcessingLogic {
         expected_responses: &AutomaticBanningExpectedLlmResponsesConfig,
         debug_log_results: bool,
         log_label: &'static str,
-    ) -> Result<(bool, Option<ReportSeverity>), TestError> {
+    ) -> Result<ReportDecision, TestError> {
         let response = match r.map(|r| r.choices.into_iter().next()) {
             Ok(Some(r)) => match r.message.content {
                 Some(response) => response,
@@ -707,6 +743,13 @@ impl AdminBotReportProcessingLogic {
             info!("LLM {log_label} result: '{}'", response);
         }
 
-        Ok((accepted, severity))
+        let llm_response = if accepted { Some(response) } else { None };
+
+        Ok(ReportDecision {
+            accepted,
+            severity,
+            llm_response,
+            ban_config: None,
+        })
     }
 }

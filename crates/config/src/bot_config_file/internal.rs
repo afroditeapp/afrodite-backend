@@ -11,7 +11,7 @@ use model::common_admin::{
     AdminBotProfileStringModerationConfig, AdminBotReportProcessingConfig,
     AdminBotReportProcessingMessagesLlmConfig, AdminBotReportProcessingProfileContentLlmConfig,
     AdminBotReportProcessingProfileStringLlmConfig, AdminBotSecurityContentVerificationLlmConfig,
-    AdminBotStringModerationLlmConfig,
+    AdminBotStringModerationLlmConfig, AutomaticBanningConfig,
 };
 pub use simple_backend_model::NsfwDetectionThresholds;
 
@@ -320,19 +320,20 @@ pub struct ReportProcessingProfileStringConfigInternal {
     pub llm: LlmConfig,
     pub default_action: AcceptOrReject,
     pub automatic_banning_enabled: bool,
-    pub automatic_banning_day_counts: AutomaticBanningDayCountConfig,
+    pub automatic_banning: AutomaticBanningConfig,
 }
 
 impl ReportProcessingProfileStringConfigInternal {
     pub const TEMPLATE_PLACEHOLDER_TEXT: &str = TEMPLATE_PLACEHOLDER_TEXT;
 
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         db: AdminBotReportProcessingProfileStringLlmConfig,
         file: crate::bot_config_file::ReportProcessingTypeFileConfig,
         base_llm: crate::bot_config_file::BaseLlmConfig,
         default_action: AcceptOrReject,
         automatic_banning_enabled: bool,
-        automatic_banning_day_counts: AutomaticBanningDayCountConfig,
+        automatic_banning: AutomaticBanningConfig,
     ) -> Option<Self> {
         let llm = file.llm.merge_with(base_llm)?;
         Some(Self {
@@ -340,7 +341,7 @@ impl ReportProcessingProfileStringConfigInternal {
             llm,
             default_action,
             automatic_banning_enabled,
-            automatic_banning_day_counts,
+            automatic_banning,
         })
     }
 }
@@ -351,17 +352,18 @@ pub struct ReportProcessingProfileContentConfigInternal {
     pub llm: LlmConfig,
     pub default_action: AcceptOrReject,
     pub automatic_banning_enabled: bool,
-    pub automatic_banning_day_counts: AutomaticBanningDayCountConfig,
+    pub automatic_banning: AutomaticBanningConfig,
 }
 
 impl ReportProcessingProfileContentConfigInternal {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         db: AdminBotReportProcessingProfileContentLlmConfig,
         file: crate::bot_config_file::ReportProcessingTypeFileConfig,
         base_llm: crate::bot_config_file::BaseLlmConfig,
         default_action: AcceptOrReject,
         automatic_banning_enabled: bool,
-        automatic_banning_day_counts: AutomaticBanningDayCountConfig,
+        automatic_banning: AutomaticBanningConfig,
     ) -> Option<Self> {
         let llm = file.llm.merge_with(base_llm)?;
         Some(Self {
@@ -369,7 +371,7 @@ impl ReportProcessingProfileContentConfigInternal {
             llm,
             default_action,
             automatic_banning_enabled,
-            automatic_banning_day_counts,
+            automatic_banning,
         })
     }
 }
@@ -380,20 +382,21 @@ pub struct ReportProcessingMessagesConfigInternal {
     pub llm: LlmConfig,
     pub default_action: AcceptOrReject,
     pub automatic_banning_enabled: bool,
-    pub automatic_banning_day_counts: AutomaticBanningDayCountConfig,
+    pub automatic_banning: AutomaticBanningConfig,
 }
 
 impl ReportProcessingMessagesConfigInternal {
     pub const TEMPLATE_PLACEHOLDER_TEXT: &str = TEMPLATE_PLACEHOLDER_TEXT;
     pub const TEMPLATE_PLACEHOLDER_MESSAGE_NUMBER: &str = TEMPLATE_PLACEHOLDER_MESSAGE_NUMBER;
 
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         db: AdminBotReportProcessingMessagesLlmConfig,
         file: crate::bot_config_file::ReportProcessingTypeFileConfig,
         base_llm: crate::bot_config_file::BaseLlmConfig,
         default_action: AcceptOrReject,
         automatic_banning_enabled: bool,
-        automatic_banning_day_counts: AutomaticBanningDayCountConfig,
+        automatic_banning: AutomaticBanningConfig,
     ) -> Option<Self> {
         let llm = file.llm.merge_with(base_llm)?;
         Some(Self {
@@ -401,7 +404,7 @@ impl ReportProcessingMessagesConfigInternal {
             llm,
             default_action,
             automatic_banning_enabled,
-            automatic_banning_day_counts,
+            automatic_banning,
         })
     }
 }
@@ -416,6 +419,7 @@ pub struct ReportProcessingConfigInternal {
 }
 
 impl ReportProcessingConfigInternal {
+    #[allow(clippy::too_many_arguments)]
     fn new_per_type_profile_string(
         db_llm: AdminBotReportProcessingProfileStringLlmConfig,
         db_enabled: bool,
@@ -423,7 +427,7 @@ impl ReportProcessingConfigInternal {
         file: crate::bot_config_file::ReportProcessingTypeFileConfig,
         base_llm: crate::bot_config_file::BaseLlmConfig,
         automatic_banning_enabled: bool,
-        automatic_banning_day_counts: AutomaticBanningDayCountConfig,
+        automatic_banning: AutomaticBanningConfig,
     ) -> Option<ReportProcessingProfileStringConfigInternal> {
         if !db_enabled {
             return None;
@@ -435,10 +439,11 @@ impl ReportProcessingConfigInternal {
             base_llm,
             default_action,
             automatic_banning_enabled,
-            automatic_banning_day_counts,
+            automatic_banning,
         )
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn new_per_type_profile_content(
         db_llm: AdminBotReportProcessingProfileContentLlmConfig,
         db_enabled: bool,
@@ -446,7 +451,7 @@ impl ReportProcessingConfigInternal {
         file: crate::bot_config_file::ReportProcessingTypeFileConfig,
         base_llm: crate::bot_config_file::BaseLlmConfig,
         automatic_banning_enabled: bool,
-        automatic_banning_day_counts: AutomaticBanningDayCountConfig,
+        automatic_banning: AutomaticBanningConfig,
     ) -> Option<ReportProcessingProfileContentConfigInternal> {
         if !db_enabled {
             return None;
@@ -458,10 +463,11 @@ impl ReportProcessingConfigInternal {
             base_llm,
             default_action,
             automatic_banning_enabled,
-            automatic_banning_day_counts,
+            automatic_banning,
         )
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn new_per_type_messages(
         db_llm: AdminBotReportProcessingMessagesLlmConfig,
         db_enabled: bool,
@@ -469,7 +475,7 @@ impl ReportProcessingConfigInternal {
         file: crate::bot_config_file::ReportProcessingTypeFileConfig,
         base_llm: crate::bot_config_file::BaseLlmConfig,
         automatic_banning_enabled: bool,
-        automatic_banning_day_counts: AutomaticBanningDayCountConfig,
+        automatic_banning: AutomaticBanningConfig,
     ) -> Option<ReportProcessingMessagesConfigInternal> {
         if !db_enabled {
             return None;
@@ -481,7 +487,7 @@ impl ReportProcessingConfigInternal {
             base_llm,
             default_action,
             automatic_banning_enabled,
-            automatic_banning_day_counts,
+            automatic_banning,
         )
     }
 
@@ -505,7 +511,7 @@ impl ReportProcessingConfigInternal {
                 file.profile_name,
                 base_llm.clone(),
                 db.profile_name.automatic_banning_enabled,
-                db.profile_name.automatic_banning_day_counts,
+                db.profile_name.automatic_banning,
             ),
             profile_text: Self::new_per_type_profile_string(
                 db.profile_text.llm,
@@ -514,7 +520,7 @@ impl ReportProcessingConfigInternal {
                 file.profile_text,
                 base_llm.clone(),
                 db.profile_text.automatic_banning_enabled,
-                db.profile_text.automatic_banning_day_counts,
+                db.profile_text.automatic_banning,
             ),
             profile_content: Self::new_per_type_profile_content(
                 db.profile_content.llm,
@@ -523,7 +529,7 @@ impl ReportProcessingConfigInternal {
                 file.profile_content,
                 base_llm.clone(),
                 db.profile_content.automatic_banning_enabled,
-                db.profile_content.automatic_banning_day_counts,
+                db.profile_content.automatic_banning,
             ),
             messages: Self::new_per_type_messages(
                 db.messages.llm,
@@ -532,7 +538,7 @@ impl ReportProcessingConfigInternal {
                 file.messages,
                 base_llm,
                 db.messages.automatic_banning_enabled,
-                db.messages.automatic_banning_day_counts,
+                db.messages.automatic_banning,
             ),
             concurrency: file.concurrency,
         })

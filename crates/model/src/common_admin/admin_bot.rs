@@ -263,6 +263,19 @@ impl Default for AutomaticBanningDayCountConfig {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
+pub struct AutomaticBanningConfig {
+    pub day_counts: AutomaticBanningDayCountConfig,
+    /// Save the LLM response as the ban reason details.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub save_reason_details: bool,
+    /// Show ban reason details to the banned user.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub reason_details_visible_to_user: bool,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
 pub struct AdminBotReportProcessingProfileStringConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
@@ -272,7 +285,7 @@ pub struct AdminBotReportProcessingProfileStringConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub automatic_banning_enabled: bool,
-    pub automatic_banning_day_counts: AutomaticBanningDayCountConfig,
+    pub automatic_banning: AutomaticBanningConfig,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
@@ -285,7 +298,7 @@ pub struct AdminBotReportProcessingProfileContentConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub automatic_banning_enabled: bool,
-    pub automatic_banning_day_counts: AutomaticBanningDayCountConfig,
+    pub automatic_banning: AutomaticBanningConfig,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
@@ -298,7 +311,7 @@ pub struct AdminBotReportProcessingMessagesConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub automatic_banning_enabled: bool,
-    pub automatic_banning_day_counts: AutomaticBanningDayCountConfig,
+    pub automatic_banning: AutomaticBanningConfig,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
