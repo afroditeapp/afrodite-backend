@@ -1,6 +1,6 @@
 use database::{DbReadMode, DieselDatabaseError};
 use database_account::current::read::GetDbReadCommandsAccount;
-use model::UnixTime;
+use model::{UnixTime, common::data_export::DataExportType};
 use model_account::{
     AccountEmailSendingStateRaw, AccountStateTableRaw, AssociationMembershipDataExportEntry,
     EmailAddressHistoryEntry, EmailAddressState, EmailChangeLimits, EmailLoginLimits,
@@ -36,14 +36,19 @@ impl UserDataExportJsonAccount {
     pub fn query(
         current: &mut DbReadMode,
         id: SourceAccount,
+        data_export_type: DataExportType,
     ) -> simple_backend_utils::Result<Self, DieselDatabaseError> {
         let id = id.0;
         let (email_verification_token, email_verification_token_time) =
             current.account().email().email_verification_token(id)?;
+        let mut account_state_table = current.account().data().account_state_table_raw(id)?;
+        if data_export_type == DataExportType::User {
+            account_state_table.hide_reason_details_if_not_visible_to_user();
+        }
         let data = Self {
             email_address_state: current.account().data().email_address_state(id)?,
             email_sending_states: current.account().email().email_sending_states(id)?,
-            account_state_table: current.account().data().account_state_table_raw(id)?,
+            account_state_table,
             account_notification_settings: current
                 .account()
                 .notification()

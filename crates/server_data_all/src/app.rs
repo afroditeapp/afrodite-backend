@@ -278,6 +278,7 @@ impl DataAllUtils for DataAllUtilsImpl {
                                             "Too many reports were marked as spam by bot or human admin. If you think the reports weren't spam, contact app support.".to_string()
                                         ).unwrap(),
                                     )),
+                                    reason_details_visible_to_user: true,
                                 },
                             )
                             .await?;

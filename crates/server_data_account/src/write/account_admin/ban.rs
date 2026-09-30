@@ -22,12 +22,14 @@ pub enum SetAccountBanStateMode {
         banned_until: UnixTime,
         reason_category: Option<AccountBanReasonCategory>,
         reason_details: Option<AccountBanReasonDetails>,
+        reason_details_visible_to_user: bool,
     },
     BanOrUnban {
         admin_id: AccountIdInternal,
         banned_until: Option<UnixTime>,
         reason_category: Option<AccountBanReasonCategory>,
         reason_details: Option<AccountBanReasonDetails>,
+        reason_details_visible_to_user: bool,
     },
 }
 
@@ -37,24 +39,34 @@ impl WriteCommandsAccountBan<'_> {
         id: AccountIdInternal,
         mode: SetAccountBanStateMode,
     ) -> Result<(), DataError> {
-        let (banned_until, admin_id, admin_type, reason_category, reason_details) = match mode {
-            SetAccountBanStateMode::Clear => (None, None, None, None, None),
+        let (
+            banned_until,
+            admin_id,
+            admin_type,
+            reason_category,
+            reason_details,
+            reason_details_visible_to_user,
+        ) = match mode {
+            SetAccountBanStateMode::Clear => (None, None, None, None, None, false),
             SetAccountBanStateMode::AutoBan {
                 banned_until,
                 reason_category,
                 reason_details,
+                reason_details_visible_to_user,
             } => (
                 Some(banned_until),
                 None,
                 Some(AccountBannedAdminType::Server),
                 reason_category,
                 reason_details,
+                reason_details_visible_to_user,
             ),
             SetAccountBanStateMode::BanOrUnban {
                 admin_id,
                 banned_until,
                 reason_category,
                 reason_details,
+                reason_details_visible_to_user,
             } => {
                 let admin_type = self
                     .db_read(move |mut cmds| {
@@ -76,6 +88,7 @@ impl WriteCommandsAccountBan<'_> {
                     Some(admin_type),
                     reason_category,
                     reason_details,
+                    reason_details_visible_to_user,
                 )
             }
         };
@@ -113,6 +126,7 @@ impl WriteCommandsAccountBan<'_> {
                 banned_until,
                 reason_category,
                 reason_details,
+                reason_details_visible_to_user,
             )?;
 
             Ok(a)

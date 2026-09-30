@@ -40,13 +40,20 @@ pub async fn get_account_ban_time(
 ) -> Result<Json<GetAccountBanTimeResult>, StatusCode> {
     ACCOUNT.get_account_ban_time.incr();
 
-    if account != api_caller.as_id() && !permissions.admin_ban_account {
+    let is_account_owner = account == api_caller.as_id();
+    let is_admin = permissions.admin_ban_account;
+
+    if !is_account_owner && !is_admin {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
     let internal_id = state.get_internal_id(account).await?;
 
-    let result = state.read().account().ban().ban_time(internal_id).await?;
+    let mut result = state.read().account().ban().ban_time(internal_id).await?;
+
+    if !is_admin && !result.reason_details_visible_to_user {
+        result.reason_details = None;
+    }
 
     Ok(result.into())
 }

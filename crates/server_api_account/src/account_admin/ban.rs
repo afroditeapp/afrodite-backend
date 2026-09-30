@@ -53,6 +53,7 @@ pub async fn post_set_ban_state(
                     banned_until: ban_info.ban_until,
                     reason_category: ban_info.reason_category,
                     reason_details: ban_info.reason_details,
+                    reason_details_visible_to_user: ban_info.reason_details_visible_to_user,
                 },
             )
             .await?;

@@ -72,7 +72,7 @@ fn db_data_export(
     )?;
     writer.write_user_json_file(
         "account",
-        &UserDataExportJsonAccount::query(&mut current, cmd.source())?,
+        &UserDataExportJsonAccount::query(&mut current, cmd.source(), cmd.data_export_type())?,
     )?;
     writer.write_user_json_file(
         "profile",

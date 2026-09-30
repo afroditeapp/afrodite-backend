@@ -531,6 +531,7 @@ CREATE TABLE IF NOT EXISTS account_state(
     account_banned_reason_category     SMALLINT,
     -- Null or non-empty string
     account_banned_reason_details      TEXT,
+    account_banned_reason_details_visible_to_user BOOLEAN NOT NULL DEFAULT FALSE,
     account_banned_admin_account_id    BIGINT,
     account_banned_admin_type_number   SMALLINT,
     account_banned_until_unix_time     BIGINT,

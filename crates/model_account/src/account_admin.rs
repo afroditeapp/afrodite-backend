@@ -42,6 +42,9 @@ pub struct SetAccountBanState {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
     pub reason_details: Option<AccountBanReasonDetails>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub reason_details_visible_to_user: bool,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]

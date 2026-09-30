@@ -22,16 +22,24 @@ impl CurrentReadAccountBan<'_> {
                 account_banned_admin_type_number,
                 account_banned_reason_category,
                 account_banned_reason_details,
+                account_banned_reason_details_visible_to_user,
             ))
             .first(self.conn())
             .into_db_error(id)
             .map(
-                |(banned_until, admin_type, reason_category, reason_details)| {
+                |(
+                    banned_until,
+                    admin_type,
+                    reason_category,
+                    reason_details,
+                    reason_details_visible_to_user,
+                )| {
                     GetAccountBanTimeResult {
                         banned_until,
                         admin_type,
                         reason_category,
                         reason_details,
+                        reason_details_visible_to_user,
                     }
                 },
             )

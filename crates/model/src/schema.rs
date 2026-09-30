@@ -216,6 +216,7 @@ diesel::table! {
         account_deletion_request_unix_time -> Nullable<Int8>,
         account_banned_reason_category -> Nullable<Int2>,
         account_banned_reason_details -> Nullable<Text>,
+        account_banned_reason_details_visible_to_user -> Bool,
         account_banned_admin_account_id -> Nullable<Int8>,
         account_banned_admin_type_number -> Nullable<Int2>,
         account_banned_until_unix_time -> Nullable<Int8>,

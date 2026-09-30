@@ -9,6 +9,7 @@ use crate::IntoDatabaseError;
 define_current_read_commands!(CurrentWriteAccountBanAdmin);
 
 impl CurrentWriteAccountBanAdmin<'_> {
+    #[allow(clippy::too_many_arguments)]
     pub fn set_banned_state(
         &mut self,
         id: AccountIdInternal,
@@ -17,6 +18,7 @@ impl CurrentWriteAccountBanAdmin<'_> {
         banned_until: Option<UnixTime>,
         reason_category: Option<AccountBanReasonCategory>,
         reason_details: Option<AccountBanReasonDetails>,
+        reason_details_visible_to_user: bool,
     ) -> Result<(), DieselDatabaseError> {
         use crate::schema::account_state::dsl::*;
 
@@ -31,6 +33,7 @@ impl CurrentWriteAccountBanAdmin<'_> {
                 account_banned_admin_type_number.eq(admin_type),
                 account_banned_reason_category.eq(reason_category),
                 account_banned_reason_details.eq(reason_details),
+                account_banned_reason_details_visible_to_user.eq(reason_details_visible_to_user),
             ))
             .execute(self.conn())
             .into_db_error(())?;

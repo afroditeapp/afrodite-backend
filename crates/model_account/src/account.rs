@@ -477,6 +477,9 @@ pub struct GetAccountBanTimeResult {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
     pub reason_details: Option<AccountBanReasonDetails>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub reason_details_visible_to_user: bool,
 }
 
 #[derive(Deserialize, ToSchema)]
@@ -585,6 +588,7 @@ pub struct AccountStateTableRaw {
     account_deletion_request_unix_time: Option<UnixTime>,
     account_banned_reason_category: Option<i16>,
     account_banned_reason_details: Option<AccountBanReasonDetails>,
+    account_banned_reason_details_visible_to_user: bool,
     account_banned_admin_type_number: Option<AccountBannedAdminType>,
     account_banned_until_unix_time: Option<UnixTime>,
     account_banned_state_change_unix_time: Option<UnixTime>,
@@ -595,6 +599,14 @@ pub struct AccountStateTableRaw {
     account_verification_method: Option<VerificationMethod>,
     account_verification_unix_time: Option<UnixTime>,
     account_verification_error_flags: AccountVerificationErrorFlagsValue,
+}
+
+impl AccountStateTableRaw {
+    pub fn hide_reason_details_if_not_visible_to_user(&mut self) {
+        if !self.account_banned_reason_details_visible_to_user {
+            self.account_banned_reason_details = None;
+        }
+    }
 }
 
 /// Global state for account component
