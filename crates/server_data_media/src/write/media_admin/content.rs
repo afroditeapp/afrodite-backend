@@ -11,7 +11,7 @@ use server_data::{
     result::WrappedContextExt, write::DbTransaction,
 };
 
-use crate::write::GetWriteCommandsMedia;
+use crate::write::{GetWriteCommandsMedia, SendNotificationToUser};
 
 define_cmd_wrapper_write!(WriteCommandsProfileAdminContent);
 
@@ -20,7 +20,7 @@ impl WriteCommandsProfileAdminContent<'_> {
         &self,
         mode: ContentModerationMode,
         content_id: ContentIdInternal,
-    ) -> Result<(), DataError> {
+    ) -> Result<Option<SendNotificationToUser>, DataError> {
         let current_content = self
             .db_read(move |mut cmds| {
                 cmds.media()
@@ -32,38 +32,31 @@ impl WriteCommandsProfileAdminContent<'_> {
             return Err(DataError::NotAllowed.report());
         }
 
-        let cache_update = db_transaction!(self, move |mut cmds| {
+        let (new_state, cache_update) = db_transaction!(self, move |mut cmds| {
             cmds.media()
                 .media_content()
                 .increment_media_content_sync_version(content_id.content_owner())?;
 
-            match mode {
+            let new_state = match mode {
                 ContentModerationMode::MoveToHumanModeration {
                     rejected_category,
                     rejected_details,
-                } => {
-                    cmds.media_admin()
-                        .media_content()
-                        .move_to_human_moderation(
-                            content_id,
-                            rejected_category,
-                            rejected_details,
-                        )?;
-                }
+                } => cmds
+                    .media_admin()
+                    .media_content()
+                    .move_to_human_moderation(content_id, rejected_category, rejected_details)?,
                 ContentModerationMode::Moderate {
                     moderator_id,
                     accept,
                     rejected_category,
                     rejected_details,
-                } => {
-                    cmds.media_admin().media_content().moderate_media_content(
-                        moderator_id,
-                        content_id,
-                        accept,
-                        rejected_category,
-                        rejected_details,
-                    )?;
-                }
+                } => cmds.media_admin().media_content().moderate_media_content(
+                    moderator_id,
+                    content_id,
+                    accept,
+                    rejected_category,
+                    rejected_details,
+                )?,
             };
 
             let current_account_media = cmds
@@ -85,9 +78,9 @@ impl WriteCommandsProfileAdminContent<'_> {
                         content_id.content_owner(),
                         &modification,
                     )?;
-                Ok(Some(modification))
+                Ok((new_state, Some(modification)))
             } else {
-                Ok(None)
+                Ok((new_state, None))
             }
         })?;
 
@@ -98,7 +91,11 @@ impl WriteCommandsProfileAdminContent<'_> {
                 .await?;
         }
 
-        Ok(())
+        if current_content.state().send_notification_to_user(new_state) {
+            Ok(Some(SendNotificationToUser))
+        } else {
+            Ok(None)
+        }
     }
 
     pub async fn change_face_detected_value(

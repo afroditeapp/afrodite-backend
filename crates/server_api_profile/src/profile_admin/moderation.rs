@@ -147,7 +147,8 @@ pub async fn post_moderate_profile_string(
     };
 
     db_write!(state, move |cmds| {
-        cmds.profile_admin()
+        let send_notification = cmds
+            .profile_admin()
             .moderation()
             .moderate_profile_string(data.content_type, mode, string_owner_id, data.value)
             .await?;
@@ -156,7 +157,7 @@ pub async fn post_moderate_profile_string(
             .send_connected_event(string_owner_id, EventToClientInternal::ProfileChanged)
             .await?;
 
-        if !data.move_to_human.unwrap_or_default() {
+        if !data.move_to_human.unwrap_or_default() && send_notification.is_some() {
             // Accepted or rejected
 
             let pending_type = match data.content_type {

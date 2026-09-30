@@ -128,7 +128,8 @@ pub async fn post_moderate_media_content(
             .media()
             .content_id_internal(content_owner, data.content_id)
             .await?;
-        cmds.media_admin()
+        let send_notification = cmds
+            .media_admin()
             .content()
             .moderate_media_content(mode, content_id)
             .await?;
@@ -140,7 +141,7 @@ pub async fn post_moderate_media_content(
             )
             .await?;
 
-        if !data.move_to_human.unwrap_or_default() {
+        if !data.move_to_human.unwrap_or_default() && send_notification.is_some() {
             // Accepted or rejected
 
             let pending_type = if data.accept {

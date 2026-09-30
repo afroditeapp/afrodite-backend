@@ -61,6 +61,24 @@ impl ProfileStringModerationState {
             | Self::RejectedByAdmin => false,
         }
     }
+
+    pub fn is_rejected(&self) -> bool {
+        match self {
+            Self::RejectedByAdminBot | Self::RejectedByAdmin => true,
+            Self::WaitingAdminBot
+            | Self::WaitingAdmin
+            | Self::AcceptedByAdminBot
+            | Self::AcceptedByAdmin
+            | Self::AcceptedByAllowlist => false,
+        }
+    }
+
+    /// Returns `true` if the moderation state changed visually for the user
+    /// when transitioning to `new_state`.
+    pub fn send_notification_to_user(&self, new_state: Self) -> bool {
+        self.is_accepted() != new_state.is_accepted()
+            || self.is_rejected() != new_state.is_rejected()
+    }
 }
 
 #[derive(Debug, Clone, Copy)]

@@ -7,6 +7,10 @@ use server_data::db_manager::WriteAccessProvider;
 pub mod media;
 pub mod media_admin;
 
+/// Marker type which indicates that a user-visible notification
+/// should be sent.
+pub struct SendNotificationToUser;
+
 pub trait GetWriteCommandsMedia {
     fn media(&self) -> WriteCommandsMedia<'_>;
     fn media_admin(&self) -> WriteCommandsMediaAdmin<'_>;

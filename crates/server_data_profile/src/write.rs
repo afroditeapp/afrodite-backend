@@ -9,6 +9,10 @@ pub mod profile;
 pub mod profile_admin;
 pub mod profile_admin_history;
 
+/// Marker type which indicates that a user-visible notification
+/// should be sent.
+pub struct SendNotificationToUser;
+
 pub trait GetWriteCommandsProfile {
     fn profile(&self) -> WriteCommandsProfile<'_>;
     fn profile_admin(&self) -> WriteCommandsProfileAdmin<'_>;

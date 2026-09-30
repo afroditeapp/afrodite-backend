@@ -231,6 +231,13 @@ impl ContentModerationState {
             | Self::AcceptedByAdmin => false,
         }
     }
+
+    /// Returns `true` if the moderation state changed visually for the user
+    /// when transitioning to `new_state`.
+    pub fn send_notification_to_user(&self, new_state: Self) -> bool {
+        self.is_accepted() != new_state.is_accepted()
+            || self.is_rejected() != new_state.is_rejected()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Queryable, Selectable)]

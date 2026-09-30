@@ -15,7 +15,7 @@ use server_data::{
 };
 use simple_backend_model::NonEmptyString;
 
-use crate::cache::CacheWriteProfile;
+use crate::{cache::CacheWriteProfile, write::SendNotificationToUser};
 
 define_cmd_wrapper_write!(WriteCommandsProfileAdminModeration);
 
@@ -26,7 +26,7 @@ impl WriteCommandsProfileAdminModeration<'_> {
         mode: ModerateProfileValueMode,
         string_owner_id: AccountIdInternal,
         string_value: NonEmptyString,
-    ) -> Result<(), DataError> {
+    ) -> Result<Option<SendNotificationToUser>, DataError> {
         let current_profile = self
             .db_read(move |mut cmds| cmds.profile().data().profile(string_owner_id))
             .await?;
@@ -38,16 +38,16 @@ impl WriteCommandsProfileAdminModeration<'_> {
             return Err(DataError::NotAllowed.report());
         }
 
-        let current_moderation_state = self
+        let current_moderation_info = self
             .db_read(move |mut cmds| {
                 cmds.profile()
                     .moderation()
                     .profile_moderation_info(string_owner_id, content_type)
             })
             .await?;
-        if current_moderation_state.is_none() {
+        let Some(current_moderation_state) = current_moderation_info.map(|s| s.state) else {
             return Err(DataError::NotAllowed.report());
-        }
+        };
 
         // Profile name and text have accepted boolean in Profile, so update Profile metadata
         let modification = ProfileModificationMetadata::generate();
@@ -119,7 +119,11 @@ impl WriteCommandsProfileAdminModeration<'_> {
 
         self.update_location_cache_profile(string_owner_id).await?;
 
-        Ok(())
+        if current_moderation_state.send_notification_to_user(new_state) {
+            Ok(Some(SendNotificationToUser))
+        } else {
+            Ok(None)
+        }
     }
 }
 
