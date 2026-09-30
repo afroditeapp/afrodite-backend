@@ -11,16 +11,16 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// EmailLoginToken : Email login token is a 128 bit token used for email-based authentication where client receives one token via API and another is sent via email.
+/// EmailLoginToken : Email login token is a 128 bit token used for email-based authentication where client receives one token via API and another is sent via email.  The token's string representation can be selected as a single word with a double click.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct EmailLoginToken {
-    /// Base64 URL safe without padding
+    /// Base64 URL safe without padding where `-` is encoded as `_a` and `_` as `_b`.
     #[serde(rename = "token")]
     pub token: String,
 }
 
 impl EmailLoginToken {
-    /// Email login token is a 128 bit token used for email-based authentication where client receives one token via API and another is sent via email.
+    /// Email login token is a 128 bit token used for email-based authentication where client receives one token via API and another is sent via email.  The token's string representation can be selected as a single word with a double click.
     pub fn new(token: String) -> EmailLoginToken {
         EmailLoginToken {
             token,

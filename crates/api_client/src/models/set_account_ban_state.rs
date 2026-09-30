@@ -22,6 +22,8 @@ pub struct SetAccountBanState {
     pub reason_category: Option<models::AccountBanReasonCategory>,
     #[serde(rename = "reason_details", skip_serializing_if = "Option::is_none")]
     pub reason_details: Option<models::AccountBanReasonDetails>,
+    #[serde(rename = "reason_details_visible_to_user", skip_serializing_if = "Option::is_none")]
+    pub reason_details_visible_to_user: Option<bool>,
 }
 
 impl SetAccountBanState {
@@ -31,6 +33,7 @@ impl SetAccountBanState {
             ban_until: None,
             reason_category: None,
             reason_details: None,
+            reason_details_visible_to_user: None,
         }
     }
 }
