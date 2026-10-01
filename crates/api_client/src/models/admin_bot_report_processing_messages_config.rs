@@ -13,8 +13,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AdminBotReportProcessingMessagesConfig {
-    #[serde(rename = "automatic_banning_day_counts")]
-    pub automatic_banning_day_counts: models::AutomaticBanningDayCountConfig,
+    #[serde(rename = "automatic_banning")]
+    pub automatic_banning: models::AutomaticBanningConfig,
     #[serde(rename = "automatic_banning_enabled", skip_serializing_if = "Option::is_none")]
     pub automatic_banning_enabled: Option<bool>,
     #[serde(rename = "default_action")]
@@ -26,9 +26,9 @@ pub struct AdminBotReportProcessingMessagesConfig {
 }
 
 impl AdminBotReportProcessingMessagesConfig {
-    pub fn new(automatic_banning_day_counts: models::AutomaticBanningDayCountConfig, default_action: models::AcceptOrReject, llm: models::AdminBotReportProcessingMessagesLlmConfig) -> AdminBotReportProcessingMessagesConfig {
+    pub fn new(automatic_banning: models::AutomaticBanningConfig, default_action: models::AcceptOrReject, llm: models::AdminBotReportProcessingMessagesLlmConfig) -> AdminBotReportProcessingMessagesConfig {
         AdminBotReportProcessingMessagesConfig {
-            automatic_banning_day_counts,
+            automatic_banning,
             automatic_banning_enabled: None,
             default_action,
             llm,

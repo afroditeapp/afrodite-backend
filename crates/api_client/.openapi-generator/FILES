@@ -86,6 +86,7 @@ src/models/attribute_value.rs
 src/models/attribute_value_order_mode.rs
 src/models/attribution_config.rs
 src/models/auth_pair.rs
+src/models/automatic_banning_config.rs
 src/models/automatic_banning_day_count_config.rs
 src/models/automatic_banning_expected_llm_responses_config.rs
 src/models/automatic_profile_search_iterator_session_id.rs

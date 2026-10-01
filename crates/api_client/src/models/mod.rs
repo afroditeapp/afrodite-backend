@@ -140,6 +140,8 @@ pub mod attribution_config;
 pub use self::attribution_config::AttributionConfig;
 pub mod auth_pair;
 pub use self::auth_pair::AuthPair;
+pub mod automatic_banning_config;
+pub use self::automatic_banning_config::AutomaticBanningConfig;
 pub mod automatic_banning_day_count_config;
 pub use self::automatic_banning_day_count_config::AutomaticBanningDayCountConfig;
 pub mod automatic_banning_expected_llm_responses_config;

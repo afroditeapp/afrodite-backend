@@ -343,6 +343,7 @@ Class | Method | HTTP request | Description
  - [AttributeValueOrderMode](docs/AttributeValueOrderMode.md)
  - [AttributionConfig](docs/AttributionConfig.md)
  - [AuthPair](docs/AuthPair.md)
+ - [AutomaticBanningConfig](docs/AutomaticBanningConfig.md)
  - [AutomaticBanningDayCountConfig](docs/AutomaticBanningDayCountConfig.md)
  - [AutomaticBanningExpectedLlmResponsesConfig](docs/AutomaticBanningExpectedLlmResponsesConfig.md)
  - [AutomaticProfileSearchIteratorSessionId](docs/AutomaticProfileSearchIteratorSessionId.md)
