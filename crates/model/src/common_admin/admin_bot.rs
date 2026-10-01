@@ -234,12 +234,16 @@ impl Default for AdminBotReportProcessingMessagesLlmConfig {
     fn default() -> Self {
         Self {
             base: AdminBotStringReportBaseLlmConfig {
-                system_text: "You are a dating app chat message report moderator. Output 'accepted, severity' where severity is low/medium/high, or 'rejected'.".to_string(),
+                system_text: "You are a dating app chat message report moderator. \
+                    Output 'accepted, severity' where severity is low/medium/high, or 'rejected'. \
+                    You will get a list of messages. Each message has a message sender (reporter/reported) and a message number. \
+                    Analyze the messages and determine if the reported has sent an inappropriate message. \
+                    Output 'rejected' if messages from the reported are appropriate.".to_string(),
                 expected_response: "accepted".to_string(),
                 user_text_template: "Reported messages:\n\n{text}".to_string(),
             },
-            report_creator_message_template: "Report creator's message ({message_number}): {text}".to_string(),
-            report_target_message_template: "Report target's message ({message_number}): {text}".to_string(),
+            report_creator_message_template: "From reporter ({message_number}): {text}".to_string(),
+            report_target_message_template: "From reported ({message_number}): {text}".to_string(),
             automatic_banning_expected_responses: AutomaticBanningExpectedLlmResponsesConfig::default(),
         }
     }
