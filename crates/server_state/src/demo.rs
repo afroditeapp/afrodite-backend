@@ -140,16 +140,18 @@ impl DemoAccountManager {
                 return DemoAccountLoginResult::default();
             };
 
+            // Check lock first so that guessing the password is not possible
+            // after locking.
+            if account.locked {
+                return DemoAccountLoginResult::locked();
+            }
+
             if account.info.password != credentials.password {
                 account.login_attempt_count = account.login_attempt_count.saturating_add(1);
                 if account.login_attempt_count >= self.max_login_attempts {
                     account.locked = true;
                 }
                 return DemoAccountLoginResult::default();
-            }
-
-            if account.locked {
-                return DemoAccountLoginResult::locked();
             }
 
             // Reset attempt count on successful login.
