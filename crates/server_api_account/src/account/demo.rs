@@ -31,8 +31,8 @@ const PATH_POST_DEMO_ACCOUNT_LOGIN: &str = "/account_api/demo_account_login";
 /// depending on the server configuration.
 ///
 /// This API route has 1 second wait time to make password guessing harder.
-/// Account will be locked if the password is guessed. Server process restart
-/// will reset the lock.
+/// Account will be locked after `demo_account_login_attempt_max_count` wrong
+/// attempts. Server process restart will reset the lock.
 #[utoipa::path(
     post,
     path = PATH_POST_DEMO_ACCOUNT_LOGIN,

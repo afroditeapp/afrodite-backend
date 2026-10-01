@@ -277,9 +277,14 @@ impl ApiDoc {
         let (data_export, _) = DataExportManagerData::new();
         let (dynamic_config_manager, _) = DynamicConfigManagerData::new();
 
-        let demo =
-            DemoAccountManager::new(config.demo_account_config().cloned().unwrap_or_default())
-                .expect("Demo account manager init failed");
+        let demo = DemoAccountManager::new(
+            config.demo_account_config().cloned().unwrap_or_default(),
+            config
+                .limits_common()
+                .demo_account_login_attempt_max_count
+                .get(),
+        )
+        .expect("Demo account manager init failed");
 
         let app_state = S::create_app_state(
             router_database_handle,

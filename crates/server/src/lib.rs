@@ -373,6 +373,10 @@ impl BusinessLogic for DatingAppBusinessLogic {
                 .demo_account_config()
                 .cloned()
                 .unwrap_or_default(),
+            self.config
+                .limits_common()
+                .demo_account_login_attempt_max_count
+                .get(),
         )
         .expect("Demo account manager init failed");
 

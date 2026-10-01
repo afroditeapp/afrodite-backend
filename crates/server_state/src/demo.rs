@@ -39,6 +39,7 @@ impl<T: PartialEq + Clone> TokenState<T> {
 struct DemoAccountAccountState {
     pub info: DemoAccountConfig,
     pub locked: bool,
+    pub login_attempt_count: u16,
     pub access_granted_token: Option<TokenState<DemoAccountToken>>,
 }
 
@@ -69,23 +70,26 @@ struct State {
 #[derive(Debug)]
 pub struct DemoAccountManager {
     state: Arc<RwLock<State>>,
+    max_login_attempts: u16,
 }
 
 impl Clone for DemoAccountManager {
     fn clone(&self) -> Self {
         Self {
             state: self.state.clone(),
+            max_login_attempts: self.max_login_attempts,
         }
     }
 }
 
 impl DemoAccountManager {
-    pub fn new(info: Vec<DemoAccountConfig>) -> Result<Self, DataError> {
+    pub fn new(info: Vec<DemoAccountConfig>, max_login_attempts: u16) -> Result<Self, DataError> {
         let states: Vec<DemoAccountAccountState> = info
             .into_iter()
             .map(|info| DemoAccountAccountState {
                 info,
                 locked: false,
+                login_attempt_count: 0,
                 access_granted_token: None,
             })
             .collect();
@@ -119,6 +123,7 @@ impl DemoAccountManager {
         }
         Ok(Self {
             state: Arc::new(RwLock::new(State { states })),
+            max_login_attempts,
         })
     }
 
@@ -136,13 +141,19 @@ impl DemoAccountManager {
             };
 
             if account.info.password != credentials.password {
-                account.locked = true;
+                account.login_attempt_count = account.login_attempt_count.saturating_add(1);
+                if account.login_attempt_count >= self.max_login_attempts {
+                    account.locked = true;
+                }
                 return DemoAccountLoginResult::default();
             }
 
             if account.locked {
                 return DemoAccountLoginResult::locked();
             }
+
+            // Reset attempt count on successful login.
+            account.login_attempt_count = 0;
 
             i
         };

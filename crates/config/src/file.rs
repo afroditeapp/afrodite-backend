@@ -1,5 +1,5 @@
 use std::{
-    num::NonZeroU8,
+    num::{NonZeroU8, NonZeroU16},
     path::{Path, PathBuf},
 };
 
@@ -48,6 +48,7 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # websocket_connection_attempts_daily_max_count = 150
 # auto_ban_spam_reporters_rejected_report_threshold = 10
 # auto_ban_spam_reporters_ban_duration = "90d"
+# demo_account_login_attempt_max_count = 10
 #
 # [limits.common.processed_report_deletion_wait_duration]
 # profile_name = "90d"
@@ -360,6 +361,9 @@ pub struct CommonLimitsConfig {
     pub websocket_connection_attempts_daily_max_count: u16,
     pub auto_ban_spam_reporters_rejected_report_threshold: u16,
     pub auto_ban_spam_reporters_ban_duration: DurationValue,
+    /// Max number of wrong demo account login attempts before the
+    /// demo account is locked until server restart.
+    pub demo_account_login_attempt_max_count: NonZeroU16,
 }
 
 impl Default for CommonLimitsConfig {
@@ -370,6 +374,7 @@ impl Default for CommonLimitsConfig {
             websocket_connection_attempts_daily_max_count: 150,
             auto_ban_spam_reporters_rejected_report_threshold: 10,
             auto_ban_spam_reporters_ban_duration: DurationValue::from_days(90),
+            demo_account_login_attempt_max_count: NonZeroU16::new(10).unwrap(),
         }
     }
 }
