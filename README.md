@@ -110,7 +110,6 @@ and `crates/manager_config` for all available config file options.
 database_id = 0
 username = "username"
 password = "password"
-access_all_accounts = true
 
 [grant_admin_access]
 email = "admin@example.com"

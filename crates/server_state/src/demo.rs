@@ -207,20 +207,16 @@ impl DemoAccountManager {
         let state = r.states.iter().find(|state| state.info.database_id == id);
 
         if let Some(state) = state {
-            if state.info.access_all_accounts {
-                Ok(AccessibleAccountsInfo::All)
-            } else {
-                let accounts: Vec<AccountId> = state
-                    .info
-                    .accessible_accounts
-                    .iter()
-                    .map(|v| AccountId::new_base_64_url(*v))
-                    .collect();
-                Ok(AccessibleAccountsInfo::Specific {
-                    config_file_accounts: accounts,
-                    demo_account_id: state.info.database_id,
-                })
-            }
+            let accounts: Vec<AccountId> = state
+                .info
+                .accessible_accounts
+                .iter()
+                .map(|v| AccountId::new_base_64_url(*v))
+                .collect();
+            Ok(AccessibleAccountsInfo {
+                config_file_accounts: accounts,
+                demo_account_id: state.info.database_id,
+            })
         } else {
             Err(DataError::NotFound.report())
         }

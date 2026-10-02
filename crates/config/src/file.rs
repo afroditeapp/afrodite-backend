@@ -565,10 +565,6 @@ pub struct DemoAccountConfig {
     /// If this is guessed wrong, these demo account credentials will
     /// be locked until server restarts.
     pub password: String,
-    /// If true then all accounts are accessible.
-    /// Overrides `accessible_accounts`.
-    #[serde(default)]
-    pub access_all_accounts: bool,
     /// Maximum number of normal accounts this demo account can create.
     max_account_count: Option<u8>,
     /// AccountIds for accounts that are accessible with demo account.

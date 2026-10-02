@@ -117,10 +117,7 @@ impl DemoAccountRegisterAccountResult {
     }
 }
 
-pub enum AccessibleAccountsInfo {
-    All,
-    Specific {
-        config_file_accounts: Vec<AccountId>,
-        demo_account_id: DemoAccountId,
-    },
+pub struct AccessibleAccountsInfo {
+    pub config_file_accounts: Vec<AccountId>,
+    pub demo_account_id: DemoAccountId,
 }

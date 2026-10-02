@@ -1,9 +1,6 @@
 use model::{AccessibleAccount, AccountId};
 use model_server_state::AccessibleAccountsInfo;
-use server_data::{
-    DataError, db_manager::RouterDatabaseReadHandle, read::GetReadCommandsCommon,
-    result::WrappedContextExt,
-};
+use server_data::{DataError, db_manager::RouterDatabaseReadHandle, result::WrappedContextExt};
 
 use crate::read::GetReadCommandsAccount;
 
@@ -25,23 +22,20 @@ impl AccessibleAccountsInfoUtils for AccessibleAccountsInfo {
         self,
         read: &RouterDatabaseReadHandle,
     ) -> server_common::result::Result<Vec<AccountId>, DataError> {
-        let (accounts, demo_account_id) = match self {
-            AccessibleAccountsInfo::All => {
-                let all_accounts = read.common().account_ids_vec().await?;
-                return Ok(all_accounts);
-            }
-            AccessibleAccountsInfo::Specific {
-                config_file_accounts,
-                demo_account_id,
-            } => (config_file_accounts, demo_account_id),
-        };
+        let AccessibleAccountsInfo {
+            config_file_accounts,
+            demo_account_id,
+        } = self;
 
         let database_accounts = read
             .account()
             .demo_account_owned_account_ids(demo_account_id)
             .await?;
 
-        Ok(accounts.into_iter().chain(database_accounts).collect())
+        Ok(config_file_accounts
+            .into_iter()
+            .chain(database_accounts)
+            .collect())
     }
 
     async fn contains(
@@ -49,20 +43,17 @@ impl AccessibleAccountsInfoUtils for AccessibleAccountsInfo {
         account: AccountId,
         read: &RouterDatabaseReadHandle,
     ) -> server_common::result::Result<(), DataError> {
-        let (accounts, demo_account_id) = match self {
-            AccessibleAccountsInfo::All => return Ok(()),
-            AccessibleAccountsInfo::Specific {
-                config_file_accounts,
-                demo_account_id,
-            } => (config_file_accounts, demo_account_id),
-        };
+        let AccessibleAccountsInfo {
+            config_file_accounts,
+            demo_account_id,
+        } = self;
 
         let related_accounts = read
             .account()
             .demo_account_owned_account_ids(*demo_account_id)
             .await?;
 
-        accounts
+        config_file_accounts
             .iter()
             .chain(related_accounts.iter())
             .find(|a| **a == account)
