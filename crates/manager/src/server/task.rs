@@ -157,6 +157,7 @@ impl TaskManager {
             ManagerApiManualTaskType::BackendRestart => {
                 self.backend_restart_and_optional_data_reset(false).await
             }
+            ManagerApiManualTaskType::BackendShutdown => self.backend_shutdown().await,
             ManagerApiManualTaskType::BackendDataReset => {
                 self.backend_restart_and_optional_data_reset(true).await
             }
@@ -259,6 +260,16 @@ impl TaskManager {
             .start_backend()
             .await
             .change_context(TaskError::StartBackendFailed)?;
+
+        Ok(())
+    }
+
+    async fn backend_shutdown(&self) -> Result<(), TaskError> {
+        self.state
+            .backend_manager()
+            .stop_backend()
+            .await
+            .change_context(TaskError::StopBackendFailed)?;
 
         Ok(())
     }

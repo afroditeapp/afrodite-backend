@@ -72,6 +72,7 @@ pub struct NotifyServer {
 pub enum ManagerApiManualTaskType {
     BackendDataReset,
     BackendRestart,
+    BackendShutdown,
     SystemReboot,
     SystemShutdown,
 }
@@ -81,6 +82,7 @@ impl From<ManualTaskType> for ManagerApiManualTaskType {
         match v {
             ManualTaskType::ServerDataReset => Self::BackendDataReset,
             ManualTaskType::ServerRestart => Self::BackendRestart,
+            ManualTaskType::ServerShutdown => Self::BackendShutdown,
             ManualTaskType::SystemReboot => Self::SystemReboot,
             ManualTaskType::SystemShutdown => Self::SystemShutdown,
         }
@@ -91,6 +93,7 @@ impl From<ManualTaskType> for ManagerApiManualTaskType {
 pub enum ManualTaskType {
     ServerDataReset,
     ServerRestart,
+    ServerShutdown,
     SystemReboot,
     SystemShutdown,
 }

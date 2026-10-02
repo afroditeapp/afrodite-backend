@@ -33,6 +33,14 @@ pub trait RpcTask: GetConfig + GetTaskManager {
                     return Ok(JsonRpcResponse::successful());
                 }
             }
+            ManagerApiManualTaskType::BackendShutdown => {
+                if !self.config().manual_tasks_config().allow_backend_shutdown {
+                    warn!(
+                        "Skipping backend shutdown request because it is disabled from config file"
+                    );
+                    return Ok(JsonRpcResponse::successful());
+                }
+            }
             ManagerApiManualTaskType::SystemReboot => {
                 if !self.config().manual_tasks_config().allow_system_reboot {
                     warn!("Skipping system reboot request because it is disabled from config file");

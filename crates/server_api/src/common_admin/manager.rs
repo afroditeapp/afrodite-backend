@@ -307,6 +307,42 @@ pub async fn post_trigger_server_restart(
     }
 }
 
+const PATH_POST_TRIGGER_SERVER_SHUTDOWN: &str = "/common_api/trigger_server_shutdown";
+
+/// Trigger server shutdown.
+///
+/// # Access
+/// * Permission [model::Permissions::admin_server_shutdown]
+#[utoipa::path(
+    post,
+    path = PATH_POST_TRIGGER_SERVER_SHUTDOWN,
+    params(ManagerInstanceNameValue),
+    responses(
+        (status = 200, description = "Successful."),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_trigger_server_shutdown(
+    State(state): State<S>,
+    Extension(api_caller_permissions): Extension<Permissions>,
+    Query(manager): Query<ManagerInstanceNameValue>,
+) -> Result<(), StatusCode> {
+    COMMON_ADMIN.post_trigger_server_shutdown.incr();
+
+    if api_caller_permissions.admin_server_shutdown {
+        state
+            .manager_request_to(manager)
+            .await?
+            .trigger_manual_task(ManualTaskType::ServerShutdown.into())
+            .await?;
+        Ok(())
+    } else {
+        Err(StatusCode::UNAUTHORIZED)
+    }
+}
+
 const PATH_POST_TRIGGER_SYSTEM_REBOOT: &str = "/common_api/trigger_system_reboot";
 
 /// Trigger system reboot.
@@ -514,6 +550,7 @@ create_open_api_router!(
         post_trigger_software_update_install,
         post_trigger_server_data_reset,
         post_trigger_server_restart,
+        post_trigger_server_shutdown,
         post_trigger_system_reboot,
         post_trigger_system_shutdown,
         get_scheduled_tasks_status,
@@ -534,6 +571,7 @@ create_counters!(
     post_trigger_software_update_install,
     post_trigger_server_data_reset,
     post_trigger_server_restart,
+    post_trigger_server_shutdown,
     post_trigger_system_reboot,
     post_trigger_system_shutdown,
     get_scheduled_tasks_status,

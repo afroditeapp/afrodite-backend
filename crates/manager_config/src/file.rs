@@ -83,6 +83,7 @@ public_api = "127.0.0.1:4000"
 
 # [manual_tasks]
 # allow_backend_restart = true
+# allow_backend_shutdown = true
 # allow_system_reboot = true
 # allow_system_shutdown = true
 
@@ -319,6 +320,8 @@ pub struct ManualTasksConfig {
     pub allow_backend_data_reset: Option<BackendDataResetConfig>,
     /// Allow manual backend restart
     pub allow_backend_restart: bool,
+    /// Allow manual backend shutdown
+    pub allow_backend_shutdown: bool,
     /// Allow manual system reboot
     pub allow_system_reboot: bool,
     /// Allow manual system shutdown
