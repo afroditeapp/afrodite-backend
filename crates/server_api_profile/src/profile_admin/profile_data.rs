@@ -25,13 +25,13 @@ const PATH_GET_PROFILE_AGE_AND_NAME: &str = "/profile_api/get_profile_age_and_na
 ///
 /// # Access
 ///
-/// Admin bot required permissions:
+/// Admin bot related permissions:
 /// - Permission [model::Permissions::admin_verify_account]
 ///
-/// Client required permissions:
+/// Client related permissions:
 /// - Permission [model::Permissions::admin_edit_profile_name]
 ///
-/// Required by both admin bot and client:
+/// Both admin bot and client related permissions:
 /// - Permission [model::Permissions::admin_edit_profile_age_range_verified_value]
 /// - Permission [model::Permissions::admin_edit_profile_name_verified_value]
 #[utoipa::path(
