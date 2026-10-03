@@ -142,12 +142,27 @@ impl CurrentWriteAccountEmail<'_> {
         Ok(())
     }
 
+    /// Completes a verified email change.
+    ///
+    /// Returns `true` if the change was applied, or `false` if it was
+    /// cancelled because the new email is already in use by another account.
     pub fn complete_email_change(
         &mut self,
         id: AccountIdInternal,
         new_email: EmailAddress,
         old_email: Option<EmailAddress>,
-    ) -> Result<(), DieselDatabaseError> {
+    ) -> Result<bool, DieselDatabaseError> {
+        if let Some(owner) = self
+            .read()
+            .account()
+            .email()
+            .account_id_from_email(new_email.clone())?
+            && owner != id
+        {
+            self.clear_email_change_data(id)?;
+            return Ok(false);
+        }
+
         {
             use model::schema::account_email_address_state::dsl::*;
 
@@ -172,7 +187,7 @@ impl CurrentWriteAccountEmail<'_> {
             UnixTime::current_time(),
         )?;
 
-        Ok(())
+        Ok(true)
     }
 
     fn insert_email_address_history_entry(

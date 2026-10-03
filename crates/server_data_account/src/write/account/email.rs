@@ -277,17 +277,30 @@ impl WriteCommandsAccountEmail<'_> {
     }
 
     /// The new_email must be verified email address.
+    ///
+    /// If the new email is already in use by another account, the change is
+    /// cancelled instead of applied.
     pub async fn complete_email_change(
         &self,
         id: AccountIdInternal,
         new_email: EmailAddress,
     ) -> Result<(), DataError> {
-        db_transaction!(self, move |mut cmds| {
+        let completed = db_transaction!(self, move |mut cmds| {
             let old_email = cmds.read().account().data().email_address(id)?;
             cmds.account()
                 .email()
                 .complete_email_change(id, new_email, old_email)
         })?;
+
+        // The pending change was cancelled because the new email is already
+        // in use. The email address itself did not change, so only notify the
+        // client that the pending change is gone.
+        if !completed {
+            self.event_manager()
+                .send_connected_event(id, EventToClientInternal::EmailAddressStateChanged)
+                .await?;
+            return Ok(());
+        }
 
         self.0
             .account()
