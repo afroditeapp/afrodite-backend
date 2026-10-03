@@ -72,7 +72,7 @@ impl CurrentReadAccountNewsAdmin<'_> {
                 version: Some(internal.version_number),
                 aid_creator: creator,
                 aid_editor: editor,
-                edit_unix_time: internal.edit_unix_time.map(|x| x.ut),
+                edit_time: internal.edit_unix_time,
             })
             .collect();
 

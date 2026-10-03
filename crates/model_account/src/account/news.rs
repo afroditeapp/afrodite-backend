@@ -155,10 +155,9 @@ pub struct NewsItem {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
     pub time: Option<UnixTime>,
-    /// Option<i64> is a workaround for Dart OpenApi generator version 7.9.0
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
-    pub edit_unix_time: Option<i64>,
+    pub edit_time: Option<UnixTime>,
     /// Only visible for accounts which have some news permissions
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]

@@ -224,7 +224,7 @@ impl CurrentReadAccountNews<'_> {
             body: internal.body,
             locale: internal.locale,
             time: item_internal.latest_publication_unix_time,
-            edit_unix_time: internal.edit_unix_time.map(|x| x.ut),
+            edit_time: internal.edit_unix_time,
             version: Some(internal.version_number),
             aid_creator: creator,
             aid_editor: editor,
