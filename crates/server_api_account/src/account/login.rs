@@ -5,8 +5,8 @@ use base64::Engine;
 use model::{AccountIdInternal, ClientType, EmailLoginToken, UnixTime};
 use model_account::{
     AccessToken, AccountId, AppleAccountId, AuthPair, EmailAddress, EmailLogin, GoogleAccountId,
-    LoginResult, RefreshToken, RequestEmailLoginToken, RequestEmailLoginTokenResult,
-    SignInWithInfo, SignInWithLoginInfo,
+    LoginPhaseOneResult, LoginResult, RefreshToken, RequestEmailLoginToken,
+    RequestEmailLoginTokenResult, SignInWithInfo, SignInWithLoginInfo,
 };
 use server_api::{
     S, TokenData,
@@ -19,12 +19,10 @@ use server_data::{
 };
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::{
-    app::{AppAttestationProvider, MaxMindDbDataProvider, SignInWith},
-    app_attestation::{AppAttestationClientType, AppAttestationError},
+    app::{MaxMindDbDataProvider, SignInWith},
     create_counters,
     sign_in_with::{apple::AppleAccountInfo, google::GoogleAccountInfo},
 };
-use simple_backend_model::{AppAttestation, AppAttestationResult};
 use tokio::time::{Duration, timeout};
 
 use crate::{
@@ -73,6 +71,22 @@ pub async fn login_impl(
     })?;
 
     Ok(LoginResult::ok(tokens, id.as_id(), email))
+}
+
+/// Store a pending login and return a short-lived token that the client must
+/// present to `post_verify_app_attestation` together with a valid app
+/// attestation to complete the login.
+pub(super) async fn store_pending_login(
+    state: &S,
+    id: AccountIdInternal,
+    client_type: ClientType,
+    connection: ConnectionId,
+) -> Result<LoginPhaseOneResult, StatusCode> {
+    let token = state
+        .verify_app_attestation_tokens()
+        .insert(id, client_type, connection.ip())
+        .await;
+    Ok(LoginPhaseOneResult::verify_app_attestation(token))
 }
 
 pub const PATH_SIGN_IN_WITH_LOGIN: &str = "/account_api/sign_in_with_login";
@@ -150,7 +164,7 @@ impl SignInWithInfoTrait for AppleAccountInfo {
 async fn validate_registration_platform(
     state: &S,
     client_type: ClientType,
-) -> Result<(), LoginResult> {
+) -> Result<(), LoginPhaseOneResult> {
     let config = state
         .dynamic_server_config_manager()
         .dynamic_server_config_ref()
@@ -173,13 +187,16 @@ async fn validate_registration_platform(
 
     let any_enabled = config.android || config.ios || config.web;
     if any_enabled {
-        Err(LoginResult::error_registration_platform_disabled())
+        Err(LoginPhaseOneResult::error_registration_platform_disabled())
     } else {
-        Err(LoginResult::error_registration_all_platforms_disabled())
+        Err(LoginPhaseOneResult::error_registration_all_platforms_disabled())
     }
 }
 
-async fn validate_login_platform(state: &S, client_type: ClientType) -> Result<(), LoginResult> {
+async fn validate_login_platform(
+    state: &S,
+    client_type: ClientType,
+) -> Result<(), LoginPhaseOneResult> {
     let config = state
         .dynamic_server_config_manager()
         .dynamic_server_config_ref()
@@ -202,9 +219,9 @@ async fn validate_login_platform(state: &S, client_type: ClientType) -> Result<(
 
     let any_enabled = config.android || config.ios || config.web;
     if any_enabled {
-        Err(LoginResult::error_login_platform_disabled())
+        Err(LoginPhaseOneResult::error_login_platform_disabled())
     } else {
-        Err(LoginResult::error_login_all_platforms_disabled())
+        Err(LoginPhaseOneResult::error_login_all_platforms_disabled())
     }
 }
 
@@ -272,32 +289,6 @@ async fn validate_email_registration_domain(
     Ok(())
 }
 
-/// Validate app attestation provided by the client against server config.
-///
-/// If app attestation is not configured, attestation is not required and
-/// this returns `Ok(None)`.
-pub(super) async fn validate_app_attestation(
-    state: &S,
-    client_type: ClientType,
-    attestation: Option<&AppAttestation>,
-) -> Result<Option<AppAttestationResult>, LoginResult> {
-    let client_type = match client_type {
-        ClientType::Android => Some(AppAttestationClientType::Android),
-        _ => None,
-    };
-    state
-        .app_attestation_manager()
-        .validate(client_type, attestation)
-        .await
-        .map_err(|error| match error {
-            AppAttestationError::Failed => LoginResult::error_app_attestation_failed(),
-            AppAttestationError::DeviceIntegrity => {
-                LoginResult::error_app_attestation_device_integrity()
-            }
-            AppAttestationError::AppIntegrity => LoginResult::error_app_attestation_app_integrity(),
-        })
-}
-
 /// Start new session with sign in with Apple or Google.
 ///
 /// Registers new account if it does not exist, when registration is enabled
@@ -308,7 +299,7 @@ pub(super) async fn validate_app_attestation(
     security(),
     request_body = SignInWithLoginInfo,
     responses(
-        (status = 200, description = "Login or account creation successful.", body = LoginResult),
+        (status = 200, description = "Login or account creation successful.", body = LoginPhaseOneResult),
         (status = 500, description = "Internal server error."),
     ),
 )]
@@ -316,29 +307,18 @@ pub async fn post_sign_in_with_login(
     State(state): State<S>,
     ClientConnectionId(connection): ClientConnectionId,
     Json(tokens): Json<SignInWithLoginInfo>,
-) -> Result<Json<LoginResult>, StatusCode> {
+) -> Result<Json<LoginPhaseOneResult>, StatusCode> {
     ACCOUNT.post_sign_in_with_login.incr();
 
     if let Some(min_version) = state.config().min_client_version()
         && !min_version.received_version_is_accepted(tokens.client_info.client_version)
     {
-        return Ok(LoginResult::error_unsupported_client().into());
+        return Ok(LoginPhaseOneResult::error_unsupported_client().into());
     }
 
     if let Err(error) = validate_login_platform(&state, tokens.client_info.client_type).await {
         return Ok(error.into());
     }
-
-    let attestation_result = match validate_app_attestation(
-        &state,
-        tokens.client_info.client_type,
-        tokens.client_info.app_attestation.as_ref(),
-    )
-    .await
-    {
-        Ok(result) => result,
-        Err(error) => return Ok(error.into()),
-    };
 
     let r = if let Some(apple) = tokens.apple {
         let nonce_bytes = base64::engine::general_purpose::URL_SAFE
@@ -362,22 +342,6 @@ pub async fn post_sign_in_with_login(
         Err(StatusCode::INTERNAL_SERVER_ERROR)
     }?;
 
-    if let Some(aid) = r.aid() {
-        // Login successful
-        let id = state.get_internal_id(aid).await?;
-        db_write!(state, move |cmds| {
-            cmds.common()
-                .client_config()
-                .client_login_session_platform(id, tokens.client_info.client_type)
-                .await?;
-            cmds.common()
-                .client_config()
-                .app_attestation(id, attestation_result)
-                .await?;
-            Ok(())
-        })?;
-    }
-
     Ok(r.into())
 }
 
@@ -386,15 +350,15 @@ async fn handle_sign_in_with_info(
     connection: ConnectionId,
     client_type: ClientType,
     info: impl SignInWithInfoTrait,
-) -> Result<LoginResult, StatusCode> {
+) -> Result<LoginPhaseOneResult, StatusCode> {
     if !info.email_verified() {
-        return Ok(LoginResult::error_sign_in_with_email_unverified());
+        return Ok(LoginPhaseOneResult::error_sign_in_with_email_unverified());
     }
 
     let already_existing_account = info.already_existing_account(state).await?;
 
     if let Some(already_existing_account) = already_existing_account {
-        login_impl(already_existing_account.as_id(), connection, state).await
+        store_pending_login(state, already_existing_account, client_type, connection).await
     } else {
         if let Err(error) = validate_registration_platform(state, client_type).await {
             return Ok(error);
@@ -412,10 +376,10 @@ async fn handle_sign_in_with_info(
         {
             RegisterImplResult::Ok(id) => id,
             RegisterImplResult::EmailAlreadyExists => {
-                return Ok(LoginResult::error_email_already_used());
+                return Ok(LoginPhaseOneResult::error_email_already_used());
             }
         };
-        login_impl(id.as_id(), connection, state).await
+        store_pending_login(state, id, client_type, connection).await
     }
 }
 
@@ -839,7 +803,7 @@ pub const PATH_POST_EMAIL_LOGIN_WITH_TOKEN: &str = "/account_api/email_login_wit
     security(),
     request_body = EmailLogin,
     responses(
-        (status = 200, description = "Successful.", body = LoginResult),
+        (status = 200, description = "Successful.", body = LoginPhaseOneResult),
         (status = 500, description = "Internal server error."),
     ),
 )]
@@ -847,7 +811,7 @@ pub async fn post_email_login_with_token(
     State(state): State<S>,
     ClientConnectionId(connection): ClientConnectionId,
     Json(request): Json<EmailLogin>,
-) -> Result<Json<LoginResult>, StatusCode> {
+) -> Result<Json<LoginPhaseOneResult>, StatusCode> {
     ACCOUNT.post_email_login_with_token.incr();
 
     let wait_until = Instant::now() + Duration::from_secs(5);
@@ -864,34 +828,23 @@ async fn post_email_login_with_token_impl(
     state: S,
     connection: ConnectionId,
     request: EmailLogin,
-) -> Result<Json<LoginResult>, StatusCode> {
+) -> Result<Json<LoginPhaseOneResult>, StatusCode> {
     if let Some(min_version) = state.config().min_client_version()
         && !min_version.received_version_is_accepted(request.client_info.client_version)
     {
-        return Ok(LoginResult::error_unsupported_client().into());
+        return Ok(LoginPhaseOneResult::error_unsupported_client().into());
     }
 
     if let Err(error) = validate_login_platform(&state, request.client_info.client_type).await {
         return Ok(error.into());
     }
 
-    let attestation_result = match validate_app_attestation(
-        &state,
-        request.client_info.client_type,
-        request.client_info.app_attestation.as_ref(),
-    )
-    .await
-    {
-        Ok(result) => result,
-        Err(error) => return Ok(error.into()),
-    };
-
     let Ok(client_token) = request.client_token.bytes() else {
-        return Ok(LoginResult::error_invalid_email_login_token().into());
+        return Ok(LoginPhaseOneResult::error_invalid_email_login_token().into());
     };
 
     let Ok(email_token) = request.email_token.bytes() else {
-        return Ok(LoginResult::error_invalid_email_login_token().into());
+        return Ok(LoginPhaseOneResult::error_invalid_email_login_token().into());
     };
 
     let token_data = state
@@ -909,31 +862,27 @@ async fn post_email_login_with_token_impl(
     match token_data {
         Some(TokenData::Account(account_id)) => {
             // Existing account login
-            let r = login_impl(account_id.as_id(), connection, &state).await?;
-
-            if let Some(aid) = r.aid() {
-                let id = state.get_internal_id(aid).await?;
-                db_write!(state, move |cmds| {
-                    cmds.common()
-                        .client_config()
-                        .client_login_session_platform(id, request.client_info.client_type)
-                        .await?;
-                    cmds.common()
-                        .client_config()
-                        .app_attestation(id, attestation_result)
-                        .await?;
-                    Ok(())
-                })?;
-            }
-
+            let r = store_pending_login(
+                &state,
+                account_id,
+                request.client_info.client_type,
+                connection,
+            )
+            .await?;
             Ok(r.into())
         }
         Some(TokenData::Email(email)) => {
             // New account registration
-            let r = register::email_registration_with_token_impl(state, connection, email).await?;
+            let r = register::email_registration_with_token_impl(
+                state,
+                connection,
+                request.client_info.client_type,
+                email,
+            )
+            .await?;
             Ok(r.into())
         }
-        None => Ok(LoginResult::error_invalid_email_login_token().into()),
+        None => Ok(LoginPhaseOneResult::error_invalid_email_login_token().into()),
     }
 }
 

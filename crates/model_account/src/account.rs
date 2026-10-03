@@ -1,6 +1,7 @@
 use diesel::prelude::*;
 use model::{
     ClientLanguage, ClientType, ClientVersion, EmailLoginToken, NewsSyncVersion, UnixTime,
+    VerifyAppAttestationToken,
 };
 use model_server_data::{
     AppleAccountId, AuthPair, EmailAddress, GoogleAccountId, PublicationId, SignInWithInfo,
@@ -37,23 +38,19 @@ pub use verification::{
     PostAgeVerificationResult,
 };
 
+/// Result of the first phase of the two-phase login protocol.
+///
+/// The login is not complete yet. The client must call
+/// `post_verify_app_attestation` with the returned token and a valid app
+/// attestation to complete the login.
 #[derive(Debug, Default, Deserialize, Serialize, ToSchema, Clone, PartialEq)]
-pub struct LoginResult {
-    /// If `None`, the client is unsupported.
+pub struct LoginPhaseOneResult {
+    /// When set, the login is not complete yet. The client must call
+    /// `post_verify_app_attestation` with this token and a valid app
+    /// attestation to complete the login.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
-    tokens: Option<AuthPair>,
-
-    /// Account ID of current account. If `None`, the client is unsupported.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[schema(nullable = false)]
-    aid: Option<AccountId>,
-
-    /// Current email of current account. If `None`, if email address is not
-    /// set or the client version is unsupported.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[schema(nullable = false)]
-    email: Option<EmailAddress>,
+    verify_app_attestation_token: Option<VerifyAppAttestationToken>,
 
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
@@ -75,10 +72,6 @@ pub struct LoginResult {
 
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
-    error_account_locked: bool,
-
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
     error_invalid_email_login_token: bool,
 
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
@@ -96,26 +89,14 @@ pub struct LoginResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     error_login_all_platforms_disabled: bool,
-
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    error_app_attestation_failed: bool,
-
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    error_app_attestation_device_integrity: bool,
-
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    #[schema(default = false)]
-    error_app_attestation_app_integrity: bool,
 }
 
-impl LoginResult {
-    pub fn ok(tokens: AuthPair, aid: AccountId, email: Option<EmailAddress>) -> Self {
+impl LoginPhaseOneResult {
+    /// Login is not complete yet. The client must call
+    /// `post_verify_app_attestation` with the returned token.
+    pub fn verify_app_attestation(token: VerifyAppAttestationToken) -> Self {
         Self {
-            tokens: Some(tokens),
-            aid: Some(aid),
-            email,
+            verify_app_attestation_token: Some(token),
             ..Default::default()
         }
     }
@@ -140,14 +121,6 @@ impl LoginResult {
         Self {
             error: true,
             error_email_already_used: true,
-            ..Default::default()
-        }
-    }
-
-    pub fn error_account_locked() -> Self {
-        Self {
-            error: true,
-            error_account_locked: true,
             ..Default::default()
         }
     }
@@ -191,7 +164,106 @@ impl LoginResult {
             ..Default::default()
         }
     }
+}
 
+/// Result of a completed login that returns access tokens directly.
+///
+/// Used by bot login routes which do not require app attestation.
+#[derive(Debug, Default, Deserialize, Serialize, ToSchema, Clone, PartialEq)]
+pub struct LoginResult {
+    /// If `None`, the client is unsupported.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    tokens: Option<AuthPair>,
+
+    /// Account ID of current account. If `None`, the client is unsupported.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    aid: Option<AccountId>,
+
+    /// Current email of current account. If `None`, if email address is not
+    /// set or the client version is unsupported.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    email: Option<EmailAddress>,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error: bool,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_account_locked: bool,
+}
+
+impl LoginResult {
+    pub fn ok(tokens: AuthPair, aid: AccountId, email: Option<EmailAddress>) -> Self {
+        Self {
+            tokens: Some(tokens),
+            aid: Some(aid),
+            email,
+            ..Default::default()
+        }
+    }
+
+    pub fn error_account_locked() -> Self {
+        Self {
+            error: true,
+            error_account_locked: true,
+            ..Default::default()
+        }
+    }
+
+    pub fn aid(&self) -> Option<AccountId> {
+        self.aid
+    }
+}
+
+/// Result of completing a login with app attestation verification.
+#[derive(Debug, Default, Deserialize, Serialize, ToSchema, Clone, PartialEq)]
+pub struct LoginPhaseTwoResult {
+    /// If `None`, the client is unsupported.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    tokens: Option<AuthPair>,
+
+    /// Account ID of current account. If `None`, the client is unsupported.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    aid: Option<AccountId>,
+
+    /// Current email of current account. If `None`, if email address is not
+    /// set or the client version is unsupported.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    email: Option<EmailAddress>,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error: bool,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_account_locked: bool,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_app_attestation_failed: bool,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_app_attestation_device_integrity: bool,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_app_attestation_app_integrity: bool,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_invalid_verify_app_attestation_token: bool,
+}
+
+impl LoginPhaseTwoResult {
     pub fn error_app_attestation_failed() -> Self {
         Self {
             error: true,
@@ -216,8 +288,32 @@ impl LoginResult {
         }
     }
 
-    pub fn aid(&self) -> Option<AccountId> {
-        self.aid
+    pub fn error_invalid_verify_app_attestation_token() -> Self {
+        Self {
+            error: true,
+            error_invalid_verify_app_attestation_token: true,
+            ..Default::default()
+        }
+    }
+}
+
+impl From<LoginResult> for LoginPhaseTwoResult {
+    fn from(value: LoginResult) -> Self {
+        let LoginResult {
+            tokens,
+            aid,
+            email,
+            error,
+            error_account_locked,
+        } = value;
+        Self {
+            tokens,
+            aid,
+            email,
+            error,
+            error_account_locked,
+            ..Default::default()
+        }
     }
 }
 
@@ -225,6 +321,14 @@ impl LoginResult {
 pub struct ClientInfo {
     pub client_type: ClientType,
     pub client_version: ClientVersion,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub app_attestation: Option<AppAttestation>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct VerifyAppAttestationLogin {
+    pub token: VerifyAppAttestationToken,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
     pub app_attestation: Option<AppAttestation>,

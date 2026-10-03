@@ -396,6 +396,31 @@ impl AccessToken {
     }
 }
 
+/// Short-lived token returned by login routes when app attestation is
+/// required. The client must present this token to
+/// `post_verify_app_attestation` together with a valid app attestation to
+/// complete the login.
+#[derive(Debug, Deserialize, Serialize, ToSchema, Clone, PartialEq)]
+pub struct VerifyAppAttestationToken {
+    pub token: String,
+}
+
+impl VerifyAppAttestationToken {
+    pub fn generate_new_with_bytes() -> (Self, Vec<u8>) {
+        let (token, bytes) = AccessToken::generate_new_with_bytes();
+        (
+            Self {
+                token: token.into_string(),
+            },
+            bytes,
+        )
+    }
+
+    pub fn bytes(&self) -> Result<Vec<u8>, base64::DecodeError> {
+        base64::engine::general_purpose::URL_SAFE_NO_PAD.decode(&self.token)
+    }
+}
+
 #[derive(Debug, Clone, Copy, Default, FromSqlRow, AsExpression)]
 #[diesel(sql_type = BigInt)]
 pub struct AccessTokenUnixTime {

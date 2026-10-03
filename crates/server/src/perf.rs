@@ -64,7 +64,7 @@ use crate::api::{
     account::{
         ACCOUNT_DELETE_COUNTERS_LIST, ACCOUNT_DEMO_COUNTERS_LIST, ACCOUNT_LOGIN_COUNTERS_LIST,
         ACCOUNT_REGISTER_COUNTERS_LIST, ACCOUNT_SETTINGS_COUNTERS_LIST,
-        ACCOUNT_STATE_COUNTERS_LIST,
+        ACCOUNT_STATE_COUNTERS_LIST, ACCOUNT_VERIFY_APP_ATTESTATION_COUNTERS_LIST,
     },
     account_bot::ACCOUNT_BOT_COUNTERS_LIST,
     chat::{
@@ -128,6 +128,10 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
     &CounterCategory::new("account_settings", ACCOUNT_SETTINGS_COUNTERS_LIST),
     &CounterCategory::new("account_state", ACCOUNT_STATE_COUNTERS_LIST),
     &CounterCategory::new("account_demo", ACCOUNT_DEMO_COUNTERS_LIST),
+    &CounterCategory::new(
+        "account_verify_app_attestation",
+        ACCOUNT_VERIFY_APP_ATTESTATION_COUNTERS_LIST,
+    ),
     &CounterCategory::new("account_news", ACCOUNT_NEWS_COUNTERS_LIST),
     &CounterCategory::new("account_report", ACCOUNT_REPORT_COUNTERS_LIST),
     &CounterCategory::new(

@@ -40,6 +40,7 @@ use crate::{
         limit::EmailRegistrationRateLimiter,
     },
     utils::ETagUtils,
+    verify_app_attestation::VerifyAppAttestationTokenStore,
 };
 
 pub mod account_verification_queue;
@@ -56,6 +57,7 @@ pub mod email_registration;
 pub mod ip_address;
 pub mod state_impl;
 pub mod utils;
+pub mod verify_app_attestation;
 
 pub use server_common::{data::DataError, result};
 pub use utoipa_axum::router::OpenApiRouter;
@@ -92,6 +94,7 @@ struct AppStateInternal {
     email_registration_rate_limiter: EmailRegistrationRateLimiter,
     email_channel_sender: EmailChannelSender,
     email_address_validator: EmailAddressValidator,
+    verify_app_attestation_tokens: VerifyAppAttestationTokenStore,
 }
 
 impl AppState {
@@ -138,6 +141,7 @@ impl AppState {
             email_registration_rate_limiter: EmailRegistrationRateLimiter::default(),
             email_channel_sender,
             email_address_validator: EmailAddressValidator::new(),
+            verify_app_attestation_tokens: VerifyAppAttestationTokenStore::default(),
         };
 
         AppState {
@@ -167,6 +171,10 @@ impl AppState {
 
     pub fn email_address_validator(&self) -> &EmailAddressValidator {
         &self.state.email_address_validator
+    }
+
+    pub fn verify_app_attestation_tokens(&self) -> &VerifyAppAttestationTokenStore {
+        &self.state.verify_app_attestation_tokens
     }
 
     pub fn etag_utils(&self) -> &ETagUtils {

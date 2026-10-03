@@ -1,9 +1,10 @@
-use model_account::{EmailAddress, LoginResult, RequestEmailLoginToken, SignInWithInfo};
+use model::ClientType;
+use model_account::{EmailAddress, LoginPhaseOneResult, RequestEmailLoginToken, SignInWithInfo};
 use server_api::{S, TokenData, app::GetConfig, db_write};
 use server_data::app::RegisterImplResult;
 use server_data_account::write::GetWriteCommandsAccount;
 
-use super::login_impl;
+use super::store_pending_login;
 use crate::{
     account::login::EmailLoginResultInternal,
     app::WriteData,
@@ -37,8 +38,9 @@ pub(super) async fn request_email_registration_token(
 pub(super) async fn email_registration_with_token_impl(
     state: S,
     connection: ConnectionId,
+    client_type: ClientType,
     email: EmailAddress,
-) -> Result<LoginResult, StatusCode> {
+) -> Result<LoginPhaseOneResult, StatusCode> {
     let id = match state
         .data_all_access()
         .register_impl(SignInWithInfo::default(), Some(email), connection.ip())
@@ -46,7 +48,7 @@ pub(super) async fn email_registration_with_token_impl(
     {
         RegisterImplResult::Ok(id) => id,
         RegisterImplResult::EmailAlreadyExists => {
-            return Ok(LoginResult::error_email_already_used());
+            return Ok(LoginPhaseOneResult::error_email_already_used());
         }
     };
 
@@ -61,5 +63,5 @@ pub(super) async fn email_registration_with_token_impl(
 
     // email_verified: no need to send events as user hasn't yet logged in
 
-    login_impl(id.as_id(), connection, &state).await
+    store_pending_login(&state, id, client_type, connection).await
 }

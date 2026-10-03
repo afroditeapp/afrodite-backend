@@ -14,6 +14,7 @@ pub mod settings;
 pub mod sign_in_with;
 pub mod state;
 pub mod verification;
+pub mod verify_app_attestation;
 
 pub use association::*;
 pub use ban::*;
@@ -31,3 +32,4 @@ pub use settings::*;
 pub use sign_in_with::*;
 pub use state::*;
 pub use verification::*;
+pub use verify_app_attestation::*;

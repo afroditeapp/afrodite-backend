@@ -1,7 +1,9 @@
 use std::time::{Duration, Instant};
 
 use axum::extract::State;
-use model_account::{AccessibleAccount, DemoAccountLoginToAccount, LoginResult, SignInWithInfo};
+use model_account::{
+    AccessibleAccount, DemoAccountLoginToAccount, LoginPhaseOneResult, SignInWithInfo,
+};
 use model_server_state::{
     DemoAccountLoginCredentials, DemoAccountLoginResult, DemoAccountRegisterAccountResult,
     DemoAccountToken,
@@ -11,7 +13,7 @@ use server_api::{
     app::{GetAccounts, GetConfig, ReadData},
     create_open_api_router, db_write,
 };
-use server_data::{app::RegisterImplResult, write::GetWriteCommandsCommon};
+use server_data::app::RegisterImplResult;
 use server_data_account::{
     demo::{AccessibleAccountsInfoUtils, DemoAccountUtils},
     read::GetReadCommandsAccount,
@@ -19,7 +21,7 @@ use server_data_account::{
 };
 use simple_backend::create_counters;
 
-use super::{login::validate_app_attestation, login_impl};
+use super::login::store_pending_login;
 use crate::{
     app::WriteData,
     utils::{ClientConnectionId, ClientIp, Json, StatusCode},
@@ -148,7 +150,7 @@ const PATH_POST_DEMO_ACCOUNT_LOGIN_TO_ACCOUNT: &str = "/account_api/demo_account
     path = PATH_POST_DEMO_ACCOUNT_LOGIN_TO_ACCOUNT,
     request_body = DemoAccountLoginToAccount,
     responses(
-        (status = 200, description = "Successful.", body = LoginResult),
+        (status = 200, description = "Successful.", body = LoginPhaseOneResult),
         (status = 401, description = "Unauthorized."),
         (status = 500, description = "Internal server error."),
     ),
@@ -158,7 +160,7 @@ pub async fn post_demo_account_login_to_account(
     State(state): State<S>,
     ClientConnectionId(connection): ClientConnectionId,
     Json(info): Json<DemoAccountLoginToAccount>,
-) -> Result<Json<LoginResult>, StatusCode> {
+) -> Result<Json<LoginPhaseOneResult>, StatusCode> {
     ACCOUNT.post_demo_account_login_to_account.incr();
 
     let Some(id) = state
@@ -172,40 +174,20 @@ pub async fn post_demo_account_login_to_account(
     if let Some(min_version) = state.config().min_client_version()
         && !min_version.received_version_is_accepted(info.client_info.client_version)
     {
-        return Ok(LoginResult::error_unsupported_client().into());
+        return Ok(LoginPhaseOneResult::error_unsupported_client().into());
     }
-
-    let attestation_result = match validate_app_attestation(
-        &state,
-        info.client_info.client_type,
-        info.client_info.app_attestation.as_ref(),
-    )
-    .await
-    {
-        Ok(result) => result,
-        Err(error) => return Ok(error.into()),
-    };
 
     let accessible_accounts = state.demo().accessible_accounts(id).await?;
     accessible_accounts.contains(info.aid, state.read()).await?;
 
-    let r = login_impl(info.aid, connection, &state).await?;
-
-    if let Some(aid) = r.aid() {
-        // Login successful
-        let id = state.get_internal_id(aid).await?;
-        db_write!(state, move |cmds| {
-            cmds.common()
-                .client_config()
-                .client_login_session_platform(id, info.client_info.client_type)
-                .await?;
-            cmds.common()
-                .client_config()
-                .app_attestation(id, attestation_result)
-                .await?;
-            Ok(())
-        })?;
-    }
+    let internal_id = state.get_internal_id(info.aid).await?;
+    let r = store_pending_login(
+        &state,
+        internal_id,
+        info.client_info.client_type,
+        connection,
+    )
+    .await?;
 
     Ok(r.into())
 }
