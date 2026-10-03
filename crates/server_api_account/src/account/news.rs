@@ -111,6 +111,9 @@ const PATH_GET_NEWS_ITEM: &str = "/account_api/news_item/{nid}";
 ///
 /// If specific locale is not found when [RequireNewsLocale::require_locale]
 /// is `true` then [GetNewsItemResult::item] is `None`.
+///
+/// If news item is private and account doesn't have any admin news
+/// permissions then [GetNewsItemResult::item] is `None`.
 #[utoipa::path(
     get,
     path = PATH_GET_NEWS_ITEM,
@@ -131,19 +134,22 @@ pub async fn get_news_item(
 ) -> Result<Json<GetNewsItemResult>, StatusCode> {
     ACCOUNT.get_news_item.incr();
 
+    let is_public = state.read().account().news().is_public(nid).await?;
+
     let mut item = state
         .read()
         .account()
         .news()
         .news_item(nid, locale, require_locale)
         .await?;
-    if !permissions.some_admin_news_permissions_granted()
-        && let Some(item) = item.as_mut()
-    {
-        item.clear_admin_info();
+    if !permissions.some_admin_news_permissions_granted() {
+        if !is_public {
+            item = None;
+        }
+        if let Some(item) = item.as_mut() {
+            item.clear_admin_info();
+        }
     }
-
-    let is_public = state.read().account().news().is_public(nid).await?;
 
     let news = GetNewsItemResult {
         item,
