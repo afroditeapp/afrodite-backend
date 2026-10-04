@@ -1,6 +1,9 @@
 use axum::extract::State;
 use model::ClientType;
-use model_account::{LoginPhaseTwoResult, VerifyAppAttestationLogin};
+use model_account::{
+    LoginPhaseTwoResult, RequestAppAttestChallenge, RequestAppAttestChallengeResult,
+    VerifyAppAttestationLogin,
+};
 use server_api::{S, app::GetAccounts, db_write};
 use server_data::write::GetWriteCommandsCommon;
 use simple_backend::{
@@ -15,6 +18,50 @@ use crate::{
     app::WriteData,
     utils::{ClientConnectionId, Json, StatusCode},
 };
+
+pub const PATH_POST_REQUEST_APP_ATTEST_CHALLENGE: &str =
+    "/account_api/request_app_attest_challenge";
+
+/// Request a random string for app attestation token.
+///
+/// The client must call this after login phase one to obtain a challenge and
+/// then put it into the `requestHash` field of the Play Integrity API verdict
+/// token before presenting it to `post_verify_app_attestation`.
+#[utoipa::path(
+    post,
+    path = PATH_POST_REQUEST_APP_ATTEST_CHALLENGE,
+    security(),
+    request_body = RequestAppAttestChallenge,
+    responses(
+        (status = 200, description = "Challenge generated.", body = RequestAppAttestChallengeResult),
+        (status = 500, description = "Internal server error."),
+    ),
+)]
+pub async fn post_request_app_attest_challenge(
+    State(state): State<S>,
+    ClientConnectionId(connection): ClientConnectionId,
+    Json(request): Json<RequestAppAttestChallenge>,
+) -> Result<Json<RequestAppAttestChallengeResult>, StatusCode> {
+    ACCOUNT.post_request_app_attest_challenge.incr();
+
+    let Ok(token_bytes) = request.token.bytes() else {
+        return Ok(
+            RequestAppAttestChallengeResult::error_invalid_verify_app_attestation_token().into(),
+        );
+    };
+
+    let Some(challenge) = state
+        .verify_app_attestation_tokens()
+        .generate_challenge(&token_bytes, connection.ip())
+        .await
+    else {
+        return Ok(
+            RequestAppAttestChallengeResult::error_invalid_verify_app_attestation_token().into(),
+        );
+    };
+
+    Ok(RequestAppAttestChallengeResult::ok(challenge).into())
+}
 
 pub const PATH_POST_VERIFY_APP_ATTESTATION: &str = "/account_api/verify_app_attestation";
 
@@ -46,7 +93,7 @@ pub async fn post_verify_app_attestation(
         return Ok(LoginPhaseTwoResult::error_invalid_verify_app_attestation_token().into());
     };
 
-    let Some((account_id, client_type, connection_ip)) = state
+    let Some((account_id, client_type, connection_ip, challenge)) = state
         .verify_app_attestation_tokens()
         .consume(&token_bytes)
         .await
@@ -60,12 +107,17 @@ pub async fn post_verify_app_attestation(
         return Ok(LoginPhaseTwoResult::error_invalid_verify_app_attestation_token().into());
     }
 
-    let attestation_result =
-        match validate_app_attestation(&state, client_type, request.app_attestation.as_ref()).await
-        {
-            Ok(result) => result,
-            Err(error) => return Ok(error.into()),
-        };
+    let attestation_result = match validate_app_attestation(
+        &state,
+        client_type,
+        request.app_attestation.as_ref(),
+        challenge.as_deref(),
+    )
+    .await
+    {
+        Ok(result) => result,
+        Err(error) => return Ok(error.into()),
+    };
 
     let r = login_impl(account_id.as_id(), connection, &state).await?;
 
@@ -96,6 +148,7 @@ async fn validate_app_attestation(
     state: &S,
     client_type: ClientType,
     attestation: Option<&AppAttestation>,
+    challenge: Option<&str>,
 ) -> Result<Option<AppAttestationResult>, LoginPhaseTwoResult> {
     let client_type = match client_type {
         ClientType::Android => Some(AppAttestationClientType::Android),
@@ -103,7 +156,7 @@ async fn validate_app_attestation(
     };
     state
         .app_attestation_manager()
-        .validate(client_type, attestation)
+        .validate(client_type, attestation, challenge)
         .await
         .map_err(|error| match error {
             AppAttestationError::Failed => LoginPhaseTwoResult::error_app_attestation_failed(),
@@ -121,4 +174,5 @@ create_counters!(
     ACCOUNT,
     ACCOUNT_VERIFY_APP_ATTESTATION_COUNTERS_LIST,
     post_verify_app_attestation,
+    post_request_app_attest_challenge,
 );

@@ -45,6 +45,7 @@ impl AppAttestationManager {
         &self,
         client_type: Option<AppAttestationClientType>,
         attestation: Option<&AppAttestation>,
+        challenge: Option<&str>,
     ) -> std::result::Result<Option<AppAttestationResult>, AppAttestationError> {
         // Skip app attestation validation if server config for the required
         // app attestation method does not exist.
@@ -53,7 +54,7 @@ impl AppAttestationManager {
                 if let Some(config) = self.config.app_attestation()
                     && let Some(play_integrity_config) = &config.play_integrity
                 {
-                    self.handle_play_integrity(play_integrity_config, attestation)
+                    self.handle_play_integrity(play_integrity_config, attestation, challenge)
                         .await
                 } else {
                     Ok(None)
@@ -67,6 +68,7 @@ impl AppAttestationManager {
         &self,
         play_integrity_config: &PlayIntegrityAppAttestationConfig,
         attestation: Option<&AppAttestation>,
+        expected_request_hash: Option<&str>,
     ) -> std::result::Result<Option<AppAttestationResult>, AppAttestationError> {
         let nothing_required = !play_integrity_config.require_device_integrity
             && !play_integrity_config.require_app_integrity;
@@ -76,7 +78,7 @@ impl AppAttestationManager {
         {
             match self
                 .play_integrity
-                .validate(play_integrity, play_integrity_config)
+                .validate(play_integrity, play_integrity_config, expected_request_hash)
                 .await
             {
                 Ok(integrity) => Ok(Some(AppAttestationResult::Success {

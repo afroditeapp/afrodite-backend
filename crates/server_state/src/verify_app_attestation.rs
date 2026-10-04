@@ -1,14 +1,18 @@
 use std::collections::HashMap;
 
+use base64::Engine;
 use model::{AccountIdInternal, ClientType, UnixTime, VerifyAppAttestationToken};
 use simple_backend_utils::time::DurationValue;
 use tokio::sync::Mutex;
+use utils::random_bytes::random_128_bits;
 
 struct PendingLogin {
     account_id: AccountIdInternal,
     client_type: ClientType,
     connection_ip: std::net::IpAddr,
     unix_time: UnixTime,
+    /// Random string for app attestation token
+    challenge: Option<String>,
 }
 
 struct StoreInner {
@@ -79,6 +83,7 @@ impl VerifyAppAttestationTokenStore {
                 client_type,
                 connection_ip,
                 unix_time,
+                challenge: None,
             },
         );
 
@@ -90,13 +95,52 @@ impl VerifyAppAttestationTokenStore {
     pub async fn consume(
         &self,
         token: &[u8],
-    ) -> Option<(AccountIdInternal, ClientType, std::net::IpAddr)> {
+    ) -> Option<(
+        AccountIdInternal,
+        ClientType,
+        std::net::IpAddr,
+        Option<String>,
+    )> {
         let mut lock = self.inner.lock().await;
         let entry = lock.tokens.remove(token)?;
         if !entry.unix_time.duration_value_elapsed(Self::TOKEN_VALIDITY) {
-            Some((entry.account_id, entry.client_type, entry.connection_ip))
+            Some((
+                entry.account_id,
+                entry.client_type,
+                entry.connection_ip,
+                entry.challenge,
+            ))
         } else {
             None
         }
+    }
+
+    /// Generate and store a challenge for the pending login behind `token`.
+    ///
+    /// The `connection_ip` must match the IP address that initiated the login
+    /// so the challenge cannot be requested from a different IP.
+    ///
+    /// Returns `None` if `token` is not a valid pending login token or the IP
+    /// address does not match.
+    pub async fn generate_challenge(
+        &self,
+        token: &[u8],
+        connection_ip: std::net::IpAddr,
+    ) -> Option<String> {
+        let mut lock = self.inner.lock().await;
+        lock.cleanup_if_needed(Self::TOKEN_VALIDITY);
+
+        let entry = lock.tokens.get_mut(token)?;
+        if entry.unix_time.duration_value_elapsed(Self::TOKEN_VALIDITY) {
+            lock.tokens.remove(token);
+            return None;
+        }
+        if entry.connection_ip != connection_ip {
+            return None;
+        }
+
+        let challenge = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(random_128_bits());
+        entry.challenge = Some(challenge.clone());
+        Some(challenge)
     }
 }

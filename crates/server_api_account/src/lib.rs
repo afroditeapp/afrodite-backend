@@ -28,6 +28,7 @@ pub use server_common::{data::DataError, result};
         account::post_request_email_login_token,
         account::post_email_login_with_token,
         account::post_verify_app_attestation,
+        account::post_request_app_attest_challenge,
         account::get_email_registration_platforms,
         account::get_verify_email,
         account::post_verify_email,

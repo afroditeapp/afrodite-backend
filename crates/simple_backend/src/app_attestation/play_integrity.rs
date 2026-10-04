@@ -54,6 +54,7 @@ impl PlayIntegrityManager {
         &self,
         attestation: &PlayIntegrityAppAttestation,
         config: &PlayIntegrityAppAttestationConfig,
+        expected_request_hash: Option<&str>,
     ) -> Result<AppIntegrityResult, PlayIntegrityError> {
         let Some(oauth) = &self.oauth else {
             return Err(PlayIntegrityError::Failed);
@@ -100,6 +101,18 @@ impl PlayIntegrityManager {
             .and_then(|v| v.as_str())
             .ok_or(PlayIntegrityError::Failed)?;
         if request_package_name != config.package_name {
+            return Err(PlayIntegrityError::Failed);
+        }
+
+        // Verify the request hash matches the challenge we issued for this
+        // login. This binds the verdict token to the pending login and
+        // prevents replaying a token obtained for a different login.
+        let request_hash = payload
+            .get("requestDetails")
+            .and_then(|d| d.get("requestHash"))
+            .and_then(|v| v.as_str())
+            .ok_or(PlayIntegrityError::Failed)?;
+        if Some(request_hash) != expected_request_hash {
             return Err(PlayIntegrityError::Failed);
         }
 

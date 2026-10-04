@@ -92,6 +92,10 @@ impl AccountRoutes {
                 post(api::account::post_verify_app_attestation),
             )
             .route(
+                api::account::PATH_POST_REQUEST_APP_ATTEST_CHALLENGE,
+                post(api::account::post_request_app_attest_challenge),
+            )
+            .route(
                 api::account::PATH_GET_EMAIL_REGISTRATION_PLATFORMS,
                 get(api::account::get_email_registration_platforms),
             )

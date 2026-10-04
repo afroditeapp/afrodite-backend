@@ -334,6 +334,43 @@ pub struct VerifyAppAttestationLogin {
     pub app_attestation: Option<AppAttestation>,
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct RequestAppAttestChallenge {
+    pub token: VerifyAppAttestationToken,
+}
+
+#[derive(Debug, Default, Deserialize, Serialize, ToSchema, Clone, PartialEq)]
+pub struct RequestAppAttestChallengeResult {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    challenge: Option<String>,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error: bool,
+
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_invalid_verify_app_attestation_token: bool,
+}
+
+impl RequestAppAttestChallengeResult {
+    pub fn ok(challenge: String) -> Self {
+        Self {
+            challenge: Some(challenge),
+            ..Default::default()
+        }
+    }
+
+    pub fn error_invalid_verify_app_attestation_token() -> Self {
+        Self {
+            error: true,
+            error_invalid_verify_app_attestation_token: true,
+            ..Default::default()
+        }
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize, ToSchema, Clone)]
 pub struct DemoAccountLoginToAccount {
     pub token: DemoAccountToken,
