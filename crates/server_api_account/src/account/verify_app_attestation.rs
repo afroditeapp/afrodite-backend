@@ -4,7 +4,11 @@ use model_account::{
     LoginPhaseTwoResult, RequestAppAttestChallenge, RequestAppAttestChallengeResult,
     VerifyAppAttestationLogin,
 };
-use server_api::{S, app::GetAccounts, db_write};
+use server_api::{
+    S,
+    app::{ApiLimitsProvider, GetAccounts},
+    db_write,
+};
 use server_data::write::GetWriteCommandsCommon;
 use simple_backend::{
     app::AppAttestationProvider,
@@ -105,6 +109,20 @@ pub async fn post_verify_app_attestation(
     // be replayed from a different IP.
     if connection.ip() != connection_ip {
         return Ok(LoginPhaseTwoResult::error_invalid_verify_app_attestation_token().into());
+    }
+
+    if request
+        .app_attestation
+        .as_ref()
+        .is_some_and(|attestation| attestation.play_integrity.is_some())
+        && state
+            .api_limits(account_id)
+            .account()
+            .play_integrity_daily_max_count()
+            .await
+            .is_err()
+    {
+        return Ok(LoginPhaseTwoResult::error_play_integrity_limit_reached().into());
     }
 
     let attestation_result = match validate_app_attestation(

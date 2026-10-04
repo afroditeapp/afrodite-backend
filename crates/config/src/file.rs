@@ -73,6 +73,7 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # email_registration_max_per_day = 500
 # post_account_verification_queue_item_daily_max_count = 10
 # account_verification_queue_max_length = 100
+# play_integrity_daily_max_count = 20
 # custom_email_send_to_all_accounts_monthly_max_count = 1
 # custom_email_send_draft_to_my_email_address_monthly_max_count = 10
 
@@ -436,6 +437,8 @@ pub struct AccountLimitsConfig {
     pub email_registration_max_per_day: u16,
     pub post_account_verification_queue_item_daily_max_count: u16,
     pub account_verification_queue_max_length: u16,
+    /// Max number of Play Integrity API verifications per account per day.
+    pub play_integrity_daily_max_count: u16,
     pub custom_email_send_to_all_accounts_monthly_max_count: u16,
     pub custom_email_send_draft_to_my_email_address_monthly_max_count: u16,
 }
@@ -465,6 +468,7 @@ impl Default for AccountLimitsConfig {
             email_registration_max_per_day: 500,
             post_account_verification_queue_item_daily_max_count: 10,
             account_verification_queue_max_length: 100,
+            play_integrity_daily_max_count: 20,
             custom_email_send_to_all_accounts_monthly_max_count: 1,
             custom_email_send_draft_to_my_email_address_monthly_max_count: 10,
         }

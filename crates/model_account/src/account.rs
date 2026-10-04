@@ -261,6 +261,13 @@ pub struct LoginPhaseTwoResult {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     error_invalid_verify_app_attestation_token: bool,
+
+    /// The daily Play Integrity API verification limit was reached. Limits
+    /// reset when scheduled tasks will run, so it is safe to show "try again
+    /// after 24 hours" text to user.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    error_play_integrity_limit_reached: bool,
 }
 
 impl LoginPhaseTwoResult {
@@ -292,6 +299,14 @@ impl LoginPhaseTwoResult {
         Self {
             error: true,
             error_invalid_verify_app_attestation_token: true,
+            ..Default::default()
+        }
+    }
+
+    pub fn error_play_integrity_limit_reached() -> Self {
+        Self {
+            error: true,
+            error_play_integrity_limit_reached: true,
             ..Default::default()
         }
     }

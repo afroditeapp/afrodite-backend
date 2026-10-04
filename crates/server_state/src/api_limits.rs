@@ -154,6 +154,18 @@ impl AccountApiLimits<'_> {
             })
             .await
     }
+
+    pub async fn play_integrity_daily_max_count(&self) -> Result<(), ApiLimitError> {
+        self.limits
+            .check(|state, config| {
+                state
+                    .play_integrity_daily_max_count
+                    .increment_and_check_is_limit_reached(
+                        config.limits_account().play_integrity_daily_max_count,
+                    )
+            })
+            .await
+    }
 }
 
 pub struct ProfileApiLimits<'a> {

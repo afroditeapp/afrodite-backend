@@ -37,6 +37,7 @@ pub struct AllApiLimits {
     pub websocket_connection_attempts: ApiLimitState,
     // Account
     pub post_account_verification_queue_item: ApiLimitState,
+    pub play_integrity_daily_max_count: ApiLimitState,
     // Profile
     pub post_reset_profile_paging: ApiLimitState,
     pub post_get_next_profile_page: ApiLimitState,
