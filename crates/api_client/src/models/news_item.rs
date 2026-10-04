@@ -21,9 +21,8 @@ pub struct NewsItem {
     pub aid_editor: Option<models::AccountId>,
     #[serde(rename = "body")]
     pub body: String,
-    /// Option<i64> is a workaround for Dart OpenApi generator version 7.9.0
-    #[serde(rename = "edit_unix_time", skip_serializing_if = "Option::is_none")]
-    pub edit_unix_time: Option<i64>,
+    #[serde(rename = "edit_time", skip_serializing_if = "Option::is_none")]
+    pub edit_time: Option<models::UnixTime>,
     #[serde(rename = "locale")]
     pub locale: String,
     /// Latest publication time
@@ -42,7 +41,7 @@ impl NewsItem {
             aid_creator: None,
             aid_editor: None,
             body,
-            edit_unix_time: None,
+            edit_time: None,
             locale,
             time: None,
             title,

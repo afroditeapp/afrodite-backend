@@ -236,6 +236,8 @@ src/models/latest_seen_message_info_list.rs
 src/models/likes_config.rs
 src/models/limited_action_status.rs
 src/models/location.rs
+src/models/login_phase_one_result.rs
+src/models/login_phase_two_result.rs
 src/models/login_result.rs
 src/models/login_session_info.rs
 src/models/maintenance_task.rs
@@ -391,6 +393,8 @@ src/models/report_iterator_query.rs
 src/models/report_processing_state.rs
 src/models/report_queue_type.rs
 src/models/report_type.rs
+src/models/request_app_attest_challenge.rs
+src/models/request_app_attest_challenge_result.rs
 src/models/request_email_login_token.rs
 src/models/request_email_login_token_result.rs
 src/models/reset_news_iterator_result.rs
@@ -452,3 +456,5 @@ src/models/update_profile_text_report.rs
 src/models/update_report_result.rs
 src/models/vapid_public_key.rs
 src/models/verification_method.rs
+src/models/verify_app_attestation_login.rs
+src/models/verify_app_attestation_token.rs

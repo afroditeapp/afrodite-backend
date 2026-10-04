@@ -327,6 +327,14 @@ pub enum PostLogoutError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`post_request_app_attest_challenge`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostRequestAppAttestChallengeError {
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`post_request_email_login_token`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -375,6 +383,14 @@ pub enum PostSetEmailLoginEnabledError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PostSignInWithLoginError {
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`post_verify_app_attestation`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostVerifyAppAttestationError {
     Status500(),
     UnknownValue(serde_json::Value),
 }
@@ -798,7 +814,7 @@ pub async fn get_email_registration_platforms(configuration: &configuration::Con
     }
 }
 
-/// If specific locale is not found when [RequireNewsLocale::require_locale] is `true` then [GetNewsItemResult::item] is `None`.
+/// If specific locale is not found when [RequireNewsLocale::require_locale] is `true` then [GetNewsItemResult::item] is `None`.  If news item is private and account doesn't have any admin news permissions then [GetNewsItemResult::item] is `None`.
 pub async fn get_news_item(configuration: &configuration::Configuration, nid: i64, locale: &str, require_locale: Option<bool>) -> Result<models::GetNewsItemResult, Error<GetNewsItemError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_nid = nid;
@@ -1198,7 +1214,7 @@ pub async fn post_demo_account_accessible_accounts(configuration: &configuration
     }
 }
 
-/// This API route has 1 second wait time to make password guessing harder. Account will be locked if the password is guessed. Server process restart will reset the lock.
+/// This API route has 1 second wait time to make password guessing harder. Account will be locked after `demo_account_login_attempt_max_count` wrong attempts. Server process restart will reset the lock.
 pub async fn post_demo_account_login(configuration: &configuration::Configuration, demo_account_login_credentials: models::DemoAccountLoginCredentials) -> Result<models::DemoAccountLoginResult, Error<PostDemoAccountLoginError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_demo_account_login_credentials = demo_account_login_credentials;
@@ -1236,7 +1252,7 @@ pub async fn post_demo_account_login(configuration: &configuration::Configuratio
     }
 }
 
-pub async fn post_demo_account_login_to_account(configuration: &configuration::Configuration, demo_account_login_to_account: models::DemoAccountLoginToAccount) -> Result<models::LoginResult, Error<PostDemoAccountLoginToAccountError>> {
+pub async fn post_demo_account_login_to_account(configuration: &configuration::Configuration, demo_account_login_to_account: models::DemoAccountLoginToAccount) -> Result<models::LoginPhaseOneResult, Error<PostDemoAccountLoginToAccountError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_demo_account_login_to_account = demo_account_login_to_account;
 
@@ -1263,8 +1279,8 @@ pub async fn post_demo_account_login_to_account(configuration: &configuration::C
         let content = resp.text().await?;
         match content_type {
             ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::LoginResult`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::LoginResult`")))),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::LoginPhaseOneResult`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::LoginPhaseOneResult`")))),
         }
     } else {
         let content = resp.text().await?;
@@ -1337,7 +1353,7 @@ pub async fn post_demo_account_register_account(configuration: &configuration::C
 }
 
 /// The route always takes at least 5 seconds to complete to make token guessing slower.
-pub async fn post_email_login_with_token(configuration: &configuration::Configuration, email_login: models::EmailLogin) -> Result<models::LoginResult, Error<PostEmailLoginWithTokenError>> {
+pub async fn post_email_login_with_token(configuration: &configuration::Configuration, email_login: models::EmailLogin) -> Result<models::LoginPhaseOneResult, Error<PostEmailLoginWithTokenError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_email_login = email_login;
 
@@ -1364,8 +1380,8 @@ pub async fn post_email_login_with_token(configuration: &configuration::Configur
         let content = resp.text().await?;
         match content_type {
             ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::LoginResult`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::LoginResult`")))),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::LoginPhaseOneResult`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::LoginPhaseOneResult`")))),
         }
     } else {
         let content = resp.text().await?;
@@ -1670,6 +1686,44 @@ pub async fn post_logout(configuration: &configuration::Configuration, ) -> Resu
     }
 }
 
+/// The client must call this after login phase one to obtain a challenge and then put it into the `requestHash` field of the Play Integrity API verdict token before presenting it to `post_verify_app_attestation`.
+pub async fn post_request_app_attest_challenge(configuration: &configuration::Configuration, request_app_attest_challenge: models::RequestAppAttestChallenge) -> Result<models::RequestAppAttestChallengeResult, Error<PostRequestAppAttestChallengeError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_request_app_attest_challenge = request_app_attest_challenge;
+
+    let uri_str = format!("{}/account_api/request_app_attest_challenge", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    req_builder = req_builder.json(&p_body_request_app_attest_challenge);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::RequestAppAttestChallengeResult`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::RequestAppAttestChallengeResult`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostRequestAppAttestChallengeError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 /// The route always takes at least 5 seconds to complete to prevent timing attacks that could be used to enumerate existing email addresses.  When `login_only` is `false` (email registration can happen), the email address is validated with an email address validator. If the email address is not supported for registration, the request is rejected with `error_email_registration_unsupported_email`.
 pub async fn post_request_email_login_token(configuration: &configuration::Configuration, request_email_login_token: models::RequestEmailLoginToken) -> Result<models::RequestEmailLoginTokenResult, Error<PostRequestEmailLoginTokenError>> {
     // add a prefix to parameters to efficiently prevent name collisions
@@ -1844,7 +1898,7 @@ pub async fn post_set_email_login_enabled(configuration: &configuration::Configu
 }
 
 /// Registers new account if it does not exist, when registration is enabled for the current client platform in dynamic server config.
-pub async fn post_sign_in_with_login(configuration: &configuration::Configuration, sign_in_with_login_info: models::SignInWithLoginInfo) -> Result<models::LoginResult, Error<PostSignInWithLoginError>> {
+pub async fn post_sign_in_with_login(configuration: &configuration::Configuration, sign_in_with_login_info: models::SignInWithLoginInfo) -> Result<models::LoginPhaseOneResult, Error<PostSignInWithLoginError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_sign_in_with_login_info = sign_in_with_login_info;
 
@@ -1871,12 +1925,50 @@ pub async fn post_sign_in_with_login(configuration: &configuration::Configuratio
         let content = resp.text().await?;
         match content_type {
             ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::LoginResult`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::LoginResult`")))),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::LoginPhaseOneResult`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::LoginPhaseOneResult`")))),
         }
     } else {
         let content = resp.text().await?;
         let entity: Option<PostSignInWithLoginError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// The login routes (`post_sign_in_with_login`, `post_email_login_with_token`, `post_demo_account_login_to_account`) return a short-lived `verify_app_attestation_token` instead of logging the account in directly. This route consumes that token and completes the login only if the app attestation passes.
+pub async fn post_verify_app_attestation(configuration: &configuration::Configuration, verify_app_attestation_login: models::VerifyAppAttestationLogin) -> Result<models::LoginPhaseTwoResult, Error<PostVerifyAppAttestationError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_verify_app_attestation_login = verify_app_attestation_login;
+
+    let uri_str = format!("{}/account_api/verify_app_attestation", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    req_builder = req_builder.json(&p_body_verify_app_attestation_login);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::LoginPhaseTwoResult`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::LoginPhaseTwoResult`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostVerifyAppAttestationError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

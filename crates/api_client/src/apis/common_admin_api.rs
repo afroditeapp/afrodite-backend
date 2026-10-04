@@ -259,6 +259,15 @@ pub enum PostTriggerServerRestartError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`post_trigger_server_shutdown`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostTriggerServerShutdownError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`post_trigger_software_update_download`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -1285,6 +1294,36 @@ pub async fn post_trigger_server_restart(configuration: &configuration::Configur
     } else {
         let content = resp.text().await?;
         let entity: Option<PostTriggerServerRestartError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// # Access * Permission [model::Permissions::admin_server_shutdown]
+pub async fn post_trigger_server_shutdown(configuration: &configuration::Configuration, manager_name: &str) -> Result<(), Error<PostTriggerServerShutdownError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_manager_name = manager_name;
+
+    let uri_str = format!("{}/common_api/trigger_server_shutdown", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    req_builder = req_builder.query(&[("manager_name", &p_query_manager_name.to_string())]);
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostTriggerServerShutdownError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

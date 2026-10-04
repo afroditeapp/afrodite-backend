@@ -11,6 +11,7 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
+/// LoginResult : Result of a completed login that returns access tokens directly.  Used by bot login routes which do not require app attestation.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct LoginResult {
     /// Account ID of current account. If `None`, the client is unsupported.
@@ -23,52 +24,19 @@ pub struct LoginResult {
     pub error: Option<bool>,
     #[serde(rename = "error_account_locked", skip_serializing_if = "Option::is_none")]
     pub error_account_locked: Option<bool>,
-    #[serde(rename = "error_app_attestation_app_integrity", skip_serializing_if = "Option::is_none")]
-    pub error_app_attestation_app_integrity: Option<bool>,
-    #[serde(rename = "error_app_attestation_device_integrity", skip_serializing_if = "Option::is_none")]
-    pub error_app_attestation_device_integrity: Option<bool>,
-    #[serde(rename = "error_app_attestation_failed", skip_serializing_if = "Option::is_none")]
-    pub error_app_attestation_failed: Option<bool>,
-    /// This might be true, when registering new account using sign in with login method.
-    #[serde(rename = "error_email_already_used", skip_serializing_if = "Option::is_none")]
-    pub error_email_already_used: Option<bool>,
-    #[serde(rename = "error_invalid_email_login_token", skip_serializing_if = "Option::is_none")]
-    pub error_invalid_email_login_token: Option<bool>,
-    #[serde(rename = "error_login_all_platforms_disabled", skip_serializing_if = "Option::is_none")]
-    pub error_login_all_platforms_disabled: Option<bool>,
-    #[serde(rename = "error_login_platform_disabled", skip_serializing_if = "Option::is_none")]
-    pub error_login_platform_disabled: Option<bool>,
-    #[serde(rename = "error_registration_all_platforms_disabled", skip_serializing_if = "Option::is_none")]
-    pub error_registration_all_platforms_disabled: Option<bool>,
-    #[serde(rename = "error_registration_platform_disabled", skip_serializing_if = "Option::is_none")]
-    pub error_registration_platform_disabled: Option<bool>,
-    #[serde(rename = "error_sign_in_with_email_unverified", skip_serializing_if = "Option::is_none")]
-    pub error_sign_in_with_email_unverified: Option<bool>,
-    #[serde(rename = "error_unsupported_client", skip_serializing_if = "Option::is_none")]
-    pub error_unsupported_client: Option<bool>,
     /// If `None`, the client is unsupported.
     #[serde(rename = "tokens", skip_serializing_if = "Option::is_none")]
     pub tokens: Option<models::AuthPair>,
 }
 
 impl LoginResult {
+    /// Result of a completed login that returns access tokens directly.  Used by bot login routes which do not require app attestation.
     pub fn new() -> LoginResult {
         LoginResult {
             aid: None,
             email: None,
             error: None,
             error_account_locked: None,
-            error_app_attestation_app_integrity: None,
-            error_app_attestation_device_integrity: None,
-            error_app_attestation_failed: None,
-            error_email_already_used: None,
-            error_invalid_email_login_token: None,
-            error_login_all_platforms_disabled: None,
-            error_login_platform_disabled: None,
-            error_registration_all_platforms_disabled: None,
-            error_registration_platform_disabled: None,
-            error_sign_in_with_email_unverified: None,
-            error_unsupported_client: None,
             tokens: None,
         }
     }

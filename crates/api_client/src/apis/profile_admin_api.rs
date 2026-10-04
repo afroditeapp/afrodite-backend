@@ -223,7 +223,7 @@ pub async fn get_latest_created_account_id_db(configuration: &configuration::Con
     }
 }
 
-/// # Access  Admin bot required permissions: - Permission [model::Permissions::admin_verify_account]  Client required permissions: - Permission [model::Permissions::admin_edit_profile_name]  Required by both admin bot and client: - Permission [model::Permissions::admin_edit_profile_age_range_verified_value] - Permission [model::Permissions::admin_edit_profile_name_verified_value]
+/// # Access  Admin bot related permissions: - Permission [model::Permissions::admin_verify_account]  Client related permissions: - Permission [model::Permissions::admin_edit_profile_name]  Both admin bot and client related permissions: - Permission [model::Permissions::admin_edit_profile_age_range_verified_value] - Permission [model::Permissions::admin_edit_profile_name_verified_value]
 pub async fn get_profile_age_and_name(configuration: &configuration::Configuration, aid: &str) -> Result<models::GetProfileAgeAndName, Error<GetProfileAgeAndNameError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_aid = aid;

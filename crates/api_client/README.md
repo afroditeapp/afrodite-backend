@@ -61,12 +61,14 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**post_init_email_change**](docs/AccountApi.md#post_init_email_change) | **POST** /account_api/init_email_change | Initiate email change process by providing a new email address.
 *AccountApi* | [**post_initial_email**](docs/AccountApi.md#post_initial_email) | **POST** /account_api/initial_email | Set initial email address for bots and accounts owned by demo account when initial setup is ongoing.
 *AccountApi* | [**post_logout**](docs/AccountApi.md#post_logout) | **POST** /account_api/logout | 
+*AccountApi* | [**post_request_app_attest_challenge**](docs/AccountApi.md#post_request_app_attest_challenge) | **POST** /account_api/request_app_attest_challenge | Request a random string for app attestation token.
 *AccountApi* | [**post_request_email_login_token**](docs/AccountApi.md#post_request_email_login_token) | **POST** /account_api/request_email_login_token | Request email login token to be sent via email.
 *AccountApi* | [**post_reset_news_paging**](docs/AccountApi.md#post_reset_news_paging) | **POST** /account_api/reset_news_paging | 
 *AccountApi* | [**post_send_verify_email_message**](docs/AccountApi.md#post_send_verify_email_message) | **POST** /account_api/send_verify_email_message | 
 *AccountApi* | [**post_set_account_deletion_request_state**](docs/AccountApi.md#post_set_account_deletion_request_state) | **POST** /account_api/set_account_deletion_request_state/{aid} | Request account deletion or cancel the deletion
 *AccountApi* | [**post_set_email_login_enabled**](docs/AccountApi.md#post_set_email_login_enabled) | **POST** /account_api/set_email_login_enabled | Enable or disable email login for an account.
 *AccountApi* | [**post_sign_in_with_login**](docs/AccountApi.md#post_sign_in_with_login) | **POST** /account_api/sign_in_with_login | Start new session with sign in with Apple or Google.
+*AccountApi* | [**post_verify_app_attestation**](docs/AccountApi.md#post_verify_app_attestation) | **POST** /account_api/verify_app_attestation | Complete a pending login by verifying app attestation.
 *AccountApi* | [**post_verify_email**](docs/AccountApi.md#post_verify_email) | **POST** /verify_email | Verify email address using the token from the form submission.
 *AccountApi* | [**post_verify_new_email**](docs/AccountApi.md#post_verify_new_email) | **POST** /verify_new_email | Verify new email address using the token from the form submission.
 *AccountApi* | [**put_setting_profile_visibility**](docs/AccountApi.md#put_setting_profile_visibility) | **PUT** /account_api/settings/profile_visibility | Update current profile visibility value.
@@ -197,6 +199,7 @@ Class | Method | HTTP request | Description
 *CommonAdminApi* | [**post_schedule_task**](docs/CommonAdminApi.md#post_schedule_task) | **POST** /common_api/schedule_task | Schedule task.
 *CommonAdminApi* | [**post_trigger_server_data_reset**](docs/CommonAdminApi.md#post_trigger_server_data_reset) | **POST** /common_api/trigger_server_data_reset | Trigger server data reset.
 *CommonAdminApi* | [**post_trigger_server_restart**](docs/CommonAdminApi.md#post_trigger_server_restart) | **POST** /common_api/trigger_server_restart | Trigger server restart.
+*CommonAdminApi* | [**post_trigger_server_shutdown**](docs/CommonAdminApi.md#post_trigger_server_shutdown) | **POST** /common_api/trigger_server_shutdown | Trigger server shutdown.
 *CommonAdminApi* | [**post_trigger_software_update_download**](docs/CommonAdminApi.md#post_trigger_software_update_download) | **POST** /common_api/trigger_software_update_download | Trigger software update download.
 *CommonAdminApi* | [**post_trigger_software_update_install**](docs/CommonAdminApi.md#post_trigger_software_update_install) | **POST** /common_api/trigger_software_update_install | Trigger software update install.
 *CommonAdminApi* | [**post_trigger_system_reboot**](docs/CommonAdminApi.md#post_trigger_system_reboot) | **POST** /common_api/trigger_system_reboot | Trigger system reboot.
@@ -493,6 +496,8 @@ Class | Method | HTTP request | Description
  - [LikesConfig](docs/LikesConfig.md)
  - [LimitedActionStatus](docs/LimitedActionStatus.md)
  - [Location](docs/Location.md)
+ - [LoginPhaseOneResult](docs/LoginPhaseOneResult.md)
+ - [LoginPhaseTwoResult](docs/LoginPhaseTwoResult.md)
  - [LoginResult](docs/LoginResult.md)
  - [LoginSessionInfo](docs/LoginSessionInfo.md)
  - [MaintenanceTask](docs/MaintenanceTask.md)
@@ -647,6 +652,8 @@ Class | Method | HTTP request | Description
  - [ReportProcessingState](docs/ReportProcessingState.md)
  - [ReportQueueType](docs/ReportQueueType.md)
  - [ReportType](docs/ReportType.md)
+ - [RequestAppAttestChallenge](docs/RequestAppAttestChallenge.md)
+ - [RequestAppAttestChallengeResult](docs/RequestAppAttestChallengeResult.md)
  - [RequestEmailLoginToken](docs/RequestEmailLoginToken.md)
  - [RequestEmailLoginTokenResult](docs/RequestEmailLoginTokenResult.md)
  - [ResetNewsIteratorResult](docs/ResetNewsIteratorResult.md)
@@ -708,6 +715,8 @@ Class | Method | HTTP request | Description
  - [UpdateReportResult](docs/UpdateReportResult.md)
  - [VapidPublicKey](docs/VapidPublicKey.md)
  - [VerificationMethod](docs/VerificationMethod.md)
+ - [VerifyAppAttestationLogin](docs/VerifyAppAttestationLogin.md)
+ - [VerifyAppAttestationToken](docs/VerifyAppAttestationToken.md)
 
 
 To get access to the crate's generated documentation, use:
