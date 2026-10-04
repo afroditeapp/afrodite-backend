@@ -86,7 +86,10 @@ pub(super) async fn store_pending_login(
         .verify_app_attestation_tokens()
         .insert(id, client_type, connection.ip())
         .await;
-    Ok(LoginPhaseOneResult::verify_app_attestation(token))
+    Ok(LoginPhaseOneResult::verify_app_attestation(
+        token,
+        id.as_id(),
+    ))
 }
 
 pub const PATH_SIGN_IN_WITH_LOGIN: &str = "/account_api/sign_in_with_login";

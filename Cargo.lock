@@ -245,6 +245,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "appattest"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5d0a66767aaf7d483c556386fb68ca2fba9347684d8bb17a4bd8b755851870f7"
+dependencies = [
+ "arrayvec",
+ "aws-lc-rs",
+ "base64 0.22.1",
+ "byteorder",
+ "minicbor",
+ "rustls-pki-types",
+ "rustls-webpki",
+]
+
+[[package]]
 name = "approx"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3304,6 +3319,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "minicbor"
+version = "0.25.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c0452a60c1863c1f50b5f77cd295e8d2786849f35883f0b9e18e7e6e1b5691b0"
+
+[[package]]
 name = "minimal-lexical"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5668,6 +5689,7 @@ dependencies = [
 name = "simple_backend"
 version = "0.0.0"
 dependencies = [
+ "appattest",
  "axum",
  "base64 0.23.1",
  "error-stack",

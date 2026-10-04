@@ -205,10 +205,26 @@ CREATE TABLE IF NOT EXISTS login_session_info(
     -- 2 = Web
     client_platform                  SMALLINT,
     -- 0 = PlayIntegrity
+    -- 1 = AppleAppAttest
     app_attestation_type_number      SMALLINT,
     app_attestation_app_integrity    BOOLEAN,
     app_attestation_device_integrity BOOLEAN,
     app_attestation_failed           BOOLEAN,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS apple_app_attest_keys(
+    account_id   BIGINT NOT NULL,
+    -- SHA-256 hash of the device public key (32 bytes).
+    key_id       BYTEA NOT NULL,
+    -- Device public key extracted from the attestation certificate (65 bytes).
+    public_key   BYTEA NOT NULL,
+    -- Unix time when the key was first attested.
+    created_at   BIGINT NOT NULL,
+    PRIMARY KEY (account_id, key_id),
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

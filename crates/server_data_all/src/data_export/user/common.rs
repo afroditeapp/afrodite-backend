@@ -1,10 +1,11 @@
 use database::{DbReadMode, DieselDatabaseError, current::read::GetDbReadCommandsCommon};
 use model::{
-    Account, AccountIdInternal, AdminNotification, AdminNotificationSettings, BotAccountType,
-    ClientConfigSyncVersion, ClientLanguage, GetApiUsageStatisticsResult,
-    GetApiUsageStatisticsSettings, GetIpAddressStatisticsResult, InitialSetupCompletedTime,
-    LoginSessionInfo, OtherSharedState, PendingAppNotification, PushNotificationDbState, ReportId,
-    ReportIteratorQueryInternal, ReportProcessingState, ReportType, UnixTime,
+    Account, AccountIdInternal, AdminNotification, AdminNotificationSettings,
+    AppleAppAttestKeyForDataExport, BotAccountType, ClientConfigSyncVersion, ClientLanguage,
+    GetApiUsageStatisticsResult, GetApiUsageStatisticsSettings, GetIpAddressStatisticsResult,
+    InitialSetupCompletedTime, LoginSessionInfo, OtherSharedState, PendingAppNotification,
+    PushNotificationDbState, ReportId, ReportIteratorQueryInternal, ReportProcessingState,
+    ReportType, UnixTime,
 };
 use serde::Serialize;
 use server_data::data_export::SourceAccount;
@@ -21,6 +22,7 @@ pub struct UserDataExportJsonCommon {
     admin_notification_settings: AdminNotificationSettings,
     admin_notification_subscriptions: AdminNotification,
     pending_app_notifications: Vec<PendingAppNotification>,
+    apple_app_attest_keys: Vec<AppleAppAttestKeyForDataExport>,
     note: &'static str,
 }
 
@@ -58,6 +60,7 @@ impl UserDataExportJsonCommon {
                 .common()
                 .notification()
                 .pending_app_notifications(id)?,
+            apple_app_attest_keys: current.common().client_config().apple_app_attest_keys(id)?,
             note: "Account IDs of moderation decision makers are not included in this data export.",
         };
         Ok(data)

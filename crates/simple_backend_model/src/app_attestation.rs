@@ -23,6 +23,7 @@ use crate::{SimpleDieselEnum, play_integrity::PlayIntegrityAppAttestation};
 #[repr(i16)]
 pub enum AppAttestationTypeNumber {
     PlayIntegrity = 0,
+    AppleAppAttest = 1,
 }
 
 /// Result of an app attestation validation.
@@ -52,4 +53,27 @@ pub struct AppAttestation {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
     pub play_integrity: Option<PlayIntegrityAppAttestation>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub apple_app_attest: Option<AppleAppAttest>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, ToSchema)]
+pub struct AppleAppAttest {
+    /// Base64-encoded CBOR attestation object returned by
+    /// `DCAppAttestService.attestKey`. Present when the client is attesting
+    /// a new key.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub attestation: Option<String>,
+    /// Base64-encoded CBOR assertion object returned by
+    /// `DCAppAttestService.generateAssertion`. Present when the client is
+    /// proving an already attested key.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub assertion: Option<String>,
+    /// Base64-encoded key identifier returned by
+    /// `DCAppAttestService.generateKey`.
+    pub key_id: String,
 }

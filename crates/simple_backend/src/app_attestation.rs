@@ -1,15 +1,28 @@
 use std::sync::Arc;
 
-use simple_backend_config::{SimpleBackendConfig, file::PlayIntegrityAppAttestationConfig};
+use simple_backend_config::{
+    SimpleBackendConfig,
+    file::{AppleAppAttestConfig, PlayIntegrityAppAttestationConfig},
+};
 use simple_backend_model::{AppAttestation, AppAttestationResult, AppAttestationTypeNumber};
 
-use crate::app_attestation::play_integrity::{PlayIntegrityError, PlayIntegrityManager};
+use crate::{
+    app::AppleAppAttestKeyStore,
+    app_attestation::{
+        apple_app_attest::AppleAppAttestManager,
+        play_integrity::{PlayIntegrityError, PlayIntegrityManager},
+    },
+};
 
+mod apple_app_attest;
 mod play_integrity;
+
+pub use apple_app_attest::decode_apple_app_attest_key_id;
 
 #[derive(PartialEq)]
 pub enum AppAttestationClientType {
     Android,
+    Ios,
 }
 
 pub enum AppAttestationError {
@@ -21,6 +34,7 @@ pub enum AppAttestationError {
 pub struct AppAttestationManager {
     config: Arc<SimpleBackendConfig>,
     play_integrity: PlayIntegrityManager,
+    apple_app_attest: AppleAppAttestManager,
 }
 
 impl AppAttestationManager {
@@ -30,10 +44,12 @@ impl AppAttestationManager {
             .and_then(|c| c.play_integrity.as_ref())
             .map(|c| c.service_account_key_path.clone());
         let play_integrity =
-            PlayIntegrityManager::new(service_account_key_path, reqwest_client).await;
+            PlayIntegrityManager::new(service_account_key_path, reqwest_client.clone()).await;
+        let apple_app_attest = AppleAppAttestManager::new(reqwest_client.clone()).await;
         Self {
             config,
             play_integrity,
+            apple_app_attest,
         }
     }
 
@@ -46,6 +62,7 @@ impl AppAttestationManager {
         client_type: Option<AppAttestationClientType>,
         attestation: Option<&AppAttestation>,
         challenge: Option<&str>,
+        key_store: &impl AppleAppAttestKeyStore,
     ) -> std::result::Result<Option<AppAttestationResult>, AppAttestationError> {
         // Skip app attestation validation if server config for the required
         // app attestation method does not exist.
@@ -60,7 +77,53 @@ impl AppAttestationManager {
                     Ok(None)
                 }
             }
+            Some(AppAttestationClientType::Ios) => {
+                if let Some(config) = self.config.app_attestation()
+                    && let Some(apple_config) = &config.apple_app_attest
+                {
+                    self.handle_apple_app_attest(apple_config, attestation, challenge, key_store)
+                        .await
+                } else {
+                    Ok(None)
+                }
+            }
             None => Ok(None),
+        }
+    }
+
+    async fn handle_apple_app_attest(
+        &self,
+        apple_config: &AppleAppAttestConfig,
+        attestation: Option<&AppAttestation>,
+        challenge: Option<&str>,
+        key_store: &impl AppleAppAttestKeyStore,
+    ) -> std::result::Result<Option<AppAttestationResult>, AppAttestationError> {
+        let result = match (
+            attestation.and_then(|v| v.apple_app_attest.as_ref()),
+            challenge,
+        ) {
+            (Some(attestation), Some(challenge)) => self
+                .apple_app_attest
+                .validate(apple_config, attestation, challenge, key_store)
+                .await
+                .map(|_| AppAttestationResult::Success {
+                    attestation_type: AppAttestationTypeNumber::AppleAppAttest,
+                    integrity: simple_backend_model::AppIntegrityResult {
+                        app_integrity: false,
+                        device_integrity: false,
+                    },
+                }),
+            _ => Err(AppAttestationError::Failed),
+        };
+
+        match result {
+            Ok(result) => Ok(Some(result)),
+            Err(_) if !apple_config.require_valid_token => {
+                Ok(Some(AppAttestationResult::Failure {
+                    attestation_type: AppAttestationTypeNumber::AppleAppAttest,
+                }))
+            }
+            Err(error) => Err(error),
         }
     }
 

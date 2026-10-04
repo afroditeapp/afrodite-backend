@@ -69,6 +69,29 @@ pub trait AppAttestationProvider {
     fn app_attestation_manager(&self) -> &AppAttestationManager;
 }
 
+/// Account specific storage for Apple App Attest device keys
+pub trait AppleAppAttestKeyStore {
+    /// Get the device public key for a key id. `None` if not found.
+    async fn apple_app_attest_public_key(
+        &self,
+        key_id: &[u8],
+    ) -> simple_backend_utils::Result<Option<Vec<u8>>, AppleAppAttestKeyStoreError>;
+    /// Insert a new key, evicting the oldest keys when the per-account
+    /// limit is exceeded.
+    async fn insert_apple_app_attest_key(
+        &self,
+        key_id: &[u8],
+        public_key: &[u8],
+        created_at: i64,
+    ) -> simple_backend_utils::Result<(), AppleAppAttestKeyStoreError>;
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum AppleAppAttestKeyStoreError {
+    #[error("Apple App Attest key store operation failed")]
+    Failed,
+}
+
 pub trait GetManagerApi {
     fn manager_api_client(&self) -> &ManagerApiClient;
 

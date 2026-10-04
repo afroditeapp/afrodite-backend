@@ -93,6 +93,9 @@ zip = "8.6.0"
 regex = "1.13.1"
 aes-gcm = "0.10.3"
 
+# Use exact version as this is not widely used crate
+appattest = { version = "=0.1.1", default-features = false }
+
 clap = { version = "4.6.5", features = ["cargo", "derive"] }
 
 tracing = "0.1.44"

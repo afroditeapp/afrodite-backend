@@ -1,4 +1,4 @@
-use diesel::{insert_into, prelude::*, update};
+use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::ResultExt;
 use model::{
     AccountIdInternal, AppAttestationResult, ClientLanguage, ClientType,
@@ -6,11 +6,78 @@ use model::{
 };
 use simple_backend_utils::{Result, db::MyRunQueryDsl};
 
-use crate::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands};
+use crate::{DieselDatabaseError, IntoDatabaseError, define_current_write_commands};
 
-define_current_read_commands!(CurrentWriteCommonClientConfig);
+define_current_write_commands!(CurrentWriteCommonClientConfig);
 
 impl CurrentWriteCommonClientConfig<'_> {
+    /// Insert a new Apple App Attest key for an account.
+    ///
+    /// If the key already exists the existing row is updated with the new
+    /// public key and creation time.
+    pub fn insert_apple_app_attest_key(
+        &mut self,
+        id: AccountIdInternal,
+        key_id_value: &[u8],
+        public_key_value: &[u8],
+        created_at_value: i64,
+    ) -> Result<(), DieselDatabaseError> {
+        use crate::schema::apple_app_attest_keys::dsl::*;
+
+        insert_into(apple_app_attest_keys)
+            .values((
+                account_id.eq(id.as_db_id()),
+                key_id.eq(key_id_value),
+                public_key.eq(public_key_value),
+                created_at.eq(created_at_value),
+            ))
+            .on_conflict((account_id, key_id))
+            .do_update()
+            .set((
+                public_key.eq(public_key_value),
+                created_at.eq(created_at_value),
+            ))
+            .execute_my_conn(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
+
+    /// Delete the oldest Apple App Attest keys for an account until at most
+    /// `max_keys` remain.
+    pub fn limit_apple_app_attest_keys(
+        &mut self,
+        id: AccountIdInternal,
+        max_keys: i64,
+    ) -> Result<(), DieselDatabaseError> {
+        use crate::schema::apple_app_attest_keys::dsl::*;
+
+        let count: i64 = apple_app_attest_keys
+            .filter(account_id.eq(id.as_db_id()))
+            .count()
+            .get_result(self.conn())
+            .change_context(DieselDatabaseError::Execute)?;
+
+        if count > max_keys {
+            let delete_count = count - max_keys;
+            let oldest_ids = apple_app_attest_keys
+                .filter(account_id.eq(id.as_db_id()))
+                .order_by(created_at.asc())
+                .select(key_id)
+                .limit(delete_count)
+                .load::<Vec<u8>>(self.conn())
+                .change_context(DieselDatabaseError::Execute)?;
+
+            delete(apple_app_attest_keys)
+                .filter(account_id.eq(id.as_db_id()))
+                .filter(key_id.eq_any(oldest_ids))
+                .execute_my_conn(self.conn())
+                .into_db_error(())?;
+        }
+
+        Ok(())
+    }
+
     pub fn upsert_dynamic_client_features_config(
         &mut self,
         config: &DynamicClientFeaturesConfig,

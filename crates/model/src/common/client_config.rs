@@ -1,3 +1,4 @@
+use base64::{Engine, prelude::BASE64_STANDARD};
 use diesel::{
     Selectable,
     deserialize::Queryable,
@@ -12,8 +13,8 @@ use utoipa::ToSchema;
 
 use super::ClientConfigSyncVersion;
 use crate::{
-    ClientFeaturesConfigHash, CustomReportsConfigHash, DynamicClientFeaturesConfigHash,
-    PartialProfileAttributesConfig, WebSocketClientTypeNumber,
+    AccountIdDb, ClientFeaturesConfigHash, CustomReportsConfigHash,
+    DynamicClientFeaturesConfigHash, PartialProfileAttributesConfig, WebSocketClientTypeNumber,
 };
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -68,6 +69,37 @@ pub struct LoginSessionInfo {
     pub app_attestation_app_integrity: Option<bool>,
     pub app_attestation_device_integrity: Option<bool>,
     pub app_attestation_failed: Option<bool>,
+}
+
+/// Apple App Attest device key stored for an account.
+#[derive(Debug, Clone, Serialize, Queryable, Selectable)]
+#[diesel(table_name = crate::schema::apple_app_attest_keys)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct AppleAppAttestKey {
+    pub account_id: AccountIdDb,
+    /// SHA-256 hash of the device public key (32 bytes).
+    pub key_id: Vec<u8>,
+    /// Device public key extracted from the attestation certificate (65 bytes).
+    pub public_key: Vec<u8>,
+    /// Unix time when the key DB row was created.
+    pub created_at: i64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct AppleAppAttestKeyForDataExport {
+    pub key_id_base64: String,
+    pub public_key_base64: String,
+    pub created_at: i64,
+}
+
+impl From<AppleAppAttestKey> for AppleAppAttestKeyForDataExport {
+    fn from(key: AppleAppAttestKey) -> Self {
+        Self {
+            key_id_base64: BASE64_STANDARD.encode(&key.key_id),
+            public_key_base64: BASE64_STANDARD.encode(&key.public_key),
+            created_at: key.created_at,
+        }
+    }
 }
 
 #[derive(

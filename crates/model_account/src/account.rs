@@ -52,6 +52,11 @@ pub struct LoginPhaseOneResult {
     #[schema(nullable = false)]
     verify_app_attestation_token: Option<VerifyAppAttestationToken>,
 
+    /// Account ID of current account. If `None`, the client is unsupported.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    aid: Option<AccountId>,
+
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     error: bool,
@@ -94,11 +99,16 @@ pub struct LoginPhaseOneResult {
 impl LoginPhaseOneResult {
     /// Login is not complete yet. The client must call
     /// `post_verify_app_attestation` with the returned token.
-    pub fn verify_app_attestation(token: VerifyAppAttestationToken) -> Self {
+    pub fn verify_app_attestation(token: VerifyAppAttestationToken, aid: AccountId) -> Self {
         Self {
             verify_app_attestation_token: Some(token),
+            aid: Some(aid),
             ..Default::default()
         }
+    }
+
+    pub fn aid(&self) -> Option<AccountId> {
+        self.aid
     }
 
     pub fn error_unsupported_client() -> Self {
@@ -227,11 +237,6 @@ pub struct LoginPhaseTwoResult {
     #[schema(nullable = false)]
     tokens: Option<AuthPair>,
 
-    /// Account ID of current account. If `None`, the client is unsupported.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[schema(nullable = false)]
-    aid: Option<AccountId>,
-
     /// Current email of current account. If `None`, if email address is not
     /// set or the client version is unsupported.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -316,14 +321,14 @@ impl From<LoginResult> for LoginPhaseTwoResult {
     fn from(value: LoginResult) -> Self {
         let LoginResult {
             tokens,
-            aid,
+            // Account ID is already returned in LoginPhaseOneResult.
+            aid: _,
             email,
             error,
             error_account_locked,
         } = value;
         Self {
             tokens,
-            aid,
             email,
             error,
             error_account_locked,
@@ -352,6 +357,12 @@ pub struct VerifyAppAttestationLogin {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct RequestAppAttestChallenge {
     pub token: VerifyAppAttestationToken,
+    /// Base64-encoded Apple App Attest key identifier to check if the server
+    /// already has the key stored. When set, the response contains
+    /// [RequestAppAttestChallengeResult::apple_app_attest_key_exists].
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub apple_app_attest_key_id: Option<String>,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, ToSchema, Clone, PartialEq)]
@@ -359,6 +370,12 @@ pub struct RequestAppAttestChallengeResult {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
     challenge: Option<String>,
+
+    /// Whether the Apple App Attest key id from the request exists on the
+    /// server. `None` when the request did not contain a key id.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    apple_app_attest_key_exists: Option<bool>,
 
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
@@ -370,9 +387,10 @@ pub struct RequestAppAttestChallengeResult {
 }
 
 impl RequestAppAttestChallengeResult {
-    pub fn ok(challenge: String) -> Self {
+    pub fn ok(challenge: String, apple_app_attest_key_exists: Option<bool>) -> Self {
         Self {
             challenge: Some(challenge),
+            apple_app_attest_key_exists,
             ..Default::default()
         }
     }

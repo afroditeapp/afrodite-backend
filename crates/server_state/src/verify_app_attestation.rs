@@ -121,12 +121,13 @@ impl VerifyAppAttestationTokenStore {
     /// so the challenge cannot be requested from a different IP.
     ///
     /// Returns `None` if `token` is not a valid pending login token or the IP
-    /// address does not match.
+    /// address does not match. Otherwise returns the challenge and the
+    /// account ID of the pending login.
     pub async fn generate_challenge(
         &self,
         token: &[u8],
         connection_ip: std::net::IpAddr,
-    ) -> Option<String> {
+    ) -> Option<(String, AccountIdInternal)> {
         let mut lock = self.inner.lock().await;
         lock.cleanup_if_needed(Self::TOKEN_VALIDITY);
 
@@ -141,6 +142,6 @@ impl VerifyAppAttestationTokenStore {
 
         let challenge = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(random_128_bits());
         entry.challenge = Some(challenge.clone());
-        Some(challenge)
+        Some((challenge, entry.account_id))
     }
 }

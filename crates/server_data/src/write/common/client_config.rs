@@ -100,6 +100,31 @@ impl WriteCommandsCommonClientConfig<'_> {
         })
     }
 
+    /// Insert a new Apple App Attest key for an account and limit the total
+    /// number of keys to `max_keys` by deleting the oldest ones.
+    pub async fn insert_apple_app_attest_key(
+        &self,
+        id: AccountIdInternal,
+        key_id: &[u8],
+        public_key: &[u8],
+        created_at: i64,
+        max_keys: i64,
+    ) -> Result<(), DataError> {
+        let key_id = key_id.to_vec();
+        let public_key = public_key.to_vec();
+        db_transaction!(self, move |mut cmds| {
+            cmds.common().client_config().insert_apple_app_attest_key(
+                id,
+                &key_id,
+                &public_key,
+                created_at,
+            )?;
+            cmds.common()
+                .client_config()
+                .limit_apple_app_attest_keys(id, max_keys)
+        })
+    }
+
     pub async fn client_language(
         &self,
         id: AccountIdInternal,

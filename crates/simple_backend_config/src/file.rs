@@ -152,6 +152,11 @@ local_bot_api_port = 3001
 # service_account_key_path = "server_config/service_account_key.json"
 # max_age_seconds = 300 # optional
 
+# [app_attestation.apple_app_attest]
+# require_valid_token = true
+# team_id = "ABCDE12345"
+# bundle_id = "com.example.app"
+
 "#;
 
 #[derive(thiserror::Error, Debug)]
@@ -731,6 +736,20 @@ impl NsfwDetectionConfig {
 #[derive(Debug, Default, Deserialize, Serialize, Clone)]
 pub struct AppAttestationConfig {
     pub play_integrity: Option<PlayIntegrityAppAttestationConfig>,
+    pub apple_app_attest: Option<AppleAppAttestConfig>,
+}
+
+/// Apple App Attest attestation configuration.
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct AppleAppAttestConfig {
+    /// When true, a valid attestation token is required and the API returns
+    /// a failure to the client if the token is missing or verification fails.
+    /// When false, attestation is optional and failures are tolerated.
+    pub require_valid_token: bool,
+    /// Apple Developer team ID
+    pub team_id: String,
+    /// iOS bundle ID of the app
+    pub bundle_id: String,
 }
 
 /// Google Play Integrity API attestation configuration.

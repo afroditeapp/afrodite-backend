@@ -279,6 +279,15 @@ diesel::table! {
 }
 
 diesel::table! {
+    apple_app_attest_keys (account_id, key_id) {
+        account_id -> Int8,
+        key_id -> Bytea,
+        public_key -> Bytea,
+        created_at -> Int8,
+    }
+}
+
+diesel::table! {
     association_membership (account_id_member) {
         account_id_member -> Int8,
         account_id_creator -> Nullable<Int8>,
@@ -1069,6 +1078,7 @@ diesel::joinable!(admin_notification_subscriptions -> account_id (account_id));
 diesel::joinable!(api_usage_statistics_metric_value -> account_id (account_id));
 diesel::joinable!(api_usage_statistics_metric_value -> api_usage_statistics_metric_name (metric_id));
 diesel::joinable!(api_usage_statistics_metric_value -> api_usage_statistics_save_time (time_id));
+diesel::joinable!(apple_app_attest_keys -> account_id (account_id));
 diesel::joinable!(chat_app_notification_settings -> account_id (account_id));
 diesel::joinable!(chat_email_notification_settings -> account_id (account_id));
 diesel::joinable!(chat_privacy_settings -> account_id (account_id));
@@ -1148,6 +1158,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     api_usage_statistics_metric_name,
     api_usage_statistics_metric_value,
     api_usage_statistics_save_time,
+    apple_app_attest_keys,
     association_membership,
     bot_config,
     chat_app_notification_settings,

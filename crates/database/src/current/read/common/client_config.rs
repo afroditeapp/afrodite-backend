@@ -1,9 +1,9 @@
 use diesel::prelude::*;
 use error_stack::ResultExt;
 use model::{
-    AccountIdInternal, ClientConfigSyncVersion, ClientLanguage, ClientType,
-    DynamicClientFeaturesConfig, DynamicClientFeaturesConfigHash, DynamicServerConfig,
-    LoginSessionInfo,
+    AccountIdInternal, AppleAppAttestKey, AppleAppAttestKeyForDataExport, ClientConfigSyncVersion,
+    ClientLanguage, ClientType, DynamicClientFeaturesConfig, DynamicClientFeaturesConfigHash,
+    DynamicServerConfig, LoginSessionInfo,
 };
 use simple_backend_utils::Result;
 
@@ -23,6 +23,56 @@ impl CurrentReadCommonClientConfig<'_> {
             .select(client_config_sync_version)
             .first(self.conn())
             .change_context(DieselDatabaseError::Execute)
+    }
+
+    /// Get the Apple App Attest key for an account by key id.
+    pub fn apple_app_attest_key(
+        &mut self,
+        id: AccountIdInternal,
+        key_id_value: &[u8],
+    ) -> Result<Option<AppleAppAttestKey>, DieselDatabaseError> {
+        use crate::schema::apple_app_attest_keys::dsl::*;
+
+        apple_app_attest_keys
+            .filter(account_id.eq(id.as_db_id()))
+            .filter(key_id.eq(key_id_value))
+            .select(AppleAppAttestKey::as_select())
+            .first(self.conn())
+            .optional()
+            .change_context(DieselDatabaseError::Execute)
+    }
+
+    /// Get all Apple App Attest keys for an account.
+    pub fn apple_app_attest_keys(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<Vec<AppleAppAttestKeyForDataExport>, DieselDatabaseError> {
+        use crate::schema::apple_app_attest_keys::dsl::*;
+
+        let keys = apple_app_attest_keys
+            .filter(account_id.eq(id.as_db_id()))
+            .select(AppleAppAttestKey::as_select())
+            .load::<AppleAppAttestKey>(self.conn())
+            .change_context(DieselDatabaseError::Execute)?;
+
+        Ok(keys.into_iter().map(Into::into).collect())
+    }
+
+    /// Check if an Apple App Attest key exists for an account.
+    pub fn apple_app_attest_key_exists(
+        &mut self,
+        id: AccountIdInternal,
+        key_id_value: &[u8],
+    ) -> Result<bool, DieselDatabaseError> {
+        use crate::schema::apple_app_attest_keys::dsl::*;
+
+        diesel::select(diesel::dsl::exists(
+            apple_app_attest_keys
+                .filter(account_id.eq(id.as_db_id()))
+                .filter(key_id.eq(key_id_value)),
+        ))
+        .get_result(self.conn())
+        .change_context(DieselDatabaseError::Execute)
     }
 
     pub fn login_session_info(

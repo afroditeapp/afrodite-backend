@@ -1,5 +1,5 @@
 use axum::extract::State;
-use model::ClientType;
+use model::{AccountIdInternal, ClientType};
 use model_account::{
     LoginPhaseTwoResult, RequestAppAttestChallenge, RequestAppAttestChallengeResult,
     VerifyAppAttestationLogin,
@@ -9,19 +9,64 @@ use server_api::{
     app::{ApiLimitsProvider, GetAccounts},
     db_write,
 };
-use server_data::write::GetWriteCommandsCommon;
+use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
 use simple_backend::{
-    app::AppAttestationProvider,
+    app::{AppAttestationProvider, AppleAppAttestKeyStore, AppleAppAttestKeyStoreError},
     app_attestation::{AppAttestationClientType, AppAttestationError},
     create_counters,
 };
 use simple_backend_model::{AppAttestation, AppAttestationResult};
+use simple_backend_utils::ContextExt;
 
 use super::login::login_impl;
 use crate::{
-    app::WriteData,
+    app::{ReadData, WriteData},
     utils::{ClientConnectionId, Json, StatusCode},
 };
+
+/// Apple App Attest key store for a specific account.
+struct AppleAppAttestKeyStoreImpl<'a> {
+    state: &'a S,
+    account_id: AccountIdInternal,
+}
+
+impl AppleAppAttestKeyStore for AppleAppAttestKeyStoreImpl<'_> {
+    async fn apple_app_attest_public_key(
+        &self,
+        key_id: &[u8],
+    ) -> simple_backend_utils::Result<Option<Vec<u8>>, AppleAppAttestKeyStoreError> {
+        let key = self
+            .state
+            .read()
+            .common()
+            .client_config()
+            .apple_app_attest_key(self.account_id, key_id)
+            .await
+            .map_err(|_| AppleAppAttestKeyStoreError::Failed.report())?;
+        Ok(key.map(|k| k.public_key))
+    }
+
+    async fn insert_apple_app_attest_key(
+        &self,
+        key_id: &[u8],
+        public_key: &[u8],
+        created_at: i64,
+    ) -> simple_backend_utils::Result<(), AppleAppAttestKeyStoreError> {
+        let key_id = key_id.to_vec();
+        let public_key = public_key.to_vec();
+        let account_id = self.account_id;
+        self.state
+            .write(move |cmds| async move {
+                cmds.common()
+                    .client_config()
+                    .insert_apple_app_attest_key(account_id, &key_id, &public_key, created_at, 5)
+                    .await
+            })
+            .await
+            .map_err(|_| AppleAppAttestKeyStoreError::Failed.report())?;
+        Ok(())
+    }
+}
 
 pub const PATH_POST_REQUEST_APP_ATTEST_CHALLENGE: &str =
     "/account_api/request_app_attest_challenge";
@@ -29,8 +74,9 @@ pub const PATH_POST_REQUEST_APP_ATTEST_CHALLENGE: &str =
 /// Request a random string for app attestation token.
 ///
 /// The client must call this after login phase one to obtain a challenge and
-/// then put it into the `requestHash` field of the Play Integrity API verdict
-/// token before presenting it to `post_verify_app_attestation`.
+/// then bind it to the app attestation before presenting it to
+/// [post_verify_app_attestation]. The challenge is used as the Play Integrity
+/// API `requestHash` and as the Apple App Attest `clientDataHash` input.
 #[utoipa::path(
     post,
     path = PATH_POST_REQUEST_APP_ATTEST_CHALLENGE,
@@ -54,7 +100,7 @@ pub async fn post_request_app_attest_challenge(
         );
     };
 
-    let Some(challenge) = state
+    let Some((challenge, account_id)) = state
         .verify_app_attestation_tokens()
         .generate_challenge(&token_bytes, connection.ip())
         .await
@@ -64,7 +110,29 @@ pub async fn post_request_app_attest_challenge(
         );
     };
 
-    Ok(RequestAppAttestChallengeResult::ok(challenge).into())
+    let key_exists = if let Some(key_id) = &request.apple_app_attest_key_id {
+        let key_id_bytes =
+            match simple_backend::app_attestation::decode_apple_app_attest_key_id(key_id) {
+                Ok(bytes) => bytes,
+                Err(_) => {
+                    return Ok(
+                    RequestAppAttestChallengeResult::error_invalid_verify_app_attestation_token()
+                        .into(),
+                );
+                }
+            };
+        let key_exists = state
+            .read()
+            .common()
+            .client_config()
+            .apple_app_attest_key_exists(account_id, &key_id_bytes)
+            .await?;
+        Some(key_exists)
+    } else {
+        None
+    };
+
+    Ok(RequestAppAttestChallengeResult::ok(challenge, key_exists).into())
 }
 
 pub const PATH_POST_VERIFY_APP_ATTESTATION: &str = "/account_api/verify_app_attestation";
@@ -127,6 +195,7 @@ pub async fn post_verify_app_attestation(
 
     let attestation_result = match validate_app_attestation(
         &state,
+        account_id,
         client_type,
         request.app_attestation.as_ref(),
         challenge.as_deref(),
@@ -164,17 +233,20 @@ pub async fn post_verify_app_attestation(
 /// this returns `Ok(None)`.
 async fn validate_app_attestation(
     state: &S,
+    account_id: AccountIdInternal,
     client_type: ClientType,
     attestation: Option<&AppAttestation>,
     challenge: Option<&str>,
 ) -> Result<Option<AppAttestationResult>, LoginPhaseTwoResult> {
     let client_type = match client_type {
         ClientType::Android => Some(AppAttestationClientType::Android),
+        ClientType::Ios => Some(AppAttestationClientType::Ios),
         _ => None,
     };
+    let key_store = AppleAppAttestKeyStoreImpl { state, account_id };
     state
         .app_attestation_manager()
-        .validate(client_type, attestation, challenge)
+        .validate(client_type, attestation, challenge, &key_store)
         .await
         .map_err(|error| match error {
             AppAttestationError::Failed => LoginPhaseTwoResult::error_app_attestation_failed(),

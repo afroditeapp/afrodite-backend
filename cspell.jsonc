@@ -78,6 +78,8 @@
     "Exif",
     "Seedable",
     "signinwithapple",
+    "appattest",
+    "CBOR",
 
     // Technical terms
     "starttls",
