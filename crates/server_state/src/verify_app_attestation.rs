@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use base64::Engine;
-use model::{AccountIdInternal, ClientType, UnixTime, VerifyAppAttestationToken};
+use model::{AccountIdInternal, ClientType, LoginPhaseTwoToken, UnixTime};
 use simple_backend_utils::time::DurationValue;
 use tokio::sync::Mutex;
 use utils::random_bytes::random_128_bits;
@@ -39,7 +39,7 @@ impl StoreInner {
 /// verification.
 ///
 /// The login routes store a pending login here and return a short-lived
-/// [VerifyAppAttestationToken]. The `post_verify_app_attestation` route
+/// [LoginPhaseTwoToken]. The `post_verify_app_attestation` route
 /// consumes the token and completes the login only if app attestation passes.
 pub struct VerifyAppAttestationTokenStore {
     inner: Mutex<StoreInner>,
@@ -64,12 +64,12 @@ impl VerifyAppAttestationTokenStore {
         account_id: AccountIdInternal,
         client_type: ClientType,
         connection_ip: std::net::IpAddr,
-    ) -> VerifyAppAttestationToken {
+    ) -> LoginPhaseTwoToken {
         let mut lock = self.inner.lock().await;
         lock.cleanup_if_needed(Self::TOKEN_VALIDITY);
 
         let (token, bytes) = loop {
-            let (token, bytes) = VerifyAppAttestationToken::generate_new_with_bytes();
+            let (token, bytes) = LoginPhaseTwoToken::generate_new_with_bytes();
             if !lock.tokens.contains_key(&bytes) {
                 break (token, bytes);
             }

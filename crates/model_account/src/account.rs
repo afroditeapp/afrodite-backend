@@ -1,7 +1,7 @@
 use diesel::prelude::*;
 use model::{
-    ClientLanguage, ClientType, ClientVersion, EmailLoginToken, NewsSyncVersion, UnixTime,
-    VerifyAppAttestationToken,
+    ClientLanguage, ClientType, ClientVersion, EmailLoginToken, LoginPhaseTwoToken,
+    NewsSyncVersion, UnixTime,
 };
 use model_server_data::{
     AppleAccountId, AuthPair, EmailAddress, GoogleAccountId, PublicationId, SignInWithInfo,
@@ -50,7 +50,7 @@ pub struct LoginPhaseOneResult {
     /// attestation to complete the login.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
-    verify_app_attestation_token: Option<VerifyAppAttestationToken>,
+    verify_app_attestation_token: Option<LoginPhaseTwoToken>,
 
     /// Account ID of current account. If `None`, the client is unsupported.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -99,7 +99,7 @@ pub struct LoginPhaseOneResult {
 impl LoginPhaseOneResult {
     /// Login is not complete yet. The client must call
     /// `post_verify_app_attestation` with the returned token.
-    pub fn verify_app_attestation(token: VerifyAppAttestationToken, aid: AccountId) -> Self {
+    pub fn verify_app_attestation(token: LoginPhaseTwoToken, aid: AccountId) -> Self {
         Self {
             verify_app_attestation_token: Some(token),
             aid: Some(aid),
@@ -348,7 +348,7 @@ pub struct ClientInfo {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct VerifyAppAttestationLogin {
-    pub token: VerifyAppAttestationToken,
+    pub token: LoginPhaseTwoToken,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
     pub app_attestation: Option<AppAttestation>,
@@ -356,7 +356,7 @@ pub struct VerifyAppAttestationLogin {
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct RequestAppAttestChallenge {
-    pub token: VerifyAppAttestationToken,
+    pub token: LoginPhaseTwoToken,
     /// Base64-encoded Apple App Attest key identifier to check if the server
     /// already has the key stored. When set, the response contains
     /// [RequestAppAttestChallengeResult::apple_app_attest_key_exists].
