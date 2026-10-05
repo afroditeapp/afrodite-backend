@@ -102,7 +102,7 @@ pub async fn post_request_app_attest_challenge(
 
     let Some((challenge, account_id)) = state
         .verify_app_attestation_tokens()
-        .generate_challenge(&token_bytes, connection.ip())
+        .generate_challenge(&token_bytes, connection.ip(), request.request_challenge)
         .await
     else {
         return Ok(
@@ -177,6 +177,24 @@ pub async fn post_verify_app_attestation(
     // be replayed from a different IP.
     if connection.ip() != connection_ip {
         return Ok(LoginPhaseTwoResult::error_invalid_verify_app_attestation_token().into());
+    }
+
+    if client_type != ClientType::Ios
+        || request
+            .app_attestation
+            .as_ref()
+            .map(|a| a.apple_app_attest.is_some())
+            .unwrap_or_default()
+    {
+        state
+            .verify_app_attestation_tokens()
+            .remove_challenge(account_id)
+            .await;
+    } else {
+        // Allow reusing old challenge on iOS when App Attest key attestation
+        // fails because of App Attest server is unavailable.
+        // AppAttestation::apple_app_attest is None in that case
+        // (and also in other error cases but let's ignore that).
     }
 
     if request

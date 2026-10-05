@@ -357,6 +357,14 @@ pub struct VerifyAppAttestationLogin {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct RequestAppAttestChallenge {
     pub token: LoginPhaseTwoToken,
+    /// Request previous challenge to be reused. If current challenge on
+    /// server doesn't match, the response contains a new challenge.
+    ///
+    /// Apple App Attest requires using the same key id and challenge when
+    /// retrying attestation after server unavailable error.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub request_challenge: Option<String>,
     /// Base64-encoded Apple App Attest key identifier to check if the server
     /// already has the key stored. When set, the response contains
     /// [RequestAppAttestChallengeResult::apple_app_attest_key_exists].

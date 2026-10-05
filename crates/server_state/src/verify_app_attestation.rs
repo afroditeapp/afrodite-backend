@@ -11,12 +11,18 @@ struct PendingLogin {
     client_type: ClientType,
     connection_ip: std::net::IpAddr,
     unix_time: UnixTime,
-    /// Random string for app attestation token
-    challenge: Option<String>,
+}
+
+/// These expire when server restarts as Apple App Attest docs say that
+/// same key ID and challenge should be used when retrying key attestation
+/// after App Attest server unavailable error.
+struct ChallengeEntry {
+    challenge: String,
 }
 
 struct StoreInner {
     tokens: HashMap<Vec<u8>, PendingLogin>,
+    challenges: HashMap<AccountIdInternal, ChallengeEntry>,
     last_cleanup: UnixTime,
 }
 
@@ -50,6 +56,7 @@ impl Default for VerifyAppAttestationTokenStore {
         Self {
             inner: Mutex::new(StoreInner {
                 tokens: HashMap::new(),
+                challenges: HashMap::new(),
                 last_cleanup: UnixTime::current_time(),
             }),
         }
@@ -83,7 +90,6 @@ impl VerifyAppAttestationTokenStore {
                 client_type,
                 connection_ip,
                 unix_time,
-                challenge: None,
             },
         );
 
@@ -91,7 +97,8 @@ impl VerifyAppAttestationTokenStore {
     }
 
     /// Consume a token. Returns the pending login data if the token is valid.
-    /// Removes the entry regardless of validity.
+    /// Removes the [PendingLogin] regardless of validity. Challenge is stored
+    /// separately and it is not removed.
     pub async fn consume(
         &self,
         token: &[u8],
@@ -108,11 +115,18 @@ impl VerifyAppAttestationTokenStore {
                 entry.account_id,
                 entry.client_type,
                 entry.connection_ip,
-                entry.challenge,
+                lock.challenges
+                    .get(&entry.account_id)
+                    .map(|e| e.challenge.clone()),
             ))
         } else {
             None
         }
+    }
+
+    pub async fn remove_challenge(&self, account_id: AccountIdInternal) {
+        let mut lock = self.inner.lock().await;
+        lock.challenges.remove(&account_id);
     }
 
     /// Generate and store a challenge for the pending login behind `token`.
@@ -120,13 +134,17 @@ impl VerifyAppAttestationTokenStore {
     /// The `connection_ip` must match the IP address that initiated the login
     /// so the challenge cannot be requested from a different IP.
     ///
-    /// Returns `None` if `token` is not a valid pending login token or the IP
+    /// When `request_challenge` is set, it will be compared with current challenge.
+    /// If the challenges match the challenge is reused.
+    ///
+    /// Returns `None` if `token` is not a valid pending login token, the IP
     /// address does not match. Otherwise returns the challenge and the
     /// account ID of the pending login.
     pub async fn generate_challenge(
         &self,
         token: &[u8],
         connection_ip: std::net::IpAddr,
+        request_challenge: Option<String>,
     ) -> Option<(String, AccountIdInternal)> {
         let mut lock = self.inner.lock().await;
         lock.cleanup_if_needed(Self::TOKEN_VALIDITY);
@@ -139,9 +157,24 @@ impl VerifyAppAttestationTokenStore {
         if entry.connection_ip != connection_ip {
             return None;
         }
+        let account_id = entry.account_id;
 
-        let challenge = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(random_128_bits());
-        entry.challenge = Some(challenge.clone());
-        Some((challenge, entry.account_id))
+        let challenge = if let Some(challenge) = request_challenge
+            && Some(&challenge) == lock.challenges.get(&account_id).map(|e| &e.challenge)
+        {
+            challenge
+        } else {
+            let challenge =
+                base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(random_128_bits());
+            lock.challenges.insert(
+                account_id,
+                ChallengeEntry {
+                    challenge: challenge.clone(),
+                },
+            );
+            challenge
+        };
+
+        Some((challenge, account_id))
     }
 }
