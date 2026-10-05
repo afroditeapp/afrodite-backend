@@ -17,6 +17,8 @@ use serde::{Deserialize, Serialize};
 pub enum AppAttestationTypeNumber {
     #[serde(rename = "PlayIntegrity")]
     PlayIntegrity,
+    #[serde(rename = "AppleAppAttest")]
+    AppleAppAttest,
 
 }
 
@@ -24,6 +26,7 @@ impl std::fmt::Display for AppAttestationTypeNumber {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::PlayIntegrity => write!(f, "PlayIntegrity"),
+            Self::AppleAppAttest => write!(f, "AppleAppAttest"),
         }
     }
 }

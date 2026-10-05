@@ -13,13 +13,21 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct RequestAppAttestChallenge {
+    /// Base64-encoded Apple App Attest key identifier to check if the server already has the key stored. When set, the response contains [RequestAppAttestChallengeResult::apple_app_attest_key_exists].
+    #[serde(rename = "apple_app_attest_key_id", skip_serializing_if = "Option::is_none")]
+    pub apple_app_attest_key_id: Option<String>,
+    /// Request previous challenge to be reused. If current challenge on server doesn't match, the response contains a new challenge.  Apple App Attest requires using the same key id and challenge when retrying attestation after server unavailable error.
+    #[serde(rename = "request_challenge", skip_serializing_if = "Option::is_none")]
+    pub request_challenge: Option<String>,
     #[serde(rename = "token")]
-    pub token: models::VerifyAppAttestationToken,
+    pub token: models::LoginPhaseTwoToken,
 }
 
 impl RequestAppAttestChallenge {
-    pub fn new(token: models::VerifyAppAttestationToken) -> RequestAppAttestChallenge {
+    pub fn new(token: models::LoginPhaseTwoToken) -> RequestAppAttestChallenge {
         RequestAppAttestChallenge {
+            apple_app_attest_key_id: None,
+            request_challenge: None,
             token,
         }
     }

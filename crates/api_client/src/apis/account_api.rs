@@ -1686,7 +1686,7 @@ pub async fn post_logout(configuration: &configuration::Configuration, ) -> Resu
     }
 }
 
-/// The client must call this after login phase one to obtain a challenge and then put it into the `requestHash` field of the Play Integrity API verdict token before presenting it to `post_verify_app_attestation`.
+/// The client must call this after login phase one to obtain a challenge and then bind it to the app attestation before presenting it to [post_verify_app_attestation]. The challenge is used as the Play Integrity API `requestHash` and as the Apple App Attest `clientDataHash` input.
 pub async fn post_request_app_attest_challenge(configuration: &configuration::Configuration, request_app_attest_challenge: models::RequestAppAttestChallenge) -> Result<models::RequestAppAttestChallengeResult, Error<PostRequestAppAttestChallengeError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_request_app_attest_challenge = request_app_attest_challenge;

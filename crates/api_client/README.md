@@ -334,6 +334,7 @@ Class | Method | HTTP request | Description
  - [ApiUsageStatistics](docs/ApiUsageStatistics.md)
  - [AppAttestation](docs/AppAttestation.md)
  - [AppAttestationTypeNumber](docs/AppAttestationTypeNumber.md)
+ - [AppleAppAttest](docs/AppleAppAttest.md)
  - [AssociationConfig](docs/AssociationConfig.md)
  - [AssociationMember](docs/AssociationMember.md)
  - [AssociationMembersPage](docs/AssociationMembersPage.md)
@@ -498,6 +499,7 @@ Class | Method | HTTP request | Description
  - [Location](docs/Location.md)
  - [LoginPhaseOneResult](docs/LoginPhaseOneResult.md)
  - [LoginPhaseTwoResult](docs/LoginPhaseTwoResult.md)
+ - [LoginPhaseTwoToken](docs/LoginPhaseTwoToken.md)
  - [LoginResult](docs/LoginResult.md)
  - [LoginSessionInfo](docs/LoginSessionInfo.md)
  - [MaintenanceTask](docs/MaintenanceTask.md)
@@ -716,7 +718,6 @@ Class | Method | HTTP request | Description
  - [VapidPublicKey](docs/VapidPublicKey.md)
  - [VerificationMethod](docs/VerificationMethod.md)
  - [VerifyAppAttestationLogin](docs/VerifyAppAttestationLogin.md)
- - [VerifyAppAttestationToken](docs/VerifyAppAttestationToken.md)
 
 
 To get access to the crate's generated documentation, use:

@@ -16,11 +16,11 @@ pub struct VerifyAppAttestationLogin {
     #[serde(rename = "app_attestation", skip_serializing_if = "Option::is_none")]
     pub app_attestation: Option<models::AppAttestation>,
     #[serde(rename = "token")]
-    pub token: models::VerifyAppAttestationToken,
+    pub token: models::LoginPhaseTwoToken,
 }
 
 impl VerifyAppAttestationLogin {
-    pub fn new(token: models::VerifyAppAttestationToken) -> VerifyAppAttestationLogin {
+    pub fn new(token: models::LoginPhaseTwoToken) -> VerifyAppAttestationLogin {
         VerifyAppAttestationLogin {
             app_attestation: None,
             token,

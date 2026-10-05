@@ -14,6 +14,9 @@ use serde::{Deserialize, Serialize};
 /// LoginPhaseOneResult : Result of the first phase of the two-phase login protocol.  The login is not complete yet. The client must call `post_verify_app_attestation` with the returned token and a valid app attestation to complete the login.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct LoginPhaseOneResult {
+    /// Account ID of current account. If `None`, the client is unsupported.
+    #[serde(rename = "aid", skip_serializing_if = "Option::is_none")]
+    pub aid: Option<models::AccountId>,
     #[serde(rename = "error", skip_serializing_if = "Option::is_none")]
     pub error: Option<bool>,
     /// This might be true, when registering new account using sign in with login method.
@@ -35,13 +38,14 @@ pub struct LoginPhaseOneResult {
     pub error_unsupported_client: Option<bool>,
     /// When set, the login is not complete yet. The client must call `post_verify_app_attestation` with this token and a valid app attestation to complete the login.
     #[serde(rename = "verify_app_attestation_token", skip_serializing_if = "Option::is_none")]
-    pub verify_app_attestation_token: Option<models::VerifyAppAttestationToken>,
+    pub verify_app_attestation_token: Option<models::LoginPhaseTwoToken>,
 }
 
 impl LoginPhaseOneResult {
     /// Result of the first phase of the two-phase login protocol.  The login is not complete yet. The client must call `post_verify_app_attestation` with the returned token and a valid app attestation to complete the login.
     pub fn new() -> LoginPhaseOneResult {
         LoginPhaseOneResult {
+            aid: None,
             error: None,
             error_email_already_used: None,
             error_invalid_email_login_token: None,

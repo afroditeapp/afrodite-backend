@@ -13,6 +13,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AppAttestation {
+    #[serde(rename = "apple_app_attest", skip_serializing_if = "Option::is_none")]
+    pub apple_app_attest: Option<models::AppleAppAttest>,
     #[serde(rename = "play_integrity", skip_serializing_if = "Option::is_none")]
     pub play_integrity: Option<models::PlayIntegrityAppAttestation>,
 }
@@ -20,6 +22,7 @@ pub struct AppAttestation {
 impl AppAttestation {
     pub fn new() -> AppAttestation {
         AppAttestation {
+            apple_app_attest: None,
             play_integrity: None,
         }
     }

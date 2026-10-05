@@ -14,9 +14,6 @@ use serde::{Deserialize, Serialize};
 /// LoginPhaseTwoResult : Result of completing a login with app attestation verification.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct LoginPhaseTwoResult {
-    /// Account ID of current account. If `None`, the client is unsupported.
-    #[serde(rename = "aid", skip_serializing_if = "Option::is_none")]
-    pub aid: Option<models::AccountId>,
     /// Current email of current account. If `None`, if email address is not set or the client version is unsupported.
     #[serde(rename = "email", skip_serializing_if = "Option::is_none")]
     pub email: Option<String>,
@@ -32,6 +29,9 @@ pub struct LoginPhaseTwoResult {
     pub error_app_attestation_failed: Option<bool>,
     #[serde(rename = "error_invalid_verify_app_attestation_token", skip_serializing_if = "Option::is_none")]
     pub error_invalid_verify_app_attestation_token: Option<bool>,
+    /// The daily Play Integrity API verification limit was reached. Limits reset when scheduled tasks will run, so it is safe to show \"try again after 24 hours\" text to user.
+    #[serde(rename = "error_play_integrity_limit_reached", skip_serializing_if = "Option::is_none")]
+    pub error_play_integrity_limit_reached: Option<bool>,
     /// If `None`, the client is unsupported.
     #[serde(rename = "tokens", skip_serializing_if = "Option::is_none")]
     pub tokens: Option<models::AuthPair>,
@@ -41,7 +41,6 @@ impl LoginPhaseTwoResult {
     /// Result of completing a login with app attestation verification.
     pub fn new() -> LoginPhaseTwoResult {
         LoginPhaseTwoResult {
-            aid: None,
             email: None,
             error: None,
             error_account_locked: None,
@@ -49,6 +48,7 @@ impl LoginPhaseTwoResult {
             error_app_attestation_device_integrity: None,
             error_app_attestation_failed: None,
             error_invalid_verify_app_attestation_token: None,
+            error_play_integrity_limit_reached: None,
             tokens: None,
         }
     }

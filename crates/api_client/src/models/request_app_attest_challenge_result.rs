@@ -13,6 +13,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct RequestAppAttestChallengeResult {
+    /// Whether the Apple App Attest key id from the request exists on the server. `None` when the request did not contain a key id.
+    #[serde(rename = "apple_app_attest_key_exists", skip_serializing_if = "Option::is_none")]
+    pub apple_app_attest_key_exists: Option<bool>,
     #[serde(rename = "challenge", skip_serializing_if = "Option::is_none")]
     pub challenge: Option<String>,
     #[serde(rename = "error", skip_serializing_if = "Option::is_none")]
@@ -24,6 +27,7 @@ pub struct RequestAppAttestChallengeResult {
 impl RequestAppAttestChallengeResult {
     pub fn new() -> RequestAppAttestChallengeResult {
         RequestAppAttestChallengeResult {
+            apple_app_attest_key_exists: None,
             challenge: None,
             error: None,
             error_invalid_verify_app_attestation_token: None,
