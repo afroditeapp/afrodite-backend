@@ -80,6 +80,7 @@
     "signinwithapple",
     "appattest",
     "CBOR",
+    "RUSTFLAGS",
 
     // Technical terms
     "starttls",
