@@ -32,7 +32,7 @@ default = "Sorry, access to this application is not allowed from your current IP
 # This page must be HTML (is forced). Template variables: {title}, {body}, {button}, {token}.
 
 [email_verification]
-web_page_template = """
+template = """
 <!DOCTYPE html>
 <html>
 <head>
@@ -92,7 +92,10 @@ struct EmailVerificationStrings {
     title: StringResourceInternal,
     body: StringResourceInternal,
     button: StringResourceInternal,
-    web_page_template: String,
+    /// HTML template for the email verification page.
+    /// `web_page_template` is a deprecated alias for this field.
+    #[serde(alias = "web_page_template")]
+    template: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -184,10 +187,10 @@ impl WebContentFile {
 
         // Validate email_verification template contains {token}
         if let Some(ref v) = config.email_verification
-            && !v.web_page_template.contains("{token}")
+            && !v.template.contains("{token}")
         {
             return Err(ConfigFileError::InvalidConfig)
-                .attach("email_verification.web_page_template must contain '{token}'".to_string());
+                .attach("email_verification.template must contain '{token}'".to_string());
         }
 
         Ok(config)
@@ -290,7 +293,7 @@ impl<'a> WebStringGetter<'a> {
 
         let template = resource
             .as_ref()
-            .map(|v| v.web_page_template.as_str())
+            .map(|v| v.template.as_str())
             .unwrap_or_default();
 
         let rendered = render_template(
