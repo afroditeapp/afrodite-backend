@@ -13,8 +13,8 @@ use config::Config;
 use data_signer::DataSigner;
 use ip_address::IpAddressUsageTracker;
 use model::{
-    AccountIdInternal, AccountVerificationErrorFlagsValue, ClientMessageForDataAllCrate,
-    EditVerificationValues, UnixTime, VerificationMethod,
+    AccountIdInternal, AccountVerificationErrorFlagsValue, ClientLanguage,
+    ClientMessageForDataAllCrate, EditVerificationValues, UnixTime, VerificationMethod,
 };
 use model_server_data::{EmailAddress, SignInWithInfo};
 use server_common::{push_notifications::PushNotificationSender, websocket::WebSocketError};
@@ -218,11 +218,12 @@ impl DataAllAccess<'_> {
         &self,
         sign_in_with: SignInWithInfo,
         email: Option<EmailAddress>,
+        language: Option<ClientLanguage>,
         ip: IpAddr,
     ) -> server_common::result::Result<RegisterImplResult, DataError> {
         let cmd = self
             .utils()
-            .register_impl(self.write(), sign_in_with, email, ip);
+            .register_impl(self.write(), sign_in_with, email, language, ip);
         cmd.await
     }
 

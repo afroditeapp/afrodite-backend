@@ -5,7 +5,7 @@ use config::Config;
 use futures::{FutureExt, future::BoxFuture};
 use model::{
     AccountIdInternal, AccountVerificationErrorFlags, AccountVerificationErrorFlagsValue,
-    ClientMessageForDataAllCrate, EditVerificationValues, EmailMessages, UnixTime,
+    ClientLanguage, ClientMessageForDataAllCrate, EditVerificationValues, EmailMessages, UnixTime,
     VerificationMethod,
 };
 use model_account::{
@@ -57,6 +57,7 @@ impl DataAllUtils for DataAllUtilsImpl {
         write_command_runner: &'a WriteCommandRunnerHandle,
         sign_in_with: SignInWithInfo,
         email: Option<EmailAddress>,
+        language: Option<ClientLanguage>,
         ip: IpAddr,
     ) -> BoxFuture<'a, server_common::result::Result<RegisterImplResult, DataError>> {
         async move {
@@ -81,7 +82,7 @@ impl DataAllUtils for DataAllUtilsImpl {
 
                     let id = cmds.account().get_next_unique_account_id().await?;
                     RegisterAccount::new(cmds.write_handle())
-                        .register(id, sign_in_with, email.clone(), ip)
+                        .register(id, sign_in_with, email.clone(), language, ip)
                         .await?;
 
                     if email.is_some() {

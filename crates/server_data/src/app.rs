@@ -4,8 +4,8 @@ use axum::extract::ws::WebSocket;
 use config::{Config, file::EmailAddress};
 use futures::future::BoxFuture;
 use model::{
-    AccountId, AccountIdInternal, AccountVerificationErrorFlagsValue, ClientMessageForDataAllCrate,
-    EditVerificationValues, UnixTime, VerificationMethod,
+    AccountId, AccountIdInternal, AccountVerificationErrorFlagsValue, ClientLanguage,
+    ClientMessageForDataAllCrate, EditVerificationValues, UnixTime, VerificationMethod,
 };
 use model_server_data::SignInWithInfo;
 pub use server_common::app::*;
@@ -141,6 +141,7 @@ pub trait DataAllUtils: Send + Sync + 'static {
         write_command_runner: &'a WriteCommandRunnerHandle,
         sign_in_with: SignInWithInfo,
         email: Option<EmailAddress>,
+        language: Option<ClientLanguage>,
         ip: IpAddr,
     ) -> BoxFuture<'a, server_common::result::Result<RegisterImplResult, DataError>>;
 

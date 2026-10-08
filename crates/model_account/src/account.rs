@@ -558,6 +558,10 @@ pub struct EmailLogin {
     pub client_info: ClientInfo,
     pub client_token: EmailLoginToken,
     pub email_token: EmailLoginToken,
+    /// Save language when a new account is created.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub language: Option<ClientLanguage>,
 }
 
 #[derive(Debug, Clone, Default, Queryable, Selectable, AsChangeset)]
@@ -673,6 +677,10 @@ pub struct SignInWithLoginInfo {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
     pub google: Option<SignInWithGoogleInfo>,
+    /// Save language when a new account is created.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub language: Option<ClientLanguage>,
 }
 
 #[derive(Deserialize, ToSchema)]

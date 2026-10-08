@@ -1,4 +1,4 @@
-use model::ClientType;
+use model::{ClientLanguage, ClientType};
 use model_account::{EmailAddress, LoginPhaseOneResult, RequestEmailLoginToken, SignInWithInfo};
 use server_api::{S, TokenData, app::GetConfig, db_write};
 use server_data::app::RegisterImplResult;
@@ -40,10 +40,16 @@ pub(super) async fn email_registration_with_token_impl(
     connection: ConnectionId,
     client_type: ClientType,
     email: EmailAddress,
+    language: Option<ClientLanguage>,
 ) -> Result<LoginPhaseOneResult, StatusCode> {
     let id = match state
         .data_all_access()
-        .register_impl(SignInWithInfo::default(), Some(email), connection.ip())
+        .register_impl(
+            SignInWithInfo::default(),
+            Some(email),
+            language,
+            connection.ip(),
+        )
         .await?
     {
         RegisterImplResult::Ok(id) => id,

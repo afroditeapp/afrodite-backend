@@ -98,7 +98,7 @@ pub async fn post_bot_register(
     ACCOUNT_BOT.post_bot_register.incr();
     let RegisterImplResult::Ok(new_account_id) = state
         .data_all_access()
-        .register_impl(SignInWithInfo::default(), None, address)
+        .register_impl(SignInWithInfo::default(), None, None, address)
         .await?
     else {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
@@ -240,7 +240,7 @@ async fn create_bot_account(
 ) -> Result<BotAccount, StatusCode> {
     let RegisterImplResult::Ok(new_account_id) = state
         .data_all_access()
-        .register_impl(SignInWithInfo::default(), None, ip)
+        .register_impl(SignInWithInfo::default(), None, None, ip)
         .await?
     else {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);

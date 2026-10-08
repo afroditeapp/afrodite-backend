@@ -129,7 +129,7 @@ pub async fn post_demo_account_register_account(
 
     let RegisterImplResult::Ok(id) = state
         .data_all_access()
-        .register_impl(SignInWithInfo::default(), None, address)
+        .register_impl(SignInWithInfo::default(), None, None, address)
         .await?
     else {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);

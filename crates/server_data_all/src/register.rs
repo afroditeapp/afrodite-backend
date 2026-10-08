@@ -6,7 +6,7 @@ use database_account::current::write::GetDbWriteCommandsAccount;
 use database_chat::current::write::GetDbWriteCommandsChat;
 use database_media::current::write::GetDbWriteCommandsMedia;
 use database_profile::current::write::GetDbWriteCommandsProfile;
-use model::{AccountIdDb, IpAddressStorage};
+use model::{AccountIdDb, ClientLanguage, IpAddressStorage};
 use model_account::{
     AccountIdInternal, EmailAddress, EmailAddressStateInternal, SharedStateRaw, SignInWithInfo,
 };
@@ -31,11 +31,20 @@ impl RegisterAccount<'_> {
         account_id: AccountIdInternal,
         sign_in_with_info: SignInWithInfo,
         email: Option<EmailAddress>,
+        language: Option<ClientLanguage>,
         ip: IpAddr,
     ) -> Result<(), DataError> {
         let config = self.config_arc().clone();
         self.db_transaction(move |current| {
-            Self::register_db_action(config, account_id, sign_in_with_info, email, ip, current)
+            Self::register_db_action(
+                config,
+                account_id,
+                sign_in_with_info,
+                email,
+                language,
+                ip,
+                current,
+            )
         })
         .await?;
 
@@ -63,6 +72,7 @@ impl RegisterAccount<'_> {
         id: AccountIdInternal,
         sign_in_with_info: SignInWithInfo,
         email: Option<EmailAddress>,
+        language: Option<ClientLanguage>,
         ip: IpAddr,
         mut current: DbWriteMode,
     ) -> simple_backend_utils::Result<AccountIdInternal, DieselDatabaseError> {
@@ -78,6 +88,13 @@ impl RegisterAccount<'_> {
             .insert_shared_state(id, SharedStateRaw::default())?;
         current.common().insert_common_state(id)?;
         current.common().insert_push_notification(id)?;
+
+        if let Some(language) = language {
+            current
+                .common()
+                .client_config()
+                .update_client_language(id, language)?;
+        }
 
         // Account
 

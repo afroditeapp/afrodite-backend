@@ -2,7 +2,7 @@ use std::{collections::HashMap, net::IpAddr, time::Instant};
 
 use axum::{Form, extract::State, response::Redirect};
 use base64::Engine;
-use model::{AccountIdInternal, ClientType, EmailLoginToken, UnixTime};
+use model::{AccountIdInternal, ClientLanguage, ClientType, EmailLoginToken, UnixTime};
 use model_account::{
     AccessToken, AccountId, AppleAccountId, AuthPair, EmailAddress, EmailLogin, GoogleAccountId,
     LoginPhaseOneResult, LoginResult, RefreshToken, RequestEmailLoginToken,
@@ -331,7 +331,14 @@ pub async fn post_sign_in_with_login(
             .sign_in_with_manager()
             .validate_apple_token(apple.token, nonce_bytes)
             .await?;
-        handle_sign_in_with_info(&state, connection, tokens.client_info.client_type, info).await
+        handle_sign_in_with_info(
+            &state,
+            connection,
+            tokens.client_info.client_type,
+            tokens.language,
+            info,
+        )
+        .await
     } else if let Some(google) = tokens.google {
         let nonce_bytes = base64::engine::general_purpose::URL_SAFE
             .decode(google.nonce)
@@ -340,7 +347,14 @@ pub async fn post_sign_in_with_login(
             .sign_in_with_manager()
             .validate_google_token(google.token, nonce_bytes)
             .await?;
-        handle_sign_in_with_info(&state, connection, tokens.client_info.client_type, info).await
+        handle_sign_in_with_info(
+            &state,
+            connection,
+            tokens.client_info.client_type,
+            tokens.language,
+            info,
+        )
+        .await
     } else {
         Err(StatusCode::INTERNAL_SERVER_ERROR)
     }?;
@@ -352,6 +366,7 @@ async fn handle_sign_in_with_info(
     state: &S,
     connection: ConnectionId,
     client_type: ClientType,
+    language: Option<ClientLanguage>,
     info: impl SignInWithInfoTrait,
 ) -> Result<LoginPhaseOneResult, StatusCode> {
     if !info.email_verified() {
@@ -374,7 +389,12 @@ async fn handle_sign_in_with_info(
 
         let id = match state
             .data_all_access()
-            .register_impl(info.sign_in_with_info(), Some(email), connection.ip())
+            .register_impl(
+                info.sign_in_with_info(),
+                Some(email),
+                language,
+                connection.ip(),
+            )
             .await?
         {
             RegisterImplResult::Ok(id) => id,
@@ -881,6 +901,7 @@ async fn post_email_login_with_token_impl(
                 connection,
                 request.client_info.client_type,
                 email,
+                request.language,
             )
             .await?;
             Ok(r.into())
