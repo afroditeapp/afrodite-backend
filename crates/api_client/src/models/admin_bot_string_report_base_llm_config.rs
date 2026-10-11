@@ -16,6 +16,9 @@ pub struct AdminBotStringReportBaseLlmConfig {
     /// If LLM response starts with this text or the first line of the response contains this text, the content is moderated as accepted. The comparisons are case insensitive.
     #[serde(rename = "expected_response")]
     pub expected_response: String,
+    /// Overrides the reasoning effort value from the bot config file.
+    #[serde(rename = "reasoning_effort", skip_serializing_if = "Option::is_none")]
+    pub reasoning_effort: Option<models::ReasoningEffortConfig>,
     #[serde(rename = "system_text")]
     pub system_text: String,
     /// Placeholder \"{text}\" is replaced with the reported content.
@@ -27,6 +30,7 @@ impl AdminBotStringReportBaseLlmConfig {
     pub fn new(expected_response: String, system_text: String, user_text_template: String) -> AdminBotStringReportBaseLlmConfig {
         AdminBotStringReportBaseLlmConfig {
             expected_response,
+            reasoning_effort: None,
             system_text,
             user_text_template,
         }

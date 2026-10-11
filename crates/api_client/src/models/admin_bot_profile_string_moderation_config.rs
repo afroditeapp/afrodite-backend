@@ -16,6 +16,9 @@ pub struct AdminBotProfileStringModerationConfig {
     /// Accept all texts which only have single visible character.
     #[serde(rename = "accept_single_visible_character", skip_serializing_if = "Option::is_none")]
     pub accept_single_visible_character: Option<bool>,
+    /// Overrides the concurrency value from the bot config file.
+    #[serde(rename = "concurrency", skip_serializing_if = "Option::is_none")]
+    pub concurrency: Option<i32>,
     #[serde(rename = "default_action")]
     pub default_action: models::ModerationAction,
     #[serde(rename = "llm")]
@@ -29,6 +32,7 @@ impl AdminBotProfileStringModerationConfig {
     pub fn new(default_action: models::ModerationAction, llm: models::AdminBotStringModerationLlmConfig) -> AdminBotProfileStringModerationConfig {
         AdminBotProfileStringModerationConfig {
             accept_single_visible_character: None,
+            concurrency: None,
             default_action,
             llm,
             llm_enabled: None,

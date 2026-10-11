@@ -375,6 +375,7 @@ src/models/put_content_to_content_slot_result.rs
 src/models/put_sign_in_with_apple.rs
 src/models/put_sign_in_with_google.rs
 src/models/put_sign_in_with_result.rs
+src/models/reasoning_effort_config.rs
 src/models/received_like_id.rs
 src/models/received_likes_iterator_state.rs
 src/models/received_likes_page.rs

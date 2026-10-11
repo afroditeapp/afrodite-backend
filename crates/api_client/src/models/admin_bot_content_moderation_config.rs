@@ -15,6 +15,9 @@ use serde::{Deserialize, Serialize};
 pub struct AdminBotContentModerationConfig {
     #[serde(rename = "added_content", skip_serializing_if = "Option::is_none")]
     pub added_content: Option<bool>,
+    /// Overrides the concurrency value from the bot config file.
+    #[serde(rename = "concurrency", skip_serializing_if = "Option::is_none")]
+    pub concurrency: Option<i32>,
     #[serde(rename = "default_action")]
     pub default_action: models::ModerationAction,
     #[serde(rename = "initial_content", skip_serializing_if = "Option::is_none")]
@@ -40,6 +43,7 @@ impl AdminBotContentModerationConfig {
     pub fn new(default_action: models::ModerationAction, llm_primary: models::AdminBotContentModerationLlmConfig, llm_secondary: models::AdminBotContentModerationLlmConfig, nsfw_detection: models::AdminBotNsfwDetectionConfig) -> AdminBotContentModerationConfig {
         AdminBotContentModerationConfig {
             added_content: None,
+            concurrency: None,
             default_action,
             initial_content: None,
             llm_primary,

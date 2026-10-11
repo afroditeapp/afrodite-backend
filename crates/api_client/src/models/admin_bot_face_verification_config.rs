@@ -13,6 +13,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AdminBotFaceVerificationConfig {
+    /// Overrides the concurrency value from the bot config file.
+    #[serde(rename = "concurrency", skip_serializing_if = "Option::is_none")]
+    pub concurrency: Option<i32>,
     #[serde(rename = "default_action")]
     pub default_action: models::AcceptOrReject,
     #[serde(rename = "llm")]
@@ -25,6 +28,7 @@ pub struct AdminBotFaceVerificationConfig {
 impl AdminBotFaceVerificationConfig {
     pub fn new(default_action: models::AcceptOrReject, llm: models::AdminBotFaceVerificationLlmConfig) -> AdminBotFaceVerificationConfig {
         AdminBotFaceVerificationConfig {
+            concurrency: None,
             default_action,
             llm,
             llm_enabled: None,

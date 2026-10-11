@@ -19,6 +19,9 @@ pub struct EmailLogin {
     pub client_token: models::EmailLoginToken,
     #[serde(rename = "email_token")]
     pub email_token: models::EmailLoginToken,
+    /// Save language when a new account is created.
+    #[serde(rename = "language", skip_serializing_if = "Option::is_none")]
+    pub language: Option<models::ClientLanguage>,
 }
 
 impl EmailLogin {
@@ -27,6 +30,7 @@ impl EmailLogin {
             client_info,
             client_token,
             email_token,
+            language: None,
         }
     }
 }

@@ -13,6 +13,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AdminBotReportProcessingConfig {
+    /// Overrides the concurrency value from the bot config file.
+    #[serde(rename = "concurrency", skip_serializing_if = "Option::is_none")]
+    pub concurrency: Option<i32>,
     #[serde(rename = "messages")]
     pub messages: models::AdminBotReportProcessingMessagesConfig,
     #[serde(rename = "profile_content")]
@@ -26,6 +29,7 @@ pub struct AdminBotReportProcessingConfig {
 impl AdminBotReportProcessingConfig {
     pub fn new(messages: models::AdminBotReportProcessingMessagesConfig, profile_content: models::AdminBotReportProcessingProfileContentConfig, profile_name: models::AdminBotReportProcessingProfileStringConfig, profile_text: models::AdminBotReportProcessingProfileStringConfig) -> AdminBotReportProcessingConfig {
         AdminBotReportProcessingConfig {
+            concurrency: None,
             messages,
             profile_content,
             profile_name,

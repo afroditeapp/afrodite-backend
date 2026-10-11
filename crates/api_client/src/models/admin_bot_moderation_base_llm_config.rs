@@ -20,6 +20,9 @@ pub struct AdminBotModerationBaseLlmConfig {
     pub expected_response: String,
     #[serde(rename = "move_rejected_to_human_moderation", skip_serializing_if = "Option::is_none")]
     pub move_rejected_to_human_moderation: Option<bool>,
+    /// Overrides the reasoning effort value from the bot config file.
+    #[serde(rename = "reasoning_effort", skip_serializing_if = "Option::is_none")]
+    pub reasoning_effort: Option<models::ReasoningEffortConfig>,
     #[serde(rename = "system_text")]
     pub system_text: String,
 }
@@ -30,6 +33,7 @@ impl AdminBotModerationBaseLlmConfig {
             add_llm_output_to_user_visible_rejection_details: None,
             expected_response,
             move_rejected_to_human_moderation: None,
+            reasoning_effort: None,
             system_text,
         }
     }

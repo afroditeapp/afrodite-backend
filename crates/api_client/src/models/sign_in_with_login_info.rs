@@ -19,6 +19,9 @@ pub struct SignInWithLoginInfo {
     pub client_info: models::ClientInfo,
     #[serde(rename = "google", skip_serializing_if = "Option::is_none")]
     pub google: Option<models::SignInWithGoogleInfo>,
+    /// Save language when a new account is created.
+    #[serde(rename = "language", skip_serializing_if = "Option::is_none")]
+    pub language: Option<models::ClientLanguage>,
 }
 
 impl SignInWithLoginInfo {
@@ -27,6 +30,7 @@ impl SignInWithLoginInfo {
             apple: None,
             client_info,
             google: None,
+            language: None,
         }
     }
 }
