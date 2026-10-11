@@ -389,7 +389,7 @@ impl<'de> Deserialize<'de> for Gender {
 #[serde(default)]
 pub struct ProfileStringModerationFileConfig {
     pub llm: BaseLlmConfig,
-    /// Default value is 2.
+    /// Default value is 1.
     pub concurrency: Option<u8>,
 }
 
@@ -508,7 +508,7 @@ pub struct ContentModerationFileConfig {
     /// action.
     pub llm_secondary: Option<BaseLlmConfig>,
     pub debug_log_delete: bool,
-    /// Default value is 2.
+    /// Default value is 1.
     pub concurrency: Option<u8>,
 }
 
@@ -517,7 +517,7 @@ pub struct ContentModerationFileConfig {
 pub struct FaceVerificationFileConfig {
     /// Large language model based face verification.
     pub llm: BaseLlmConfig,
-    /// Default value is 2.
+    /// Default value is 1.
     pub concurrency: Option<u8>,
 }
 
@@ -530,7 +530,7 @@ pub struct AccountVerificationFileConfig {
 #[serde(default)]
 pub struct SecurityContentVerificationFileConfig {
     pub llm: BaseLlmConfig,
-    /// Default value is 2.
+    /// Default value is 1.
     pub concurrency: Option<u8>,
 }
 
@@ -550,7 +550,7 @@ pub struct ReportProcessingFileConfig {
     pub profile_text: ReportProcessingTypeFileConfig,
     pub profile_content: ReportProcessingTypeFileConfig,
     pub messages: ReportProcessingTypeFileConfig,
-    /// Default value is 2.
+    /// Default value is 1.
     pub concurrency: Option<u8>,
 }
 

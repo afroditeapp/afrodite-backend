@@ -48,7 +48,7 @@ impl ProfileStringModerationConfigInternal {
                 base_llm,
             ),
             default_action: db.default_action,
-            concurrency: db.concurrency.or(file.concurrency).unwrap_or(2),
+            concurrency: db.concurrency.or(file.concurrency).unwrap_or(1),
         })
     }
 }
@@ -154,7 +154,7 @@ impl SecurityContentVerificationConfigInternal {
                 base_llm,
             ),
             default_action: db.default_action,
-            concurrency: db.concurrency.or(file.concurrency).unwrap_or(2),
+            concurrency: db.concurrency.or(file.concurrency).unwrap_or(1),
         })
     }
 }
@@ -195,7 +195,7 @@ impl FaceVerificationConfigInternal {
         Some(Self {
             llm: FaceVerificationLlmConfigInternal::new(db.llm, db.llm_enabled, file.llm, base_llm),
             default_action: db.default_action,
-            concurrency: db.concurrency.or(file.concurrency).unwrap_or(2),
+            concurrency: db.concurrency.or(file.concurrency).unwrap_or(1),
         })
     }
 }
@@ -233,7 +233,7 @@ impl ContentModerationConfigInternal {
             ),
             default_action: db.default_action,
             debug_log_delete: file.debug_log_delete,
-            concurrency: db.concurrency.or(file.concurrency).unwrap_or(2),
+            concurrency: db.concurrency.or(file.concurrency).unwrap_or(1),
         })
     }
 }
@@ -540,7 +540,7 @@ impl ReportProcessingConfigInternal {
                 db.messages.automatic_banning_enabled,
                 db.messages.automatic_banning,
             ),
-            concurrency: db.concurrency.or(file.concurrency).unwrap_or(2),
+            concurrency: db.concurrency.or(file.concurrency).unwrap_or(1),
         })
     }
 }
