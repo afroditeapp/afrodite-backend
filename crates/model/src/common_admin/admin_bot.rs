@@ -98,6 +98,10 @@ pub struct AdminBotFaceVerificationConfig {
     pub llm_enabled: bool,
     pub llm: AdminBotFaceVerificationLlmConfig,
     pub default_action: AcceptOrReject,
+    /// Overrides the concurrency value from the bot config file.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub concurrency: Option<u8>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -140,6 +144,10 @@ pub struct AdminBotSecurityContentVerificationConfig {
     pub llm_enabled: bool,
     pub llm: AdminBotSecurityContentVerificationLlmConfig,
     pub default_action: AcceptOrReject,
+    /// Overrides the concurrency value from the bot config file.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub concurrency: Option<u8>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -324,6 +332,10 @@ pub struct AdminBotReportProcessingConfig {
     pub profile_text: AdminBotReportProcessingProfileStringConfig,
     pub profile_content: AdminBotReportProcessingProfileContentConfig,
     pub messages: AdminBotReportProcessingMessagesConfig,
+    /// Overrides the concurrency value from the bot config file.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub concurrency: Option<u8>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
@@ -339,6 +351,10 @@ pub struct AdminBotProfileStringModerationConfig {
     pub llm_enabled: bool,
     pub llm: AdminBotStringModerationLlmConfig,
     pub default_action: ModerationAction,
+    /// Overrides the concurrency value from the bot config file.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub concurrency: Option<u8>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -392,6 +408,10 @@ pub struct AdminBotContentModerationConfig {
     pub llm_secondary_enabled: bool,
     pub llm_secondary: AdminBotContentModerationLlmConfig,
     pub default_action: ModerationAction,
+    /// Overrides the concurrency value from the bot config file.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub concurrency: Option<u8>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]

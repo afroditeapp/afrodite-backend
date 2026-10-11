@@ -385,21 +385,12 @@ impl<'de> Deserialize<'de> for Gender {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Default, Clone, Deserialize)]
 #[serde(default)]
 pub struct ProfileStringModerationFileConfig {
     pub llm: BaseLlmConfig,
     /// Default value is 2.
-    pub concurrency: u8,
-}
-
-impl Default for ProfileStringModerationFileConfig {
-    fn default() -> Self {
-        Self {
-            llm: BaseLlmConfig::default(),
-            concurrency: 2,
-        }
-    }
+    pub concurrency: Option<u8>,
 }
 
 #[derive(Debug, Clone)]
@@ -503,7 +494,7 @@ impl ReasoningEffortConfig {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Default, Clone, Deserialize)]
 #[serde(default)]
 pub struct ContentModerationFileConfig {
     /// Neural network based detection.
@@ -518,37 +509,16 @@ pub struct ContentModerationFileConfig {
     pub llm_secondary: Option<BaseLlmConfig>,
     pub debug_log_delete: bool,
     /// Default value is 2.
-    pub concurrency: u8,
+    pub concurrency: Option<u8>,
 }
 
-impl Default for ContentModerationFileConfig {
-    fn default() -> Self {
-        Self {
-            nsfw_detection: None,
-            llm_primary: None,
-            llm_secondary: None,
-            debug_log_delete: false,
-            concurrency: 2,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Default, Clone, Deserialize)]
 #[serde(default)]
 pub struct FaceVerificationFileConfig {
     /// Large language model based face verification.
     pub llm: BaseLlmConfig,
     /// Default value is 2.
-    pub concurrency: u8,
-}
-
-impl Default for FaceVerificationFileConfig {
-    fn default() -> Self {
-        Self {
-            llm: BaseLlmConfig::default(),
-            concurrency: 2,
-        }
-    }
+    pub concurrency: Option<u8>,
 }
 
 #[derive(Debug, Clone, Deserialize, Default)]
@@ -556,21 +526,12 @@ pub struct AccountVerificationFileConfig {
     pub security_content: Option<SecurityContentVerificationFileConfig>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Default, Clone, Deserialize)]
 #[serde(default)]
 pub struct SecurityContentVerificationFileConfig {
     pub llm: BaseLlmConfig,
     /// Default value is 2.
-    pub concurrency: u8,
-}
-
-impl Default for SecurityContentVerificationFileConfig {
-    fn default() -> Self {
-        Self {
-            llm: BaseLlmConfig::default(),
-            concurrency: 2,
-        }
-    }
+    pub concurrency: Option<u8>,
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]
@@ -579,7 +540,7 @@ pub struct ReportProcessingTypeFileConfig {
     pub llm: BaseLlmConfig,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Default, Clone, Deserialize)]
 #[serde(default)]
 pub struct ReportProcessingFileConfig {
     /// Common LLM config for all report processing types. More specific
@@ -590,20 +551,7 @@ pub struct ReportProcessingFileConfig {
     pub profile_content: ReportProcessingTypeFileConfig,
     pub messages: ReportProcessingTypeFileConfig,
     /// Default value is 2.
-    pub concurrency: u8,
-}
-
-impl Default for ReportProcessingFileConfig {
-    fn default() -> Self {
-        Self {
-            llm: BaseLlmConfig::default(),
-            profile_name: ReportProcessingTypeFileConfig::default(),
-            profile_text: ReportProcessingTypeFileConfig::default(),
-            profile_content: ReportProcessingTypeFileConfig::default(),
-            messages: ReportProcessingTypeFileConfig::default(),
-            concurrency: 2,
-        }
-    }
+    pub concurrency: Option<u8>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
