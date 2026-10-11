@@ -21,6 +21,8 @@ use crate::{
 
 pub mod internal;
 
+pub use model::common_admin::ReasoningEffortConfig;
+
 const DEFAULT_BOT_CONFIG: &str = r#"
 
 # Local admin bot config
@@ -461,35 +463,6 @@ impl BaseLlmConfig {
             retry_wait_times_in_seconds: self
                 .retry_wait_times_in_seconds
                 .or(base.retry_wait_times_in_seconds),
-        }
-    }
-}
-
-/// Reasoning effort for LLM models that support it.
-///
-/// Mirrors the OpenAI chat completion API values.
-#[derive(Debug, Clone, Copy, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum ReasoningEffortConfig {
-    None,
-    Minimal,
-    Low,
-    Medium,
-    High,
-    Xhigh,
-}
-
-impl ReasoningEffortConfig {
-    pub fn to_openai_api_type(self) -> async_openai::types::chat::ReasoningEffort {
-        use async_openai::types::chat::ReasoningEffort;
-
-        match self {
-            ReasoningEffortConfig::None => ReasoningEffort::None,
-            ReasoningEffortConfig::Minimal => ReasoningEffort::Minimal,
-            ReasoningEffortConfig::Low => ReasoningEffort::Low,
-            ReasoningEffortConfig::Medium => ReasoningEffort::Medium,
-            ReasoningEffortConfig::High => ReasoningEffort::High,
-            ReasoningEffortConfig::Xhigh => ReasoningEffort::Xhigh,
         }
     }
 }

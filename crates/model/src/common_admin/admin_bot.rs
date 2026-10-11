@@ -17,6 +17,35 @@ pub enum AcceptOrReject {
     Reject,
 }
 
+/// Reasoning effort for LLM models that support it.
+///
+/// Mirrors the OpenAI chat completion API values.
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, ToSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum ReasoningEffortConfig {
+    None,
+    Minimal,
+    Low,
+    Medium,
+    High,
+    Xhigh,
+}
+
+impl ReasoningEffortConfig {
+    pub fn to_openai_api_type(self) -> async_openai::types::chat::ReasoningEffort {
+        use async_openai::types::chat::ReasoningEffort;
+
+        match self {
+            ReasoningEffortConfig::None => ReasoningEffort::None,
+            ReasoningEffortConfig::Minimal => ReasoningEffort::Minimal,
+            ReasoningEffortConfig::Low => ReasoningEffort::Low,
+            ReasoningEffortConfig::Medium => ReasoningEffort::Medium,
+            ReasoningEffortConfig::High => ReasoningEffort::High,
+            ReasoningEffortConfig::Xhigh => ReasoningEffort::Xhigh,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct AdminBotBaseLlmConfig {
     pub system_text: String,
@@ -24,6 +53,10 @@ pub struct AdminBotBaseLlmConfig {
     /// line of the response contains this text, the content
     /// is moderated as accepted. The comparisons are case insensitive.
     pub expected_response: String,
+    /// Overrides the reasoning effort value from the bot config file.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub reasoning_effort: Option<ReasoningEffortConfig>,
 }
 
 impl AdminBotBaseLlmConfig {
@@ -31,6 +64,7 @@ impl AdminBotBaseLlmConfig {
         Self {
             system_text,
             expected_response,
+            reasoning_effort: None,
         }
     }
 }
@@ -48,6 +82,10 @@ pub struct AdminBotModerationBaseLlmConfig {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub move_rejected_to_human_moderation: bool,
+    /// Overrides the reasoning effort value from the bot config file.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub reasoning_effort: Option<ReasoningEffortConfig>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -59,6 +97,10 @@ pub struct AdminBotStringReportBaseLlmConfig {
     pub expected_response: String,
     /// Placeholder "{text}" is replaced with the reported content.
     pub user_text_template: String,
+    /// Overrides the reasoning effort value from the bot config file.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub reasoning_effort: Option<ReasoningEffortConfig>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, Default)]
@@ -198,6 +240,7 @@ impl Default for AdminBotReportProcessingProfileStringLlmConfig {
                 system_text: "You are a dating app text report moderator. Output 'accepted, severity' where severity is low/medium/high, or 'rejected'.".to_string(),
                 expected_response: "accepted".to_string(),
                 user_text_template: "Reported content:\n\n{text}".to_string(),
+                reasoning_effort: None,
             },
             automatic_banning_expected_responses: AutomaticBanningExpectedLlmResponsesConfig::default(),
         }
@@ -249,6 +292,7 @@ impl Default for AdminBotReportProcessingMessagesLlmConfig {
                     Output 'rejected' if messages from the reported are appropriate.".to_string(),
                 expected_response: "accepted".to_string(),
                 user_text_template: "Reported messages:\n\n{text}".to_string(),
+                reasoning_effort: None,
             },
             report_creator_message_template: "From reporter ({message_number}): {text}".to_string(),
             report_target_message_template: "From reported ({message_number}): {text}".to_string(),
@@ -374,6 +418,7 @@ impl Default for AdminBotStringModerationLlmConfig {
                 expected_response: "accepted".to_string(),
                 move_rejected_to_human_moderation: false,
                 add_llm_output_to_user_visible_rejection_details: false,
+                reasoning_effort: None,
             },
             user_text_template: "Text:\n\n{text}".to_string(),
         }

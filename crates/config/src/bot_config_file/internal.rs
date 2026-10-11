@@ -71,7 +71,8 @@ impl ProfileStringModerationLlmConfigInternal {
         if !db_enabled {
             return None;
         }
-        let llm = file.merge_with(base_llm)?;
+        let mut llm = file.merge_with(base_llm)?;
+        llm.reasoning_effort = db.base.reasoning_effort.or(llm.reasoning_effort);
 
         Some(Self { db, llm })
     }
@@ -175,7 +176,8 @@ impl SecurityContentVerificationLlmConfigInternal {
         if !db_enabled {
             return None;
         }
-        let llm = file.merge_with(base_llm)?;
+        let mut llm = file.merge_with(base_llm)?;
+        llm.reasoning_effort = db.base.reasoning_effort.or(llm.reasoning_effort);
 
         Some(Self { db, llm })
     }
@@ -292,7 +294,8 @@ impl FaceVerificationLlmConfigInternal {
         if !db_enabled {
             return None;
         }
-        let llm = file.merge_with(base_llm)?;
+        let mut llm = file.merge_with(base_llm)?;
+        llm.reasoning_effort = db.base.reasoning_effort.or(llm.reasoning_effort);
 
         Some(Self { db, llm })
     }
@@ -308,7 +311,8 @@ impl ContentModerationLlmConfigInternal {
         if !db_enabled {
             return None;
         }
-        let llm = file.unwrap_or_default().merge_with(base_llm)?;
+        let mut llm = file.unwrap_or_default().merge_with(base_llm)?;
+        llm.reasoning_effort = db.base.reasoning_effort.or(llm.reasoning_effort);
 
         Some(Self { db, llm })
     }
@@ -335,7 +339,8 @@ impl ReportProcessingProfileStringConfigInternal {
         automatic_banning_enabled: bool,
         automatic_banning: AutomaticBanningConfig,
     ) -> Option<Self> {
-        let llm = file.llm.merge_with(base_llm)?;
+        let mut llm = file.llm.merge_with(base_llm)?;
+        llm.reasoning_effort = db.base.reasoning_effort.or(llm.reasoning_effort);
         Some(Self {
             db,
             llm,
@@ -365,7 +370,8 @@ impl ReportProcessingProfileContentConfigInternal {
         automatic_banning_enabled: bool,
         automatic_banning: AutomaticBanningConfig,
     ) -> Option<Self> {
-        let llm = file.llm.merge_with(base_llm)?;
+        let mut llm = file.llm.merge_with(base_llm)?;
+        llm.reasoning_effort = db.base.reasoning_effort.or(llm.reasoning_effort);
         Some(Self {
             db,
             llm,
@@ -398,7 +404,8 @@ impl ReportProcessingMessagesConfigInternal {
         automatic_banning_enabled: bool,
         automatic_banning: AutomaticBanningConfig,
     ) -> Option<Self> {
-        let llm = file.llm.merge_with(base_llm)?;
+        let mut llm = file.llm.merge_with(base_llm)?;
+        llm.reasoning_effort = db.base.reasoning_effort.or(llm.reasoning_effort);
         Some(Self {
             db,
             llm,
