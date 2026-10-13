@@ -194,7 +194,8 @@ async fn get_or_create_bots_impl(state: &S, ip: IpAddr) -> Result<Json<GetBotsRe
         .bot_config()
         .await?
         .unwrap_or_default();
-    let expected_user_count = bot_config.user_bots as usize;
+    let user_bot_max_count = state.config().limits_common().user_bot_max_count.into();
+    let expected_user_count = (bot_config.user_bots as usize).min(user_bot_max_count);
 
     // Create missing admin bot if needed
     if bot_config.admin_bot
@@ -212,6 +213,9 @@ async fn get_or_create_bots_impl(state: &S, ip: IpAddr) -> Result<Json<GetBotsRe
     {
         result.admin = Some(admin);
     }
+
+    // Max count might be lowered so prevent returning extra user bots
+    result.users.truncate(user_bot_max_count);
 
     // Create missing user bots if needed
     if result.users.len() < expected_user_count {

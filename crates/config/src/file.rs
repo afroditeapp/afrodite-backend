@@ -49,6 +49,7 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # auto_ban_spam_reporters_rejected_report_threshold = 10
 # auto_ban_spam_reporters_ban_duration = "90d"
 # demo_account_login_attempt_max_count = 10
+# user_bot_max_count = 0
 #
 # [limits.common.processed_report_deletion_wait_duration]
 # profile_name = "90d"
@@ -365,6 +366,9 @@ pub struct CommonLimitsConfig {
     /// Max number of wrong demo account login attempts before the
     /// demo account is locked until server restart.
     pub demo_account_login_attempt_max_count: NonZeroU16,
+    /// Max number of user bots. Zero disables user bots even if
+    /// bot config has a non-zero user bot count.
+    pub user_bot_max_count: u16,
 }
 
 impl Default for CommonLimitsConfig {
@@ -376,6 +380,7 @@ impl Default for CommonLimitsConfig {
             auto_ban_spam_reporters_rejected_report_threshold: 10,
             auto_ban_spam_reporters_ban_duration: DurationValue::from_days(90),
             demo_account_login_attempt_max_count: NonZeroU16::new(10).unwrap(),
+            user_bot_max_count: 0,
         }
     }
 }

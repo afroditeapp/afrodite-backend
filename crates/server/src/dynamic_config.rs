@@ -153,9 +153,10 @@ impl DynamicConfigManager {
             }
         }
 
-        if (self.current_config.admin_bot || self.current_config.user_bots > 0)
-            && !self.current_config.remote_bot_login
-        {
+        let user_bots_allowed = self.state.config().limits_common().user_bot_max_count > 0;
+        let at_least_one_bot_enabled = self.current_config.admin_bot
+            || (self.current_config.user_bots > 0 && user_bots_allowed);
+        if at_least_one_bot_enabled && !self.current_config.remote_bot_login {
             let bots = BotClient::start_bots(self.state.config())
                 .await
                 .change_context(DynamicConfigManagerError::BotClient)?;
