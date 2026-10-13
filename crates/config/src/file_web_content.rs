@@ -93,8 +93,6 @@ struct EmailVerificationStrings {
     body: StringResourceInternal,
     button: StringResourceInternal,
     /// HTML template for the email verification page.
-    /// `web_page_template` is a deprecated alias for this field.
-    #[serde(alias = "web_page_template")]
     template: String,
 }
 
