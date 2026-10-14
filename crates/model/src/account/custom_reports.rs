@@ -134,6 +134,12 @@ impl CustomReportsConfig {
 pub struct CustomReport {
     pub key: String,
     pub name: String,
+    /// Default description for the report which client shows below the
+    /// report name. The translation key for the description is
+    /// `{key}_description`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub description: Option<String>,
     pub report_type: CustomReportType,
     /// Client should show the report type when making a new report.
     #[serde(default = "value_bool_true", skip_serializing_if = "value_is_true")]
@@ -152,10 +158,13 @@ impl CustomReport {
     fn validate(&self) -> Result<(), String> {
         let mut keys = HashSet::new();
         keys.insert(self.key.clone());
+        if self.description.is_some() {
+            keys.insert(description_key(&self.key));
+        }
 
         for t in self.translations.clone() {
             for l in t.values {
-                if l.key != self.key {
+                if !keys.contains(&l.key) {
                     return Err(format!(
                         "Missing custom report key definition for translation key {}",
                         l.key
@@ -166,6 +175,10 @@ impl CustomReport {
 
         Ok(())
     }
+}
+
+fn description_key(key: &str) -> String {
+    format!("{key}_description")
 }
 
 fn value_bool_true() -> bool {
