@@ -2,10 +2,10 @@ use base64::Engine;
 use diesel::{alias, prelude::*};
 use model::{
     AccountId, AccountIdDb, AccountIdInternal, AccountInteractionInternal, ChatMessageReport,
-    ContentId, MessageNumber, ReportAccountInfo, ReportChatInfo, ReportChatInfoInteractionState,
-    ReportContent, ReportDetailed, ReportDetailedInfo, ReportDetailedInfoInternal,
-    ReportDetailedWithId, ReportIdDb, ReportInternal, ReportProcessingState, ReportTypeInternal,
-    UnixTime,
+    ContentId, CustomReportString, MessageNumber, ReportAccountInfo, ReportChatInfo,
+    ReportChatInfoInteractionState, ReportContent, ReportDetailed, ReportDetailedInfo,
+    ReportDetailedInfoInternal, ReportDetailedWithId, ReportIdDb, ReportInternal,
+    ReportProcessingState, ReportTypeInternal, UnixTime,
 };
 use simple_backend_model::NonEmptyString;
 use simple_backend_utils::Result;
@@ -105,6 +105,7 @@ impl CurrentReadCommonReport<'_> {
         let mut profile_text = None;
         let mut profile_content = None;
         let mut chat_message = None;
+        let mut custom_report_string = None;
 
         match report.info.report_type {
             ReportTypeInternal::ProfileName => {
@@ -120,7 +121,7 @@ impl CurrentReadCommonReport<'_> {
                 chat_message = self.chat_message_report(report.id)?
             }
             ReportTypeInternal::CustomReport(_) => {
-                // Currently custom reports don't support any content
+                custom_report_string = self.custom_report_string_report(report.id)?
             }
         }
 
@@ -130,6 +131,7 @@ impl CurrentReadCommonReport<'_> {
                 profile_text,
                 profile_content,
                 chat_message,
+                custom_report_string,
             },
             info: ReportDetailedInfo {
                 id: report.id.into(),
@@ -188,6 +190,20 @@ impl CurrentReadCommonReport<'_> {
         media_report_profile_content
             .find(id)
             .select(profile_content_uuid)
+            .first(self.conn())
+            .optional()
+            .into_db_error(())
+    }
+
+    pub fn custom_report_string_report(
+        &mut self,
+        id: ReportIdDb,
+    ) -> Result<Option<CustomReportString>, DieselDatabaseError> {
+        use crate::schema::custom_report_string::dsl::*;
+
+        custom_report_string
+            .find(id)
+            .select(content)
             .first(self.conn())
             .optional()
             .into_db_error(())

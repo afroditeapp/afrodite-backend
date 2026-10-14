@@ -458,6 +458,13 @@ diesel::table! {
 }
 
 diesel::table! {
+    custom_report_string (report_id) {
+        report_id -> Int8,
+        content -> Text,
+    }
+}
+
+diesel::table! {
     custom_reports_file_hash (row_type) {
         row_type -> Int4,
         sha256_hash -> Text,
@@ -1090,6 +1097,7 @@ diesel::joinable!(custom_email -> account_id (account_id_creator));
 diesel::joinable!(custom_email_sending_state -> account_id (account_id));
 diesel::joinable!(custom_email_sending_state -> custom_email (email_id));
 diesel::joinable!(custom_email_translations -> custom_email (email_id));
+diesel::joinable!(custom_report_string -> common_report (report_id));
 diesel::joinable!(daily_likes_left -> account_id (account_id));
 diesel::joinable!(demo_account_owned_accounts -> account_id (account_id));
 diesel::joinable!(history_client_version_statistics -> history_client_version_statistics_version_number (version_id));
@@ -1176,6 +1184,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     custom_email_sending_limits,
     custom_email_sending_state,
     custom_email_translations,
+    custom_report_string,
     custom_reports_file_hash,
     daily_likes_left,
     demo_account_owned_accounts,

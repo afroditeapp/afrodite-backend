@@ -2,7 +2,9 @@ use axum::{Extension, extract::State};
 use model::{
     AccountIdInternal, AdminNotificationTypes, CustomReportsConfigHash, UpdateReportResult,
 };
-use model_account::{GetCustomReportsConfigResult, UpdateCustomReportEmpty};
+use model_account::{
+    GetCustomReportsConfigResult, UpdateCustomReportEmpty, UpdateCustomReportString,
+};
 use server_api::{
     S,
     app::{AdminNotificationProvider, ApiLimitsProvider, GetConfig},
@@ -44,7 +46,51 @@ pub async fn post_custom_report_empty(
     let r = db_write!(state, move |cmds| cmds
         .account()
         .report()
-        .report_custom_report_empty(account_id, target, update.custom_report_id)
+        .report_custom_report(account_id, target, update.custom_report_id, None)
+        .await)?;
+
+    state
+        .admin_notification()
+        .send_notification_if_needed(AdminNotificationTypes::ProcessReports)
+        .await;
+
+    Ok(r.into())
+}
+
+const PATH_POST_CUSTOM_REPORT_STRING: &str = "/account_api/custom_report_string";
+
+/// Send custom report with string content
+#[utoipa::path(
+    post,
+    path = PATH_POST_CUSTOM_REPORT_STRING,
+    request_body = UpdateCustomReportString,
+    responses(
+        (status = 200, description = "Successful.", body = UpdateReportResult),
+        (status = 401, description = "Unauthorized."),
+        (status = 429, description = "Too many requests."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_custom_report_string(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+    Json(update): Json<UpdateCustomReportString>,
+) -> Result<Json<UpdateReportResult>, StatusCode> {
+    ACCOUNT.post_custom_report_string.incr();
+    state.api_limits(account_id).common().send_report().await?;
+
+    let target = state.get_internal_id(update.target).await?;
+
+    let r = db_write!(state, move |cmds| cmds
+        .account()
+        .report()
+        .report_custom_report(
+            account_id,
+            target,
+            update.custom_report_id,
+            Some(update.content)
+        )
         .await)?;
 
     state
@@ -88,6 +134,7 @@ pub async fn post_get_custom_reports_config(
 create_open_api_router!(
         fn router_account_report,
         post_custom_report_empty,
+        post_custom_report_string,
         post_get_custom_reports_config,
 );
 
@@ -96,5 +143,6 @@ create_counters!(
     ACCOUNT,
     ACCOUNT_REPORT_COUNTERS_LIST,
     post_custom_report_empty,
+    post_custom_report_string,
     post_get_custom_reports_config,
 );

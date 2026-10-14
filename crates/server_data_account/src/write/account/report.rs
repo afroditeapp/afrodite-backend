@@ -1,8 +1,8 @@
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
 use database_account::current::{read::GetDbReadCommandsAccount, write::GetDbWriteCommandsAccount};
 use model::{
-    AccountIdInternal, CustomReportId, CustomReportType, ReportType, ReportTypeInternal,
-    UpdateReportResult,
+    AccountIdInternal, CustomReportId, CustomReportString, CustomReportType, ReportType,
+    ReportTypeInternal, UpdateReportResult,
 };
 use server_data::{
     DataError,
@@ -17,23 +17,28 @@ use tracing::info;
 define_cmd_wrapper_write!(WriteCommandsAccountReport);
 
 impl WriteCommandsAccountReport<'_> {
-    /// Reports custom report with empty content if not previously reported.
-    pub async fn report_custom_report_empty(
+    /// Reports a custom report if it hasn't been reported before.
+    pub async fn report_custom_report(
         &self,
         creator: AccountIdInternal,
         target: AccountIdInternal,
         custom_report_id: CustomReportId,
+        content: Option<CustomReportString>,
     ) -> Result<UpdateReportResult, DataError> {
         let custom_report_type_number = custom_report_id
             .to_report_type_value()
             .map_err(|e| DataError::NotAllowed.report().attach(e))?;
 
+        let expected_report_type = match &content {
+            Some(_) => CustomReportType::String,
+            None => CustomReportType::Empty,
+        };
         let custom_report_type = self
             .config()
             .custom_reports()
             .index_with_id(custom_report_id)
             .map(|r| r.report_type);
-        if custom_report_type != Some(CustomReportType::Empty) {
+        if custom_report_type != Some(expected_report_type) {
             return Err(DataError::NotAllowed.report());
         }
 
@@ -50,17 +55,30 @@ impl WriteCommandsAccountReport<'_> {
             return Ok(UpdateReportResult::too_many_reports());
         }
 
-        if !reports.is_empty() {
-            // Already reported
+        let already_reported = match &content {
+            None => !reports.is_empty(),
+            Some(content) => reports
+                .iter()
+                .any(|v| v.report.content.custom_report_string.as_ref() == Some(content)),
+        };
+        if already_reported {
             return Ok(UpdateReportResult::success());
         }
 
         db_transaction!(self, move |mut cmds| {
-            cmds.account().report().insert_custom_report_empty(
-                creator,
-                target,
-                custom_report_type_number,
-            )?;
+            match &content {
+                None => cmds.account().report().insert_custom_report_empty(
+                    creator,
+                    target,
+                    custom_report_type_number,
+                )?,
+                Some(content) => cmds.account().report().insert_custom_report_string(
+                    creator,
+                    target,
+                    custom_report_type_number,
+                    content,
+                )?,
+            }
             Ok(())
         })?;
 

@@ -1,6 +1,8 @@
 use std::collections::HashSet;
 
 use serde::{Deserialize, Serialize};
+use simple_backend_utils::{diesel_non_empty_string_wrapper, string::NonEmptyString};
+use unicode_segmentation::UnicodeSegmentation;
 use utoipa::ToSchema;
 
 use crate::{CustomReportTypeValue, ReportType};
@@ -66,7 +68,73 @@ impl CustomReportsConfigHash {
 pub enum CustomReportType {
     // Empty content
     Empty,
+    /// User written text report. Max 200 grapheme clusters,
+    /// max 800 bytes.
+    String,
 }
+
+/// Custom report string content.
+///
+/// Max 200 grapheme clusters. The value is stored as UTF-8 bytes in the
+/// database, so the max byte count is 4 times the grapheme cluster count.
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Serialize,
+    Deserialize,
+    ToSchema,
+    diesel::FromSqlRow,
+    diesel::AsExpression,
+)]
+#[diesel(sql_type = diesel::sql_types::Text)]
+#[serde(transparent)]
+#[schema(value_type = String)]
+pub struct CustomReportString(pub NonEmptyString);
+
+impl CustomReportString {
+    pub const MAX_GRAPHEME_CLUSTER_COUNT: usize = 200;
+    pub const MAX_BYTE_COUNT: usize = 4 * Self::MAX_GRAPHEME_CLUSTER_COUNT;
+
+    pub fn new(value: NonEmptyString) -> Result<Self, String> {
+        let grapheme_cluster_count = value.as_str().graphemes(true).count();
+        if grapheme_cluster_count > Self::MAX_GRAPHEME_CLUSTER_COUNT {
+            return Err(format!(
+                "Custom report string max grapheme cluster count is {}, got {}",
+                Self::MAX_GRAPHEME_CLUSTER_COUNT,
+                grapheme_cluster_count
+            ));
+        }
+        if value.as_str().len() > Self::MAX_BYTE_COUNT {
+            return Err(format!(
+                "Custom report string max byte count is {}, got {}",
+                Self::MAX_BYTE_COUNT,
+                value.as_str().len()
+            ));
+        }
+        Ok(Self(value))
+    }
+
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
+}
+
+impl TryFrom<NonEmptyString> for CustomReportString {
+    type Error = String;
+
+    fn try_from(value: NonEmptyString) -> Result<Self, Self::Error> {
+        Self::new(value)
+    }
+}
+
+impl AsRef<str> for CustomReportString {
+    fn as_ref(&self) -> &str {
+        self.as_str()
+    }
+}
+
+diesel_non_empty_string_wrapper!(CustomReportString);
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CustomReportsConfig {

@@ -3,8 +3,8 @@ use simple_backend_model::{NonEmptyString, UnixTime};
 use utoipa::ToSchema;
 
 use crate::{
-    AccountId, AccountIdDb, AccountIdInternal, ChatMessageReport, ContentId, ProfileAge, ReportId,
-    ReportIdDb, ReportProcessingState, ReportType, ReportTypeInternal,
+    AccountId, AccountIdDb, AccountIdInternal, ChatMessageReport, ContentId, CustomReportString,
+    ProfileAge, ReportId, ReportIdDb, ReportProcessingState, ReportType, ReportTypeInternal,
 };
 
 pub struct ReportInternal {
@@ -110,6 +110,9 @@ pub struct ReportContent {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
     pub chat_message: Option<ChatMessageReport>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub custom_report_string: Option<CustomReportString>,
 }
 
 #[derive(Serialize, ToSchema)]

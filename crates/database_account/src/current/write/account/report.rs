@@ -2,7 +2,10 @@ use database::{
     DieselDatabaseError, current::write::GetDbWriteCommandsCommon, define_current_write_commands,
 };
 use diesel::{insert_into, prelude::*};
-use model::{AccountIdInternal, CustomReportTypeValue, ReportProcessingState, ReportTypeInternal};
+use model::{
+    AccountIdInternal, CustomReportString, CustomReportTypeValue, ReportProcessingState,
+    ReportTypeInternal,
+};
 use simple_backend_utils::{Result, db::MyRunQueryDsl};
 
 use crate::IntoDatabaseError;
@@ -22,6 +25,32 @@ impl CurrentWriteAccountReport<'_> {
             ReportTypeInternal::CustomReport(custom_report_type),
             ReportProcessingState::Waiting,
         )?;
+
+        Ok(())
+    }
+
+    pub fn insert_custom_report_string(
+        &mut self,
+        creator: AccountIdInternal,
+        target: AccountIdInternal,
+        custom_report_type: CustomReportTypeValue,
+        value: &CustomReportString,
+    ) -> Result<(), DieselDatabaseError> {
+        let id = self.write().common().report().insert_report_content(
+            creator,
+            target,
+            ReportTypeInternal::CustomReport(custom_report_type),
+            ReportProcessingState::Waiting,
+        )?;
+
+        {
+            use model::schema::custom_report_string::dsl::*;
+
+            insert_into(custom_report_string)
+                .values((report_id.eq(id), content.eq(value.as_str())))
+                .execute_my_conn(self.conn())
+                .into_db_error((creator, target))?;
+        }
 
         Ok(())
     }

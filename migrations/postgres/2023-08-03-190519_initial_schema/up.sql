@@ -901,6 +901,16 @@ CREATE TABLE IF NOT EXISTS profile_report_profile_text(
             ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS custom_report_string(
+    report_id      BIGINT PRIMARY KEY NOT NULL,
+    -- Non-empty string
+    content        TEXT               NOT NULL,
+    FOREIGN KEY (report_id)
+        REFERENCES common_report (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS profile_app_notification_settings(
     account_id                                 BIGINT PRIMARY KEY  NOT NULL,
     profile_string_moderation                  BOOLEAN             NOT NULL,

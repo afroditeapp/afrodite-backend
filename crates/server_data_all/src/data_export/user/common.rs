@@ -2,10 +2,10 @@ use database::{DbReadMode, DieselDatabaseError, current::read::GetDbReadCommands
 use model::{
     Account, AccountIdInternal, AdminNotification, AdminNotificationSettings,
     AppleAppAttestKeyForDataExport, BotAccountType, ClientConfigSyncVersion, ClientLanguage,
-    GetApiUsageStatisticsResult, GetApiUsageStatisticsSettings, GetIpAddressStatisticsResult,
-    InitialSetupCompletedTime, LoginSessionInfo, OtherSharedState, PendingAppNotification,
-    PushNotificationDbState, ReportId, ReportIteratorQueryInternal, ReportProcessingState,
-    ReportType, UnixTime,
+    CustomReportString, GetApiUsageStatisticsResult, GetApiUsageStatisticsSettings,
+    GetIpAddressStatisticsResult, InitialSetupCompletedTime, LoginSessionInfo, OtherSharedState,
+    PendingAppNotification, PushNotificationDbState, ReportId, ReportIteratorQueryInternal,
+    ReportProcessingState, ReportType, ReportTypeInternal, UnixTime,
 };
 use serde::Serialize;
 use server_data::data_export::SourceAccount;
@@ -88,6 +88,7 @@ struct DataExportReport {
     pub processing_state: ReportProcessingState,
     pub report_type: ReportType,
     pub creation_time: UnixTime,
+    pub custom_report_string: Option<CustomReportString>,
 }
 
 impl DataExportReport {
@@ -111,11 +112,19 @@ impl DataExportReport {
                 break;
             }
             for r in reports {
+                let custom_report_string = match r.info.report_type {
+                    ReportTypeInternal::CustomReport(_) => current
+                        .common()
+                        .report()
+                        .custom_report_string_report(r.id)?,
+                    _ => None,
+                };
                 data_export_reports.push(DataExportReport {
                     id: r.id.into(),
                     processing_state: r.info.processing_state,
                     report_type: r.info.report_type.into(),
                     creation_time: r.info.creation_time,
+                    custom_report_string,
                 });
             }
             query.page += 1;
