@@ -1,3 +1,5 @@
+use std::net::IpAddr;
+
 use database::{DbReadMode, DieselDatabaseError};
 use database_media::current::read::GetDbReadCommandsMedia;
 use model::{ContentId, ContentIdDb, ProfileContentVersion, UnixTime};
@@ -54,8 +56,15 @@ impl UserDataExportJsonMedia {
 struct DataExportMediaContent {
     id: ContentIdDb,
     uuid: ContentId,
-    creation_unix_time: UnixTime,
+    upload_unix_time: UnixTime,
     initial_content: bool,
+    source_image_sha256_hash: Vec<u8>,
+    source_image_file_size_bytes: i64,
+    source_image_width: i16,
+    source_image_height: i16,
+    source_image_file_type: i16,
+    uploader_ip: IpAddr,
+    uploader_port: Option<u16>,
 }
 
 impl DataExportMediaContent {
@@ -63,8 +72,15 @@ impl DataExportMediaContent {
         Self {
             id: value.id,
             uuid: value.uuid,
-            creation_unix_time: value.creation_unix_time,
+            upload_unix_time: value.upload_unix_time,
             initial_content: value.initial_content,
+            source_image_sha256_hash: value.source_image_sha256_hash,
+            source_image_file_size_bytes: value.source_image_file_size_bytes,
+            source_image_width: value.source_image_width,
+            source_image_height: value.source_image_height,
+            source_image_file_type: value.source_image_file_type as i16,
+            uploader_ip: value.uploader_ip.to_ip_addr(),
+            uploader_port: value.uploader_port.map(Into::into),
         }
     }
 }

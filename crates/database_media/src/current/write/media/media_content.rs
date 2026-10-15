@@ -3,11 +3,11 @@ use database::{
 };
 use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::ResultExt;
-use model::{ContentIdInternal, SyncVersion, UnixTime};
+use model::{ContentIdInternal, IpAddressInternal, PortNumber, SyncVersion, UnixTime};
 use model_media::{
     AccountIdInternal, ContentId, ContentIdDb, ContentModerationState, ContentSlot,
     MediaContentRaw, MediaContentType, NewContentParams, ProfileContentModificationMetadata,
-    SetProfileContent,
+    SetProfileContent, SourceImageInfo,
 };
 use simple_backend_utils::{ContextExt, Result};
 
@@ -237,6 +237,7 @@ impl CurrentWriteMediaContent<'_> {
         Ok(())
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn insert_content_id(
         &mut self,
         content_uploader: AccountIdInternal,
@@ -245,10 +246,12 @@ impl CurrentWriteMediaContent<'_> {
         content_params: NewContentParams,
         face_detected_value: bool,
         face_detected_manual_value: Option<bool>,
+        source_image_info: SourceImageInfo,
+        upload_time: UnixTime,
+        ip: IpAddressInternal,
+        port: Option<PortNumber>,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::media_content::dsl::*;
-
-        let current_time = UnixTime::current_time();
 
         let account = self.read().common().account(content_uploader)?;
         let initial_content_value = !account.state_container().initial_setup_completed();
@@ -273,7 +276,14 @@ impl CurrentWriteMediaContent<'_> {
                 face_verified_manual.eq(None::<bool>),
                 content_type_number.eq(content_params.content_type.to_stored_type()),
                 initial_content.eq(initial_content_value),
-                creation_unix_time.eq(current_time),
+                upload_unix_time.eq(upload_time),
+                source_image_sha256_hash.eq(source_image_info.source_image_sha256_hash),
+                source_image_file_size_bytes.eq(source_image_info.source_image_file_size_bytes),
+                source_image_width.eq(source_image_info.source_image_width),
+                source_image_height.eq(source_image_info.source_image_height),
+                source_image_file_type.eq(source_image_info.source_image_file_type),
+                uploader_ip.eq(ip),
+                uploader_port.eq(port),
                 moderation_state.eq(state_value),
             ))
             .execute(self.conn())

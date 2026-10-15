@@ -3,12 +3,64 @@ use std::{
     net::{IpAddr, Ipv4Addr, Ipv6Addr},
 };
 
-use diesel::{Selectable, prelude::Queryable, sql_types::Binary};
+use diesel::{
+    Selectable,
+    prelude::Queryable,
+    sql_types::{Binary, Integer},
+};
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{IpCountryCounters, IpCountryKey, UnixTime, diesel_bytes_wrapper};
+use simple_backend_model::{
+    IpCountryCounters, IpCountryKey, UnixTime, diesel_bytes_wrapper, diesel_i32_wrapper,
+};
 use utoipa::ToSchema;
 
 use crate::AccountId;
+
+/// TCP/UDP port number.
+///
+/// Valid port values are in the range 0-65535.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, diesel::FromSqlRow, diesel::AsExpression)]
+#[diesel(sql_type = Integer)]
+pub struct PortNumber {
+    value: i32,
+}
+
+impl PortNumber {
+    pub fn new(value: u16) -> Self {
+        Self {
+            value: i32::from(value),
+        }
+    }
+
+    pub fn as_u16(&self) -> u16 {
+        self.value as u16
+    }
+}
+
+impl TryFrom<i32> for PortNumber {
+    type Error = String;
+
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        if value < 0 || value > u16::MAX.into() {
+            return Err(format!("Invalid port number {value}"));
+        }
+        Ok(Self { value })
+    }
+}
+
+impl AsRef<i32> for PortNumber {
+    fn as_ref(&self) -> &i32 {
+        &self.value
+    }
+}
+
+impl From<PortNumber> for u16 {
+    fn from(value: PortNumber) -> Self {
+        value.as_u16()
+    }
+}
+
+diesel_i32_wrapper!(PortNumber);
 
 #[derive(Debug, Clone, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::ip_address_usage_statistics)]

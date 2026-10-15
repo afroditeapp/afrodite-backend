@@ -1,12 +1,12 @@
 use diesel::{prelude::*, sql_types::SmallInt};
 use model::{
-    ContentId, ContentIdDb, ContentSlot, MediaVerificationStatusFlags, ProfileContentVersion,
-    UnixTime, sync_version_wrappers,
+    ContentId, ContentIdDb, ContentSlot, IpAddressInternal, MediaVerificationStatusFlags,
+    PortNumber, ProfileContentVersion, UnixTime, sync_version_wrappers,
 };
 use model_server_data::{MediaContentType, ProfileContentEditedTime};
 use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
-use simple_backend_model::SimpleDieselEnum;
+use simple_backend_model::{SimpleDieselEnum, SourceImageFileType};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::AccountIdDb;
@@ -254,7 +254,14 @@ pub struct MediaContentRaw {
     face_verified_manual: Option<bool>,
     pub content_type_number: MediaContentType,
     slot_number: ContentSlot,
-    pub creation_unix_time: UnixTime,
+    pub upload_unix_time: UnixTime,
+    pub source_image_sha256_hash: Vec<u8>,
+    pub source_image_file_size_bytes: i64,
+    pub source_image_width: i16,
+    pub source_image_height: i16,
+    pub source_image_file_type: SourceImageFileType,
+    pub uploader_ip: IpAddressInternal,
+    pub uploader_port: Option<PortNumber>,
     pub initial_content: bool,
     pub moderation_state: ContentModerationState,
     pub moderation_rejected_reason_category: Option<MediaContentModerationRejectedReasonCategory>,

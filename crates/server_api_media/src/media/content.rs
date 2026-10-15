@@ -8,7 +8,7 @@ use axum_extra::TypedHeader;
 use headers::{ContentLength, ContentType, IfNoneMatch};
 use model::{
     ContentQualityVariant, EventToClientInternal, GetContentProcessingState, NotificationEvent,
-    PendingAppNotificationInternal,
+    PendingAppNotificationInternal, UnixTime,
 };
 use model_media::{
     AccountContent, AccountId, AccountIdInternal, AccountState, ContentId, ContentSlot,
@@ -20,7 +20,7 @@ use server_api::{
     create_open_api_router, db_write,
     result::WrappedResultExt,
     utils::{
-        IfNoneMatchExtensions, cache_control_for_images,
+        ClientIpAndPort, IfNoneMatchExtensions, cache_control_for_images,
         cache_control_for_images_with_downgraded_quality,
     },
 };
@@ -380,6 +380,7 @@ const PATH_PUT_UPLOAD_CONTENT: &str = "/media_api/upload_content";
 pub async fn put_upload_content(
     State(state): State<S>,
     Extension(account_id): Extension<AccountIdInternal>,
+    ClientIpAndPort(uploader_ip, uploader_port): ClientIpAndPort,
     Query(new_content_params): Query<NewContentParams>,
     content_data: Body,
 ) -> Result<Json<PutContentToContentSlotResult>, StatusCode> {
@@ -401,6 +402,8 @@ pub async fn put_upload_content(
     if count > state.config().limits_media().max_content_count.into() {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
+
+    let upload_unix_time = UnixTime::current_time();
 
     let upload_permit = match state.content_processing().begin_upload(account_id).await {
         Ok(v) => v,
@@ -426,7 +429,15 @@ pub async fn put_upload_content(
 
     state
         .content_processing()
-        .queue_new_content(account_id, slot, content_info, new_content_params)
+        .queue_new_content(
+            account_id,
+            slot,
+            content_info,
+            upload_unix_time,
+            uploader_ip.into(),
+            uploader_port,
+            new_content_params,
+        )
         .await;
 
     Ok(PutContentToContentSlotResult::ok().into())

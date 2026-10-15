@@ -225,6 +225,10 @@ impl ContentProcessingManager {
                     state_copy.new_content_params,
                     face_detected,
                     if is_bot { Some(true) } else { None },
+                    info.source_image_info,
+                    state_copy.upload_unix_time,
+                    state_copy.uploader_ip,
+                    state_copy.uploader_port,
                 )
                 .await
         })

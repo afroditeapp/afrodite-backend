@@ -1039,7 +1039,22 @@ CREATE TABLE IF NOT EXISTS media_content(
     content_type_number SMALLINT            NOT NULL,
     -- Numbers from 0 to 6.
     slot_number         SMALLINT            NOT NULL,
-    creation_unix_time  BIGINT              NOT NULL,
+    -- Upload HTTP request start unix time.
+    upload_unix_time    BIGINT              NOT NULL,
+    -- SHA256 hash of the source image file bytes (32 bytes).
+    source_image_sha256_hash BYTEA          NOT NULL,
+    -- Source image file size in bytes.
+    source_image_file_size_bytes BIGINT     NOT NULL,
+    -- Source image width in pixels.
+    source_image_width  SMALLINT            NOT NULL,
+    -- Source image height in pixels.
+    source_image_height SMALLINT            NOT NULL,
+    -- Source image file type. Jpeg = 0, Png = 1.
+    source_image_file_type SMALLINT         NOT NULL,
+    -- Uploader's IP address. V4 addresses are 4 bytes and V6 addresses are 16 bytes.
+    uploader_ip         BYTEA               NOT NULL,
+    -- Uploader's port number if available.
+    uploader_port       INTEGER,
     -- Content was uploaded when profile visibility is pending public or
     -- pending private.
     initial_content     BOOLEAN             NOT NULL,

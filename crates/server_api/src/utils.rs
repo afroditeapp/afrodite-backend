@@ -15,7 +15,7 @@ use headers::{
 };
 use http::request::Parts;
 use hyper::Request;
-use model::AccessToken;
+use model::{AccessToken, PortNumber};
 use serde::Serialize;
 pub use server_common::data::connection_id::ConnectionId;
 use server_data::{
@@ -152,6 +152,37 @@ where
         };
 
         Ok(Self(ip))
+    }
+}
+
+/// Similar to [ClientIp] but return also [PortNumber] if available.
+#[derive(Debug, Clone, Copy)]
+pub struct ClientIpAndPort(pub IpAddr, pub Option<PortNumber>);
+
+impl<S> FromRequestParts<S> for ClientIpAndPort
+where
+    S: Send + Sync + GetConfig,
+{
+    type Rejection = StatusCode;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let connect_info = ConnectInfo::<SocketAddr>::from_request_parts(parts, state)
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+        let (ip, port) = if state.config().simple_backend().public_api_tls_disabled() {
+            (
+                client_ip_from_http_header_if_possible(&parts.headers, *connect_info),
+                None,
+            )
+        } else {
+            (
+                connect_info.ip(),
+                Some(PortNumber::new(connect_info.port())),
+            )
+        };
+
+        Ok(Self(ip, port))
     }
 }
 

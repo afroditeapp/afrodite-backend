@@ -2,7 +2,8 @@ use std::collections::{HashMap, VecDeque};
 
 use model::{
     AccountId, AccountIdDb, AccountIdInternal, ContentProcessingState,
-    ContentProcessingStateChanged, ContentProcessingStateInternal, ContentSlot,
+    ContentProcessingStateChanged, ContentProcessingStateInternal, ContentSlot, IpAddressInternal,
+    PortNumber, UnixTime,
 };
 use model_server_data::NewContentParams;
 use tokio::sync::{Notify, OwnedMutexGuard, RwLock};
@@ -35,11 +36,15 @@ impl ProcessManagerData {
     }
 
     /// Queue new content for account-level processing.
+    #[allow(clippy::too_many_arguments)]
     pub async fn queue_new_content(
         &self,
         content_owner: AccountIdInternal,
         slot: ContentSlot,
         upload_info: UploadInfo,
+        upload_unix_time: UnixTime,
+        uploader_ip: IpAddressInternal,
+        uploader_port: Option<PortNumber>,
         new_content_params: NewContentParams,
         mut processing_phase_lock: OwnedMutexGuard<ProcessingPhase>,
     ) {
@@ -52,6 +57,7 @@ impl ProcessManagerData {
             tmp_img_very_low,
             upload_permit,
         } = upload_info;
+
         *processing_phase_lock = ProcessingPhase::Processing;
         drop(processing_phase_lock);
         drop(upload_permit);
@@ -72,6 +78,9 @@ impl ProcessManagerData {
             tmp_img_lower,
             tmp_img_very_low,
             tmp_raw_img,
+            upload_unix_time,
+            uploader_ip,
+            uploader_port,
             new_content_params,
         };
         write.processing_states.insert(key, state);
@@ -179,6 +188,9 @@ pub struct ProcessingState {
     pub tmp_img_low: TmpContentFile,
     pub tmp_img_lower: TmpContentFile,
     pub tmp_img_very_low: TmpContentFile,
+    pub upload_unix_time: UnixTime,
+    pub uploader_ip: IpAddressInternal,
+    pub uploader_port: Option<PortNumber>,
     pub new_content_params: NewContentParams,
 }
 

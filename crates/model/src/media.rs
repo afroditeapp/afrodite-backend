@@ -4,7 +4,7 @@ use diesel::{
 };
 use serde::{Deserialize, Serialize};
 pub use simple_backend_model::{
-    ContentQualityVariant, ImageProcessingDynamicConfig, ImageProcessingWarnings,
+    ContentQualityVariant, ImageProcessingDynamicConfig, ImageProcessingWarnings, SourceImageInfo,
 };
 use simple_backend_model::{SimpleDieselEnum, diesel_i64_wrapper, diesel_uuid_wrapper};
 use utoipa::{IntoParams, ToSchema};

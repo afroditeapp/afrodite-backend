@@ -3,10 +3,14 @@ use std::collections::HashSet;
 use database::current::read::GetDbReadCommandsCommon;
 use database_media::current::{read::GetDbReadCommandsMedia, write::GetDbWriteCommandsMedia};
 use error_stack::ResultExt;
-use model::{AccountState, ContentIdInternal, ContentQualityVariant, EventToClientInternal};
+use model::{
+    AccountState, ContentIdInternal, ContentQualityVariant, EventToClientInternal,
+    IpAddressInternal, PortNumber, UnixTime,
+};
 use model_media::{
     AccountIdInternal, ContentId, ContentIdDb, ContentSlot, CurrentAccountMediaInternal,
     NewContentParams, ProfileContent, ProfileContentModificationMetadata, SetProfileContent,
+    SourceImageInfo,
 };
 use server_data::{
     DataError, DieselDatabaseError,
@@ -56,6 +60,10 @@ impl WriteCommandsMedia<'_> {
         new_content_params: NewContentParams,
         face_detected: bool,
         face_detected_manual: Option<bool>,
+        source_image_info: SourceImageInfo,
+        upload_time: UnixTime,
+        ip: IpAddressInternal,
+        port: Option<PortNumber>,
     ) -> Result<ContentId, DataError> {
         let account = self
             .db_read(move |mut cmds| cmds.common().account(id))
@@ -169,6 +177,10 @@ impl WriteCommandsMedia<'_> {
                     new_content_params,
                     face_detected,
                     face_detected_manual,
+                    source_image_info,
+                    upload_time,
+                    ip,
+                    port,
                 )?;
 
                 // Move content from tmp dir to content dir

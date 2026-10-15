@@ -55,10 +55,7 @@ impl CurrentReadMediaAdminContent<'_> {
                 media_content::moderation_rejected_reason_category,
                 media_content::moderation_rejected_reason_details,
             ))
-            .order((
-                media_content::creation_unix_time.asc(),
-                account_id::id.asc(),
-            ))
+            .order((media_content::upload_unix_time.asc(), account_id::id.asc()))
             .limit(LIMIT)
             .load::<MediaContentPendingModeration>(self.conn())
             .into_db_error(())?;

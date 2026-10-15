@@ -1,6 +1,9 @@
 use std::{collections::HashMap, sync::Arc};
 
-use model::{AccountIdDb, AccountIdInternal, ContentProcessingState, ContentSlot};
+use model::{
+    AccountIdDb, AccountIdInternal, ContentProcessingState, ContentSlot, IpAddressInternal,
+    PortNumber, UnixTime,
+};
 use tokio::sync::{Mutex, OwnedMutexGuard, RwLock, oneshot};
 
 use crate::event::EventManagerWithCacheReference;
@@ -67,11 +70,15 @@ impl ContentProcessingManagerData {
         upload::begin_upload(self.processing_phase_lock(content_owner).await).await
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn queue_new_content(
         &self,
         content_owner: AccountIdInternal,
         slot: ContentSlot,
         upload_info: UploadInfo,
+        upload_unix_time: UnixTime,
+        uploader_ip: IpAddressInternal,
+        uploader_port: Option<PortNumber>,
         new_content_params: model_server_data::NewContentParams,
     ) {
         let processing_phase_lock = self.processing_phase_lock(content_owner).await;
@@ -80,6 +87,9 @@ impl ContentProcessingManagerData {
                 content_owner,
                 slot,
                 upload_info,
+                upload_unix_time,
+                uploader_ip,
+                uploader_port,
                 new_content_params,
                 processing_phase_lock,
             )
