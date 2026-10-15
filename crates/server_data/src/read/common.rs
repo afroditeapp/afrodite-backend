@@ -12,6 +12,7 @@ use crate::{
 
 mod bot_config;
 mod client_config;
+mod consent;
 mod data_export;
 mod notification;
 mod profile_attributes;
@@ -26,6 +27,10 @@ impl<'a> ReadCommandsCommon<'a> {
 
     pub fn client_config(self) -> client_config::ReadCommandsCommonClientConfig<'a> {
         client_config::ReadCommandsCommonClientConfig::new(self.0)
+    }
+
+    pub fn consent(self) -> consent::ReadCommandsCommonConsent<'a> {
+        consent::ReadCommandsCommonConsent::new(self.0)
     }
 
     pub fn data_export(self) -> data_export::ReadCommandsCommonDataExport<'a> {

@@ -45,6 +45,29 @@ pub use client_config::*;
 pub mod websocket;
 pub use websocket::*;
 
+#[derive(
+    Debug,
+    Default,
+    Clone,
+    Copy,
+    Queryable,
+    Selectable,
+    AsChangeset,
+    Insertable,
+    Deserialize,
+    Serialize,
+    ToSchema,
+)]
+#[diesel(table_name = crate::schema::data_consent_settings)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct DataConsentSettings {
+    /// Allow admin bot to fill media content face verified values.
+    /// This is GDPR opt-in for automatic biometric data processing.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub allow_face_verification: bool,
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct ServerVersion {
     /// Server code version.

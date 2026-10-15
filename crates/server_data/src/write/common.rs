@@ -16,6 +16,7 @@ use crate::{
 
 mod bot_config;
 mod client_config;
+mod consent;
 mod data_export;
 mod notification;
 mod push_notification;
@@ -26,6 +27,10 @@ define_cmd_wrapper_write!(WriteCommandsCommon);
 impl WriteCommandsCommon<'_> {
     pub fn server_info(&mut self) -> server_info::WriteCommandsCommonServerInfo<'_> {
         server_info::WriteCommandsCommonServerInfo::new(self.handle())
+    }
+
+    pub fn consent(&mut self) -> consent::WriteCommandsCommonConsent<'_> {
+        consent::WriteCommandsCommonConsent::new(self.handle())
     }
 
     pub fn bot_config(&mut self) -> bot_config::WriteCommandsCommonBotConfig<'_> {

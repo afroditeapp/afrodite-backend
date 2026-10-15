@@ -69,7 +69,9 @@ impl CurrentReadMediaAdminContent<'_> {
     pub fn media_content_face_verified_null_list(
         &mut self,
     ) -> Result<GetMediaContentFaceVerifiedNullList, DieselDatabaseError> {
-        use crate::schema::{account_id, current_account_media, media_content};
+        use crate::schema::{
+            account_id, current_account_media, data_consent_settings, media_content,
+        };
 
         const LIMIT: i64 = 25;
 
@@ -105,7 +107,12 @@ impl CurrentReadMediaAdminContent<'_> {
                     .assume_not_null()
                     .eq(media_content::id)),
             )
+            .inner_join(
+                data_consent_settings::table
+                    .on(current_account_media::account_id.eq(data_consent_settings::account_id)),
+            )
             .filter(current_account_media::security_content_id.is_not_null())
+            .filter(data_consent_settings::allow_face_verification.eq(true))
             .filter(has_face_verified_null_content)
             .order((
                 current_account_media::security_content_set_unix_time.asc(),

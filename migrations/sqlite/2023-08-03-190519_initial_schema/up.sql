@@ -197,6 +197,16 @@ CREATE TABLE IF NOT EXISTS common_state(
             ON UPDATE CASCADE
 );
 
+-- Account data processing consent settings.
+CREATE TABLE IF NOT EXISTS data_consent_settings(
+    account_id                 INTEGER PRIMARY KEY NOT NULL,
+    allow_face_verification    BOOLEAN            NOT NULL DEFAULT FALSE,
+    FOREIGN KEY (account_id)
+        REFERENCES account_id (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE
+);
+
 -- Login session related info for an account.
 CREATE TABLE IF NOT EXISTS login_session_info(
     account_id                       INTEGER PRIMARY KEY NOT NULL,

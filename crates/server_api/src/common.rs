@@ -51,6 +51,9 @@ use crate::{
 mod client_config;
 pub use client_config::*;
 
+mod consent;
+pub use consent::*;
+
 mod data_export;
 pub use data_export::*;
 

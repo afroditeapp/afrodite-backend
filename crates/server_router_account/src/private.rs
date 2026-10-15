@@ -15,6 +15,7 @@ impl PrivateRoutes {
     pub fn private_common_router(&self) -> Router {
         Router::new()
             .merge(api::common::router_client_config(self.state.clone()))
+            .merge(api::common::router_consent(self.state.clone()))
             .merge(api::common::router_data_export(self.state.clone()))
             .merge(api::common::router_notification(self.state.clone()))
             .merge(api::common::router_profile_paging(self.state.clone()))

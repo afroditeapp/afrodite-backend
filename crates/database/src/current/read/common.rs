@@ -9,6 +9,7 @@ use crate::{
 
 pub mod bot_config;
 mod client_config;
+mod consent;
 mod notification;
 pub mod profile_attributes;
 mod push_notification;
@@ -19,6 +20,10 @@ mod token;
 define_current_read_commands!(CurrentReadCommon);
 
 impl<'a> CurrentReadCommon<'a> {
+    pub fn consent(self) -> consent::CurrentReadCommonConsent<'a> {
+        consent::CurrentReadCommonConsent::new(self.cmds)
+    }
+
     pub fn profile_attributes(self) -> profile_attributes::CurrentReadCommonProfileAttributes<'a> {
         profile_attributes::CurrentReadCommonProfileAttributes::new(self.cmds)
     }

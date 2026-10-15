@@ -7,6 +7,7 @@ use crate::{IntoDatabaseError, define_current_write_commands};
 
 mod bot_config;
 mod client_config;
+mod consent;
 mod notification;
 pub mod profile_attributes;
 mod push_notification;
@@ -20,6 +21,10 @@ pub use state::{AccountUpdate, CacheUpdateAccount};
 define_current_write_commands!(CurrentWriteCommon);
 
 impl<'a> CurrentWriteCommon<'a> {
+    pub fn consent(self) -> consent::CurrentWriteCommonConsent<'a> {
+        consent::CurrentWriteCommonConsent::new(self.cmds)
+    }
+
     pub fn server_info(self) -> server_info::CurrentWriteCommonServerInfo<'a> {
         server_info::CurrentWriteCommonServerInfo::new(self.cmds)
     }
