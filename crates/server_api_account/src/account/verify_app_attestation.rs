@@ -8,6 +8,7 @@ use server_api::{
     S,
     app::{ApiLimitsProvider, GetAccounts},
     db_write,
+    utils::ClientIp,
 };
 use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
 use simple_backend::{
@@ -89,7 +90,7 @@ pub const PATH_POST_REQUEST_APP_ATTEST_CHALLENGE: &str =
 )]
 pub async fn post_request_app_attest_challenge(
     State(state): State<S>,
-    ClientConnectionId(connection): ClientConnectionId,
+    ClientIp(ip): ClientIp,
     Json(request): Json<RequestAppAttestChallenge>,
 ) -> Result<Json<RequestAppAttestChallengeResult>, StatusCode> {
     ACCOUNT.post_request_app_attest_challenge.incr();
@@ -102,7 +103,7 @@ pub async fn post_request_app_attest_challenge(
 
     let Some((challenge, account_id)) = state
         .verify_app_attestation_tokens()
-        .generate_challenge(&token_bytes, connection.ip(), request.request_challenge)
+        .generate_challenge(&token_bytes, ip, request.request_challenge)
         .await
     else {
         return Ok(
