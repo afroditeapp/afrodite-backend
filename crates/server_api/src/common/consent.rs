@@ -1,5 +1,5 @@
 use axum::{Extension, extract::State};
-use model::{AccountIdInternal, DataConsentSettings};
+use model::{AccountIdInternal, DataConsentSettings, UpdateDataConsentSettings};
 use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
 use simple_backend::create_counters;
 
@@ -36,16 +36,16 @@ pub async fn get_data_consent_settings(
         .data_consent_settings(id)
         .await?;
 
-    Ok(settings.into())
+    Ok(settings.into_public().into())
 }
 
 const PATH_POST_DATA_CONSENT_SETTINGS: &str = "/common_api/data_consent_settings";
 
-/// Update data consent settings.
+/// Update specific data consent setting fields.
 #[utoipa::path(
     post,
     path = PATH_POST_DATA_CONSENT_SETTINGS,
-    request_body = DataConsentSettings,
+    request_body = UpdateDataConsentSettings,
     responses(
         (status = 200, description = "Success."),
         (status = 401, description = "Unauthorized."),
@@ -56,7 +56,7 @@ const PATH_POST_DATA_CONSENT_SETTINGS: &str = "/common_api/data_consent_settings
 pub async fn post_data_consent_settings(
     State(state): State<S>,
     Extension(id): Extension<AccountIdInternal>,
-    Json(settings): Json<DataConsentSettings>,
+    Json(settings): Json<UpdateDataConsentSettings>,
 ) -> Result<(), StatusCode> {
     COMMON.post_data_consent_settings.incr();
 

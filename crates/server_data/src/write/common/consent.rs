@@ -1,5 +1,5 @@
 use database::current::write::GetDbWriteCommandsCommon;
-use model::{AccountIdInternal, DataConsentSettings};
+use model::{AccountIdInternal, UpdateDataConsentSettings};
 
 use crate::{
     DataError, db_transaction, define_cmd_wrapper_write, result::Result, write::DbTransaction,
@@ -11,7 +11,7 @@ impl WriteCommandsCommonConsent<'_> {
     pub async fn upsert_data_consent_settings(
         &self,
         id: AccountIdInternal,
-        value: DataConsentSettings,
+        value: UpdateDataConsentSettings,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.common()

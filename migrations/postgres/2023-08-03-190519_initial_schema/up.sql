@@ -199,8 +199,9 @@ CREATE TABLE IF NOT EXISTS common_state(
 
 -- Account data processing consent settings.
 CREATE TABLE IF NOT EXISTS data_consent_settings(
-    account_id                 BIGINT PRIMARY KEY NOT NULL,
-    allow_face_verification    BOOLEAN            NOT NULL DEFAULT FALSE,
+    account_id                             BIGINT PRIMARY KEY NOT NULL,
+    allow_face_verification                BOOLEAN            NOT NULL DEFAULT FALSE,
+    allow_face_verification_edit_unix_time BIGINT,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

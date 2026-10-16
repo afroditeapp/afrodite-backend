@@ -45,27 +45,43 @@ pub use client_config::*;
 pub mod websocket;
 pub use websocket::*;
 
-#[derive(
-    Debug,
-    Default,
-    Clone,
-    Copy,
-    Queryable,
-    Selectable,
-    AsChangeset,
-    Insertable,
-    Deserialize,
-    Serialize,
-    ToSchema,
-)]
-#[diesel(table_name = crate::schema::data_consent_settings)]
-#[diesel(check_for_backend(crate::Db))]
+#[derive(Debug, Default, Clone, Copy, Deserialize, Serialize, ToSchema)]
 pub struct DataConsentSettings {
     /// Allow admin bot to fill media content face verified values.
     /// This is GDPR opt-in for automatic biometric data processing.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub allow_face_verification: bool,
+}
+
+#[derive(
+    Debug, Default, Clone, Copy, Queryable, Selectable, AsChangeset, Insertable, Serialize,
+)]
+#[diesel(table_name = crate::schema::data_consent_settings)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct DataConsentSettingsInternal {
+    /// Allow admin bot to fill media content face verified values.
+    /// This is GDPR opt-in for automatic biometric data processing.
+    pub allow_face_verification: bool,
+    pub allow_face_verification_edit_unix_time: Option<UnixTime>,
+}
+
+impl DataConsentSettingsInternal {
+    pub fn into_public(self) -> DataConsentSettings {
+        DataConsentSettings {
+            allow_face_verification: self.allow_face_verification,
+        }
+    }
+}
+
+/// Update specific data consent setting fields.
+#[derive(Debug, Default, Clone, Copy, Deserialize, Serialize, ToSchema)]
+pub struct UpdateDataConsentSettings {
+    /// Allow admin bot to fill media content face verified values.
+    /// This is GDPR opt-in for automatic biometric data processing.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub allow_face_verification: Option<bool>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]

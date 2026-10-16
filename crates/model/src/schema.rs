@@ -484,6 +484,7 @@ diesel::table! {
     data_consent_settings (account_id) {
         account_id -> Int8,
         allow_face_verification -> Bool,
+        allow_face_verification_edit_unix_time -> Nullable<Int8>,
     }
 }
 

@@ -1,5 +1,5 @@
 use diesel::prelude::*;
-use model::{AccountIdInternal, DataConsentSettings};
+use model::{AccountIdInternal, DataConsentSettingsInternal};
 use simple_backend_utils::Result;
 
 use crate::{DieselDatabaseError, IntoDatabaseError, define_current_read_commands};
@@ -10,12 +10,12 @@ impl CurrentReadCommonConsent<'_> {
     pub fn data_consent_settings(
         &mut self,
         account_id_value: AccountIdInternal,
-    ) -> Result<DataConsentSettings, DieselDatabaseError> {
+    ) -> Result<DataConsentSettingsInternal, DieselDatabaseError> {
         use crate::schema::data_consent_settings::dsl::*;
 
         let query_result = data_consent_settings
             .filter(account_id.eq(account_id_value.as_db_id()))
-            .select(DataConsentSettings::as_select())
+            .select(DataConsentSettingsInternal::as_select())
             .first(self.conn())
             .optional()
             .into_db_error(())?;
