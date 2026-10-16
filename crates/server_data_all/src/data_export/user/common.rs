@@ -2,10 +2,10 @@ use database::{DbReadMode, DieselDatabaseError, current::read::GetDbReadCommands
 use model::{
     Account, AccountIdInternal, AdminNotification, AdminNotificationSettings,
     AppleAppAttestKeyForDataExport, BotAccountType, ClientConfigSyncVersion, ClientLanguage,
-    CustomReportString, GetApiUsageStatisticsResult, GetApiUsageStatisticsSettings,
-    GetIpAddressStatisticsResult, InitialSetupCompletedTime, LoginSessionInfo, OtherSharedState,
-    PendingAppNotification, PushNotificationDbState, ReportId, ReportIteratorQueryInternal,
-    ReportProcessingState, ReportType, ReportTypeInternal, UnixTime,
+    CustomReportString, DataConsentSettingsInternal, GetApiUsageStatisticsResult,
+    GetApiUsageStatisticsSettings, GetIpAddressStatisticsResult, InitialSetupCompletedTime,
+    LoginSessionInfo, OtherSharedState, PendingAppNotification, PushNotificationDbState, ReportId,
+    ReportIteratorQueryInternal, ReportProcessingState, ReportType, ReportTypeInternal, UnixTime,
 };
 use serde::Serialize;
 use server_data::data_export::SourceAccount;
@@ -15,6 +15,7 @@ pub struct UserDataExportJsonCommon {
     id: AccountIdInternal,
     account: Account,
     shared_state: DataExportSharedState,
+    data_consent_settings: DataConsentSettingsInternal,
     sent_reports: Vec<DataExportReport>,
     common_state: DataExportCommonState,
     api_usage_statistics: GetApiUsageStatisticsResult,
@@ -38,6 +39,7 @@ impl UserDataExportJsonCommon {
             shared_state: DataExportSharedState::new(
                 current.common().state().other_shared_state(id)?,
             ),
+            data_consent_settings: current.common().consent().data_consent_settings(id)?,
             sent_reports: DataExportReport::query(current, id)?,
             common_state: DataExportCommonState::query(current, id)?,
             api_usage_statistics: current.common_admin().statistics().api_usage_statistics(
