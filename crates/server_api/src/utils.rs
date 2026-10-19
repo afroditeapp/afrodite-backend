@@ -23,7 +23,10 @@ use server_data::{
     read::GetReadCommandsCommon,
 };
 pub use server_state::utils::StatusCode;
-use server_state::{StateForRouterCreation, app::GetAccessTokens};
+use server_state::{
+    StateForRouterCreation,
+    app::{GetAccessTokens, IpAddressUsageTrackerProvider},
+};
 use simple_backend::{create_counters, utils::client_ip_from_http_header_if_possible};
 use simple_backend_config::RUNNING_IN_DEBUG_MODE;
 use utoipa::{
@@ -67,6 +70,11 @@ pub async fn authenticate_with_access_token(
         }
 
         API.access_token_found.incr();
+        state
+            .s
+            .ip_address_usage_tracker()
+            .mark_ip_used(id.id, addr)
+            .await;
         req.extensions_mut().insert(id);
         req.extensions_mut().insert(permissions);
         req.extensions_mut().insert(account_state);
