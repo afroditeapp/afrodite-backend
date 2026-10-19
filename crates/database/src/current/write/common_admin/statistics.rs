@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use diesel::{
-    ExpressionMethods, OptionalExtension, RunQueryDsl, insert_into,
+    ExpressionMethods, OptionalExtension, RunQueryDsl, delete, insert_into,
     query_dsl::methods::{FindDsl, SelectDsl},
 };
 use model::{AccountIdDb, ApiUsage, IpAddressStorage, UnixTime};
@@ -85,6 +85,22 @@ impl CurrentWriteCommonStatistics<'_> {
                 };
             }
         }
+
+        Ok(())
+    }
+
+    /// Delete IP address usage statistics entries which have not
+    /// been used after `retention_unix_time`.
+    pub fn delete_old_ip_address_data(
+        mut self,
+        retention_unix_time: UnixTime,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::ip_address_usage_statistics::dsl::*;
+
+        delete(ip_address_usage_statistics)
+            .filter(latest_usage_unix_time.lt(retention_unix_time))
+            .execute(self.conn())
+            .into_db_error(())?;
 
         Ok(())
     }

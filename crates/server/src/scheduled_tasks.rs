@@ -149,7 +149,31 @@ impl ScheduledTaskManager {
         self.delete_processed_reports_which_have_user_data().await?;
         self.prune_email_address_history().await?;
         self.prune_sign_in_with_history().await?;
+        self.prune_ip_address_usage_data().await?;
         backup_data(&self.state, quit_notification).await?;
+        Ok(())
+    }
+
+    async fn prune_ip_address_usage_data(&self) -> Result<(), ScheduledTaskError> {
+        let retention_duration = self
+            .state
+            .config()
+            .limits_common()
+            .ip_address_usage_statistics_retention_duration;
+
+        let retention_unix_time = UnixTime::new(
+            UnixTime::current_time().ut - Into::<i64>::into(retention_duration.seconds),
+        );
+
+        db_write_raw!(self.state, move |cmds| {
+            cmds.common_admin()
+                .statistics()
+                .delete_old_ip_address_data(retention_unix_time)
+                .await
+        })
+        .await
+        .change_context(ScheduledTaskError::DatabaseError)?;
+
         Ok(())
     }
 

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use database::current::write::GetDbWriteCommandsCommon;
-use model::{AccountIdDb, ApiUsage, IpAddressStorage};
+use model::{AccountIdDb, ApiUsage, IpAddressStorage, UnixTime};
 
 use crate::{
     DataError, db_transaction, define_cmd_wrapper_write, result::Result, write::DbTransaction,
@@ -25,6 +25,17 @@ impl WriteCommandsCommonAdminStatistics<'_> {
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
             cmds.common_admin().statistics().save_ip_address_data(data)
+        })
+    }
+
+    pub async fn delete_old_ip_address_data(
+        &self,
+        retention_unix_time: UnixTime,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.common_admin()
+                .statistics()
+                .delete_old_ip_address_data(retention_unix_time)
         })
     }
 }
