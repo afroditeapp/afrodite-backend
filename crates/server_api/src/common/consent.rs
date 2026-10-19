@@ -1,11 +1,13 @@
 use axum::{Extension, extract::State};
-use model::{AccountIdInternal, DataConsentSettings, UpdateDataConsentSettings};
+use model::{
+    AccountIdInternal, AdminBotNotificationTypes, DataConsentSettings, UpdateDataConsentSettings,
+};
 use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
 use simple_backend::create_counters;
 
 use crate::{
     S,
-    app::{ReadData, WriteData},
+    app::{AdminNotificationProvider, ReadData, WriteData},
     create_open_api_router, db_write,
     utils::{Json, StatusCode},
 };
@@ -66,6 +68,15 @@ pub async fn post_data_consent_settings(
             .upsert_data_consent_settings(id, settings)
             .await
     })?;
+
+    if settings.allow_face_verification == Some(true) {
+        state
+            .admin_notification()
+            .send_bot_notification_if_needed(
+                AdminBotNotificationTypes::VERIFY_MEDIA_CONTENT_FACE_BOT,
+            )
+            .await;
+    }
 
     Ok(())
 }
