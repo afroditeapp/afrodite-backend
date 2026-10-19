@@ -47,6 +47,7 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**post_cancel_email_change**](docs/AccountApi.md#post_cancel_email_change) | **POST** /account_api/cancel_email_change | Cancel email changing process
 *AccountApi* | [**post_complete_setup**](docs/AccountApi.md#post_complete_setup) | **POST** /account_api/complete_setup | Complete initial setup.
 *AccountApi* | [**post_custom_report_empty**](docs/AccountApi.md#post_custom_report_empty) | **POST** /account_api/custom_report_empty | Send custom report without any content
+*AccountApi* | [**post_custom_report_string**](docs/AccountApi.md#post_custom_report_string) | **POST** /account_api/custom_report_string | Send custom report with string content
 *AccountApi* | [**post_demo_account_accessible_accounts**](docs/AccountApi.md#post_demo_account_accessible_accounts) | **POST** /account_api/demo_account_accessible_accounts | Get demo account's available accounts.
 *AccountApi* | [**post_demo_account_login**](docs/AccountApi.md#post_demo_account_login) | **POST** /account_api/demo_account_login | Access demo account, which allows accessing all or specific accounts depending on the server configuration.
 *AccountApi* | [**post_demo_account_login_to_account**](docs/AccountApi.md#post_demo_account_login_to_account) | **POST** /account_api/demo_account_login_to_account | 
@@ -80,6 +81,7 @@ Class | Method | HTTP request | Description
 *AccountAdminApi* | [**get_account_id_from_email**](docs/AccountAdminApi.md#get_account_id_from_email) | **GET** /account_api/get_account_id_from_email/{email} | Get account ID from email
 *AccountAdminApi* | [**get_account_locked_state**](docs/AccountAdminApi.md#get_account_locked_state) | **GET** /account_api/get_account_locked_state/{aid} | Get account locked state
 *AccountAdminApi* | [**get_account_login_session_info**](docs/AccountAdminApi.md#get_account_login_session_info) | **GET** /account_api/get_account_login_session_info/{aid} | Get login session info for specific account.
+*AccountAdminApi* | [**get_account_sign_in_with_state_admin**](docs/AccountAdminApi.md#get_account_sign_in_with_state_admin) | **GET** /account_api/get_account_sign_in_with_state_admin/{aid} | Get sign in with Apple and Google state for specific account.
 *AccountAdminApi* | [**get_account_state_admin**](docs/AccountAdminApi.md#get_account_state_admin) | **GET** /account_api/get_account_state_admin/{aid} | Get [model::Account] for specific account.
 *AccountAdminApi* | [**get_account_verification_queue_next_item**](docs/AccountAdminApi.md#get_account_verification_queue_next_item) | **GET** /account_api/account_verification_queue_next_item | Get next item in account verification queue.
 *AccountAdminApi* | [**get_all_admins**](docs/AccountAdminApi.md#get_all_admins) | **GET** /account_api/get_all_admins | Get all admins
@@ -158,6 +160,7 @@ Class | Method | HTTP request | Description
 *CommonApi* | [**get_client_config**](docs/CommonApi.md#get_client_config) | **GET** /common_api/client_config | 
 *CommonApi* | [**get_client_language**](docs/CommonApi.md#get_client_language) | **GET** /common_api/client_language | 
 *CommonApi* | [**get_connect_websocket**](docs/CommonApi.md#get_connect_websocket) | **GET** /common_api/connect | Connect to server using WebSocket after getting refresh and access tokens.
+*CommonApi* | [**get_data_consent_settings**](docs/CommonApi.md#get_data_consent_settings) | **GET** /common_api/data_consent_settings | Get current data consent settings.
 *CommonApi* | [**get_data_export_archive**](docs/CommonApi.md#get_data_export_archive) | **GET** /common_api/data_export_archive | Download current data export archive
 *CommonApi* | [**get_data_export_state**](docs/CommonApi.md#get_data_export_state) | **GET** /common_api/data_export_state | 
 *CommonApi* | [**get_manual_server_maintenance_info_for_another_server**](docs/CommonApi.md#get_manual_server_maintenance_info_for_another_server) | **GET** /common_api/manual_server_maintenance_info_for_another_server | Get manual server maintenance info for another server.
@@ -167,6 +170,7 @@ Class | Method | HTTP request | Description
 *CommonApi* | [**post_automatic_profile_search_get_next_profile_page**](docs/CommonApi.md#post_automatic_profile_search_get_next_profile_page) | **POST** /common_api/automatic_profile_search/next | Post (updates iterator) to get next page of automatic profile search profile list.
 *CommonApi* | [**post_automatic_profile_search_reset_profile_paging**](docs/CommonApi.md#post_automatic_profile_search_reset_profile_paging) | **POST** /common_api/automatic_profile_search/reset | Reset automatic profile search profile paging.
 *CommonApi* | [**post_client_language**](docs/CommonApi.md#post_client_language) | **POST** /common_api/client_language | 
+*CommonApi* | [**post_data_consent_settings**](docs/CommonApi.md#post_data_consent_settings) | **POST** /common_api/data_consent_settings | Update specific data consent setting fields.
 *CommonApi* | [**post_delete_pending_app_notifications**](docs/CommonApi.md#post_delete_pending_app_notifications) | **POST** /common_api/pending_app_notifications/delete | 
 *CommonApi* | [**post_get_next_profile_page**](docs/CommonApi.md#post_get_next_profile_page) | **POST** /common_api/profile/page/next | Post (updates iterator) to get next page of profile list.
 *CommonApi* | [**post_reset_profile_paging**](docs/CommonApi.md#post_reset_profile_paging) | **POST** /common_api/profile/page/reset | Reset profile paging.
@@ -404,6 +408,7 @@ Class | Method | HTTP request | Description
  - [DailyLikesConfig](docs/DailyLikesConfig.md)
  - [DailyLikesLeft](docs/DailyLikesLeft.md)
  - [DailyLikesLeftSyncVersion](docs/DailyLikesLeftSyncVersion.md)
+ - [DataConsentSettings](docs/DataConsentSettings.md)
  - [DataExportName](docs/DataExportName.md)
  - [DataExportState](docs/DataExportState.md)
  - [DataExportStateType](docs/DataExportStateType.md)
@@ -497,6 +502,7 @@ Class | Method | HTTP request | Description
  - [LikesConfig](docs/LikesConfig.md)
  - [LimitedActionStatus](docs/LimitedActionStatus.md)
  - [Location](docs/Location.md)
+ - [LoginMethod](docs/LoginMethod.md)
  - [LoginPhaseOneResult](docs/LoginPhaseOneResult.md)
  - [LoginPhaseTwoResult](docs/LoginPhaseTwoResult.md)
  - [LoginPhaseTwoToken](docs/LoginPhaseTwoToken.md)
@@ -563,6 +569,7 @@ Class | Method | HTTP request | Description
  - [PerfMetricValues](docs/PerfMetricValues.md)
  - [Permissions](docs/Permissions.md)
  - [PlayIntegrityAppAttestation](docs/PlayIntegrityAppAttestation.md)
+ - [PortNumber](docs/PortNumber.md)
  - [PostAccountVerificationQueueItemResult](docs/PostAccountVerificationQueueItemResult.md)
  - [PostAccountVerificationQueueRemoveNextItem](docs/PostAccountVerificationQueueRemoveNextItem.md)
  - [PostAgeVerification](docs/PostAgeVerification.md)
@@ -708,6 +715,8 @@ Class | Method | HTTP request | Description
  - [UpdateChatMessageReports](docs/UpdateChatMessageReports.md)
  - [UpdateCustomEmail](docs/UpdateCustomEmail.md)
  - [UpdateCustomReportEmpty](docs/UpdateCustomReportEmpty.md)
+ - [UpdateCustomReportString](docs/UpdateCustomReportString.md)
+ - [UpdateDataConsentSettings](docs/UpdateDataConsentSettings.md)
  - [UpdateNewsTranslation](docs/UpdateNewsTranslation.md)
  - [UpdateNewsTranslationResult](docs/UpdateNewsTranslationResult.md)
  - [UpdateProfileAttributesSchema](docs/UpdateProfileAttributesSchema.md)

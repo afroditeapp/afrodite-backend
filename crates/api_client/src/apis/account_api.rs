@@ -206,6 +206,16 @@ pub enum PostCustomReportEmptyError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`post_custom_report_string`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum PostCustomReportStringError {
+    Status401(),
+    Status429(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`post_demo_account_accessible_accounts`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -1172,6 +1182,46 @@ pub async fn post_custom_report_empty(configuration: &configuration::Configurati
     } else {
         let content = resp.text().await?;
         let entity: Option<PostCustomReportEmptyError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn post_custom_report_string(configuration: &configuration::Configuration, update_custom_report_string: models::UpdateCustomReportString) -> Result<models::UpdateReportResult, Error<PostCustomReportStringError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_update_custom_report_string = update_custom_report_string;
+
+    let uri_str = format!("{}/account_api/custom_report_string", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_update_custom_report_string);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::UpdateReportResult`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::UpdateReportResult`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<PostCustomReportStringError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

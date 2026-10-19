@@ -15,6 +15,9 @@ use serde::{Deserialize, Serialize};
 pub struct ReportContent {
     #[serde(rename = "chat_message", skip_serializing_if = "Option::is_none")]
     pub chat_message: Option<models::ChatMessageReport>,
+    /// Custom report string content.  Max 200 grapheme clusters. The value is stored as UTF-8 bytes in the database, so the max byte count is 4 times the grapheme cluster count.
+    #[serde(rename = "custom_report_string", skip_serializing_if = "Option::is_none")]
+    pub custom_report_string: Option<String>,
     #[serde(rename = "profile_content", skip_serializing_if = "Option::is_none")]
     pub profile_content: Option<models::ContentId>,
     /// Null or non-empty string
@@ -29,6 +32,7 @@ impl ReportContent {
     pub fn new() -> ReportContent {
         ReportContent {
             chat_message: None,
+            custom_report_string: None,
             profile_content: None,
             profile_name: None,
             profile_text: None,

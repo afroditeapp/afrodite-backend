@@ -21,18 +21,32 @@ pub struct LoginSessionInfo {
     pub app_attestation_failed: Option<Option<bool>>,
     #[serde(rename = "app_attestation_type_number", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub app_attestation_type_number: Option<Option<models::AppAttestationTypeNumber>>,
+    /// Client's IP address from the latest login.
+    #[serde(rename = "client_ip")]
+    pub client_ip: String,
     #[serde(rename = "client_platform", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub client_platform: Option<Option<models::ClientType>>,
+    #[serde(rename = "client_port", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub client_port: Option<Option<models::PortNumber>>,
+    #[serde(rename = "login_method")]
+    pub login_method: models::LoginMethod,
+    /// Login session start time.
+    #[serde(rename = "start_unix_time")]
+    pub start_unix_time: models::UnixTime,
 }
 
 impl LoginSessionInfo {
-    pub fn new() -> LoginSessionInfo {
+    pub fn new(client_ip: String, login_method: models::LoginMethod, start_unix_time: models::UnixTime) -> LoginSessionInfo {
         LoginSessionInfo {
             app_attestation_app_integrity: None,
             app_attestation_device_integrity: None,
             app_attestation_failed: None,
             app_attestation_type_number: None,
+            client_ip,
             client_platform: None,
+            client_port: None,
+            login_method,
+            start_unix_time,
         }
     }
 }

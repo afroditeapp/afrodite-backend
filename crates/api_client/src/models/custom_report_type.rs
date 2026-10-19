@@ -16,6 +16,8 @@ use serde::{Deserialize, Serialize};
 pub enum CustomReportType {
     #[serde(rename = "Empty")]
     Empty,
+    #[serde(rename = "String")]
+    String,
 
 }
 
@@ -23,6 +25,7 @@ impl std::fmt::Display for CustomReportType {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Self::Empty => write!(f, "Empty"),
+            Self::String => write!(f, "String"),
         }
     }
 }

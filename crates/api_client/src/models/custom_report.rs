@@ -13,6 +13,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct CustomReport {
+    /// Default description for the report which client shows below the report name. The translation key for the description is `{key}_description`.
+    #[serde(rename = "description", skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
     #[serde(rename = "id")]
     pub id: i32,
     #[serde(rename = "key")]
@@ -34,6 +37,7 @@ pub struct CustomReport {
 impl CustomReport {
     pub fn new(id: i32, key: String, name: String, order_number: i32, report_type: models::CustomReportType) -> CustomReport {
         CustomReport {
+            description: None,
             id,
             key,
             name,
