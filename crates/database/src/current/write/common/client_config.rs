@@ -3,7 +3,7 @@ use error_stack::ResultExt;
 use model::{
     AccountIdInternal, AppAttestationResult, ClientLanguage, ClientType,
     DynamicClientFeaturesConfig, DynamicClientFeaturesConfigHash, DynamicServerConfig,
-    IpAddressInternal, PortNumber, SyncVersion, UnixTime,
+    IpAddressInternal, LoginMethod, PortNumber, SyncVersion, UnixTime,
 };
 use simple_backend_utils::{Result, db::MyRunQueryDsl};
 
@@ -156,6 +156,7 @@ impl CurrentWriteCommonClientConfig<'_> {
         platform: ClientType,
         port: Option<PortNumber>,
         ip: IpAddressInternal,
+        login_method: LoginMethod,
         attestation: Option<AppAttestationResult>,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::login_session_info::dsl::*;
@@ -185,6 +186,7 @@ impl CurrentWriteCommonClientConfig<'_> {
                 client_port.eq(port),
                 client_ip.eq(ip),
                 start_unix_time.eq(start_time),
+                login_method_number.eq(login_method),
                 app_attestation_type_number.eq(attestation_type),
                 app_attestation_app_integrity.eq(app_integrity),
                 app_attestation_device_integrity.eq(device_integrity),
@@ -197,6 +199,7 @@ impl CurrentWriteCommonClientConfig<'_> {
                 client_port.eq(port),
                 client_ip.eq(ip),
                 start_unix_time.eq(start_time),
+                login_method_number.eq(login_method),
                 app_attestation_type_number.eq(attestation_type),
                 app_attestation_app_integrity.eq(app_integrity),
                 app_attestation_device_integrity.eq(device_integrity),

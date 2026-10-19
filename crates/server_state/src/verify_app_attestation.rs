@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use base64::Engine;
-use model::{AccountIdInternal, ClientType, LoginPhaseTwoToken, UnixTime};
+use model::{AccountIdInternal, ClientType, LoginMethod, LoginPhaseTwoToken, UnixTime};
 use simple_backend_utils::time::DurationValue;
 use tokio::sync::Mutex;
 use utils::random_bytes::random_128_bits;
@@ -9,6 +9,7 @@ use utils::random_bytes::random_128_bits;
 struct PendingLogin {
     account_id: AccountIdInternal,
     client_type: ClientType,
+    login_method: LoginMethod,
     connection_ip: std::net::IpAddr,
     unix_time: UnixTime,
 }
@@ -70,6 +71,7 @@ impl VerifyAppAttestationTokenStore {
         &self,
         account_id: AccountIdInternal,
         client_type: ClientType,
+        login_method: LoginMethod,
         connection_ip: std::net::IpAddr,
     ) -> LoginPhaseTwoToken {
         let mut lock = self.inner.lock().await;
@@ -88,6 +90,7 @@ impl VerifyAppAttestationTokenStore {
             PendingLogin {
                 account_id,
                 client_type,
+                login_method,
                 connection_ip,
                 unix_time,
             },
@@ -105,6 +108,7 @@ impl VerifyAppAttestationTokenStore {
     ) -> Option<(
         AccountIdInternal,
         ClientType,
+        LoginMethod,
         std::net::IpAddr,
         Option<String>,
     )> {
@@ -114,6 +118,7 @@ impl VerifyAppAttestationTokenStore {
             Some((
                 entry.account_id,
                 entry.client_type,
+                entry.login_method,
                 entry.connection_ip,
                 lock.challenges
                     .get(&entry.account_id)

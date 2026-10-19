@@ -61,7 +61,30 @@ pub enum ClientType {
     Bot = WebSocketClientTypeNumber::Bot as i16,
 }
 
-#[derive(Debug, Clone, Default, Serialize, ToSchema)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Deserialize,
+    Serialize,
+    PartialEq,
+    ToSchema,
+    TryFromPrimitive,
+    SimpleDieselEnum,
+    diesel::FromSqlRow,
+    diesel::AsExpression,
+)]
+#[diesel(sql_type = SmallInt)]
+#[repr(i16)]
+pub enum LoginMethod {
+    Email = 0,
+    Apple = 1,
+    Google = 2,
+    Demo = 3,
+    Bot = 4,
+}
+
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct LoginSessionInfo {
     pub client_platform: Option<ClientType>,
     pub client_port: Option<PortNumber>,
@@ -69,6 +92,7 @@ pub struct LoginSessionInfo {
     pub client_ip: String,
     /// Login session start time.
     pub start_unix_time: UnixTime,
+    pub login_method: LoginMethod,
     pub app_attestation_type_number: Option<AppAttestationTypeNumber>,
     pub app_attestation_app_integrity: Option<bool>,
     pub app_attestation_device_integrity: Option<bool>,
@@ -83,6 +107,7 @@ pub struct LoginSessionInfoInternal {
     pub client_port: Option<PortNumber>,
     pub client_ip: IpAddressInternal,
     pub start_unix_time: UnixTime,
+    pub login_method_number: LoginMethod,
     pub app_attestation_type_number: Option<AppAttestationTypeNumber>,
     pub app_attestation_app_integrity: Option<bool>,
     pub app_attestation_device_integrity: Option<bool>,
@@ -96,6 +121,7 @@ impl From<LoginSessionInfoInternal> for LoginSessionInfo {
             client_port: value.client_port,
             client_ip: value.client_ip.to_ip_addr().to_string(),
             start_unix_time: value.start_unix_time,
+            login_method: value.login_method_number,
             app_attestation_type_number: value.app_attestation_type_number,
             app_attestation_app_integrity: value.app_attestation_app_integrity,
             app_attestation_device_integrity: value.app_attestation_device_integrity,

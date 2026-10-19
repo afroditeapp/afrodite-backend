@@ -165,7 +165,7 @@ pub async fn post_verify_app_attestation(
         return Ok(LoginPhaseTwoResult::error_invalid_verify_app_attestation_token().into());
     };
 
-    let Some((account_id, client_type, connection_ip, challenge)) = state
+    let Some((account_id, client_type, login_method, connection_ip, challenge)) = state
         .verify_app_attestation_tokens()
         .consume(&token_bytes)
         .await
@@ -227,6 +227,7 @@ pub async fn post_verify_app_attestation(
     let r = login_impl(
         account_id.as_id(),
         client_type,
+        login_method,
         attestation_result,
         connection,
         &state,

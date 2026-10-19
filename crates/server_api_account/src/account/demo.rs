@@ -1,6 +1,7 @@
 use std::time::{Duration, Instant};
 
 use axum::extract::State;
+use model::LoginMethod;
 use model_account::{
     AccessibleAccount, DemoAccountLoginToAccount, LoginPhaseOneResult, SignInWithInfo,
 };
@@ -185,6 +186,7 @@ pub async fn post_demo_account_login_to_account(
         &state,
         internal_id,
         info.client_info.client_type,
+        LoginMethod::Demo,
         connection.id(),
     )
     .await?;

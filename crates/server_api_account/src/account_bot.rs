@@ -4,7 +4,7 @@ use std::{
 };
 
 use axum::extract::State;
-use model::{BotAccountType, ClientType};
+use model::{BotAccountType, ClientType, LoginMethod};
 use model_account::{
     AccountId, BotAccount, EmailAddress, GetBotsResult, LoginResult, RemoteBotLogin,
     RemoteBotPassword, SignInWithInfo,
@@ -57,7 +57,15 @@ pub async fn post_bot_login(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let r = login_impl(id, ClientType::Bot, None, connection, &state).await?;
+    let r = login_impl(
+        id,
+        ClientType::Bot,
+        LoginMethod::Bot,
+        None,
+        connection,
+        &state,
+    )
+    .await?;
 
     Ok(r.into())
 }
@@ -310,7 +318,15 @@ async fn post_remote_bot_login_internal(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let r = login_impl(info.aid, ClientType::Bot, None, connection, state).await?;
+    let r = login_impl(
+        info.aid,
+        ClientType::Bot,
+        LoginMethod::Bot,
+        None,
+        connection,
+        state,
+    )
+    .await?;
 
     Ok(r.into())
 }

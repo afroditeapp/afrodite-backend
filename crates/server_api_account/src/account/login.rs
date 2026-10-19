@@ -2,7 +2,9 @@ use std::{collections::HashMap, net::IpAddr, time::Instant};
 
 use axum::{Form, extract::State, response::Redirect};
 use base64::Engine;
-use model::{AccountIdInternal, ClientLanguage, ClientType, EmailLoginToken, UnixTime};
+use model::{
+    AccountIdInternal, ClientLanguage, ClientType, EmailLoginToken, LoginMethod, UnixTime,
+};
 use model_account::{
     AccessToken, AccountId, AppleAccountId, AuthPair, EmailAddress, EmailLogin, GoogleAccountId,
     LoginPhaseOneResult, LoginResult, RefreshToken, RequestEmailLoginToken,
@@ -38,6 +40,7 @@ pub mod register;
 pub async fn login_impl(
     id: AccountId,
     client_type: ClientType,
+    login_method: LoginMethod,
     attestation: Option<AppAttestationResult>,
     connection: ConnectionDetails,
     state: &S,
@@ -73,6 +76,7 @@ pub async fn login_impl(
                 client_type,
                 connection.port(),
                 connection.id().ip().into(),
+                login_method,
                 attestation,
             )
             .await?;
@@ -94,11 +98,12 @@ pub(super) async fn store_pending_login(
     state: &S,
     id: AccountIdInternal,
     client_type: ClientType,
+    login_method: LoginMethod,
     connection: ConnectionId,
 ) -> Result<LoginPhaseOneResult, StatusCode> {
     let token = state
         .verify_app_attestation_tokens()
-        .insert(id, client_type, connection.ip())
+        .insert(id, client_type, login_method, connection.ip())
         .await;
     Ok(LoginPhaseOneResult::verify_app_attestation(
         token,
@@ -349,6 +354,7 @@ pub async fn post_sign_in_with_login(
             &state,
             connection,
             tokens.client_info.client_type,
+            LoginMethod::Apple,
             tokens.language,
             info,
         )
@@ -365,6 +371,7 @@ pub async fn post_sign_in_with_login(
             &state,
             connection,
             tokens.client_info.client_type,
+            LoginMethod::Google,
             tokens.language,
             info,
         )
@@ -380,6 +387,7 @@ async fn handle_sign_in_with_info(
     state: &S,
     connection: ConnectionDetails,
     client_type: ClientType,
+    login_method: LoginMethod,
     language: Option<ClientLanguage>,
     info: impl SignInWithInfoTrait,
 ) -> Result<LoginPhaseOneResult, StatusCode> {
@@ -394,6 +402,7 @@ async fn handle_sign_in_with_info(
             state,
             already_existing_account,
             client_type,
+            login_method,
             connection.id(),
         )
         .await
@@ -422,7 +431,7 @@ async fn handle_sign_in_with_info(
                 return Ok(LoginPhaseOneResult::error_email_already_used());
             }
         };
-        store_pending_login(state, id, client_type, connection.id()).await
+        store_pending_login(state, id, client_type, login_method, connection.id()).await
     }
 }
 
@@ -909,6 +918,7 @@ async fn post_email_login_with_token_impl(
                 &state,
                 account_id,
                 request.client_info.client_type,
+                LoginMethod::Email,
                 connection,
             )
             .await?;

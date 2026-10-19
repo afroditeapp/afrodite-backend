@@ -1,4 +1,4 @@
-use model::{ClientLanguage, ClientType};
+use model::{ClientLanguage, ClientType, LoginMethod};
 use model_account::{EmailAddress, LoginPhaseOneResult, RequestEmailLoginToken, SignInWithInfo};
 use server_api::{S, TokenData, app::GetConfig, db_write};
 use server_data::app::RegisterImplResult;
@@ -69,5 +69,5 @@ pub(super) async fn email_registration_with_token_impl(
 
     // email_verified: no need to send events as user hasn't yet logged in
 
-    store_pending_login(&state, id, client_type, connection).await
+    store_pending_login(&state, id, client_type, LoginMethod::Email, connection).await
 }
