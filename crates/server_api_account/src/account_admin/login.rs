@@ -3,7 +3,7 @@ use axum::{
     extract::{Path, State},
 };
 use model::{AccountId, Permissions};
-use model_account::{AccountLockedState, GetAccountLoginSessionInfo};
+use model_account::{AccountLockedState, GetAccountLoginSessionInfo, SignInWithState};
 use server_api::{
     S,
     app::{GetAccounts, ReadData, WriteData},
@@ -144,11 +144,57 @@ pub async fn get_account_login_session_info(
     Ok(GetAccountLoginSessionInfo { info }.into())
 }
 
+const PATH_GET_ACCOUNT_SIGN_IN_WITH_STATE_ADMIN: &str =
+    "/account_api/get_account_sign_in_with_state_admin/{aid}";
+
+/// Get sign in with Apple and Google state for specific account.
+///
+/// # Access
+///
+/// Permission [model::Permissions::admin_view_login] is required.
+#[utoipa::path(
+    get,
+    path = PATH_GET_ACCOUNT_SIGN_IN_WITH_STATE_ADMIN,
+    params(AccountId),
+    responses(
+        (status = 200, description = "Successful.", body = SignInWithState),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_account_sign_in_with_state_admin(
+    State(state): State<S>,
+    Extension(permissions): Extension<Permissions>,
+    Path(account_id): Path<AccountId>,
+) -> Result<Json<SignInWithState>, StatusCode> {
+    ACCOUNT_ADMIN.get_account_sign_in_with_state_admin.incr();
+
+    if !permissions.admin_view_login {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    let internal_id = state.get_internal_id(account_id).await?;
+
+    let info = state
+        .read()
+        .account()
+        .account_sign_in_with_info(internal_id)
+        .await?;
+
+    Ok(SignInWithState {
+        apple: info.apple_account_id.is_some(),
+        google: info.google_account_id.is_some(),
+    }
+    .into())
+}
+
 create_open_api_router!(
     fn router_admin_login,
     get_account_locked_state,
     post_set_account_locked_state,
     get_account_login_session_info,
+    get_account_sign_in_with_state_admin,
 );
 
 create_counters!(
@@ -158,4 +204,5 @@ create_counters!(
     get_account_locked_state,
     post_set_account_locked_state,
     get_account_login_session_info,
+    get_account_sign_in_with_state_admin,
 );
