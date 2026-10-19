@@ -21,7 +21,7 @@ use simple_backend::{
     image::{ImageProcess, ImageProcessError},
 };
 use simple_backend_image_process::ImageProcessingInfo;
-use tokio::task::JoinHandle;
+use tokio::{sync::broadcast::error::TryRecvError, task::JoinHandle};
 use tracing::{error, warn};
 
 #[derive(thiserror::Error, Debug)]
@@ -95,7 +95,7 @@ impl ContentProcessingManager {
                                 )
                                 .await;
                         }
-                        if let Ok(()) = quit_notification.try_recv() {
+                        if quit_notification.try_recv() != Err(TryRecvError::Empty) {
                             // Server quit started
                             return
                         }
