@@ -12,6 +12,7 @@ use server_api::{
     S, TokenData,
     app::{GetConfig, GetDynamicServerConfig},
     db_write,
+    utils::ConnectionId,
 };
 use server_data::{
     IntoDataError, app::RegisterImplResult, db_manager::InternalReading, email::EmailSendingHandle,
@@ -23,19 +24,22 @@ use simple_backend::{
     create_counters,
     sign_in_with::{apple::AppleAccountInfo, google::GoogleAccountInfo},
 };
+use simple_backend_model::AppAttestationResult;
 use tokio::time::{Duration, timeout};
 
 use crate::{
     account::login::register::request_email_registration_token,
     app::{GetAccounts, ReadData, WriteData},
-    utils::{ClientConnectionId, ClientIp, ConnectionId, Json, StatusCode},
+    utils::{ClientConnectionDetails, ClientIp, ConnectionDetails, Json, StatusCode},
 };
 
 pub mod register;
 
 pub async fn login_impl(
     id: AccountId,
-    connection: ConnectionId,
+    client_type: ClientType,
+    attestation: Option<AppAttestationResult>,
+    connection: ConnectionDetails,
     state: &S,
 ) -> Result<LoginResult, StatusCode> {
     let id = state.get_internal_id(id).await?;
@@ -62,9 +66,13 @@ pub async fn login_impl(
             .push_notification()
             .remove_push_notification_device_token_and_encryption_key(id)
             .await?;
+        cmds.common()
+            .client_config()
+            .login_session_info(id, client_type, connection.port(), attestation)
+            .await?;
         cmds.cache()
             .websocket_cache_cmds()
-            .init_login_session(id.into(), tokens_clone, connection, false)
+            .init_login_session(id.into(), tokens_clone, connection.id(), false)
             .await
             .into_error()?;
         Ok(())
@@ -308,7 +316,7 @@ async fn validate_email_registration_domain(
 )]
 pub async fn post_sign_in_with_login(
     State(state): State<S>,
-    ClientConnectionId(connection): ClientConnectionId,
+    ClientConnectionDetails(connection): ClientConnectionDetails,
     Json(tokens): Json<SignInWithLoginInfo>,
 ) -> Result<Json<LoginPhaseOneResult>, StatusCode> {
     ACCOUNT.post_sign_in_with_login.incr();
@@ -364,7 +372,7 @@ pub async fn post_sign_in_with_login(
 
 async fn handle_sign_in_with_info(
     state: &S,
-    connection: ConnectionId,
+    connection: ConnectionDetails,
     client_type: ClientType,
     language: Option<ClientLanguage>,
     info: impl SignInWithInfoTrait,
@@ -376,7 +384,13 @@ async fn handle_sign_in_with_info(
     let already_existing_account = info.already_existing_account(state).await?;
 
     if let Some(already_existing_account) = already_existing_account {
-        store_pending_login(state, already_existing_account, client_type, connection).await
+        store_pending_login(
+            state,
+            already_existing_account,
+            client_type,
+            connection.id(),
+        )
+        .await
     } else {
         if let Err(error) = validate_registration_platform(state, client_type).await {
             return Ok(error);
@@ -393,7 +407,7 @@ async fn handle_sign_in_with_info(
                 info.sign_in_with_info(),
                 Some(email),
                 language,
-                connection.ip(),
+                connection.id().ip(),
             )
             .await?
         {
@@ -402,7 +416,7 @@ async fn handle_sign_in_with_info(
                 return Ok(LoginPhaseOneResult::error_email_already_used());
             }
         };
-        store_pending_login(state, id, client_type, connection).await
+        store_pending_login(state, id, client_type, connection.id()).await
     }
 }
 
@@ -832,14 +846,14 @@ pub const PATH_POST_EMAIL_LOGIN_WITH_TOKEN: &str = "/account_api/email_login_wit
 )]
 pub async fn post_email_login_with_token(
     State(state): State<S>,
-    ClientConnectionId(connection): ClientConnectionId,
+    ClientConnectionDetails(connection): ClientConnectionDetails,
     Json(request): Json<EmailLogin>,
 ) -> Result<Json<LoginPhaseOneResult>, StatusCode> {
     ACCOUNT.post_email_login_with_token.incr();
 
     let wait_until = Instant::now() + Duration::from_secs(5);
 
-    let r = post_email_login_with_token_impl(state, connection, request).await;
+    let r = post_email_login_with_token_impl(state, connection.id(), request).await;
 
     // Wait until at least 5 seconds have elapsed
     tokio::time::sleep_until(wait_until.into()).await;

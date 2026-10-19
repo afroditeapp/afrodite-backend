@@ -18,7 +18,7 @@ use model::{
     RefreshToken, WebSocketClientInfo, WebSocketClientTypeNumber,
 };
 use model_server_data::AuthPair;
-use server_common::websocket::WebSocketError;
+use server_common::{data::connection_id::ConnectionId, websocket::WebSocketError};
 use server_data::{
     app::{EventManagerProvider, GetConfig},
     event::InternalEventType,
@@ -37,7 +37,7 @@ use server_state::{
 use simple_backend::{create_counters, web_socket::WebSocketManager};
 use tracing::{error, info};
 
-use super::utils::{ClientConnectionId, ConnectionId, StatusCode};
+use super::utils::{ClientConnectionDetails, StatusCode};
 use crate::{
     S,
     common::websocket::{
@@ -175,7 +175,7 @@ pub async fn get_connect_websocket(
     State(state): State<S>,
     websocket: WebSocketUpgrade,
     header_map: HeaderMap,
-    ClientConnectionId(connection): ClientConnectionId,
+    ClientConnectionDetails(connection): ClientConnectionDetails,
     ws_manager: WebSocketManager,
 ) -> std::result::Result<impl IntoResponse, StatusCode> {
     COMMON.get_connect_websocket.incr();
@@ -271,14 +271,14 @@ pub async fn get_connect_websocket(
             .await;
         state
             .ip_address_usage_tracker()
-            .mark_ip_used(id.id, connection.ip())
+            .mark_ip_used(id.id, connection.id().ip())
             .await;
     } else {
         COMMON.websocket_access_token_not_found.incr();
     }
 
     let response = websocket.protocols(["v1"]).on_upgrade(move |socket| {
-        handle_socket_basic_errors(socket, connection, id, state, ws_manager, info)
+        handle_socket_basic_errors(socket, connection.id(), id, state, ws_manager, info)
     });
     Ok(response)
 }

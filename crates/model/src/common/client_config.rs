@@ -14,7 +14,8 @@ use utoipa::ToSchema;
 use super::ClientConfigSyncVersion;
 use crate::{
     AccountIdDb, ClientFeaturesConfigHash, CustomReportsConfigHash,
-    DynamicClientFeaturesConfigHash, PartialProfileAttributesConfig, WebSocketClientTypeNumber,
+    DynamicClientFeaturesConfigHash, PartialProfileAttributesConfig, PortNumber,
+    WebSocketClientTypeNumber,
 };
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -65,6 +66,7 @@ pub enum ClientType {
 #[diesel(check_for_backend(crate::Db))]
 pub struct LoginSessionInfo {
     pub client_platform: Option<ClientType>,
+    pub client_port: Option<PortNumber>,
     pub app_attestation_type_number: Option<AppAttestationTypeNumber>,
     pub app_attestation_app_integrity: Option<bool>,
     pub app_attestation_device_integrity: Option<bool>,

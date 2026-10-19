@@ -6,8 +6,7 @@ use model_account::{
 };
 use server_api::{
     S,
-    app::{ApiLimitsProvider, GetAccounts},
-    db_write,
+    app::{ApiLimitsProvider, WriteData},
     utils::ClientIp,
 };
 use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
@@ -21,8 +20,8 @@ use simple_backend_utils::ContextExt;
 
 use super::login::login_impl;
 use crate::{
-    app::{ReadData, WriteData},
-    utils::{ClientConnectionId, Json, StatusCode},
+    app::ReadData,
+    utils::{ClientConnectionDetails, Json, StatusCode},
 };
 
 /// Apple App Attest key store for a specific account.
@@ -157,7 +156,7 @@ pub const PATH_POST_VERIFY_APP_ATTESTATION: &str = "/account_api/verify_app_atte
 )]
 pub async fn post_verify_app_attestation(
     State(state): State<S>,
-    ClientConnectionId(connection): ClientConnectionId,
+    ClientConnectionDetails(connection): ClientConnectionDetails,
     Json(request): Json<VerifyAppAttestationLogin>,
 ) -> Result<Json<LoginPhaseTwoResult>, StatusCode> {
     ACCOUNT.post_verify_app_attestation.incr();
@@ -176,7 +175,7 @@ pub async fn post_verify_app_attestation(
 
     // Bind the token to the IP address that initiated the login so it cannot
     // be replayed from a different IP.
-    if connection.ip() != connection_ip {
+    if connection.id().ip() != connection_ip {
         return Ok(LoginPhaseTwoResult::error_invalid_verify_app_attestation_token().into());
     }
 
@@ -225,23 +224,14 @@ pub async fn post_verify_app_attestation(
         Err(error) => return Ok(error.into()),
     };
 
-    let r = login_impl(account_id.as_id(), connection, &state).await?;
-
-    if let Some(aid) = r.aid() {
-        // Login successful
-        let id = state.get_internal_id(aid).await?;
-        db_write!(state, move |cmds| {
-            cmds.common()
-                .client_config()
-                .client_login_session_platform(id, client_type)
-                .await?;
-            cmds.common()
-                .client_config()
-                .app_attestation(id, attestation_result)
-                .await?;
-            Ok(())
-        })?;
-    }
+    let r = login_impl(
+        account_id.as_id(),
+        client_type,
+        attestation_result,
+        connection,
+        &state,
+    )
+    .await?;
 
     Ok(LoginPhaseTwoResult::from(r).into())
 }

@@ -25,7 +25,7 @@ use utils::api::{ADMIN_BOT_EMAIL, USER_BOT_EMAIL_PREFIX, USER_BOT_EMAIL_SUFFIX};
 use super::account::login_impl;
 use crate::{
     app::{GetAccounts, ReadData, WriteData},
-    utils::{ClientConnectionId, ClientIp, ConnectionId, Json, StatusCode},
+    utils::{ClientConnectionDetails, ClientIp, ConnectionDetails, Json, StatusCode},
 };
 
 pub const PATH_BOT_LOGIN: &str = "/account_api/bot_login";
@@ -46,7 +46,7 @@ pub const PATH_BOT_LOGIN: &str = "/account_api/bot_login";
 )]
 pub async fn post_bot_login(
     State(state): State<S>,
-    ClientConnectionId(connection): ClientConnectionId,
+    ClientConnectionDetails(connection): ClientConnectionDetails,
     Json(id): Json<AccountId>,
 ) -> Result<Json<LoginResult>, StatusCode> {
     ACCOUNT_BOT.post_bot_login.incr();
@@ -57,18 +57,7 @@ pub async fn post_bot_login(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let r = login_impl(id, connection, &state).await?;
-
-    if let Some(aid) = r.aid() {
-        // Login successful
-        let id = state.get_internal_id(aid).await?;
-        db_write!(state, move |cmds| {
-            cmds.common()
-                .client_config()
-                .client_login_session_platform(id, ClientType::Bot)
-                .await
-        })?;
-    }
+    let r = login_impl(id, ClientType::Bot, None, connection, &state).await?;
 
     Ok(r.into())
 }
@@ -282,7 +271,7 @@ pub const PATH_REMOTE_BOT_LOGIN: &str = "/account_api/remote_bot_login";
 )]
 pub async fn post_remote_bot_login(
     State(state): State<S>,
-    ClientConnectionId(connection): ClientConnectionId,
+    ClientConnectionDetails(connection): ClientConnectionDetails,
     Json(info): Json<RemoteBotLogin>,
 ) -> Result<Json<LoginResult>, StatusCode> {
     ACCOUNT_BOT.post_remote_bot_login.incr();
@@ -296,7 +285,7 @@ pub async fn post_remote_bot_login(
 
 async fn post_remote_bot_login_internal(
     state: &S,
-    connection: ConnectionId,
+    connection: ConnectionDetails,
     info: RemoteBotLogin,
 ) -> Result<Json<LoginResult>, StatusCode> {
     if !state.is_remote_bot_login_enabled() {
@@ -307,7 +296,7 @@ async fn post_remote_bot_login_internal(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     };
 
-    if !is_ip_address_accepted(state, connection.ip(), config.access()).await {
+    if !is_ip_address_accepted(state, connection.id().ip(), config.access()).await {
         return Err(StatusCode::NOT_FOUND);
     }
 
@@ -321,18 +310,7 @@ async fn post_remote_bot_login_internal(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    let r = login_impl(info.aid, connection, state).await?;
-
-    if let Some(aid) = r.aid() {
-        // Login successful
-        let id = state.get_internal_id(aid).await?;
-        db_write!(state, move |cmds| {
-            cmds.common()
-                .client_config()
-                .client_login_session_platform(id, ClientType::Bot)
-                .await
-        })?;
-    }
+    let r = login_impl(info.aid, ClientType::Bot, None, connection, state).await?;
 
     Ok(r.into())
 }

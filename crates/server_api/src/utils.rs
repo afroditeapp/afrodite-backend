@@ -17,7 +17,7 @@ use http::request::Parts;
 use hyper::Request;
 use model::{AccessToken, PortNumber};
 use serde::Serialize;
-pub use server_common::data::connection_id::ConnectionId;
+pub use server_common::data::connection_id::{ConnectionDetails, ConnectionId};
 use server_data::{
     app::{GetConfig, ReadData},
     read::GetReadCommandsCommon,
@@ -186,25 +186,10 @@ where
     }
 }
 
-/// Extractor which returns the client's IP address and port number as a
-/// [`ConnectionId`].
-///
-/// This is an alternative to [`ConnectInfo<SocketAddr>`] for setups where the
-/// server is behind a reverse proxy (such as Caddy) which terminates TLS.
-///
-/// When the server's public API TLS is disabled (see
-/// `[tls.public_api] disable = true`), the real client IP address is only
-/// available via the `X-Forwarded-For` HTTP header set by the reverse proxy.
-///
-/// In that case the rightmost IP address in the `X-Forwarded-For` header is
-/// used, as it is the one added by the trusted reverse proxy closest to the
-/// server. When TLS is not disabled, the header is ignored and the IP address
-/// from the actual TCP connection is used instead. The port number is always
-/// taken from the actual TCP connection.
 #[derive(Debug, Clone, Copy)]
-pub struct ClientConnectionId(pub ConnectionId);
+pub struct ClientConnectionDetails(pub ConnectionDetails);
 
-impl<S> FromRequestParts<S> for ClientConnectionId
+impl<S> FromRequestParts<S> for ClientConnectionDetails
 where
     S: Send + Sync + GetConfig,
 {
@@ -215,13 +200,22 @@ where
             .await
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-        let ip = if state.config().simple_backend().public_api_tls_disabled() {
-            client_ip_from_http_header_if_possible(&parts.headers, *connect_info)
+        let (ip, port) = if state.config().simple_backend().public_api_tls_disabled() {
+            (
+                client_ip_from_http_header_if_possible(&parts.headers, *connect_info),
+                None,
+            )
         } else {
-            connect_info.ip()
+            (
+                connect_info.ip(),
+                Some(PortNumber::new(connect_info.port())),
+            )
         };
 
-        Ok(Self(ConnectionId::new(ip, connect_info.port())))
+        Ok(Self(ConnectionDetails::new(
+            ConnectionId::new(ip, connect_info.port()),
+            port,
+        )))
     }
 }
 

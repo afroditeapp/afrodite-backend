@@ -24,7 +24,7 @@ use simple_backend::create_counters;
 use super::login::store_pending_login;
 use crate::{
     app::WriteData,
-    utils::{ClientConnectionId, ClientIp, Json, StatusCode},
+    utils::{ClientConnectionDetails, ClientIp, Json, StatusCode},
 };
 
 const PATH_POST_DEMO_ACCOUNT_LOGIN: &str = "/account_api/demo_account_login";
@@ -158,7 +158,7 @@ const PATH_POST_DEMO_ACCOUNT_LOGIN_TO_ACCOUNT: &str = "/account_api/demo_account
 )]
 pub async fn post_demo_account_login_to_account(
     State(state): State<S>,
-    ClientConnectionId(connection): ClientConnectionId,
+    ClientConnectionDetails(connection): ClientConnectionDetails,
     Json(info): Json<DemoAccountLoginToAccount>,
 ) -> Result<Json<LoginPhaseOneResult>, StatusCode> {
     ACCOUNT.post_demo_account_login_to_account.incr();
@@ -185,7 +185,7 @@ pub async fn post_demo_account_login_to_account(
         &state,
         internal_id,
         info.client_info.client_type,
-        connection,
+        connection.id(),
     )
     .await?;
 

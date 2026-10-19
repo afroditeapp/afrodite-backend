@@ -19,21 +19,33 @@ use crate::AccountId;
 /// TCP/UDP port number.
 ///
 /// Valid port values are in the range 0-65535.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, diesel::FromSqlRow, diesel::AsExpression)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    Serialize,
+    Deserialize,
+    diesel::FromSqlRow,
+    diesel::AsExpression,
+    ToSchema,
+)]
 #[diesel(sql_type = Integer)]
 pub struct PortNumber {
-    value: i32,
+    port: i32,
 }
 
 impl PortNumber {
-    pub fn new(value: u16) -> Self {
+    pub fn new(port: u16) -> Self {
         Self {
-            value: i32::from(value),
+            port: i32::from(port),
         }
     }
 
     pub fn as_u16(&self) -> u16 {
-        self.value as u16
+        self.port as u16
     }
 }
 
@@ -44,13 +56,13 @@ impl TryFrom<i32> for PortNumber {
         if value < 0 || value > u16::MAX.into() {
             return Err(format!("Invalid port number {value}"));
         }
-        Ok(Self { value })
+        Ok(Self { port: value })
     }
 }
 
 impl AsRef<i32> for PortNumber {
     fn as_ref(&self) -> &i32 {
-        &self.value
+        &self.port
     }
 }
 

@@ -215,6 +215,8 @@ CREATE TABLE IF NOT EXISTS login_session_info(
     -- 1 = iOS
     -- 2 = Web
     client_platform                  SMALLINT,
+    -- Client's TCP port number if available.
+    client_port                      INTEGER,
     -- 0 = PlayIntegrity
     -- 1 = AppleAppAttest
     app_attestation_type_number      SMALLINT,

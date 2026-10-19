@@ -2,7 +2,8 @@ use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::ResultExt;
 use model::{
     AccountIdInternal, AppAttestationResult, ClientLanguage, ClientType,
-    DynamicClientFeaturesConfig, DynamicClientFeaturesConfigHash, DynamicServerConfig, SyncVersion,
+    DynamicClientFeaturesConfig, DynamicClientFeaturesConfigHash, DynamicServerConfig, PortNumber,
+    SyncVersion,
 };
 use simple_backend_utils::{Result, db::MyRunQueryDsl};
 
@@ -149,27 +150,11 @@ impl CurrentWriteCommonClientConfig<'_> {
         Ok(())
     }
 
-    pub fn update_client_login_session_platform(
+    pub fn update_login_session_info(
         &mut self,
         id: AccountIdInternal,
-        value: ClientType,
-    ) -> Result<(), DieselDatabaseError> {
-        use model::schema::login_session_info::dsl::*;
-
-        insert_into(login_session_info)
-            .values((account_id.eq(id.as_db_id()), client_platform.eq(value)))
-            .on_conflict(account_id)
-            .do_update()
-            .set(client_platform.eq(value))
-            .execute_my_conn(self.conn())
-            .into_db_error(())?;
-
-        Ok(())
-    }
-
-    pub fn update_app_attestation(
-        &mut self,
-        id: AccountIdInternal,
+        platform: ClientType,
+        port: Option<PortNumber>,
         attestation: Option<AppAttestationResult>,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::login_session_info::dsl::*;
@@ -193,6 +178,8 @@ impl CurrentWriteCommonClientConfig<'_> {
         insert_into(login_session_info)
             .values((
                 account_id.eq(id.as_db_id()),
+                client_platform.eq(platform),
+                client_port.eq(port),
                 app_attestation_type_number.eq(attestation_type),
                 app_attestation_app_integrity.eq(app_integrity),
                 app_attestation_device_integrity.eq(device_integrity),
@@ -201,6 +188,8 @@ impl CurrentWriteCommonClientConfig<'_> {
             .on_conflict(account_id)
             .do_update()
             .set((
+                client_platform.eq(platform),
+                client_port.eq(port),
                 app_attestation_type_number.eq(attestation_type),
                 app_attestation_app_integrity.eq(app_integrity),
                 app_attestation_device_integrity.eq(device_integrity),
