@@ -440,7 +440,12 @@ pub async fn put_upload_content(
         )
         .await;
 
-    Ok(PutContentToContentSlotResult::ok().into())
+    let processing_state = state
+        .content_processing()
+        .get_current_state(account_id)
+        .await;
+
+    Ok(PutContentToContentSlotResult::ok(processing_state).into())
 }
 
 const PATH_GET_CONTENT_PROCESSING_STATE: &str = "/media_api/content_processing_state";

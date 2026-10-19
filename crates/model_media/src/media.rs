@@ -1,7 +1,8 @@
 use diesel::{prelude::*, sql_types::SmallInt};
 use model::{
-    ContentId, ContentIdDb, ContentSlot, IpAddressInternal, MediaVerificationStatusFlags,
-    PortNumber, ProfileContentVersion, UnixTime, sync_version_wrappers,
+    ContentId, ContentIdDb, ContentProcessingState, ContentSlot, IpAddressInternal,
+    MediaVerificationStatusFlags, PortNumber, ProfileContentVersion, UnixTime,
+    sync_version_wrappers,
 };
 use model_server_data::{MediaContentType, ProfileContentEditedTime};
 use num_enum::TryFromPrimitive;
@@ -515,6 +516,10 @@ impl SetProfileContent {
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, ToSchema)]
 pub struct PutContentToContentSlotResult {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub processing_state: Option<ContentProcessingState>,
+
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub error: bool,
@@ -525,14 +530,18 @@ pub struct PutContentToContentSlotResult {
 }
 
 impl PutContentToContentSlotResult {
-    pub fn ok() -> Self {
-        Self::default()
+    pub fn ok(processing_state: Option<ContentProcessingState>) -> Self {
+        Self {
+            processing_state,
+            ..Self::default()
+        }
     }
 
     pub fn error_content_processing_ongoing() -> Self {
         Self {
             error: true,
             error_content_processing_ongoing: true,
+            ..Self::default()
         }
     }
 }
