@@ -3,7 +3,7 @@ use error_stack::ResultExt;
 use model::{
     AccountIdInternal, AppleAppAttestKey, AppleAppAttestKeyForDataExport, ClientConfigSyncVersion,
     ClientLanguage, ClientType, DynamicClientFeaturesConfig, DynamicClientFeaturesConfigHash,
-    DynamicServerConfig, LoginSessionInfo,
+    DynamicServerConfig, LoginSessionInfo, LoginSessionInfoInternal,
 };
 use simple_backend_utils::Result;
 
@@ -83,10 +83,11 @@ impl CurrentReadCommonClientConfig<'_> {
 
         login_session_info
             .filter(account_id.eq(id.as_db_id()))
-            .select(LoginSessionInfo::as_select())
+            .select(LoginSessionInfoInternal::as_select())
             .first(self.conn())
             .optional()
             .change_context(DieselDatabaseError::Execute)
+            .map(|row: Option<LoginSessionInfoInternal>| row.map(LoginSessionInfo::from))
     }
 
     pub fn client_login_session_platform(

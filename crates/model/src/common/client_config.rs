@@ -14,8 +14,8 @@ use utoipa::ToSchema;
 use super::ClientConfigSyncVersion;
 use crate::{
     AccountIdDb, ClientFeaturesConfigHash, CustomReportsConfigHash,
-    DynamicClientFeaturesConfigHash, PartialProfileAttributesConfig, PortNumber,
-    WebSocketClientTypeNumber,
+    DynamicClientFeaturesConfigHash, IpAddressInternal, PartialProfileAttributesConfig, PortNumber,
+    UnixTime, WebSocketClientTypeNumber,
 };
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -61,16 +61,47 @@ pub enum ClientType {
     Bot = WebSocketClientTypeNumber::Bot as i16,
 }
 
-#[derive(Debug, Clone, Default, Serialize, ToSchema, Queryable, Selectable)]
-#[diesel(table_name = crate::schema::login_session_info)]
-#[diesel(check_for_backend(crate::Db))]
+#[derive(Debug, Clone, Default, Serialize, ToSchema)]
 pub struct LoginSessionInfo {
     pub client_platform: Option<ClientType>,
     pub client_port: Option<PortNumber>,
+    /// Client's IP address from the latest login.
+    pub client_ip: String,
+    /// Login session start time.
+    pub start_unix_time: UnixTime,
     pub app_attestation_type_number: Option<AppAttestationTypeNumber>,
     pub app_attestation_app_integrity: Option<bool>,
     pub app_attestation_device_integrity: Option<bool>,
     pub app_attestation_failed: Option<bool>,
+}
+
+#[derive(Debug, Clone, Queryable, Selectable)]
+#[diesel(table_name = crate::schema::login_session_info)]
+#[diesel(check_for_backend(crate::Db))]
+pub struct LoginSessionInfoInternal {
+    pub client_platform: Option<ClientType>,
+    pub client_port: Option<PortNumber>,
+    pub client_ip: IpAddressInternal,
+    pub start_unix_time: UnixTime,
+    pub app_attestation_type_number: Option<AppAttestationTypeNumber>,
+    pub app_attestation_app_integrity: Option<bool>,
+    pub app_attestation_device_integrity: Option<bool>,
+    pub app_attestation_failed: Option<bool>,
+}
+
+impl From<LoginSessionInfoInternal> for LoginSessionInfo {
+    fn from(value: LoginSessionInfoInternal) -> Self {
+        Self {
+            client_platform: value.client_platform,
+            client_port: value.client_port,
+            client_ip: value.client_ip.to_ip_addr().to_string(),
+            start_unix_time: value.start_unix_time,
+            app_attestation_type_number: value.app_attestation_type_number,
+            app_attestation_app_integrity: value.app_attestation_app_integrity,
+            app_attestation_device_integrity: value.app_attestation_device_integrity,
+            app_attestation_failed: value.app_attestation_failed,
+        }
+    }
 }
 
 /// Apple App Attest device key stored for an account.

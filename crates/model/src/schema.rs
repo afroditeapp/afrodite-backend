@@ -724,6 +724,8 @@ diesel::table! {
         account_id -> Int8,
         client_platform -> Nullable<Int2>,
         client_port -> Nullable<Int4>,
+        client_ip -> Bytea,
+        start_unix_time -> Int8,
         app_attestation_type_number -> Nullable<Int2>,
         app_attestation_app_integrity -> Nullable<Bool>,
         app_attestation_device_integrity -> Nullable<Bool>,

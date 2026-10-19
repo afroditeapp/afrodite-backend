@@ -217,6 +217,10 @@ CREATE TABLE IF NOT EXISTS login_session_info(
     client_platform                  SMALLINT,
     -- Client's TCP port number if available.
     client_port                      INTEGER,
+    -- Client's IP address. V4 addresses are 4 bytes and V6 addresses are 16 bytes.
+    client_ip                        BLOB                NOT NULL,
+    -- Login session start time.
+    start_unix_time                  BIGINT              NOT NULL,
     -- 0 = PlayIntegrity
     -- 1 = AppleAppAttest
     app_attestation_type_number      SMALLINT,

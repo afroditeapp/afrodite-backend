@@ -9,6 +9,7 @@ use server_api::{
     app::{GetAccounts, ReadData, WriteData},
     create_open_api_router, db_write,
 };
+use server_data::read::GetReadCommandsCommon;
 use server_data_account::{read::GetReadCommandsAccount, write::GetWriteCommandsAccount};
 use simple_backend::create_counters;
 
@@ -135,8 +136,8 @@ pub async fn get_account_login_session_info(
 
     let info = state
         .read()
-        .account_admin()
-        .login()
+        .common()
+        .client_config()
         .login_session_info(internal_id)
         .await?;
 

@@ -68,7 +68,13 @@ pub async fn login_impl(
             .await?;
         cmds.common()
             .client_config()
-            .login_session_info(id, client_type, connection.port(), attestation)
+            .login_session_info(
+                id,
+                client_type,
+                connection.port(),
+                connection.id().ip().into(),
+                attestation,
+            )
             .await?;
         cmds.cache()
             .websocket_cache_cmds()

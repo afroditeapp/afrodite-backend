@@ -1,7 +1,7 @@
 use database::current::write::GetDbWriteCommandsCommon;
 use model::{
     AccountIdInternal, AppAttestationResult, ClientLanguage, ClientType,
-    DynamicClientFeaturesConfig, DynamicServerConfig, PortNumber,
+    DynamicClientFeaturesConfig, DynamicServerConfig, IpAddressInternal, PortNumber,
 };
 
 use crate::{
@@ -81,12 +81,17 @@ impl WriteCommandsCommonClientConfig<'_> {
         id: AccountIdInternal,
         platform: ClientType,
         port: Option<PortNumber>,
+        ip: IpAddressInternal,
         attestation: Option<AppAttestationResult>,
     ) -> Result<(), DataError> {
         db_transaction!(self, move |mut cmds| {
-            cmds.common()
-                .client_config()
-                .update_login_session_info(id, platform, port, attestation)
+            cmds.common().client_config().update_login_session_info(
+                id,
+                platform,
+                port,
+                ip,
+                attestation,
+            )
         })
     }
 

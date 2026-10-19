@@ -2,8 +2,8 @@ use diesel::{delete, insert_into, prelude::*, update};
 use error_stack::ResultExt;
 use model::{
     AccountIdInternal, AppAttestationResult, ClientLanguage, ClientType,
-    DynamicClientFeaturesConfig, DynamicClientFeaturesConfigHash, DynamicServerConfig, PortNumber,
-    SyncVersion,
+    DynamicClientFeaturesConfig, DynamicClientFeaturesConfigHash, DynamicServerConfig,
+    IpAddressInternal, PortNumber, SyncVersion, UnixTime,
 };
 use simple_backend_utils::{Result, db::MyRunQueryDsl};
 
@@ -155,6 +155,7 @@ impl CurrentWriteCommonClientConfig<'_> {
         id: AccountIdInternal,
         platform: ClientType,
         port: Option<PortNumber>,
+        ip: IpAddressInternal,
         attestation: Option<AppAttestationResult>,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::login_session_info::dsl::*;
@@ -175,11 +176,15 @@ impl CurrentWriteCommonClientConfig<'_> {
             None => (None, None, None, None),
         };
 
+        let start_time = UnixTime::current_time();
+
         insert_into(login_session_info)
             .values((
                 account_id.eq(id.as_db_id()),
                 client_platform.eq(platform),
                 client_port.eq(port),
+                client_ip.eq(ip),
+                start_unix_time.eq(start_time),
                 app_attestation_type_number.eq(attestation_type),
                 app_attestation_app_integrity.eq(app_integrity),
                 app_attestation_device_integrity.eq(device_integrity),
@@ -190,6 +195,8 @@ impl CurrentWriteCommonClientConfig<'_> {
             .set((
                 client_platform.eq(platform),
                 client_port.eq(port),
+                client_ip.eq(ip),
+                start_unix_time.eq(start_time),
                 app_attestation_type_number.eq(attestation_type),
                 app_attestation_app_integrity.eq(app_integrity),
                 app_attestation_device_integrity.eq(device_integrity),
