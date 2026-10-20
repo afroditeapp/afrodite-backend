@@ -17,7 +17,7 @@ use server_data::{
     cache::profile::UpdateLocationCacheState,
     db_manager::InternalWriting,
     db_transaction, define_cmd_wrapper_write,
-    file::{FileWrite, utils::TmpContentFile},
+    file::{FileWrite, utils::TmpProcessedContentFiles},
     read::DbRead,
     result::Result,
     write::DbTransaction,
@@ -51,11 +51,7 @@ impl WriteCommandsMedia<'_> {
     pub async fn save_img(
         &self,
         id: AccountIdInternal,
-        tmp_img_high: TmpContentFile,
-        tmp_img_medium: TmpContentFile,
-        tmp_img_low: TmpContentFile,
-        tmp_img_lower: TmpContentFile,
-        tmp_img_very_low: TmpContentFile,
+        tmp_files: TmpProcessedContentFiles,
         slot: ContentSlot,
         new_content_params: NewContentParams,
         face_detected: bool,
@@ -184,19 +180,24 @@ impl WriteCommandsMedia<'_> {
                 )?;
 
                 // Move content from tmp dir to content dir
-                tmp_img_high
+                tmp_files
+                    .high
                     .move_to_blocking(&processed_content_path_high)
                     .map_err(|e| e.change_context(DieselDatabaseError::File))?;
-                tmp_img_medium
+                tmp_files
+                    .medium
                     .move_to_blocking(&processed_content_path_medium)
                     .map_err(|e| e.change_context(DieselDatabaseError::File))?;
-                tmp_img_low
+                tmp_files
+                    .low
                     .move_to_blocking(&processed_content_path_low)
                     .map_err(|e| e.change_context(DieselDatabaseError::File))?;
-                tmp_img_lower
+                tmp_files
+                    .lower
                     .move_to_blocking(&processed_content_path_lower)
                     .map_err(|e| e.change_context(DieselDatabaseError::File))?;
-                tmp_img_very_low
+                tmp_files
+                    .very_low
                     .move_to_blocking(&processed_content_path_very_low)
                     .map_err(|e| e.change_context(DieselDatabaseError::File))?;
                 // If moving fails, diesel rollbacks the transaction.

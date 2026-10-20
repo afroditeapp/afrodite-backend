@@ -12,6 +12,7 @@ use simple_backend_utils::{
 use tokio::{io::AsyncWriteExt, sync::oneshot};
 use tokio_stream::{StreamExt, wrappers::ReadDirStream};
 use tokio_util::io::ReaderStream;
+use tracing::warn;
 
 use super::super::FileError;
 
@@ -40,19 +41,8 @@ impl FileDir {
         })
     }
 
-    /// Unprocessed content upload.
-    pub fn raw_content_upload(&self, id: AccountId) -> TmpContentFile {
-        self.account_dir(id).tmp_dir().raw_content_upload()
-    }
-
-    pub fn processed_content_upload_variant(
-        &self,
-        id: AccountId,
-        variant: ContentQualityVariant,
-    ) -> TmpContentFile {
-        self.account_dir(id)
-            .tmp_dir()
-            .processed_content_upload_variant(variant)
+    pub fn content_upload_files(&self, id: AccountId) -> TmpContentUploadFiles {
+        self.account_dir(id).tmp_dir().content_upload_files()
     }
 
     pub fn media_content_variant(
@@ -148,27 +138,24 @@ impl TmpDir {
         }
     }
 
-    pub fn raw_content_upload(mut self) -> TmpContentFile {
-        self.dir.push(TMP_RAW_UPLOAD_FILE_NAME);
-        TmpContentFile {
-            path: PathToFile { path: self.dir },
-        }
-    }
-
-    pub fn processed_content_upload_variant(
-        mut self,
-        variant: ContentQualityVariant,
-    ) -> TmpContentFile {
-        let name = match variant {
-            ContentQualityVariant::High => TMP_PROCESSED_UPLOAD_FILE_NAME_HIGH,
-            ContentQualityVariant::Medium => TMP_PROCESSED_UPLOAD_FILE_NAME_MEDIUM,
-            ContentQualityVariant::Low => TMP_PROCESSED_UPLOAD_FILE_NAME_LOW,
-            ContentQualityVariant::Lower => TMP_PROCESSED_UPLOAD_FILE_NAME_LOWER,
-            ContentQualityVariant::VeryLow => TMP_PROCESSED_UPLOAD_FILE_NAME_VERY_LOW,
+    pub fn content_upload_files(self) -> TmpContentUploadFiles {
+        let tmp_dir_path = self.dir;
+        let file = |name: &str| {
+            let mut path = tmp_dir_path.clone();
+            path.push(name);
+            TmpContentFile {
+                path: PathToFile { path },
+            }
         };
-        self.dir.push(name);
-        TmpContentFile {
-            path: PathToFile { path: self.dir },
+        TmpContentUploadFiles {
+            raw: file(TMP_RAW_UPLOAD_FILE_NAME),
+            processed: TmpProcessedContentFiles {
+                high: file(TMP_PROCESSED_UPLOAD_FILE_NAME_HIGH),
+                medium: file(TMP_PROCESSED_UPLOAD_FILE_NAME_MEDIUM),
+                low: file(TMP_PROCESSED_UPLOAD_FILE_NAME_LOW),
+                lower: file(TMP_PROCESSED_UPLOAD_FILE_NAME_LOWER),
+                very_low: file(TMP_PROCESSED_UPLOAD_FILE_NAME_VERY_LOW),
+            },
         }
     }
 
@@ -259,6 +246,51 @@ impl TmpContentFile {
 
     pub fn as_path(&self) -> &Path {
         self.path.as_path()
+    }
+}
+
+/// Processed content upload tmp files, one for each quality variant.
+#[derive(Debug, Clone)]
+pub struct TmpProcessedContentFiles {
+    pub high: TmpContentFile,
+    pub medium: TmpContentFile,
+    pub low: TmpContentFile,
+    pub lower: TmpContentFile,
+    pub very_low: TmpContentFile,
+}
+
+impl TmpProcessedContentFiles {
+    /// Remove all processed variant files if they exist.
+    async fn overwrite_and_remove_all_if_exists(&self) {
+        for (name, file) in [
+            ("high", &self.high),
+            ("medium", &self.medium),
+            ("low", &self.low),
+            ("lower", &self.lower),
+            ("very_low", &self.very_low),
+        ] {
+            if let Err(e) = file.overwrite_and_remove_if_exists().await {
+                warn!("tmp processed content file {name} removing failed {}", e)
+            }
+        }
+    }
+}
+
+/// All tmp files related to one content upload.
+#[derive(Debug, Clone)]
+pub struct TmpContentUploadFiles {
+    /// Unprocessed source image.
+    pub raw: TmpContentFile,
+    pub processed: TmpProcessedContentFiles,
+}
+
+impl TmpContentUploadFiles {
+    /// Remove all tmp files related to the content upload.
+    pub async fn overwrite_and_remove_all_if_exists(&self) {
+        self.processed.overwrite_and_remove_all_if_exists().await;
+        if let Err(e) = self.raw.overwrite_and_remove_if_exists().await {
+            warn!("tmp raw content file removing failed {}", e)
+        }
     }
 }
 

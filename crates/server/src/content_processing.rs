@@ -128,12 +128,12 @@ impl ContentProcessingManager {
                             .unwrap_or_default();
                         Ok(dynamic_config)
                     },
-                    content.tmp_raw_img.as_path(),
-                    content.tmp_img_high.as_path(),
-                    content.tmp_img_medium.as_path(),
-                    content.tmp_img_low.as_path(),
-                    content.tmp_img_lower.as_path(),
-                    content.tmp_img_very_low.as_path(),
+                    content.tmp_files.raw.as_path(),
+                    content.tmp_files.processed.high.as_path(),
+                    content.tmp_files.processed.medium.as_path(),
+                    content.tmp_files.processed.low.as_path(),
+                    content.tmp_files.processed.lower.as_path(),
+                    content.tmp_files.processed.very_low.as_path(),
                 )
                 .await
                 .change_context(ContentProcessingError::ContentProcessingFailed)
@@ -178,9 +178,7 @@ impl ContentProcessingManager {
             }
         };
 
-        if let Err(e) = content.tmp_raw_img.overwrite_and_remove_if_exists().await {
-            warn!("content.tmp_raw_img removing failed {:?}", e)
-        }
+        content.tmp_files.overwrite_and_remove_all_if_exists().await;
 
         new_state
     }
@@ -216,11 +214,7 @@ impl ContentProcessingManager {
             cmds.media()
                 .save_img(
                     state_copy.content_owner,
-                    state_copy.tmp_img_high,
-                    state_copy.tmp_img_medium,
-                    state_copy.tmp_img_low,
-                    state_copy.tmp_img_lower,
-                    state_copy.tmp_img_very_low,
+                    state_copy.tmp_files.processed,
                     state_copy.slot,
                     state_copy.new_content_params,
                     face_detected,

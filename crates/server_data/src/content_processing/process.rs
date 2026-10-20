@@ -9,7 +9,7 @@ use model_server_data::NewContentParams;
 use tokio::sync::{Notify, OwnedMutexGuard, RwLock};
 
 use super::{ProcessingPhase, UploadPermit};
-use crate::{event::EventManagerWithCacheReference, file::utils::TmpContentFile};
+use crate::{event::EventManagerWithCacheReference, file::utils::TmpContentUploadFiles};
 
 #[derive(Debug)]
 pub struct ContentProcessingReceiver(pub std::sync::Arc<Notify>);
@@ -49,12 +49,7 @@ impl ProcessManagerData {
         mut processing_phase_lock: OwnedMutexGuard<ProcessingPhase>,
     ) {
         let UploadInfo {
-            tmp_raw_img,
-            tmp_img_high,
-            tmp_img_medium,
-            tmp_img_low,
-            tmp_img_lower,
-            tmp_img_very_low,
+            tmp_files,
             upload_permit,
         } = upload_info;
 
@@ -72,12 +67,7 @@ impl ProcessManagerData {
             processing_state: ContentProcessingStateInternal::InQueue {
                 wait_queue_position: write.queue.len().try_into().unwrap_or(i64::MAX),
             },
-            tmp_img_high,
-            tmp_img_medium,
-            tmp_img_low,
-            tmp_img_lower,
-            tmp_img_very_low,
-            tmp_raw_img,
+            tmp_files,
             upload_unix_time,
             uploader_ip,
             uploader_port,
@@ -182,12 +172,7 @@ pub struct ProcessingState {
     pub content_owner: AccountIdInternal,
     pub slot: ContentSlot,
     pub processing_state: ContentProcessingStateInternal,
-    pub tmp_raw_img: TmpContentFile,
-    pub tmp_img_high: TmpContentFile,
-    pub tmp_img_medium: TmpContentFile,
-    pub tmp_img_low: TmpContentFile,
-    pub tmp_img_lower: TmpContentFile,
-    pub tmp_img_very_low: TmpContentFile,
+    pub tmp_files: TmpContentUploadFiles,
     pub upload_unix_time: UnixTime,
     pub uploader_ip: IpAddressInternal,
     pub uploader_port: Option<PortNumber>,
@@ -209,17 +194,6 @@ impl ProcessingState {
 
 #[derive(Debug)]
 pub struct UploadInfo {
-    /// Source file for content processing
-    pub tmp_raw_img: TmpContentFile,
-    /// Target file for high quality variant
-    pub tmp_img_high: TmpContentFile,
-    /// Target file for medium quality variant
-    pub tmp_img_medium: TmpContentFile,
-    /// Target file for low quality variant
-    pub tmp_img_low: TmpContentFile,
-    /// Target file for lower quality variant
-    pub tmp_img_lower: TmpContentFile,
-    /// Target file for very low quality variant
-    pub tmp_img_very_low: TmpContentFile,
+    pub tmp_files: TmpContentUploadFiles,
     pub upload_permit: UploadPermit,
 }
