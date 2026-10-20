@@ -6,12 +6,19 @@ use simple_backend_utils::time::DurationValue;
 use tokio::sync::Mutex;
 use utils::random_bytes::random_128_bits;
 
+pub enum LoginType {
+    Login,
+    Registration,
+    EmailRegistration,
+}
+
 struct PendingLogin {
     account_id: AccountIdInternal,
     client_type: ClientType,
     login_method: LoginMethod,
     connection_ip: std::net::IpAddr,
     unix_time: UnixTime,
+    login_type: LoginType,
 }
 
 /// These expire when server restarts as Apple App Attest docs say that
@@ -73,6 +80,7 @@ impl VerifyAppAttestationTokenStore {
         client_type: ClientType,
         login_method: LoginMethod,
         connection_ip: std::net::IpAddr,
+        login_type: LoginType,
     ) -> LoginPhaseTwoToken {
         let mut lock = self.inner.lock().await;
         lock.cleanup_if_needed(Self::TOKEN_VALIDITY);
@@ -93,6 +101,7 @@ impl VerifyAppAttestationTokenStore {
                 login_method,
                 connection_ip,
                 unix_time,
+                login_type,
             },
         );
 
@@ -102,6 +111,7 @@ impl VerifyAppAttestationTokenStore {
     /// Consume a token. Returns the pending login data if the token is valid.
     /// Removes the [PendingLogin] regardless of validity. Challenge is stored
     /// separately and it is not removed.
+    #[allow(clippy::type_complexity)]
     pub async fn consume(
         &self,
         token: &[u8],
@@ -111,6 +121,7 @@ impl VerifyAppAttestationTokenStore {
         LoginMethod,
         std::net::IpAddr,
         Option<String>,
+        LoginType,
     )> {
         let mut lock = self.inner.lock().await;
         let entry = lock.tokens.remove(token)?;
@@ -123,6 +134,7 @@ impl VerifyAppAttestationTokenStore {
                 lock.challenges
                     .get(&entry.account_id)
                     .map(|e| e.challenge.clone()),
+                entry.login_type,
             ))
         } else {
             None

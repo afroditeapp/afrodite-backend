@@ -7,8 +7,8 @@
 //! Data types for API and database.
 
 pub use simple_backend_model::{
-    AppAttestationResult, AppAttestationTypeNumber, ScheduledMaintenanceStatus,
-    ServerMaintenanceStatus, UnixTime,
+    AppAttestationRequirements, AppAttestationResult, AppAttestationTypeNumber,
+    ScheduledMaintenanceStatus, ServerMaintenanceStatus, UnixTime,
 };
 
 pub mod common;

@@ -146,14 +146,11 @@ local_bot_api_port = 3001
 # room_prefix = "Afrodite_meeting_"
 
 # [app_attestation.play_integrity]
-# require_device_integrity = true
-# require_app_integrity = true
 # package_name = "com.example.app"
 # service_account_key_path = "server_config/service_account_key.json"
 # max_age_seconds = 300 # optional
 
 # [app_attestation.apple_app_attest]
-# require_valid_token = true
 # team_id = "ABCDE12345"
 # bundle_id = "com.example.app"
 
@@ -742,10 +739,6 @@ pub struct AppAttestationConfig {
 /// Apple App Attest attestation configuration.
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct AppleAppAttestConfig {
-    /// When true, a valid attestation token is required and the API returns
-    /// a failure to the client if the token is missing or verification fails.
-    /// When false, attestation is optional and failures are tolerated.
-    pub require_valid_token: bool,
     /// Apple Developer team ID
     pub team_id: String,
     /// iOS bundle ID of the app
@@ -755,9 +748,6 @@ pub struct AppleAppAttestConfig {
 /// Google Play Integrity API attestation configuration.
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct PlayIntegrityAppAttestationConfig {
-    pub require_device_integrity: bool,
-    /// Require `appIntegrity.appRecognitionVerdict` to be `PLAY_RECOGNIZED`.
-    pub require_app_integrity: bool,
     /// Expected application package name. The verdict token
     /// `requestDetails.requestPackageName` must match this.
     pub package_name: String,

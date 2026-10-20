@@ -5,8 +5,8 @@ use model_account::{
     VerifyAppAttestationLogin,
 };
 use server_api::{
-    S,
-    app::{ApiLimitsProvider, WriteData},
+    LoginType, S,
+    app::{ApiLimitsProvider, GetDynamicServerConfig, WriteData},
     utils::ClientIp,
 };
 use server_data::{read::GetReadCommandsCommon, write::GetWriteCommandsCommon};
@@ -15,7 +15,7 @@ use simple_backend::{
     app_attestation::{AppAttestationClientType, AppAttestationError},
     create_counters,
 };
-use simple_backend_model::{AppAttestation, AppAttestationResult};
+use simple_backend_model::{AppAttestation, AppAttestationRequirements, AppAttestationResult};
 use simple_backend_utils::ContextExt;
 
 use super::login::login_impl;
@@ -165,7 +165,7 @@ pub async fn post_verify_app_attestation(
         return Ok(LoginPhaseTwoResult::error_invalid_verify_app_attestation_token().into());
     };
 
-    let Some((account_id, client_type, login_method, connection_ip, challenge)) = state
+    let Some((account_id, client_type, login_method, connection_ip, challenge, login_type)) = state
         .verify_app_attestation_tokens()
         .consume(&token_bytes)
         .await
@@ -217,6 +217,7 @@ pub async fn post_verify_app_attestation(
         client_type,
         request.app_attestation.as_ref(),
         challenge.as_deref(),
+        login_type,
     )
     .await
     {
@@ -247,6 +248,7 @@ async fn validate_app_attestation(
     client_type: ClientType,
     attestation: Option<&AppAttestation>,
     challenge: Option<&str>,
+    login_type: LoginType,
 ) -> Result<Option<AppAttestationResult>, LoginPhaseTwoResult> {
     let client_type = match client_type {
         ClientType::Android => Some(AppAttestationClientType::Android),
@@ -254,9 +256,16 @@ async fn validate_app_attestation(
         _ => None,
     };
     let key_store = AppleAppAttestKeyStoreImpl { state, account_id };
+    let requirements = attestation_requirements(state, login_type).await;
     state
         .app_attestation_manager()
-        .validate(client_type, attestation, challenge, &key_store)
+        .validate(
+            client_type,
+            attestation,
+            challenge,
+            &key_store,
+            requirements,
+        )
         .await
         .map_err(|error| match error {
             AppAttestationError::Failed => LoginPhaseTwoResult::error_app_attestation_failed(),
@@ -267,6 +276,21 @@ async fn validate_app_attestation(
                 LoginPhaseTwoResult::error_app_attestation_app_integrity()
             }
         })
+}
+
+/// App attestation requirements for the login type from dynamic server config.
+async fn attestation_requirements(state: &S, login_type: LoginType) -> AppAttestationRequirements {
+    let config = state
+        .dynamic_server_config_manager()
+        .dynamic_server_config_ref()
+        .await;
+    let config = config.as_ref();
+    match login_type {
+        LoginType::Login => config.map(|c| c.account_login_app_attestation),
+        LoginType::Registration => config.map(|c| c.account_registration_app_attestation),
+        LoginType::EmailRegistration => config.map(|c| c.email_registration_app_attestation),
+    }
+    .unwrap_or_default()
 }
 
 create_counters!(

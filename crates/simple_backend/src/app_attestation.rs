@@ -4,7 +4,9 @@ use simple_backend_config::{
     SimpleBackendConfig,
     file::{AppleAppAttestConfig, PlayIntegrityAppAttestationConfig},
 };
-use simple_backend_model::{AppAttestation, AppAttestationResult, AppAttestationTypeNumber};
+use simple_backend_model::{
+    AppAttestation, AppAttestationRequirements, AppAttestationResult, AppAttestationTypeNumber,
+};
 
 use crate::{
     app::AppleAppAttestKeyStore,
@@ -63,6 +65,7 @@ impl AppAttestationManager {
         attestation: Option<&AppAttestation>,
         challenge: Option<&str>,
         key_store: &impl AppleAppAttestKeyStore,
+        requirements: AppAttestationRequirements,
     ) -> std::result::Result<Option<AppAttestationResult>, AppAttestationError> {
         // Skip app attestation validation if server config for the required
         // app attestation method does not exist.
@@ -71,8 +74,13 @@ impl AppAttestationManager {
                 if let Some(config) = self.config.app_attestation()
                     && let Some(play_integrity_config) = &config.play_integrity
                 {
-                    self.handle_play_integrity(play_integrity_config, attestation, challenge)
-                        .await
+                    self.handle_play_integrity(
+                        play_integrity_config,
+                        requirements,
+                        attestation,
+                        challenge,
+                    )
+                    .await
                 } else {
                     Ok(None)
                 }
@@ -81,8 +89,14 @@ impl AppAttestationManager {
                 if let Some(config) = self.config.app_attestation()
                     && let Some(apple_config) = &config.apple_app_attest
                 {
-                    self.handle_apple_app_attest(apple_config, attestation, challenge, key_store)
-                        .await
+                    self.handle_apple_app_attest(
+                        apple_config,
+                        requirements,
+                        attestation,
+                        challenge,
+                        key_store,
+                    )
+                    .await
                 } else {
                     Ok(None)
                 }
@@ -94,6 +108,7 @@ impl AppAttestationManager {
     async fn handle_apple_app_attest(
         &self,
         apple_config: &AppleAppAttestConfig,
+        requirements: AppAttestationRequirements,
         attestation: Option<&AppAttestation>,
         challenge: Option<&str>,
         key_store: &impl AppleAppAttestKeyStore,
@@ -118,11 +133,9 @@ impl AppAttestationManager {
 
         match result {
             Ok(result) => Ok(Some(result)),
-            Err(_) if !apple_config.require_valid_token => {
-                Ok(Some(AppAttestationResult::Failure {
-                    attestation_type: AppAttestationTypeNumber::AppleAppAttest,
-                }))
-            }
+            Err(_) if !requirements.ios_valid_token => Ok(Some(AppAttestationResult::Failure {
+                attestation_type: AppAttestationTypeNumber::AppleAppAttest,
+            })),
             Err(error) => Err(error),
         }
     }
@@ -130,18 +143,24 @@ impl AppAttestationManager {
     async fn handle_play_integrity(
         &self,
         play_integrity_config: &PlayIntegrityAppAttestationConfig,
+        requirements: AppAttestationRequirements,
         attestation: Option<&AppAttestation>,
         expected_request_hash: Option<&str>,
     ) -> std::result::Result<Option<AppAttestationResult>, AppAttestationError> {
-        let nothing_required = !play_integrity_config.require_device_integrity
-            && !play_integrity_config.require_app_integrity;
+        let nothing_required =
+            !requirements.android_device_integrity && !requirements.android_app_integrity;
 
         if let Some(attestation) = attestation
             && let Some(play_integrity) = &attestation.play_integrity
         {
             match self
                 .play_integrity
-                .validate(play_integrity, play_integrity_config, expected_request_hash)
+                .validate(
+                    play_integrity,
+                    play_integrity_config,
+                    requirements,
+                    expected_request_hash,
+                )
                 .await
             {
                 Ok(integrity) => Ok(Some(AppAttestationResult::Success {

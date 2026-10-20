@@ -10,7 +10,7 @@ use model_server_state::{
     DemoAccountToken,
 };
 use server_api::{
-    S,
+    LoginType, S,
     app::{GetAccounts, GetConfig, ReadData},
     create_open_api_router, db_write,
 };
@@ -188,6 +188,7 @@ pub async fn post_demo_account_login_to_account(
         info.client_info.client_type,
         LoginMethod::Demo,
         connection.id(),
+        LoginType::Login,
     )
     .await?;
 

@@ -26,6 +26,22 @@ pub enum AppAttestationTypeNumber {
     AppleAppAttest = 1,
 }
 
+#[derive(Debug, Clone, Copy, Default, Deserialize, Serialize, PartialEq, ToSchema)]
+pub struct AppAttestationRequirements {
+    /// Android: require Play Integrity API device integrity verdict.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub android_device_integrity: bool,
+    /// Android: require Play Integrity API app integrity verdict.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub android_app_integrity: bool,
+    /// iOS: require valid Apple App Attest token.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub ios_valid_token: bool,
+}
+
 /// Result of an app attestation validation.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum AppAttestationResult {

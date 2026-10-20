@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use simple_backend_model::AppAttestationRequirements;
 use utoipa::ToSchema;
 
 mod notification;
@@ -135,4 +136,7 @@ pub struct DynamicServerConfig {
     pub account_login_platforms: AccountLoginPlatforms,
     pub email_registration_platforms: EmailRegistrationPlatforms,
     pub email_registration_domain_lists: EmailRegistrationDomainLists,
+    pub account_registration_app_attestation: AppAttestationRequirements,
+    pub account_login_app_attestation: AppAttestationRequirements,
+    pub email_registration_app_attestation: AppAttestationRequirements,
 }

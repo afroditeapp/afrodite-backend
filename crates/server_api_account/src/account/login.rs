@@ -11,7 +11,7 @@ use model_account::{
     RequestEmailLoginTokenResult, SignInWithInfo, SignInWithLoginInfo,
 };
 use server_api::{
-    S, TokenData,
+    LoginType, S, TokenData,
     app::{GetConfig, GetDynamicServerConfig},
     db_write,
     utils::ConnectionId,
@@ -100,10 +100,11 @@ pub(super) async fn store_pending_login(
     client_type: ClientType,
     login_method: LoginMethod,
     connection: ConnectionId,
+    login_type: LoginType,
 ) -> Result<LoginPhaseOneResult, StatusCode> {
     let token = state
         .verify_app_attestation_tokens()
-        .insert(id, client_type, login_method, connection.ip())
+        .insert(id, client_type, login_method, connection.ip(), login_type)
         .await;
     Ok(LoginPhaseOneResult::verify_app_attestation(
         token,
@@ -404,6 +405,7 @@ async fn handle_sign_in_with_info(
             client_type,
             login_method,
             connection.id(),
+            LoginType::Login,
         )
         .await
     } else {
@@ -431,7 +433,15 @@ async fn handle_sign_in_with_info(
                 return Ok(LoginPhaseOneResult::error_email_already_used());
             }
         };
-        store_pending_login(state, id, client_type, login_method, connection.id()).await
+        store_pending_login(
+            state,
+            id,
+            client_type,
+            login_method,
+            connection.id(),
+            LoginType::Registration,
+        )
+        .await
     }
 }
 
@@ -920,6 +930,7 @@ async fn post_email_login_with_token_impl(
                 request.client_info.client_type,
                 LoginMethod::Email,
                 connection,
+                LoginType::Login,
             )
             .await?;
             Ok(r.into())

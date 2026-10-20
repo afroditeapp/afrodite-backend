@@ -5,7 +5,9 @@ use fcm::yup_oauth2::{
     client::DefaultHyperClientBuilder,
 };
 use simple_backend_config::file::PlayIntegrityAppAttestationConfig;
-use simple_backend_model::{AppIntegrityResult, PlayIntegrityAppAttestation};
+use simple_backend_model::{
+    AppAttestationRequirements, AppIntegrityResult, PlayIntegrityAppAttestation,
+};
 use tracing::error;
 
 const PLAY_INTEGRITY_OAUTH_SCOPE: &str = "https://www.googleapis.com/auth/playintegrity";
@@ -54,6 +56,7 @@ impl PlayIntegrityManager {
         &self,
         attestation: &PlayIntegrityAppAttestation,
         config: &PlayIntegrityAppAttestationConfig,
+        requirements: AppAttestationRequirements,
         expected_request_hash: Option<&str>,
     ) -> Result<AppIntegrityResult, PlayIntegrityError> {
         let Some(oauth) = &self.oauth else {
@@ -145,7 +148,7 @@ impl PlayIntegrityManager {
                     .any(|v| v.as_str() == Some("MEETS_DEVICE_INTEGRITY"))
             })
             .unwrap_or(false);
-        if config.require_device_integrity && !device_integrity {
+        if requirements.android_device_integrity && !device_integrity {
             return Err(PlayIntegrityError::DeviceIntegrity);
         }
 
@@ -156,7 +159,7 @@ impl PlayIntegrityManager {
             .and_then(|v| v.as_str())
             .ok_or(PlayIntegrityError::Failed)?;
         let app_integrity = app_recognition_verdict == "PLAY_RECOGNIZED";
-        if config.require_app_integrity && !app_integrity {
+        if requirements.android_app_integrity && !app_integrity {
             return Err(PlayIntegrityError::AppIntegrity);
         }
 
