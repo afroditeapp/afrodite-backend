@@ -268,16 +268,9 @@ fn handle_image(
     // Full resolution image might consume a lot of RAM
     drop(img);
 
-    let face_detected = match face_detector.detect_face(high.to_luma8()) {
-        Ok(v) => v,
-        Err(e) => {
-            // Ignore
-            eprintln!("{e:?}");
-            false
-        }
-    };
-
-    let nsfw_detected = nsfw_detector.detect_nsfw(high.to_rgba8())?;
+    // NSFW model input is fixed 224x224, so resize directly to that size.
+    let nsfw_input = high.resize_exact(224, 224, image::imageops::FilterType::Triangle);
+    let nsfw_detected = nsfw_detector.detect_nsfw(nsfw_input.to_rgba8())?;
 
     encode_and_save_jpeg(config, &high, &command.output_high)?;
 
@@ -286,6 +279,14 @@ fn handle_image(
 
     let low = resize_image_if_needed(&high, 640);
     encode_and_save_jpeg(config, &low, &command.output_low)?;
+    let face_detected = match face_detector.detect_face(low.to_luma8()) {
+        Ok(v) => v,
+        Err(e) => {
+            // Ignore
+            eprintln!("{e:?}");
+            false
+        }
+    };
 
     let lower = resize_image_if_needed(&high, 426);
     encode_and_save_jpeg(config, &lower, &command.output_lower)?;
