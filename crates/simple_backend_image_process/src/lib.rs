@@ -11,7 +11,7 @@ use nsfw_detection::NsfwDetector;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use simple_backend_config::image_process::ImageProcessingConfig;
-use simple_backend_model::{SourceImageFileType, SourceImageInfo};
+use simple_backend_model::SourceImageInfo;
 use simple_backend_utils::{Result, consts::MIB_IN_BYTES};
 
 mod face_detection;
@@ -69,9 +69,6 @@ pub enum ImageProcessError {
 
     #[error("Unsupported image format")]
     UnsupportedImageFormat,
-
-    #[error("Source image metadata does not fit to database types")]
-    SourceImageInfoDbConversionFailed,
 }
 
 /// Image process reads this info as JSON from standard input.
@@ -187,33 +184,27 @@ pub fn run_image_processing_loop() -> Result<(), ImageProcessError> {
     }
 }
 
-fn open_image(
-    path: &PathBuf,
-) -> Result<(ImageReader<BufReader<File>>, SourceImageFileType), ImageProcessError> {
+fn open_image(path: &PathBuf) -> Result<ImageReader<BufReader<File>>, ImageProcessError> {
     let mut file = File::open(path).change_context(ImageProcessError::InputReadingFailed)?;
 
     let mut bytes = [0u8; 4];
     file.read_exact(&mut bytes)
         .change_context(ImageProcessError::InputReadingFailed)?;
     let format = match bytes {
-        [0xFF, 0xD8, 0xFF, _] => (ImageFormat::Jpeg, SourceImageFileType::Jpeg),
-        [0x89, 0x50, 0x4E, 0x47] => (ImageFormat::Png, SourceImageFileType::Png),
+        [0xFF, 0xD8, 0xFF, _] => ImageFormat::Jpeg,
+        [0x89, 0x50, 0x4E, 0x47] => ImageFormat::Png,
         _ => return Err(ImageProcessError::UnsupportedImageFormat.into_report()),
     };
 
     file.seek(SeekFrom::Start(0))
         .change_context(ImageProcessError::InputReadingFailed)?;
     let buf_reader = BufReader::new(file);
-    Ok((ImageReader::with_format(buf_reader, format.0), format.1))
+    Ok(ImageReader::with_format(buf_reader, format))
 }
 
-/// Hash the source image file bytes and get the file size.
-fn hash_source_image_file(path: &PathBuf) -> Result<(Vec<u8>, u64), ImageProcessError> {
+/// Hash the source image file bytes.
+fn hash_source_image_file(path: &PathBuf) -> Result<Vec<u8>, ImageProcessError> {
     let file = File::open(path).change_context(ImageProcessError::InputReadingFailed)?;
-    let file_size = file
-        .metadata()
-        .change_context(ImageProcessError::InputReadingFailed)?
-        .len();
 
     let mut hasher = Sha256::new();
     let mut file = BufReader::new(file);
@@ -228,7 +219,7 @@ fn hash_source_image_file(path: &PathBuf) -> Result<(Vec<u8>, u64), ImageProcess
         hasher.update(&buffer[..read]);
     }
 
-    Ok((hasher.finalize().to_vec(), file_size))
+    Ok(hasher.finalize().to_vec())
 }
 
 fn handle_image(
@@ -237,10 +228,8 @@ fn handle_image(
     nsfw_detector: &NsfwDetector,
     command: ProcessImageCommand,
 ) -> Result<ImageProcessingInfo, ImageProcessError> {
-    let (source_image_sha256_hash, source_image_file_size_bytes) =
-        hash_source_image_file(&command.input)?;
-
-    let (img_reader, source_image_file_type) = open_image(&command.input)?;
+    let source_image_sha256_hash = hash_source_image_file(&command.input)?;
+    let img_reader = open_image(&command.input)?;
     let mut img_decoder = img_reader
         .into_decoder()
         .change_context(ImageProcessError::InputReadingFailed)?;
@@ -299,13 +288,6 @@ fn handle_image(
         nsfw_detected,
         source_image_info: SourceImageInfo {
             source_image_sha256_hash,
-            source_image_file_size_bytes: TryInto::<i64>::try_into(source_image_file_size_bytes)
-                .change_context(ImageProcessError::SourceImageInfoDbConversionFailed)?,
-            source_image_width: TryInto::<i16>::try_into(source_image_width)
-                .change_context(ImageProcessError::SourceImageInfoDbConversionFailed)?,
-            source_image_height: TryInto::<i16>::try_into(source_image_height)
-                .change_context(ImageProcessError::SourceImageInfoDbConversionFailed)?,
-            source_image_file_type,
         },
     };
 

@@ -7,7 +7,7 @@ use model::{
 use model_server_data::{MediaContentType, ProfileContentEditedTime};
 use num_enum::TryFromPrimitive;
 use serde::{Deserialize, Serialize};
-use simple_backend_model::{SimpleDieselEnum, SourceImageFileType};
+use simple_backend_model::SimpleDieselEnum;
 use utoipa::{IntoParams, ToSchema};
 
 use crate::AccountIdDb;
@@ -257,10 +257,6 @@ pub struct MediaContentRaw {
     slot_number: ContentSlot,
     pub upload_unix_time: UnixTime,
     pub source_image_sha256_hash: Vec<u8>,
-    pub source_image_file_size_bytes: i64,
-    pub source_image_width: i16,
-    pub source_image_height: i16,
-    pub source_image_file_type: SourceImageFileType,
     pub uploader_ip: IpAddressInternal,
     pub uploader_port: Option<PortNumber>,
     pub initial_content: bool,
