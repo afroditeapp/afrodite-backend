@@ -261,6 +261,18 @@ fn handle_image(
     let nsfw_input = high.resize_exact(224, 224, image::imageops::FilterType::Triangle);
     let nsfw_detected = nsfw_detector.detect_nsfw(nsfw_input.to_rgba8())?;
 
+    // Processed files are not used when NSFW is detected, so skip
+    // encoding and face detection.
+    if nsfw_detected {
+        return Ok(ImageProcessingInfo {
+            face_detected: false,
+            nsfw_detected,
+            source_image_info: SourceImageInfo {
+                source_image_sha256_hash,
+            },
+        });
+    }
+
     encode_and_save_jpeg(config, &high, &command.output_high)?;
 
     let medium = resize_image_if_needed(&high, 854);
