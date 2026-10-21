@@ -72,6 +72,14 @@ default = "Account deletion reminder 3/3"
 [account_deletion_remainder_third.body]
 default = "Your account will be deleted. This is the final reminder."
 
+# Account deleted final notification
+
+[account_deleted.subject]
+default = "Your account has been deleted"
+
+[account_deleted.body]
+default = "Your account has been deleted."
+
 # Email change verification
 
 [email_change_verification.subject]
@@ -123,6 +131,7 @@ pub struct EmailContentFile {
     account_deletion_remainder_first: Option<EmailContentStrings>,
     account_deletion_remainder_second: Option<EmailContentStrings>,
     account_deletion_remainder_third: Option<EmailContentStrings>,
+    account_deleted: Option<EmailContentStrings>,
     /// "{token}" is replaced with email change verification token
     email_change_verification: Option<EmailContentStrings>,
     email_change_notification: Option<EmailContentStrings>,
@@ -168,6 +177,7 @@ impl Default for EmailContentFile {
             account_deletion_remainder_first: None,
             account_deletion_remainder_second: None,
             account_deletion_remainder_third: None,
+            account_deleted: None,
             email_change_verification: None,
             email_change_notification: None,
             email_login: None,
@@ -257,7 +267,7 @@ impl EmailContentFile {
         let (template, _, custom_keys) = effective_email_config(&config.email, &None);
         validate_custom_keys(&template, &custom_keys, "global")?;
 
-        let emails: [(&str, &Option<EmailContentStrings>); 9] = [
+        let emails: [(&str, &Option<EmailContentStrings>); 10] = [
             ("email_verification", &config.email_verification),
             ("new_message", &config.new_message),
             ("new_like", &config.new_like),
@@ -273,6 +283,7 @@ impl EmailContentFile {
                 "account_deletion_remainder_third",
                 &config.account_deletion_remainder_third,
             ),
+            ("account_deleted", &config.account_deleted),
             (
                 "email_change_verification",
                 &config.email_change_verification,
@@ -420,6 +431,14 @@ impl<'a> EmailStringGetter<'a> {
             &self.config.account_deletion_remainder_third,
             "Account deletion reminder 3/3",
             "Your account will be deleted. This is the final reminder.",
+        )
+    }
+
+    pub fn account_deleted(&self) -> Result<EmailContent, ConfigFileError> {
+        self.apply_template(
+            &self.config.account_deleted,
+            "Your account has been deleted",
+            "Your account has been deleted.",
         )
     }
 

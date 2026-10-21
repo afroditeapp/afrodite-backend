@@ -84,6 +84,14 @@ impl WriteCommandsAccountDelete<'_> {
     /// in RAM data for account but that is processed hourly and that
     /// deletes the data for non existing accounts.
     pub async fn delete_account(&self, id: AccountIdInternal) -> Result<(), DataError> {
+        let (email, language) = self
+            .db_read(move |mut cmds| {
+                let email = cmds.account().data().email_address(id)?;
+                let language = cmds.common().client_config().client_language(id)?;
+                Ok((email, language))
+            })
+            .await?;
+
         self.handle().common().logout(id).await?;
 
         // Delete account from location index
@@ -107,6 +115,11 @@ impl WriteCommandsAccountDelete<'_> {
             .account_dir(id.as_id())
             .delete_if_exists()
             .await?;
+
+        if let Some(email) = email {
+            self.email_sender()
+                .send_account_deleted_notification(email, language);
+        }
 
         Ok(())
     }

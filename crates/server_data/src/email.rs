@@ -49,6 +49,10 @@ pub enum HighPriorityEmailMsg {
         language: Option<ClientLanguage>,
         result_sender: oneshot::Sender<Result<(), DataError>>,
     },
+    AccountDeleted {
+        email: EmailAddress,
+        language: Option<ClientLanguage>,
+    },
 }
 
 /// A handle that can be awaited to get the result of sending a high priority email.
@@ -151,6 +155,25 @@ impl EmailChannelSender {
         }
 
         Ok(EmailSendingHandle { result_receiver })
+    }
+
+    /// Best effort sending. The email is just moved to the send queue and
+    /// sending errors are only logged.
+    pub fn send_account_deleted_notification(
+        &self,
+        email: EmailAddress,
+        language: Option<ClientLanguage>,
+    ) {
+        let cmd = HighPriorityEmailMsg::AccountDeleted { email, language };
+        match self.high_priority_sender.try_send(cmd) {
+            Ok(()) => (),
+            Err(TrySendError::Closed(_)) => {
+                error!("Account deleted email send failed: channel broken");
+            }
+            Err(TrySendError::Full(_)) => {
+                error!("Account deleted email send failed: channel full");
+            }
+        }
     }
 }
 
