@@ -5794,7 +5794,6 @@ dependencies = [
  "rustface",
  "serde",
  "serde_json",
- "sha2 0.11.0",
  "simple_backend_config",
  "simple_backend_model",
  "simple_backend_utils",

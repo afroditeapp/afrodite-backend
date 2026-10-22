@@ -3,8 +3,6 @@ use utoipa::ToSchema;
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct SourceImageInfo {
-    /// SHA256 hash of the source image file bytes (32 bytes).
-    pub source_image_sha256_hash: Vec<u8>,
     /// PDQ perceptual hash of the source image (32 bytes).
     pub source_image_pdq_hash: Vec<u8>,
     /// PDQ hash quality (0-100).

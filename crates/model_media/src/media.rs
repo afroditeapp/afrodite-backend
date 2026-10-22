@@ -256,7 +256,6 @@ pub struct MediaContentRaw {
     pub content_type_number: MediaContentType,
     slot_number: ContentSlot,
     pub upload_unix_time: UnixTime,
-    pub source_image_sha256_hash: Vec<u8>,
     pub source_image_pdq_hash: Vec<u8>,
     pub source_image_pdq_hash_quality: i16,
     pub uploader_ip: IpAddressInternal,

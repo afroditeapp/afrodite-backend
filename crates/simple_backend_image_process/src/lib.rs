@@ -10,7 +10,6 @@ use image::{DynamicImage, EncodableLayout, ImageDecoder, ImageFormat, ImageReade
 use nsfw_detection::NsfwDetector;
 use pdq_rs::{self, pdq_hash_rgb_full};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use simple_backend_config::image_process::ImageProcessingConfig;
 use simple_backend_model::SourceImageInfo;
 use simple_backend_utils::{Result, consts::MIB_IN_BYTES};
@@ -206,33 +205,12 @@ fn open_image(path: &PathBuf) -> Result<ImageReader<BufReader<File>>, ImageProce
     Ok(ImageReader::with_format(buf_reader, format))
 }
 
-/// Hash the source image file bytes.
-fn hash_source_image_file(path: &PathBuf) -> Result<Vec<u8>, ImageProcessError> {
-    let file = File::open(path).change_context(ImageProcessError::InputReadingFailed)?;
-
-    let mut hasher = Sha256::new();
-    let mut file = BufReader::new(file);
-    let mut buffer = [0u8; 8192];
-    loop {
-        let read = file
-            .read(&mut buffer)
-            .change_context(ImageProcessError::InputReadingFailed)?;
-        if read == 0 {
-            break;
-        }
-        hasher.update(&buffer[..read]);
-    }
-
-    Ok(hasher.finalize().to_vec())
-}
-
 fn handle_image(
     config: &ImageProcessingConfig,
     face_detector: &FaceDetector,
     nsfw_detector: &NsfwDetector,
     command: ProcessImageCommand,
 ) -> Result<ImageProcessingInfo, ImageProcessError> {
-    let source_image_sha256_hash = hash_source_image_file(&command.input)?;
     let img_reader = open_image(&command.input)?;
     let mut img_decoder = img_reader
         .into_decoder()
@@ -272,7 +250,6 @@ fn handle_image(
             face_detected: false,
             nsfw_detected,
             source_image_info: SourceImageInfo {
-                source_image_sha256_hash,
                 source_image_pdq_hash: Vec::new(),
                 source_image_pdq_hash_quality: 0,
             },
@@ -313,7 +290,6 @@ fn handle_image(
         face_detected,
         nsfw_detected,
         source_image_info: SourceImageInfo {
-            source_image_sha256_hash,
             source_image_pdq_hash,
             source_image_pdq_hash_quality,
         },

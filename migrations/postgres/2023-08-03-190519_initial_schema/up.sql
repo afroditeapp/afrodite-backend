@@ -1054,8 +1054,6 @@ CREATE TABLE IF NOT EXISTS media_content(
     slot_number         SMALLINT            NOT NULL,
     -- Upload HTTP request start unix time.
     upload_unix_time    BIGINT              NOT NULL,
-    -- SHA256 hash of the source image file bytes (32 bytes).
-    source_image_sha256_hash BYTEA          NOT NULL,
     -- PDQ perceptual hash of the source image (32 bytes).
     source_image_pdq_hash BYTEA             NOT NULL,
     -- PDQ hash quality (0-100).

@@ -277,7 +277,6 @@ impl CurrentWriteMediaContent<'_> {
                 content_type_number.eq(content_params.content_type.to_stored_type()),
                 initial_content.eq(initial_content_value),
                 upload_unix_time.eq(upload_time),
-                source_image_sha256_hash.eq(source_image_info.source_image_sha256_hash),
                 source_image_pdq_hash.eq(source_image_info.source_image_pdq_hash),
                 source_image_pdq_hash_quality.eq(source_image_info.source_image_pdq_hash_quality),
                 uploader_ip.eq(ip),
