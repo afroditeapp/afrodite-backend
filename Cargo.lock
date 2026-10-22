@@ -3900,6 +3900,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "pdq-rs"
+version = "1.0.0"
+source = "git+https://github.com/jutuon/pdq-rs?rev=d7ebe4b830ead98f73b2c3249934df31bf77631f#d7ebe4b830ead98f73b2c3249934df31bf77631f"
+dependencies = [
+ "cc",
+ "image",
+]
+
+[[package]]
 name = "pem"
 version = "3.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5386,6 +5395,7 @@ name = "server_data_all"
 version = "0.0.0"
 dependencies = [
  "axum",
+ "base16ct 1.0.0",
  "config",
  "database",
  "database_account",
@@ -5780,6 +5790,7 @@ dependencies = [
  "image",
  "mozjpeg",
  "nsfw",
+ "pdq-rs",
  "rustface",
  "serde",
  "serde_json",

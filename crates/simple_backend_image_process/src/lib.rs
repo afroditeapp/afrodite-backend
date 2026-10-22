@@ -8,6 +8,7 @@ use error_stack::{IntoReport, ResultExt};
 use face_detection::FaceDetector;
 use image::{DynamicImage, EncodableLayout, ImageDecoder, ImageFormat, ImageReader};
 use nsfw_detection::NsfwDetector;
+use pdq_rs::{self, pdq_hash_rgb_full};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use simple_backend_config::image_process::ImageProcessingConfig;
@@ -69,6 +70,9 @@ pub enum ImageProcessError {
 
     #[error("Unsupported image format")]
     UnsupportedImageFormat,
+
+    #[error("PDQ hashing failed")]
+    PdqHashingFailed,
 }
 
 /// Image process reads this info as JSON from standard input.
@@ -269,6 +273,8 @@ fn handle_image(
             nsfw_detected,
             source_image_info: SourceImageInfo {
                 source_image_sha256_hash,
+                source_image_pdq_hash: Vec::new(),
+                source_image_pdq_hash_quality: 0,
             },
         });
     }
@@ -288,6 +294,14 @@ fn handle_image(
             false
         }
     };
+    let (source_image_pdq_hash, source_image_pdq_hash_quality) = pdq_hash_rgb_full(&low)
+        .map(|(hash, quality)| {
+            (
+                hash.bits.to_vec(),
+                i16::try_from(quality).unwrap_or(i16::MAX),
+            )
+        })
+        .ok_or(ImageProcessError::PdqHashingFailed.into_report())?;
 
     let lower = resize_image_if_needed(&high, 426);
     encode_and_save_jpeg(config, &lower, &command.output_lower)?;
@@ -300,6 +314,8 @@ fn handle_image(
         nsfw_detected,
         source_image_info: SourceImageInfo {
             source_image_sha256_hash,
+            source_image_pdq_hash,
+            source_image_pdq_hash_quality,
         },
     };
 

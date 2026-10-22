@@ -59,6 +59,8 @@ struct DataExportMediaContent {
     upload_unix_time: UnixTime,
     initial_content: bool,
     source_image_sha256_hash: Vec<u8>,
+    source_image_pdq_hash: String,
+    source_image_pdq_hash_quality: i16,
     uploader_ip: IpAddr,
     uploader_port: Option<u16>,
 }
@@ -71,6 +73,8 @@ impl DataExportMediaContent {
             upload_unix_time: value.upload_unix_time,
             initial_content: value.initial_content,
             source_image_sha256_hash: value.source_image_sha256_hash,
+            source_image_pdq_hash: base16ct::lower::encode_string(&value.source_image_pdq_hash),
+            source_image_pdq_hash_quality: value.source_image_pdq_hash_quality,
             uploader_ip: value.uploader_ip.to_ip_addr(),
             uploader_port: value.uploader_port.map(Into::into),
         }

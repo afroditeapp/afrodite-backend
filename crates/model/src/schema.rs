@@ -762,6 +762,8 @@ diesel::table! {
         slot_number -> Int2,
         upload_unix_time -> Int8,
         source_image_sha256_hash -> Bytea,
+        source_image_pdq_hash -> Bytea,
+        source_image_pdq_hash_quality -> Int2,
         uploader_ip -> Bytea,
         uploader_port -> Nullable<Int4>,
         initial_content -> Bool,

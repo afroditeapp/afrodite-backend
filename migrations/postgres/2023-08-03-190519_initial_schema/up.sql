@@ -1056,6 +1056,10 @@ CREATE TABLE IF NOT EXISTS media_content(
     upload_unix_time    BIGINT              NOT NULL,
     -- SHA256 hash of the source image file bytes (32 bytes).
     source_image_sha256_hash BYTEA          NOT NULL,
+    -- PDQ perceptual hash of the source image (32 bytes).
+    source_image_pdq_hash BYTEA             NOT NULL,
+    -- PDQ hash quality (0-100).
+    source_image_pdq_hash_quality SMALLINT  NOT NULL,
     -- Uploader's IP address. V4 addresses are 4 bytes and V6 addresses are 16 bytes.
     uploader_ip         BYTEA               NOT NULL,
     -- Uploader's port number if available.

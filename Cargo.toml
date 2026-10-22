@@ -188,6 +188,10 @@ rev = "961f307d53009cba9c036f650c57339c72842530"
 default-features = false
 features = ["hyper-rustls-client"]
 
+[workspace.dependencies.pdq-rs]
+git = "https://github.com/jutuon/pdq-rs"
+rev = "d7ebe4b830ead98f73b2c3249934df31bf77631f"
+
 # Make image processing faster for debug builds
 [profile.dev.package.image]
 opt-level = 3
