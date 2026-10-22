@@ -337,6 +337,7 @@ Class | Method | HTTP request | Description
  - [ApiUsageCount](docs/ApiUsageCount.md)
  - [ApiUsageStatistics](docs/ApiUsageStatistics.md)
  - [AppAttestation](docs/AppAttestation.md)
+ - [AppAttestationRequirements](docs/AppAttestationRequirements.md)
  - [AppAttestationTypeNumber](docs/AppAttestationTypeNumber.md)
  - [AppleAppAttest](docs/AppleAppAttest.md)
  - [AssociationConfig](docs/AssociationConfig.md)

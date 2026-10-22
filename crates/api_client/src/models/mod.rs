@@ -114,6 +114,8 @@ pub mod api_usage_statistics;
 pub use self::api_usage_statistics::ApiUsageStatistics;
 pub mod app_attestation;
 pub use self::app_attestation::AppAttestation;
+pub mod app_attestation_requirements;
+pub use self::app_attestation_requirements::AppAttestationRequirements;
 pub mod app_attestation_type_number;
 pub use self::app_attestation_type_number::AppAttestationTypeNumber;
 pub mod apple_app_attest;

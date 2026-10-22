@@ -17,6 +17,8 @@ pub struct PutContentToContentSlotResult {
     pub error: Option<bool>,
     #[serde(rename = "error_content_processing_ongoing", skip_serializing_if = "Option::is_none")]
     pub error_content_processing_ongoing: Option<bool>,
+    #[serde(rename = "processing_state", skip_serializing_if = "Option::is_none")]
+    pub processing_state: Option<models::ContentProcessingState>,
 }
 
 impl PutContentToContentSlotResult {
@@ -24,6 +26,7 @@ impl PutContentToContentSlotResult {
         PutContentToContentSlotResult {
             error: None,
             error_content_processing_ongoing: None,
+            processing_state: None,
         }
     }
 }

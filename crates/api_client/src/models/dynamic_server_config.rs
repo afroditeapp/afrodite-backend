@@ -13,10 +13,16 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct DynamicServerConfig {
+    #[serde(rename = "account_login_app_attestation", skip_serializing_if = "Option::is_none")]
+    pub account_login_app_attestation: Option<models::AppAttestationRequirements>,
     #[serde(rename = "account_login_platforms", skip_serializing_if = "Option::is_none")]
     pub account_login_platforms: Option<models::AccountLoginPlatforms>,
+    #[serde(rename = "account_registration_app_attestation", skip_serializing_if = "Option::is_none")]
+    pub account_registration_app_attestation: Option<models::AppAttestationRequirements>,
     #[serde(rename = "account_registration_platforms", skip_serializing_if = "Option::is_none")]
     pub account_registration_platforms: Option<models::AccountRegistrationPlatforms>,
+    #[serde(rename = "email_registration_app_attestation", skip_serializing_if = "Option::is_none")]
+    pub email_registration_app_attestation: Option<models::AppAttestationRequirements>,
     #[serde(rename = "email_registration_domain_lists", skip_serializing_if = "Option::is_none")]
     pub email_registration_domain_lists: Option<models::EmailRegistrationDomainLists>,
     #[serde(rename = "email_registration_platforms", skip_serializing_if = "Option::is_none")]
@@ -26,8 +32,11 @@ pub struct DynamicServerConfig {
 impl DynamicServerConfig {
     pub fn new() -> DynamicServerConfig {
         DynamicServerConfig {
+            account_login_app_attestation: None,
             account_login_platforms: None,
+            account_registration_app_attestation: None,
             account_registration_platforms: None,
+            email_registration_app_attestation: None,
             email_registration_domain_lists: None,
             email_registration_platforms: None,
         }

@@ -15,12 +15,16 @@ use serde::{Deserialize, Serialize};
 pub struct PostVideoCallUrlResult {
     #[serde(rename = "jitsi_meet", skip_serializing_if = "Option::is_none")]
     pub jitsi_meet: Option<models::JitsiMeetUrl>,
+    /// Remaining daily video call URL creation count. The value will be returned only if there is 5 or less URL creations left.
+    #[serde(rename = "remaining_video_call_urls", skip_serializing_if = "Option::is_none")]
+    pub remaining_video_call_urls: Option<i32>,
 }
 
 impl PostVideoCallUrlResult {
     pub fn new() -> PostVideoCallUrlResult {
         PostVideoCallUrlResult {
             jitsi_meet: None,
+            remaining_video_call_urls: None,
         }
     }
 }
