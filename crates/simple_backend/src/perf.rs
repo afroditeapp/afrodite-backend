@@ -83,6 +83,14 @@ impl MetricValues {
             .insert(MetricKey::SYSTEM_CPU_USAGE, info.cpu_usage());
         self.metrics
             .insert(MetricKey::SYSTEM_RAM_USAGE_MIB, info.ram_usage_mib());
+        self.metrics.insert(
+            MetricKey::SYSTEM_NETWORK_RECEIVED_KIB_PER_SECOND,
+            info.network_received_kib_per_second(),
+        );
+        self.metrics.insert(
+            MetricKey::SYSTEM_NETWORK_TRANSMITTED_KIB_PER_SECOND,
+            info.network_transmitted_kib_per_second(),
+        );
     }
 }
 

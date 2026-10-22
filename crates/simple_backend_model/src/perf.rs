@@ -63,6 +63,10 @@ impl MetricKey {
 
     pub const SYSTEM_CPU_USAGE: Self = Self::system("cpu_usage", "cpu");
     pub const SYSTEM_RAM_USAGE_MIB: Self = Self::system("ram_usage_mib", "ram");
+    pub const SYSTEM_NETWORK_RECEIVED_KIB_PER_SECOND: Self =
+        Self::system("network_received_kib_per_second", "network");
+    pub const SYSTEM_NETWORK_TRANSMITTED_KIB_PER_SECOND: Self =
+        Self::system("network_transmitted_kib_per_second", "network");
 
     pub const CONNECTIONS: Self = Self::websocket("connections");
     pub const CONNECTIONS_MEN: Self = Self::websocket("connections_men");
