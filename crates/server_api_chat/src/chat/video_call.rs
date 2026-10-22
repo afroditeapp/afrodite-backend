@@ -6,7 +6,9 @@ use model::AccountId;
 use model_chat::{AccountIdInternal, JitsiMeetUrl, PostVideoCallUrlResult};
 use server_api::{
     S,
-    app::{ApiUsageTrackerProvider, GetAccounts, ReadData, WriteData},
+    app::{
+        ApiLimitsProvider, ApiUsageTrackerProvider, GetAccounts, GetConfig, ReadData, WriteData,
+    },
     create_open_api_router,
 };
 use server_data::read::GetReadCommandsCommon;
@@ -46,6 +48,17 @@ async fn post_create_video_call_url(
         .api_usage_tracker()
         .incr(id, |u| &u.post_create_video_call_url)
         .await;
+
+    let current_count = state
+        .api_limits(id)
+        .chat()
+        .post_create_video_call_url()
+        .await?;
+    let max_count = state
+        .config()
+        .limits_chat()
+        .create_video_call_url_daily_max_count;
+    let remaining = max_count.saturating_sub(current_count);
 
     let other_user = state.get_internal_id(other_user).await?;
 
@@ -110,6 +123,7 @@ async fn post_create_video_call_url(
                 url: urls.url,
                 custom_url: urls.custom_url,
             }),
+            remaining_video_call_urls: (remaining <= 5).then_some(remaining),
         })
         .unwrap_or_default();
 

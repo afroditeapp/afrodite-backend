@@ -47,4 +47,5 @@ pub struct AllApiLimits {
     pub get_profile_content_info: ApiLimitState,
     // Chat
     pub post_send_message: ApiLimitState,
+    pub post_create_video_call_url: ApiLimitState,
 }

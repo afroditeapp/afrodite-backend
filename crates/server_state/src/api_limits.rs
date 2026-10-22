@@ -268,4 +268,24 @@ impl ChatApiLimits<'_> {
 
         Ok(current_count)
     }
+
+    /// Returns current daily video call URL creation count
+    pub async fn post_create_video_call_url(&self) -> Result<u16, ApiLimitError> {
+        self.limits
+            .check(|state, config| {
+                state
+                    .post_create_video_call_url
+                    .increment_and_check_is_limit_reached(
+                        config.limits_chat().create_video_call_url_daily_max_count,
+                    )
+            })
+            .await?;
+
+        let current_count = self
+            .limits
+            .read(|state| state.post_create_video_call_url.value())
+            .await?;
+
+        Ok(current_count)
+    }
 }

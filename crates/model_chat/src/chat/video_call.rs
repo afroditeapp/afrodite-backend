@@ -6,6 +6,11 @@ pub struct PostVideoCallUrlResult {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
     pub jitsi_meet: Option<JitsiMeetUrl>,
+    /// Remaining daily video call URL creation count. The value will be
+    /// returned only if there is 5 or less URL creations left.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub remaining_video_call_urls: Option<u16>,
 }
 
 #[derive(Serialize, ToSchema)]
