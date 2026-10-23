@@ -35,6 +35,7 @@ use crate::{
     server::{app::App, mount::MountManager, state::MountStateStorage},
 };
 
+pub mod alerts;
 pub mod app;
 pub mod backend_events;
 pub mod backend_manager;
@@ -148,6 +149,27 @@ impl AppServer {
 
         let reboot_manager_quit_handle =
             reboot::RebootManager::new_manager(app.state(), services_quit_watcher.resubscribe());
+
+        // Start alert manager
+
+        let alert_manager_quit_handle = if let Some(alerts_config) = self.config.alerts() {
+            match alerts::AlertManager::new_manager(
+                alerts_config,
+                self.config.manager_name(),
+                services_quit_watcher.resubscribe(),
+            ) {
+                Ok(handle) => Some(handle),
+                Err(e) => {
+                    error!(
+                        "Alert manager starting failed, alerts are disabled. Error: {:?}",
+                        e
+                    );
+                    None
+                }
+            }
+        } else {
+            None
+        };
 
         // Start update manager
         let reqwest_client = reqwest::Client::new();
@@ -278,6 +300,10 @@ impl AppServer {
         reboot_manager_quit_handle.wait_quit().await;
         scheduled_task_manager_quit_handle.wait_quit().await;
         task_manager_quit_handle.wait_quit().await;
+
+        if let Some(alert_manager_quit_handle) = alert_manager_quit_handle {
+            alert_manager_quit_handle.wait_quit().await;
+        }
 
         drop(app);
 

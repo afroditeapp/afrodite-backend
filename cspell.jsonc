@@ -131,6 +131,7 @@
     "regclass",
     "roundtrips",
     "safelisted",
+    "mbits",
 
     // Finnish place names
     "Kilpisjärvi",

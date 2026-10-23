@@ -26,6 +26,9 @@ flate2 = { workspace = true }
 tar = { workspace = true }
 jiff = { workspace = true }
 
+lettre = { workspace = true }
+sysinfo = { workspace = true }
+
 # Server TLS
 tokio-rustls = { workspace = true }
 

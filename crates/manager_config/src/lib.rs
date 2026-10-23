@@ -23,8 +23,8 @@ use tokio_rustls::rustls::{ServerConfig, server::WebPkiClientVerifier};
 use tracing::{info, warn};
 
 use self::file::{
-    ConfigFile, ManualTasksConfig, SecureStorageConfig, ServerEncryptionKey, SocketConfig,
-    SoftwareUpdateConfig, SystemInfoConfig,
+    AlertsConfig, ConfigFile, ManualTasksConfig, SecureStorageConfig, ServerEncryptionKey,
+    SocketConfig, SoftwareUpdateConfig, SystemInfoConfig,
 };
 
 pub mod args;
@@ -45,6 +45,8 @@ pub enum GetConfigError {
 
     #[error("TLS config is required when debug mode is off")]
     TlsConfigMissing,
+    #[error("Invalid alerts config")]
+    InvalidAlertsConfig,
     #[error("TLS config creation error")]
     CreateTlsConfig,
 
@@ -125,6 +127,10 @@ impl Config {
 
     pub fn system_info(&self) -> Option<&SystemInfoConfig> {
         self.file.system_info.as_ref()
+    }
+
+    pub fn alerts(&self) -> Option<&AlertsConfig> {
+        self.file.alerts.as_ref()
     }
 
     /// Directory for build and update files
@@ -237,6 +243,13 @@ pub fn get_config(
     if public_api_tls_config.is_none() && !file_config.general.debug() {
         return Err(GetConfigError::TlsConfigMissing)
             .attach("TLS must be configured when debug mode is false");
+    }
+
+    if let Some(alerts) = &file_config.alerts
+        && alerts.check_interval().seconds == 0
+    {
+        return Err(GetConfigError::InvalidAlertsConfig)
+            .attach("Alerts check_interval must be greater than zero");
     }
 
     let script_locations =

@@ -102,6 +102,36 @@ public_api = "127.0.0.1:4000"
 # [system_info]
 # log_services = ["afrodite-manager", "afrodite-backend"]
 
+# [alerts]
+# check_interval = "1m" # Optional
+# max_emails_per_alert_per_day = 4 # Optional
+# debug_logging = false # Optional
+
+# [alerts.email]
+# smtp_server_address = "smtp.example.com"
+# use_starttls_instead_of_smtps = false # Optional
+# username = "user"
+# password = "password"
+# email_from_header = "Alerts <alerts@example.com>"
+# recipient = "admin@example.com"
+# debug_logging = false # Optional
+
+# [alerts.thresholds] # Default values
+# disk_space_percent = 85
+# ram_percent = 90
+# cpu_percent = 90
+# cpu_per_core_percent = 95
+# bandwidth_received_mbits = 50
+# bandwidth_transmitted_mbits = 50
+
+# [alerts.sustained_checks] # Default values
+# disk_space = 3
+# ram = 3
+# cpu = 3
+# cpu_per_core = 5
+# bandwidth_received = 15
+# bandwidth_transmitted = 15
+
 # [tls]
 # public_api_cert = "manager-tls/server.crt"
 # public_api_key = "manager-tls/server.key"
@@ -145,6 +175,7 @@ pub struct ConfigFile {
     pub automatic_system_reboot: Option<AutomaticSystemRebootConfig>,
     pub software_update: Option<SoftwareUpdateConfig>,
     pub system_info: Option<SystemInfoConfig>,
+    pub alerts: Option<AlertsConfig>,
     /// TLS is required if debug setting is false.
     pub tls: Option<TlsConfig>,
 }
@@ -358,6 +389,114 @@ pub struct AutomaticSystemRebootConfig {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SystemInfoConfig {
     pub log_services: Vec<String>,
+}
+
+/// Periodic system health monitoring with email alerts.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct AlertsConfig {
+    pub email: EmailAlertsConfig,
+    pub thresholds: Option<AlertThresholdsConfig>,
+    pub sustained_checks: Option<AlertSustainedChecksConfig>,
+    check_interval: Option<DurationValue>,
+    max_emails_per_alert_per_day: Option<u32>,
+    debug_logging: Option<bool>,
+}
+
+impl AlertsConfig {
+    /// How often system metrics are checked.
+    pub fn check_interval(&self) -> DurationValue {
+        self.check_interval
+            .unwrap_or(DurationValue::from_seconds(60))
+    }
+
+    /// Maximum amount of emails per alert type per UTC day.
+    /// Both alert and recovery emails are counted.
+    pub fn max_emails_per_alert_per_day(&self) -> u32 {
+        self.max_emails_per_alert_per_day.unwrap_or(4)
+    }
+
+    /// Log collected system metrics on every check. Disabled by default.
+    pub fn debug_logging(&self) -> bool {
+        self.debug_logging.unwrap_or(false)
+    }
+
+    pub fn thresholds(&self) -> AlertThresholdsConfig {
+        self.thresholds.clone().unwrap_or_default()
+    }
+
+    pub fn sustained_checks(&self) -> AlertSustainedChecksConfig {
+        self.sustained_checks.clone().unwrap_or_default()
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct EmailAlertsConfig {
+    /// The SMTP server must have port 465 open for sending emails using
+    /// implicit TLS.
+    pub smtp_server_address: String,
+    /// Use STARTTLS to start TLS connection on port 587 instead of implicit
+    /// TLS.
+    #[serde(default)]
+    pub use_starttls_instead_of_smtps: bool,
+    pub username: String,
+    pub password: String,
+    /// Email `From` header, for example `Example <no-reply@example.com>`
+    pub email_from_header: String,
+    /// Recipient of all alert emails.
+    pub recipient: String,
+    #[serde(default)]
+    pub debug_logging: bool,
+}
+
+/// Threshold values for alert checks.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(default)]
+pub struct AlertThresholdsConfig {
+    pub disk_space_percent: u32,
+    pub ram_percent: u32,
+    pub cpu_percent: u32,
+    pub cpu_per_core_percent: u32,
+    pub bandwidth_received_mbits: u32,
+    pub bandwidth_transmitted_mbits: u32,
+}
+
+impl Default for AlertThresholdsConfig {
+    fn default() -> Self {
+        Self {
+            disk_space_percent: 85,
+            ram_percent: 90,
+            cpu_percent: 90,
+            cpu_per_core_percent: 95,
+            bandwidth_received_mbits: 50,
+            bandwidth_transmitted_mbits: 50,
+        }
+    }
+}
+
+/// How many consecutive checks a threshold must be exceeded
+/// before an alert email is sent.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(default)]
+pub struct AlertSustainedChecksConfig {
+    pub disk_space: u32,
+    pub ram: u32,
+    pub cpu: u32,
+    pub cpu_per_core: u32,
+    pub bandwidth_received: u32,
+    pub bandwidth_transmitted: u32,
+}
+
+impl Default for AlertSustainedChecksConfig {
+    fn default() -> Self {
+        Self {
+            disk_space: 3,
+            ram: 3,
+            cpu: 3,
+            cpu_per_core: 5,
+            bandwidth_received: 15,
+            bandwidth_transmitted: 15,
+        }
+    }
 }
 
 /// Manager instance which has server enabled

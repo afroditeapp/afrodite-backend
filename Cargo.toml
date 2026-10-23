@@ -86,7 +86,7 @@ bitflags = "2.13.1"
 num_enum = "0.7.6"
 sha1 = "0.11.0"
 sha2 = "0.11.0"
-sysinfo = { version = "0.39.6", default-features = false, features = ["system"] }
+sysinfo = { version = "0.39.6", default-features = false, features = ["system", "disk", "network"] }
 ipnet = "2.12.1"
 maxminddb = "0.30.0"
 zip = "8.6.0"
