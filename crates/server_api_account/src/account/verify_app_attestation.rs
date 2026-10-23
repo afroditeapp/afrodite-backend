@@ -1,11 +1,11 @@
 use axum::extract::State;
-use model::{AccountIdInternal, ClientType};
+use model::{AccountIdInternal, ClientType, LoginMethod};
 use model_account::{
     LoginPhaseTwoResult, RequestAppAttestChallenge, RequestAppAttestChallengeResult,
     VerifyAppAttestationLogin,
 };
 use server_api::{
-    LoginType, S,
+    S,
     app::{ApiLimitsProvider, GetDynamicServerConfig, WriteData},
     utils::ClientIp,
 };
@@ -165,7 +165,7 @@ pub async fn post_verify_app_attestation(
         return Ok(LoginPhaseTwoResult::error_invalid_verify_app_attestation_token().into());
     };
 
-    let Some((account_id, client_type, login_method, connection_ip, challenge, login_type)) = state
+    let Some((account_id, client_type, login_method, connection_ip, challenge)) = state
         .verify_app_attestation_tokens()
         .consume(&token_bytes)
         .await
@@ -215,9 +215,9 @@ pub async fn post_verify_app_attestation(
         &state,
         account_id,
         client_type,
+        login_method,
         request.app_attestation.as_ref(),
         challenge.as_deref(),
-        login_type,
     )
     .await
     {
@@ -246,9 +246,9 @@ async fn validate_app_attestation(
     state: &S,
     account_id: AccountIdInternal,
     client_type: ClientType,
+    login_method: LoginMethod,
     attestation: Option<&AppAttestation>,
     challenge: Option<&str>,
-    login_type: LoginType,
 ) -> Result<Option<AppAttestationResult>, LoginPhaseTwoResult> {
     let client_type = match client_type {
         ClientType::Android => Some(AppAttestationClientType::Android),
@@ -256,7 +256,7 @@ async fn validate_app_attestation(
         _ => None,
     };
     let key_store = AppleAppAttestKeyStoreImpl { state, account_id };
-    let requirements = attestation_requirements(state, login_type).await;
+    let requirements = attestation_requirements(state, login_method).await;
     state
         .app_attestation_manager()
         .validate(
@@ -278,17 +278,19 @@ async fn validate_app_attestation(
         })
 }
 
-/// App attestation requirements for the login type from dynamic server config.
-async fn attestation_requirements(state: &S, login_type: LoginType) -> AppAttestationRequirements {
+async fn attestation_requirements(
+    state: &S,
+    login_method: LoginMethod,
+) -> AppAttestationRequirements {
     let config = state
         .dynamic_server_config_manager()
         .dynamic_server_config_ref()
         .await;
     let config = config.as_ref();
-    match login_type {
-        LoginType::Login => config.map(|c| c.account_login_app_attestation),
-        LoginType::Registration => config.map(|c| c.account_registration_app_attestation),
-        LoginType::EmailRegistration => config.map(|c| c.email_registration_app_attestation),
+    match login_method {
+        LoginMethod::Email => config.map(|c| c.email_app_attestation),
+        LoginMethod::Apple | LoginMethod::Google => config.map(|c| c.sign_in_with_app_attestation),
+        LoginMethod::Demo | LoginMethod::Bot => None,
     }
     .unwrap_or_default()
 }

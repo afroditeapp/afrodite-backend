@@ -136,7 +136,8 @@ pub struct DynamicServerConfig {
     pub account_login_platforms: AccountLoginPlatforms,
     pub email_registration_platforms: EmailRegistrationPlatforms,
     pub email_registration_domain_lists: EmailRegistrationDomainLists,
-    pub account_registration_app_attestation: AppAttestationRequirements,
-    pub account_login_app_attestation: AppAttestationRequirements,
-    pub email_registration_app_attestation: AppAttestationRequirements,
+    /// App attestation requirements for email login and registration.
+    pub email_app_attestation: AppAttestationRequirements,
+    /// App attestation requirements for sign in with login and registration.
+    pub sign_in_with_app_attestation: AppAttestationRequirements,
 }
