@@ -156,7 +156,7 @@ quote = "1.0.47"
 # Test mode
 inventory = "0.3.24"
 tokio-tungstenite = { version = "0.29.0", features = ["url", "rustls-tls-native-roots"] }
-pgp = { version = "0.20.0", default-features = false }
+pgp = { version = "0.21.0", default-features = false }
 smallvec = "1.15.2"
 async-openai = { version = "0.41.3", default-features = false, features = ["chat-completion", "rustls"] }
 unicode-segmentation = "1.13.3"
