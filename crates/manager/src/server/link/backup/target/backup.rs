@@ -170,6 +170,10 @@ impl SaveContentBackup {
                 return Err(BackupTargetError::InvalidContentId.report());
             };
 
+            if text.ends_with(".sha256") {
+                continue;
+            }
+
             let (content_text, variant) = if let Some(stripped) = text.strip_suffix("6") {
                 (stripped, ContentQualityVariant::High)
             } else if let Some(stripped) = text.strip_suffix("5") {
