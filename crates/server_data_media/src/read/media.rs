@@ -88,6 +88,20 @@ impl ReadCommandsMedia<'_> {
         .into_error()
     }
 
+    pub async fn content_states(
+        &self,
+        account_id: AccountIdInternal,
+        content_ids: Vec<ContentId>,
+    ) -> Result<Vec<MediaContentRaw>, DataError> {
+        self.db_read(move |mut cmds| {
+            cmds.media()
+                .media_content()
+                .get_account_media_content_states(account_id, content_ids)
+        })
+        .await
+        .into_error()
+    }
+
     pub async fn content_id_internal(
         &self,
         account_id: AccountIdInternal,

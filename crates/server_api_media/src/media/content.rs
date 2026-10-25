@@ -12,7 +12,8 @@ use model::{
 };
 use model_media::{
     AccountContent, AccountId, AccountIdInternal, AccountState, ContentId, ContentSlot,
-    GetContentQueryParams, NewContentParams, Permissions, PutContentToContentSlotResult,
+    GetContentQueryParams, GetMediaContentStates, NewContentParams, Permissions,
+    PutContentToContentSlotResult,
 };
 use server_api::{
     S,
@@ -343,6 +344,43 @@ pub async fn get_all_account_media_content(
     .into())
 }
 
+const PATH_GET_MEDIA_CONTENT_STATES: &str = "/media_api/content_states";
+
+/// Get detailed info of the requested media content of the calling account.
+///
+/// Content IDs not belonging to the account are omitted from the response.
+///
+/// # Access
+///
+/// - Own account
+#[utoipa::path(
+    post,
+    path = PATH_GET_MEDIA_CONTENT_STATES,
+    responses(
+        (status = 200, description = "Successful.", body = GetMediaContentStates),
+        (status = 401, description = "Unauthorized."),
+        (status = 500),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_media_content_states(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+    Json(content_ids): Json<Vec<ContentId>>,
+) -> Result<Json<GetMediaContentStates>, StatusCode> {
+    MEDIA.get_media_content_states.incr();
+
+    let content = state
+        .read()
+        .media()
+        .content_states(account_id, content_ids)
+        .await?;
+
+    let data = content.into_iter().map(|m| m.into()).collect();
+
+    Ok(GetMediaContentStates { data }.into())
+}
+
 const PATH_PUT_UPLOAD_CONTENT: &str = "/media_api/upload_content";
 
 /// Upload content to server for processing.
@@ -590,6 +628,7 @@ create_open_api_router!(
     fn router_content,
     get_content,
     get_all_account_media_content,
+    get_media_content_states,
     put_upload_content,
     get_content_processing_state,
     delete_content,
@@ -601,6 +640,7 @@ create_counters!(
     MEDIA_CONTENT_COUNTERS_LIST,
     get_content,
     get_all_account_media_content,
+    get_media_content_states,
     get_content_processing_state,
     put_upload_content,
     delete_content,

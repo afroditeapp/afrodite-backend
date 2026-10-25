@@ -129,6 +129,21 @@ impl CurrentReadMediaMediaContent<'_> {
             .into_db_error(media_owner_id)
     }
 
+    pub fn get_account_media_content_states(
+        &mut self,
+        media_owner_id: AccountIdInternal,
+        content_ids: Vec<ContentId>,
+    ) -> Result<Vec<MediaContentRaw>, DieselDatabaseError> {
+        use crate::schema::media_content::dsl::*;
+
+        media_content
+            .filter(account_id.eq(media_owner_id.as_db_id()))
+            .filter(uuid.eq_any(content_ids))
+            .select(MediaContentRaw::as_select())
+            .load(self.conn())
+            .into_db_error(media_owner_id)
+    }
+
     pub fn get_account_media_content_count(
         &mut self,
         media_owner_id: AccountIdInternal,

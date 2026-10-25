@@ -808,6 +808,11 @@ pub struct GetMediaContentResult {
     pub sync_version: MediaContentSyncVersion,
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct GetMediaContentStates {
+    pub data: Vec<ContentInfoDetailed>,
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
 pub struct AccountContent {
     pub data: Vec<ContentInfoDetailed>,
