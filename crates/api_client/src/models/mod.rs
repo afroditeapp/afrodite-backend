@@ -374,6 +374,8 @@ pub mod get_media_content_face_verified_null_list;
 pub use self::get_media_content_face_verified_null_list::GetMediaContentFaceVerifiedNullList;
 pub mod get_media_content_result;
 pub use self::get_media_content_result::GetMediaContentResult;
+pub mod get_media_content_states;
+pub use self::get_media_content_states::GetMediaContentStates;
 pub mod get_my_profile_result;
 pub use self::get_my_profile_result::GetMyProfileResult;
 pub mod get_news_item_result;

@@ -216,6 +216,7 @@ Class | Method | HTTP request | Description
 *MediaApi* | [**get_map_tile**](docs/MediaApi.md#get_map_tile) | **GET** /media_api/map_tile/{z}/{x}/{y} | Get map tile PNG file.
 *MediaApi* | [**get_media_app_notification_settings**](docs/MediaApi.md#get_media_app_notification_settings) | **GET** /media_api/get_media_app_notification_settings | 
 *MediaApi* | [**get_media_content_info**](docs/MediaApi.md#get_media_content_info) | **GET** /media_api/media_content_info | Get my profile and security content
+*MediaApi* | [**get_media_content_states**](docs/MediaApi.md#get_media_content_states) | **POST** /media_api/content_states | Get detailed info of the requested media content of the calling account.
 *MediaApi* | [**get_profile_content_info**](docs/MediaApi.md#get_profile_content_info) | **GET** /media_api/profile_content_info/{aid} | Get current profile content for selected profile.
 *MediaApi* | [**get_profile_content_info_binary**](docs/MediaApi.md#get_profile_content_info_binary) | **GET** /media_api/profile_content_info_binary/{aid} | Get current profile content for selected profile as compact binary payload.
 *MediaApi* | [**post_media_app_notification_settings**](docs/MediaApi.md#post_media_app_notification_settings) | **POST** /media_api/post_media_app_notification_settings | 
@@ -467,6 +468,7 @@ Class | Method | HTTP request | Description
  - [GetLatestPublicKeyId](docs/GetLatestPublicKeyId.md)
  - [GetMediaContentFaceVerifiedNullList](docs/GetMediaContentFaceVerifiedNullList.md)
  - [GetMediaContentResult](docs/GetMediaContentResult.md)
+ - [GetMediaContentStates](docs/GetMediaContentStates.md)
  - [GetMyProfileResult](docs/GetMyProfileResult.md)
  - [GetNewsItemResult](docs/GetNewsItemResult.md)
  - [GetPrivatePublicKeyInfo](docs/GetPrivatePublicKeyInfo.md)
