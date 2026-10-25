@@ -72,10 +72,10 @@ default = "Account deletion reminder 3/3"
 [account_deletion_remainder_third.body]
 default = "Your account will be deleted. This is the final reminder."
 
-# Account deleted final notification
+# Account deleted
 
 [account_deleted.subject]
-default = "Your account has been deleted"
+default = "Account deleted"
 
 [account_deleted.body]
 default = "Your account has been deleted."
@@ -437,7 +437,7 @@ impl<'a> EmailStringGetter<'a> {
     pub fn account_deleted(&self) -> Result<EmailContent, ConfigFileError> {
         self.apply_template(
             &self.config.account_deleted,
-            "Your account has been deleted",
+            "Account deleted",
             "Your account has been deleted.",
         )
     }
