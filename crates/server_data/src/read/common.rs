@@ -95,6 +95,13 @@ impl ReadCommandsCommon<'_> {
         self.cache().logged_in_clients().await
     }
 
+    /// Is the account currently logged in, i.e. has a valid access token.
+    pub async fn account_is_logged_in(&self, id: AccountIdInternal) -> Result<bool, DataError> {
+        self.read_cache_common(id, |e| Ok(e.access_token().is_some()))
+            .await
+            .into_error()
+    }
+
     pub async fn backup_current_database(&self, file_name: String) -> Result<(), DataError> {
         self.db_read_raw_no_transaction(move |mut cmds| {
             cmds.common().backup_current_database(file_name)
