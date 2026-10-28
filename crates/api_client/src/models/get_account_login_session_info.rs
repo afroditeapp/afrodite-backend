@@ -13,14 +13,18 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct GetAccountLoginSessionInfo {
+    /// Login session info from current (when logged in) or previous (when logged out) login.
     #[serde(rename = "info", skip_serializing_if = "Option::is_none")]
     pub info: Option<models::LoginSessionInfo>,
+    #[serde(rename = "logged_in", skip_serializing_if = "Option::is_none")]
+    pub logged_in: Option<bool>,
 }
 
 impl GetAccountLoginSessionInfo {
     pub fn new() -> GetAccountLoginSessionInfo {
         GetAccountLoginSessionInfo {
             info: None,
+            logged_in: None,
         }
     }
 }
