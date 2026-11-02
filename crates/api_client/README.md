@@ -107,7 +107,7 @@ Class | Method | HTTP request | Description
 *AccountAdminApi* | [**post_send_custom_email_to_all_accounts**](docs/AccountAdminApi.md#post_send_custom_email_to_all_accounts) | **POST** /account_api/send_custom_email_to_all_accounts | 
 *AccountAdminApi* | [**post_set_account_locked_state**](docs/AccountAdminApi.md#post_set_account_locked_state) | **POST** /account_api/set_account_locked_state/{aid} | Set account locked state
 *AccountAdminApi* | [**post_set_ban_state**](docs/AccountAdminApi.md#post_set_ban_state) | **POST** /account_api/set_ban_state | Ban or unban account
-*AccountAdminApi* | [**post_set_news_publicity**](docs/AccountAdminApi.md#post_set_news_publicity) | **DELETE** /account_api/set_news_publicity/{nid} | 
+*AccountAdminApi* | [**post_set_news_publicity**](docs/AccountAdminApi.md#post_set_news_publicity) | **POST** /account_api/set_news_publicity/{nid} | 
 *AccountAdminApi* | [**post_set_permissions**](docs/AccountAdminApi.md#post_set_permissions) | **POST** /account_api/set_permissions/{aid} | Set permissions for account
 *AccountAdminApi* | [**post_update_association_membership_type**](docs/AccountAdminApi.md#post_update_association_membership_type) | **POST** /account_api/update_association_membership_type | Change the membership type of an existing association membership.
 *AccountAdminApi* | [**post_update_custom_email**](docs/AccountAdminApi.md#post_update_custom_email) | **POST** /account_api/update_custom_email | Update a custom email message draft.

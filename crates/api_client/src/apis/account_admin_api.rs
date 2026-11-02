@@ -1440,7 +1440,7 @@ pub async fn post_set_news_publicity(configuration: &configuration::Configuratio
     let p_body_boolean_setting = boolean_setting;
 
     let uri_str = format!("{}/account_api/set_news_publicity/{nid}", configuration.base_path, nid=p_path_nid);
-    let mut req_builder = configuration.client.request(reqwest::Method::DELETE, &uri_str);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());

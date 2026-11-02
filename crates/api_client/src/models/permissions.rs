@@ -120,6 +120,7 @@ pub struct Permissions {
     pub admin_view_login: Option<bool>,
     #[serde(rename = "admin_view_permissions", skip_serializing_if = "Option::is_none")]
     pub admin_view_permissions: Option<bool>,
+    /// NOTE: Not used currently
     #[serde(rename = "admin_view_profile_history", skip_serializing_if = "Option::is_none")]
     pub admin_view_profile_history: Option<bool>,
 }
