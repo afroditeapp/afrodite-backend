@@ -223,6 +223,7 @@ define_permissions!(
     admin_view_login,
     admin_view_account_api_usage,
     admin_view_account_ip_address_usage,
+    /// NOTE: Not used currently
     admin_view_profile_history,
     admin_view_permissions,
     admin_view_email_address,
