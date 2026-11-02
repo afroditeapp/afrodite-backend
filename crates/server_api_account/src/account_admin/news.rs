@@ -199,7 +199,7 @@ pub async fn delete_news_translation(
 const PATH_POST_SET_NEWS_PUBLICITY: &str = "/account_api/set_news_publicity/{nid}";
 
 #[utoipa::path(
-    delete,
+    post,
     path = PATH_POST_SET_NEWS_PUBLICITY,
     params(NewsId),
     request_body(content = BooleanSetting),
