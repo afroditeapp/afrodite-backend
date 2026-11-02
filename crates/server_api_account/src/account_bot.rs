@@ -158,6 +158,18 @@ pub async fn post_remote_get_bots(
 ) -> Result<Json<GetBotsResult>, StatusCode> {
     ACCOUNT_BOT.post_remote_get_bots.incr();
 
+    let wait_until = Instant::now() + Duration::from_secs(1);
+    let result = post_remote_get_bots_internal(&state, address, info).await;
+    tokio::time::sleep_until(wait_until.into()).await;
+
+    result
+}
+
+async fn post_remote_get_bots_internal(
+    state: &S,
+    address: IpAddr,
+    info: RemoteBotPassword,
+) -> Result<Json<GetBotsResult>, StatusCode> {
     if !state.is_remote_bot_login_enabled() {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
@@ -166,7 +178,7 @@ pub async fn post_remote_get_bots(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     };
 
-    if !is_ip_address_accepted(&state, address, config.access()).await {
+    if !is_ip_address_accepted(state, address, config.access()).await {
         return Err(StatusCode::NOT_FOUND);
     }
 
@@ -174,7 +186,7 @@ pub async fn post_remote_get_bots(
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
-    get_or_create_bots_impl(&state, address).await
+    get_or_create_bots_impl(state, address).await
 }
 
 /// Get or create bot accounts based on server configuration.
