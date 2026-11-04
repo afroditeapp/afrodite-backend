@@ -5,6 +5,7 @@
 ## Changed
 
 - Allow '+' character in local part of email address
+- Update profile edit time only on user visible changes
 
 ## [0.25.5] - 2026-11-02
 

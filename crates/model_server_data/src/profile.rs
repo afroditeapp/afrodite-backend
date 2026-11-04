@@ -110,4 +110,11 @@ impl ProfileModificationMetadata {
             time: ProfileEditedTime::current_time(),
         }
     }
+
+    pub fn generate_with_edit_time(time: ProfileEditedTime) -> Self {
+        Self {
+            version: ProfileVersion::new_random(),
+            time,
+        }
+    }
 }

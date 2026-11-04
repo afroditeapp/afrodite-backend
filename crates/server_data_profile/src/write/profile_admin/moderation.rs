@@ -50,54 +50,70 @@ impl WriteCommandsProfileAdminModeration<'_> {
         };
 
         // Profile name and text have accepted boolean in Profile, so update Profile metadata
-        let modification = ProfileModificationMetadata::generate();
-        let new_state: ProfileStringModerationState = db_transaction!(self, move |mut cmds| {
-            cmds.profile()
-                .data()
-                .required_changes_for_profile_update(string_owner_id, &modification)?;
-            let new_state = match mode {
-                ModerateProfileValueMode::MoveToHumanModeration {
-                    rejected_category,
-                    rejected_details,
-                } => cmds.profile_admin().moderation().move_to_human_moderation(
-                    string_owner_id,
-                    content_type,
-                    rejected_category,
-                    rejected_details,
-                )?,
-                ModerateProfileValueMode::Moderate {
-                    moderator_id,
-                    accept,
-                    rejected_category,
-                    rejected_details,
-                } => {
-                    if content_type == ProfileStringModerationContentType::ProfileName {
-                        if accept {
-                            cmds.profile_admin()
-                                .moderation()
-                                .add_to_profile_name_allowlist(
-                                    moderator_id,
-                                    string_owner_id,
-                                    string_value,
-                                )?;
-                        } else {
-                            cmds.profile_admin()
-                                .moderation()
-                                .delete_from_profile_name_allowlist(string_value)?;
-                        }
-                    }
-                    cmds.profile_admin().moderation().moderate_profile_string(
-                        moderator_id,
+        let (new_state, modification): (ProfileStringModerationState, ProfileModificationMetadata) =
+            db_transaction!(self, move |mut cmds| {
+                let new_state = match mode {
+                    ModerateProfileValueMode::MoveToHumanModeration {
+                        rejected_category,
+                        rejected_details,
+                    } => cmds.profile_admin().moderation().move_to_human_moderation(
                         string_owner_id,
                         content_type,
+                        rejected_category,
+                        rejected_details,
+                    )?,
+                    ModerateProfileValueMode::Moderate {
+                        moderator_id,
                         accept,
                         rejected_category,
                         rejected_details,
-                    )?
-                }
-            };
-            Ok(new_state)
-        })?;
+                    } => {
+                        if content_type == ProfileStringModerationContentType::ProfileName {
+                            if accept {
+                                cmds.profile_admin()
+                                    .moderation()
+                                    .add_to_profile_name_allowlist(
+                                        moderator_id,
+                                        string_owner_id,
+                                        string_value,
+                                    )?;
+                            } else {
+                                cmds.profile_admin()
+                                    .moderation()
+                                    .delete_from_profile_name_allowlist(string_value)?;
+                            }
+                        }
+                        cmds.profile_admin().moderation().moderate_profile_string(
+                            moderator_id,
+                            string_owner_id,
+                            content_type,
+                            accept,
+                            rejected_category,
+                            rejected_details,
+                        )?
+                    }
+                };
+                // Profile edited time is only updated when the state change is visible to
+                // the user to avoid showing profile in automatic search results without
+                // user visible changes.
+                let modification = if current_moderation_state.send_notification_to_user(new_state)
+                {
+                    ProfileModificationMetadata::generate()
+                } else {
+                    let profile_state = cmds
+                        .read()
+                        .profile()
+                        .data()
+                        .profile_state(string_owner_id)?;
+                    ProfileModificationMetadata::generate_with_edit_time(
+                        profile_state.profile_edited_unix_time,
+                    )
+                };
+                cmds.profile()
+                    .data()
+                    .required_changes_for_profile_update(string_owner_id, &modification)?;
+                Ok((new_state, modification))
+            })?;
 
         self.write_cache_profile(string_owner_id.as_id(), |p| {
             match content_type {
