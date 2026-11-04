@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## Changed
+
+- Allow '+' character in local part of email address
+
 ## [0.25.5] - 2026-11-02
 
 ### Fixed

@@ -28,7 +28,7 @@ impl EmailAddressValidator {
     pub fn new() -> Self {
         Self {
             whitespace: Regex::new(r"\s").unwrap(),
-            allowed_local_part: Regex::new(r"^[a-zA-Z0-9._-]+$").unwrap(),
+            allowed_local_part: Regex::new(r"^[a-zA-Z0-9._+-]+$").unwrap(),
             alphanumeric: Regex::new(r"[a-zA-Z0-9]").unwrap(),
         }
     }
@@ -55,8 +55,7 @@ impl EmailAddressValidator {
             return Some(EmailAddressValidationError::MultipleAtSigns);
         }
 
-        // Every character of the local part must be allowed. `+` is excluded as
-        // the backend does not support address aliases.
+        // Every character of the local part must be allowed.
         if !self.allowed_local_part.is_match(local_part) {
             return Some(EmailAddressValidationError::InvalidCharacters);
         }
