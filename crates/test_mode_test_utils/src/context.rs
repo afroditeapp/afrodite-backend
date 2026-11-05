@@ -305,6 +305,10 @@ impl Admin {
         self.account.account_id()
     }
 
+    pub fn account_id_string(&self) -> String {
+        self.account.account_id().aid.to_string()
+    }
+
     pub async fn accept_pending_content_moderations_for_initial_images(
         &mut self,
     ) -> Result<(), TestError> {
