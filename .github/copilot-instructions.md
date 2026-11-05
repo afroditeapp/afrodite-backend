@@ -1,5 +1,8 @@
-Creating database migrations is not needed. When modifying database schema
-use `make reset-database` command to update `schema.rs` file.
+This backend is in production so DB migrations are needed.
+Remember to also update `full_schema.sql` which documents the DB schema for
+developers.
+
+When modifying database migrations `make reset-database` command to update `schema.rs` file.
 
 If you run `grep` command for some reason, make sure to exclude
 `target` and `.git` directories.
