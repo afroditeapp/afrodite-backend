@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.26.0] - 2026-11-05
+
 ## Changed
 
 - Add `initial_setup_completed` and `account_deleted_unix_time` columns to
