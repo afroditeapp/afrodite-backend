@@ -17,6 +17,13 @@ impl ProfileContentModificationMetadata {
             time: ProfileContentEditedTime::current_time(),
         }
     }
+
+    pub fn generate_with_edit_time(time: ProfileContentEditedTime) -> Self {
+        Self {
+            version: ProfileContentVersion::new_random(),
+            time,
+        }
+    }
 }
 
 #[derive(

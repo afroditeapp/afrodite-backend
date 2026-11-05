@@ -4,8 +4,10 @@
 
 ## Changed
 
-- Allow '+' character in local part of email address
-- Update profile edit time only on user visible changes
+- Allow '+' character in local part of email address.
+- Update profile and profile content edit times only on user visible changes.
+  This avoids showing profiles without any visible changes in automatic
+  profile search results.
 
 ## [0.25.5] - 2026-11-02
 

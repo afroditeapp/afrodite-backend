@@ -32,7 +32,7 @@ impl WriteCommandsProfileAdminContent<'_> {
             return Err(DataError::NotAllowed.report());
         }
 
-        let (new_state, cache_update) = db_transaction!(self, move |mut cmds| {
+        let (cache_update, user_visible_change) = db_transaction!(self, move |mut cmds| {
             cmds.media()
                 .media_content()
                 .increment_media_content_sync_version(content_id.content_owner())?;
@@ -58,6 +58,7 @@ impl WriteCommandsProfileAdminContent<'_> {
                     rejected_details,
                 )?,
             };
+            let user_visible_change = current_content.state().send_notification_to_user(new_state);
 
             let current_account_media = cmds
                 .read()
@@ -71,16 +72,30 @@ impl WriteCommandsProfileAdminContent<'_> {
                 // Public profile content accepted value might have
                 // changed, so update public profile content version
                 // and edit time.
-                let modification = ProfileContentModificationMetadata::generate();
+                //
+                // Profile content edited time is only updated when the state
+                // change is visible to the user to avoid showing profile in
+                // automatic search results without user visible changes.
+                let modification = if user_visible_change {
+                    ProfileContentModificationMetadata::generate()
+                } else {
+                    let media_state = cmds
+                        .read()
+                        .media()
+                        .get_media_state(content_id.content_owner())?;
+                    ProfileContentModificationMetadata::generate_with_edit_time(
+                        media_state.profile_content_edited_unix_time,
+                    )
+                };
                 cmds.media()
                     .media_content()
                     .required_changes_for_public_profile_content_update(
                         content_id.content_owner(),
                         &modification,
                     )?;
-                Ok((new_state, Some(modification)))
+                Ok((Some(modification), user_visible_change))
             } else {
-                Ok((new_state, None))
+                Ok((None, user_visible_change))
             }
         })?;
 
@@ -91,7 +106,7 @@ impl WriteCommandsProfileAdminContent<'_> {
                 .await?;
         }
 
-        if current_content.state().send_notification_to_user(new_state) {
+        if user_visible_change {
             Ok(Some(SendNotificationToUser))
         } else {
             Ok(None)
