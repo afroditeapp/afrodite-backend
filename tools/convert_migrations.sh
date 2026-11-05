@@ -24,5 +24,6 @@ find "$POSTGRES_DIR" -name "*.sql" ! -path "*/00000000000000_diesel_initial_setu
         -e 's/BIGINT PRIMARY KEY  /INTEGER PRIMARY KEY /g' \
         -e 's/BIGINT PRIMARY KEY/INTEGER PRIMARY KEY/g' \
         -e 's/BYTEA/BLOB /g' \
+        -e 's/EXTRACT(EPOCH FROM now())/unixepoch()/g' \
         "$file" > "$dest_file"
 done

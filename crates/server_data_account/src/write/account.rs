@@ -152,6 +152,17 @@ impl WriteCommandsAccount<'_> {
         })
     }
 
+    pub async fn set_initial_setup_completed_to_used_account_ids(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        db_transaction!(self, move |mut cmds| {
+            cmds.account()
+                .data()
+                .set_initial_setup_completed_to_used_account_ids(id)
+        })
+    }
+
     pub async fn set_account_verification_data(
         &self,
         id: AccountIdInternal,

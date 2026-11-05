@@ -1064,6 +1064,8 @@ diesel::table! {
     used_account_ids (id) {
         id -> Int8,
         uuid -> Bytea,
+        initial_setup_completed -> Bool,
+        account_deleted_unix_time -> Nullable<Int8>,
     }
 }
 

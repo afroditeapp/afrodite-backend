@@ -74,6 +74,10 @@ pub async fn complete_initial_setup(
                 .update_initial_setup_completed_unix_time(id)
                 .await?;
 
+            cmds.account()
+                .set_initial_setup_completed_to_used_account_ids(id)
+                .await?;
+
             let global_state = cmds.read().account().global_state().await?;
             let enable_all_permissions = if matches_with_grant_admin_access_config
                 && (global_state.admin_access_granted_count == 0

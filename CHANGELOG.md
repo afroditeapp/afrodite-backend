@@ -4,6 +4,9 @@
 
 ## Changed
 
+- Add `initial_setup_completed` and `account_deleted_unix_time` columns to
+  `used_account_ids` database table. The initial setup flag survives account
+  deletion and the deletion time is set when account data is removed.
 - Allow '+' character in local part of email address.
 - Update profile and profile content edit times only on user visible changes.
   This avoids showing profiles without any visible changes in automatic

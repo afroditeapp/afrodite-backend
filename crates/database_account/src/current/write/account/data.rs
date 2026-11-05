@@ -116,4 +116,18 @@ impl CurrentWriteAccountData<'_> {
 
         Ok(())
     }
+
+    pub fn set_initial_setup_completed_to_used_account_ids(
+        &mut self,
+        id_value: AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::used_account_ids::dsl::*;
+
+        update(used_account_ids.find(id_value.as_db_id()))
+            .set(initial_setup_completed.eq(true))
+            .execute(self.conn())
+            .into_db_error(id_value)?;
+
+        Ok(())
+    }
 }

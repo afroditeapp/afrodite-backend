@@ -30,11 +30,27 @@ impl CurrentWriteAccountDelete<'_> {
         Ok(())
     }
 
+    fn set_account_deleted_unix_time_to_used_account_ids(
+        &mut self,
+        id_value: AccountIdInternal,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::used_account_ids::dsl::*;
+
+        update(used_account_ids.find(id_value.as_db_id()))
+            .set(account_deleted_unix_time.eq(UnixTime::current_time()))
+            .execute(self.conn())
+            .into_db_error(id_value)?;
+
+        Ok(())
+    }
+
     pub fn delete_account(
         &mut self,
         id_value: AccountIdInternal,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::account_id::dsl::*;
+
+        self.set_account_deleted_unix_time_to_used_account_ids(id_value)?;
 
         delete(account_id)
             .filter(id.eq(id_value.as_db_id()))

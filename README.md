@@ -54,6 +54,8 @@ make run-release
 
 ### Dependencies
 
+SQLite 3.38.0 or newer is required as `unixepoch()` must be supported.
+
 #### Ubuntu
 
 1. Install [Rust](https://www.rust-lang.org/learn/get-started).

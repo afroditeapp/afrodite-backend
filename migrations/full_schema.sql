@@ -17,11 +17,15 @@ CREATE TABLE IF NOT EXISTS info_scheduled_tasks_start_time(
     unix_time BIGINT              NOT NULL
 );
 
--- All used account IDs. Account ID is not removed from here
+-- All used account IDs. Account ID is not currently removed from here
 -- when account data is removed.
 CREATE TABLE IF NOT EXISTS used_account_ids(
     id         BIGSERIAL PRIMARY KEY             NOT NULL,
-    uuid       BYTEA                             NOT NULL UNIQUE
+    uuid       BYTEA                             NOT NULL UNIQUE,
+    -- Set once when account initial setup is completed.
+    initial_setup_completed BOOLEAN NOT NULL DEFAULT FALSE,
+    -- Set when account data is removed.
+    account_deleted_unix_time BIGINT
 );
 
 -- Account IDs for currently existing accounts
