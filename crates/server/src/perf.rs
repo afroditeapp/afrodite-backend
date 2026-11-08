@@ -56,6 +56,7 @@ use server_api_profile::{
     profile_admin::{
         PROFILE_ADMIN_ITERATE_PROFILES_COUNTERS_LIST, PROFILE_ADMIN_MODERATION_COUNTERS_LIST,
         PROFILE_ADMIN_PROFILE_ATTRIBUTES_COUNTERS_LIST, PROFILE_ADMIN_PROFILE_DATA_COUNTERS_LIST,
+        PROFILE_ADMIN_PROFILE_STRING_ITERATION_COUNTERS_LIST,
         PROFILE_ADMIN_STATISTICS_COUNTERS_LIST, PROFILE_ADMIN_VERIFICATION_COUNTERS_LIST,
     },
 };
@@ -235,6 +236,10 @@ pub static ALL_COUNTERS: &[&CounterCategory] = &[
     &CounterCategory::new(
         "profile_admin_profile_attributes",
         PROFILE_ADMIN_PROFILE_ATTRIBUTES_COUNTERS_LIST,
+    ),
+    &CounterCategory::new(
+        "profile_admin_profile_string_iteration",
+        PROFILE_ADMIN_PROFILE_STRING_ITERATION_COUNTERS_LIST,
     ),
     // Chat
     &CounterCategory::new("chat_like", CHAT_LIKE_COUNTERS_LIST),

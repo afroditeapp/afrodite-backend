@@ -41,6 +41,9 @@ impl PrivateRoutes {
             ))
             .merge(api::profile_admin::router_admin_profile_attributes(
                 self.state.clone(),
+            ))
+            .merge(api::profile_admin::router_admin_profile_string_iteration(
+                self.state.clone(),
             ));
 
         let private = if self.state.s.config().debug_mode() {

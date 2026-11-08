@@ -12,6 +12,9 @@
 - Cleanup `used_account_ids` rows for deleted accounts which never
   completed the initial setup. Cleanup happens during daily scheduled
   tasks one day after account deletion.
+- New admin API route `get_profile_string_iteration_page` for iterating
+  all profile name/text values in descending profile edited time order.
+  Iteration page number and origin edited time value can be set.
 
 ## [0.26.0] - 2026-11-05
 
