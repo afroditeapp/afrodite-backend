@@ -18,6 +18,9 @@ pub use map::*;
 mod content;
 pub use content::*;
 
+mod content_iteration;
+pub use content_iteration::*;
+
 mod report;
 pub use report::*;
 

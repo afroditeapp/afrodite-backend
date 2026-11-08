@@ -15,6 +15,11 @@
 - New admin API route `get_profile_string_iteration_page` for iterating
   all profile name/text values in descending profile edited time order.
   Iteration page number and origin edited time value can be set.
+- New admin API route `get_media_content_iteration_page` for iterating
+  all media content items in descending content upload time order. The
+  `only_security_content` query parameter can be used to iterate only
+  security content items. Iteration page number and origin upload time
+  value can be set.
 
 ## [0.26.0] - 2026-11-05
 

@@ -1,8 +1,9 @@
 use database_media::current::read::GetDbReadCommandsMedia;
-use model::ImageProcessingDynamicConfig;
+use model::{ImageProcessingDynamicConfig, UnixTime};
 use model_media::{
-    GetMediaContentFaceVerifiedNullList, MediaContentModerationQueuePage,
-    MediaContentModerationQueueType, MediaContentModerationType, MediaContentType,
+    GetMediaContentFaceVerifiedNullList, MediaContentIterationPage,
+    MediaContentModerationQueuePage, MediaContentModerationQueueType, MediaContentModerationType,
+    MediaContentType,
 };
 use server_common::result::Result;
 use server_data::{DataError, IntoDataError, define_cmd_wrapper_read, read::DbRead};
@@ -32,6 +33,23 @@ impl ReadCommandsMediaAdmin<'_> {
             cmds.media_admin()
                 .content()
                 .media_content_face_verified_null_list()
+        })
+        .await
+        .into_error()
+    }
+
+    pub async fn media_content_iteration_page(
+        &self,
+        only_security_content: bool,
+        page: i64,
+        origin: UnixTime,
+    ) -> Result<MediaContentIterationPage, DataError> {
+        self.db_read(move |mut cmds| {
+            cmds.media_admin().content().media_content_iteration_page(
+                only_security_content,
+                page,
+                origin,
+            )
         })
         .await
         .into_error()

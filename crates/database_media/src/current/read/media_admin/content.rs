@@ -1,12 +1,13 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
-use model::ContentId;
+use model::{AccountId, ContentId};
 use model_media::{
     AccountIdInternal, ContentModerationState, GetMediaContentFaceVerifiedNullList,
-    MediaContentFaceVerifiedNullByAccount, MediaContentModerationQueuePage,
-    MediaContentModerationQueueType, MediaContentModerationType, MediaContentPendingModeration,
-    MediaContentRaw, MediaContentType,
+    MediaContentFaceVerifiedNullByAccount, MediaContentIterationPage, MediaContentIterationValue,
+    MediaContentModerationQueuePage, MediaContentModerationQueueType, MediaContentModerationType,
+    MediaContentPendingModeration, MediaContentRaw, MediaContentType,
 };
+use simple_backend_model::UnixTime;
 use simple_backend_utils::Result;
 
 use crate::IntoDatabaseError;
@@ -151,4 +152,98 @@ impl CurrentReadMediaAdminContent<'_> {
 
         Ok(GetMediaContentFaceVerifiedNullList { values })
     }
+
+    pub fn media_content_iteration_page(
+        &mut self,
+        only_security_content: bool,
+        page: i64,
+        origin: UnixTime,
+    ) -> Result<MediaContentIterationPage, DieselDatabaseError> {
+        use crate::schema::{account_id, current_account_media, media_content};
+
+        const PAGE_SIZE: i64 = 25;
+
+        let is_security_content = diesel::dsl::exists(
+            current_account_media::table
+                .filter(
+                    current_account_media::security_content_id
+                        .assume_not_null()
+                        .eq(media_content::id),
+                )
+                .filter(current_account_media::account_id.eq(media_content::account_id)),
+        );
+
+        let select_columns = (
+            account_id::uuid,
+            media_content::uuid,
+            media_content::face_detected,
+            media_content::face_detected_manual,
+            media_content::secure_capture,
+            media_content::upload_unix_time,
+        );
+
+        let from_clause = media_content::table
+            .inner_join(account_id::table.on(media_content::account_id.eq(account_id::id)));
+
+        type IterationRow = (AccountId, ContentId, bool, Option<bool>, bool, UnixTime);
+
+        if only_security_content {
+            let rows: Vec<IterationRow> = from_clause
+                .filter(is_security_content)
+                .filter(media_content::upload_unix_time.lt(origin.ut))
+                .order((
+                    media_content::upload_unix_time.desc(),
+                    media_content::id.desc(),
+                ))
+                .select(select_columns)
+                .limit(PAGE_SIZE)
+                .offset(PAGE_SIZE.saturating_mul(page))
+                .load(self.conn())
+                .into_db_error(())?;
+
+            return Ok(convert_iteration_rows(rows));
+        }
+
+        let rows: Vec<IterationRow> = from_clause
+            .filter(media_content::upload_unix_time.lt(origin.ut))
+            .order((
+                media_content::upload_unix_time.desc(),
+                media_content::id.desc(),
+            ))
+            .select(select_columns)
+            .limit(PAGE_SIZE)
+            .offset(PAGE_SIZE.saturating_mul(page))
+            .load(self.conn())
+            .into_db_error(())?;
+
+        Ok(convert_iteration_rows(rows))
+    }
+}
+
+/// Convert raw iteration row tuples into API values.
+#[allow(clippy::type_complexity)]
+fn convert_iteration_rows(
+    rows: Vec<(AccountId, ContentId, bool, Option<bool>, bool, UnixTime)>,
+) -> MediaContentIterationPage {
+    let mut values = Vec::with_capacity(rows.len());
+
+    for (
+        account_id,
+        content_id,
+        face_detected,
+        face_detected_manual,
+        secure_capture,
+        uploaded_time,
+    ) in rows
+    {
+        values.push(MediaContentIterationValue {
+            account_id,
+            content_id,
+            face_detected: face_detected_manual.unwrap_or(face_detected),
+            secure_capture,
+            uploaded_time,
+        });
+    }
+
+    MediaContentIterationPage { values }
 }

@@ -164,6 +164,10 @@ impl ApiDoc {
                 server_api_media::media_admin::router_admin_content(state.clone()).into_openapi(),
             )
             .merge_from(
+                server_api_media::media_admin::router_admin_content_iteration(state.clone())
+                    .into_openapi(),
+            )
+            .merge_from(
                 server_api_media::media_admin::router_admin_security_content(state.clone())
                     .into_openapi(),
             )
