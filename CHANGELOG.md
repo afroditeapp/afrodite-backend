@@ -9,6 +9,9 @@
   have been inactive for
   `init_deletion_for_initial_setup_inactive_accounts_wait_duration`
   (default 14 days). The deletion initiated email is sent as well.
+- Cleanup `used_account_ids` rows for deleted accounts which never
+  completed the initial setup. Cleanup happens during daily scheduled
+  tasks one day after account deletion.
 
 ## [0.26.0] - 2026-11-05
 

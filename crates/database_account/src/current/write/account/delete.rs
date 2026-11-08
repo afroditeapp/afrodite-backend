@@ -59,4 +59,22 @@ impl CurrentWriteAccountDelete<'_> {
 
         Ok(())
     }
+
+    pub fn delete_old_initial_setup_used_account_ids(
+        &mut self,
+        deletion_unix_time_max: UnixTime,
+    ) -> Result<(), DieselDatabaseError> {
+        use model::schema::used_account_ids::dsl::*;
+
+        delete(used_account_ids)
+            .filter(
+                account_deleted_unix_time
+                    .lt(deletion_unix_time_max)
+                    .and(initial_setup_completed.eq(false)),
+            )
+            .execute(self.conn())
+            .into_db_error(())?;
+
+        Ok(())
+    }
 }

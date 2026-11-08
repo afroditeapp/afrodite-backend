@@ -150,7 +150,21 @@ impl ScheduledTaskManager {
         self.prune_email_address_history().await?;
         self.prune_sign_in_with_history().await?;
         self.prune_ip_address_usage_data().await?;
+        self.delete_old_initial_setup_used_account_ids().await?;
         backup_data(&self.state, quit_notification).await?;
+        Ok(())
+    }
+
+    async fn delete_old_initial_setup_used_account_ids(&self) -> Result<(), ScheduledTaskError> {
+        db_write_raw!(self.state, move |cmds| {
+            cmds.account()
+                .delete()
+                .delete_old_initial_setup_used_account_ids()
+                .await
+        })
+        .await
+        .change_context(ScheduledTaskError::DatabaseError)?;
+
         Ok(())
     }
 

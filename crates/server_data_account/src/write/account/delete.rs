@@ -1,6 +1,6 @@
 use database::current::{read::GetDbReadCommandsCommon, write::GetDbWriteCommandsCommon};
 use database_account::current::{read::GetDbReadCommandsAccount, write::GetDbWriteCommandsAccount};
-use model::EventToClientInternal;
+use model::{EventToClientInternal, UnixTime};
 use model_account::{AccountIdInternal, EmailSendingState, ProfileVisibility};
 use server_data::{
     DataError,
@@ -122,6 +122,23 @@ impl WriteCommandsAccountDelete<'_> {
         }
 
         Ok(())
+    }
+
+    /// Cleanup deleted account IDs which never completed the initial
+    /// setup. Runs as a scheduled task.
+    ///
+    /// The IDs are safe to delete as the profile hasn't been public yet.
+    /// Very unlikely issue: the same user gets the same UUID again which
+    /// might cause some issues with the client.
+    pub async fn delete_old_initial_setup_used_account_ids(&self) -> Result<(), DataError> {
+        // Cleanup at the next day after account deletion.
+        let deletion_unix_time_max = UnixTime::new(UnixTime::current_time().ut - 60 * 60 * 24);
+
+        db_transaction!(self, move |mut cmds| {
+            cmds.account()
+                .delete()
+                .delete_old_initial_setup_used_account_ids(deletion_unix_time_max)
+        })
     }
 
     pub async fn delete_all_accounts(&self) -> Result<(), DataError> {
