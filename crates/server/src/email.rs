@@ -115,6 +115,13 @@ impl EmailManager {
                                 error!("Account deleted email send failed: {:?}", e);
                             }
                         }
+                        HighPriorityEmailMsg::AccountDeletionInitiated { email, language } => {
+                            if let Err(e) =
+                                self.handle_send_account_deletion_initiated(&email, &language).await
+                            {
+                                error!("Account deletion initiated email send failed: {:?}", e);
+                            }
+                        }
                     }
                 }
                 Some(cmd) = self.normal_receiver.recv() => {
@@ -198,6 +205,34 @@ impl EmailManager {
         let getter = email_content.get(language.as_ref());
         let content = getter
             .account_deleted()
+            .change_context(EmailError::GettingEmailDataFailed)?;
+
+        self.smtp_client
+            .send(
+                email.as_str(),
+                &content.subject,
+                &content.body,
+                content.body_is_html,
+            )
+            .await
+            .change_context(EmailError::SendingFailed)?;
+
+        Ok(())
+    }
+
+    async fn handle_send_account_deletion_initiated(
+        &self,
+        email: &EmailAddress,
+        language: &Option<ClientLanguage>,
+    ) -> simple_backend_utils::Result<(), EmailError> {
+        if email.as_str().ends_with("@example.com") {
+            return Ok(());
+        }
+
+        let email_content = self.state.config().email_content();
+        let getter = email_content.get(language.as_ref());
+        let content = getter
+            .account_deletion_initiated()
             .change_context(EmailError::GettingEmailDataFailed)?;
 
         self.smtp_client

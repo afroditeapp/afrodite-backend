@@ -80,6 +80,14 @@ default = "Account deleted"
 [account_deleted.body]
 default = "Your account has been deleted."
 
+# Account deletion initiated
+
+[account_deletion_initiated.subject]
+default = "Account deletion scheduled because of inactivity"
+
+[account_deletion_initiated.body]
+default = "Your account is scheduled for deletion due to inactivity. If you want to keep your account, please sign in to the app and cancel the deletion. You will get three reminder emails before the deletion happens."
+
 # Email change verification
 
 [email_change_verification.subject]
@@ -132,6 +140,7 @@ pub struct EmailContentFile {
     account_deletion_remainder_second: Option<EmailContentStrings>,
     account_deletion_remainder_third: Option<EmailContentStrings>,
     account_deleted: Option<EmailContentStrings>,
+    account_deletion_initiated: Option<EmailContentStrings>,
     /// "{token}" is replaced with email change verification token
     email_change_verification: Option<EmailContentStrings>,
     email_change_notification: Option<EmailContentStrings>,
@@ -178,6 +187,7 @@ impl Default for EmailContentFile {
             account_deletion_remainder_second: None,
             account_deletion_remainder_third: None,
             account_deleted: None,
+            account_deletion_initiated: None,
             email_change_verification: None,
             email_change_notification: None,
             email_login: None,
@@ -267,7 +277,7 @@ impl EmailContentFile {
         let (template, _, custom_keys) = effective_email_config(&config.email, &None);
         validate_custom_keys(&template, &custom_keys, "global")?;
 
-        let emails: [(&str, &Option<EmailContentStrings>); 10] = [
+        let emails: [(&str, &Option<EmailContentStrings>); 11] = [
             ("email_verification", &config.email_verification),
             ("new_message", &config.new_message),
             ("new_like", &config.new_like),
@@ -284,6 +294,10 @@ impl EmailContentFile {
                 &config.account_deletion_remainder_third,
             ),
             ("account_deleted", &config.account_deleted),
+            (
+                "account_deletion_initiated",
+                &config.account_deletion_initiated,
+            ),
             (
                 "email_change_verification",
                 &config.email_change_verification,
@@ -439,6 +453,14 @@ impl<'a> EmailStringGetter<'a> {
             &self.config.account_deleted,
             "Account deleted",
             "Your account has been deleted.",
+        )
+    }
+
+    pub fn account_deletion_initiated(&self) -> Result<EmailContent, ConfigFileError> {
+        self.apply_template(
+            &self.config.account_deletion_initiated,
+            "Account deletion scheduled because of inactivity",
+            "Your account is scheduled for deletion due to inactivity. If you want to keep your account, please sign in to the app and cancel the deletion. You will get three reminder emails before the deletion happens.",
         )
     }
 

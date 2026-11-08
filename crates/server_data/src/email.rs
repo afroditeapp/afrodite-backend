@@ -53,6 +53,10 @@ pub enum HighPriorityEmailMsg {
         email: EmailAddress,
         language: Option<ClientLanguage>,
     },
+    AccountDeletionInitiated {
+        email: EmailAddress,
+        language: Option<ClientLanguage>,
+    },
 }
 
 /// A handle that can be awaited to get the result of sending a high priority email.
@@ -172,6 +176,25 @@ impl EmailChannelSender {
             }
             Err(TrySendError::Full(_)) => {
                 error!("Account deleted email send failed: channel full");
+            }
+        }
+    }
+
+    /// Best effort sending. The email is just moved to the send queue and
+    /// sending errors are only logged.
+    pub fn send_account_deletion_initiated_notification(
+        &self,
+        email: EmailAddress,
+        language: Option<ClientLanguage>,
+    ) {
+        let cmd = HighPriorityEmailMsg::AccountDeletionInitiated { email, language };
+        match self.high_priority_sender.try_send(cmd) {
+            Ok(()) => (),
+            Err(TrySendError::Closed(_)) => {
+                error!("Account deletion initiated email send failed: channel broken");
+            }
+            Err(TrySendError::Full(_)) => {
+                error!("Account deletion initiated email send failed: channel full");
             }
         }
     }

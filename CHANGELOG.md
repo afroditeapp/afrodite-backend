@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Send email when account deletion is initiated automatically.
+
 ## [0.26.0] - 2026-11-05
 
 ## Changed

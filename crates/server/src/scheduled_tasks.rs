@@ -398,6 +398,24 @@ impl ScheduledTaskManager {
                     .seconds,
             );
             if UnixTime::current_time().ut >= inactive_account.ut {
+                // Note: Read email address and client language before the
+                // deletion state is set.
+                let email = self
+                    .state
+                    .read()
+                    .account()
+                    .email_address(id)
+                    .await
+                    .change_context(ScheduledTaskError::DatabaseError)?;
+                let language = self
+                    .state
+                    .read()
+                    .common()
+                    .client_config()
+                    .client_language(id)
+                    .await
+                    .change_context(ScheduledTaskError::DatabaseError)?;
+
                 db_write_raw!(self.state, move |cmds| {
                     cmds.account()
                         .delete()
@@ -406,6 +424,16 @@ impl ScheduledTaskManager {
                 })
                 .await
                 .change_context(ScheduledTaskError::DatabaseError)?;
+
+                // NOTE: Oneshot best effort email sending without any
+                // database sending state. If email sending reliability
+                // becomes critical, move this to the DB-backed
+                // EmailMessages pipeline.
+                if let Some(email) = email {
+                    self.state
+                        .email_channel_sender()
+                        .send_account_deletion_initiated_notification(email, language);
+                }
             }
         }
 
