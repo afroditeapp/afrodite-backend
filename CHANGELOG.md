@@ -5,6 +5,10 @@
 ### Added
 
 - Send email when account deletion is initiated automatically.
+- Init account deletion for accounts which are in initial setup state and
+  have been inactive for
+  `init_deletion_for_initial_setup_inactive_accounts_wait_duration`
+  (default 14 days). The deletion initiated email is sent as well.
 
 ## [0.26.0] - 2026-11-05
 

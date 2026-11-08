@@ -60,6 +60,7 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # inactivity_logout_wait_duration = "365d"
 # account_deletion_wait_duration = "90d"
 # init_deletion_for_inactive_accounts_wait_duration = "730d"
+# init_deletion_for_initial_setup_inactive_accounts_wait_duration = "14d"
 # email_verification_token_validity_duration = "1d"
 # email_verification_resend_min_wait_duration = "15m"
 # email_verification_emails_per_month = 10
@@ -415,6 +416,7 @@ pub struct AccountLimitsConfig {
     pub inactivity_logout_wait_duration: DurationValue,
     pub account_deletion_wait_duration: DurationValue,
     pub init_deletion_for_inactive_accounts_wait_duration: DurationValue,
+    pub init_deletion_for_initial_setup_inactive_accounts_wait_duration: DurationValue,
     pub email_verification_token_validity_duration: DurationValue,
     pub email_verification_resend_min_wait_duration: DurationValue,
     pub email_verification_emails_per_month: u16,
@@ -461,6 +463,8 @@ impl Default for AccountLimitsConfig {
             inactivity_logout_wait_duration: DurationValue::from_days(365),
             account_deletion_wait_duration: DurationValue::from_days(90),
             init_deletion_for_inactive_accounts_wait_duration: DurationValue::from_days(365 * 2), // About 2 years
+            init_deletion_for_initial_setup_inactive_accounts_wait_duration:
+                DurationValue::from_days(14),
             email_verification_token_validity_duration: DurationValue::from_days(1),
             email_verification_resend_min_wait_duration: DurationValue::from_seconds(15 * 60),
             email_verification_emails_per_month: 10,

@@ -278,7 +278,8 @@ impl ScheduledTaskManager {
             }
 
             if account_state != AccountState::PendingDeletion {
-                self.init_deletion_for_unused_account(id).await?;
+                self.init_deletion_for_unused_account(id, account_state)
+                    .await?;
             }
 
             if account_state == AccountState::PendingDeletion {
@@ -380,6 +381,7 @@ impl ScheduledTaskManager {
     pub async fn init_deletion_for_unused_account(
         &self,
         id: AccountIdInternal,
+        account_state: AccountState,
     ) -> Result<(), ScheduledTaskError> {
         let last_seen_time = self
             .state
@@ -390,13 +392,23 @@ impl ScheduledTaskManager {
             .change_context(ScheduledTaskError::DatabaseError)?;
 
         if let Some(last_seen_time) = last_seen_time.last_seen_unix_time() {
-            let inactive_account = last_seen_time.ut.add_seconds(
-                self.state
-                    .config()
-                    .limits_account()
-                    .init_deletion_for_inactive_accounts_wait_duration
-                    .seconds,
-            );
+            let inactivity_wait_duration = match account_state {
+                AccountState::InitialSetup => {
+                    self.state
+                        .config()
+                        .limits_account()
+                        .init_deletion_for_initial_setup_inactive_accounts_wait_duration
+                }
+                _ => {
+                    self.state
+                        .config()
+                        .limits_account()
+                        .init_deletion_for_inactive_accounts_wait_duration
+                }
+            };
+            let inactive_account = last_seen_time
+                .ut
+                .add_seconds(inactivity_wait_duration.seconds);
             if UnixTime::current_time().ut >= inactive_account.ut {
                 // Note: Read email address and client language before the
                 // deletion state is set.
