@@ -32,19 +32,20 @@ pub struct AccountFilters {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
     pub login_session_ip_country_is_not: Option<String>,
-    /// Includes accounts whose latest login session does not have valid
-    /// basic app attestation. Valid basic app attestation means valid
-    /// iOS app attestation token or valid Android app and device
-    /// integrity values.
+    /// Includes accounts whose latest login session basic app
+    /// attestation validity matches the provided value. Valid basic
+    /// app attestation means valid iOS app attestation token or valid
+    /// Android app and device integrity values. Accounts without a
+    /// login session are included when the value is false.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
-    pub login_session_basic_app_attestation_not_valid: Option<bool>,
+    pub login_session_basic_app_attestation_validity: Option<bool>,
 }
 
 impl AccountFilters {
     pub fn any_login_session_filter(&self) -> bool {
         self.login_session_ip_country_is_not.is_some()
-            || self.login_session_basic_app_attestation_not_valid.is_some()
+            || self.login_session_basic_app_attestation_validity.is_some()
     }
 }
 

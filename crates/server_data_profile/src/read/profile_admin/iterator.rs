@@ -183,11 +183,11 @@ impl ReadCommandsProfileIterator<'_> {
                 continue;
             }
 
-            if filters
-                .login_session_basic_app_attestation_not_valid
-                .unwrap_or(false)
-                && basic_app_attestation_valid(db_page.login_session_infos.get(&account_db_id))
-                    != Some(true)
+            if let Some(wanted_attestation_validity) =
+                filters.login_session_basic_app_attestation_validity
+                && wanted_attestation_validity
+                    != basic_app_attestation_valid(db_page.login_session_infos.get(&account_db_id))
+                        .unwrap_or(false)
             {
                 continue;
             }

@@ -103,7 +103,7 @@ pub async fn get_admin_profile_iterator_page(
             filters.account_online = None;
         }
         if !can_view_login {
-            filters.login_session_basic_app_attestation_not_valid = None;
+            filters.login_session_basic_app_attestation_validity = None;
         }
         if !can_view_ip_usage {
             filters.login_session_ip_country_is_not = None;
