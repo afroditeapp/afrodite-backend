@@ -96,12 +96,18 @@ pub async fn get_admin_profile_iterator_page(
     let can_view_login = permissions.admin_view_login;
     let can_view_ip_usage = permissions.admin_view_account_ip_address_usage;
 
-    if let Some(filters) = settings.filters.as_mut()
-        && !can_view_account_state
-    {
-        filters.account_state = None;
-        filters.profile_visibility = None;
-        filters.account_online = None;
+    if let Some(filters) = settings.filters.as_mut() {
+        if !can_view_account_state {
+            filters.account_state = None;
+            filters.profile_visibility = None;
+            filters.account_online = None;
+        }
+        if !can_view_login {
+            filters.login_session_basic_app_attestation_not_valid = None;
+        }
+        if !can_view_ip_usage {
+            filters.login_session_ip_country_is_not = None;
+        }
     }
 
     if let Some(extra_info) = settings.extra_info.as_mut() {
@@ -123,7 +129,14 @@ pub async fn get_admin_profile_iterator_page(
         }
     }
 
-    let ip_db = if can_view_ip_usage && settings.extra_info().login_session_ip_country {
+    let ip_db = if can_view_ip_usage
+        && (settings.extra_info().login_session_ip_country
+            || settings
+                .filters
+                .as_ref()
+                .and_then(|f| f.login_session_ip_country_is_not.as_ref())
+                .is_some())
+    {
         state.maxmind_db().current_db().await
     } else {
         None

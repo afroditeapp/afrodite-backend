@@ -16,7 +16,7 @@ pub struct AccountIdDbValue {
 ///
 /// Filter values which the caller does not have permission to use are
 /// silently ignored.
-#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ToSchema)]
 pub struct AccountFilters {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
@@ -27,6 +27,25 @@ pub struct AccountFilters {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
     pub profile_visibility: Option<ProfileVisibility>,
+    /// Includes accounts whose latest login session IP country is not
+    /// the provided country code.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub login_session_ip_country_is_not: Option<String>,
+    /// Includes accounts whose latest login session does not have valid
+    /// basic app attestation. Valid basic app attestation means valid
+    /// iOS app attestation token or valid Android app and device
+    /// integrity values.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub login_session_basic_app_attestation_not_valid: Option<bool>,
+}
+
+impl AccountFilters {
+    pub fn any_login_session_filter(&self) -> bool {
+        self.login_session_ip_country_is_not.is_some()
+            || self.login_session_basic_app_attestation_not_valid.is_some()
+    }
 }
 
 /// Account list extra info settings.
@@ -85,7 +104,7 @@ pub struct ProfileIteratorSettings {
 
 impl ProfileIteratorSettings {
     pub fn filters(&self) -> AccountFilters {
-        self.filters.unwrap_or_default()
+        self.filters.clone().unwrap_or_default()
     }
 
     pub fn extra_info(&self) -> AccountExtraInfoSettings {

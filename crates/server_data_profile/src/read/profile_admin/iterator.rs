@@ -12,7 +12,7 @@ use server_data::{
     result::Result,
 };
 use simple_backend::maxmind_db::IpDb;
-use simple_backend_model::UnixTime;
+use simple_backend_model::{AppAttestationTypeNumber, UnixTime};
 
 define_cmd_wrapper_read!(ReadCommandsProfileIterator);
 
@@ -51,8 +51,14 @@ impl ReadCommandsProfileIterator<'_> {
 
             has_more_db_pages = db_page.has_more_pages;
 
-            self.add_page_values(&mut values, db_page, filters, extra_info, ip_db.as_deref())
-                .await?;
+            self.add_page_values(
+                &mut values,
+                db_page,
+                filters.clone(),
+                extra_info,
+                ip_db.as_deref(),
+            )
+            .await?;
 
             next_db_page += 1;
 
@@ -76,11 +82,12 @@ impl ReadCommandsProfileIterator<'_> {
         settings: &ProfileIteratorSettings,
     ) -> Result<ProfileIteratorDbPage, DataError> {
         let extra_info = settings.extra_info();
+        let filters = settings.filters();
 
         let db_settings = ProfileIteratorSettings {
             start_position: settings.start_position,
             page,
-            filters: settings.filters,
+            filters: settings.filters.clone(),
             extra_info: settings.extra_info,
         };
 
@@ -101,13 +108,14 @@ impl ReadCommandsProfileIterator<'_> {
                     vec![]
                 };
 
-                let login_session_infos = if extra_info.any_login_session_info() {
-                    cmds.profile_admin()
-                        .iterator()
-                        .get_login_session_infos(&account_db_ids)?
-                } else {
-                    vec![]
-                };
+                let login_session_infos =
+                    if extra_info.any_login_session_info() || filters.any_login_session_filter() {
+                        cmds.profile_admin()
+                            .iterator()
+                            .get_login_session_infos(&account_db_ids)?
+                    } else {
+                        vec![]
+                    };
 
                 Ok((data, has_more_pages, email_addresses, login_session_infos))
             })
@@ -161,6 +169,25 @@ impl ReadCommandsProfileIterator<'_> {
 
             if let Some(wanted_online) = online_filter
                 && wanted_online != is_online
+            {
+                continue;
+            }
+
+            if let Some(not_country) = &filters.login_session_ip_country_is_not
+                && login_session_ip_country_is(
+                    db_page.login_session_infos.get(&account_db_id),
+                    ip_db,
+                    not_country,
+                )
+            {
+                continue;
+            }
+
+            if filters
+                .login_session_basic_app_attestation_not_valid
+                .unwrap_or(false)
+                && basic_app_attestation_valid(db_page.login_session_infos.get(&account_db_id))
+                    != Some(true)
             {
                 continue;
             }
@@ -243,5 +270,52 @@ impl ReadCommandsProfileIterator<'_> {
         })
         .await
         .into_error()
+    }
+}
+
+/// Returns true if the latest login session IP country is the provided
+/// country. Accounts without a login session or an unknown IP country
+/// are treated as not matching the provided country.
+fn login_session_ip_country_is(
+    info: Option<&LoginSessionInfoInternal>,
+    ip_db: Option<&IpDb>,
+    country: &str,
+) -> bool {
+    let resolved = info
+        .map(|info| info.client_ip.to_ip_addr())
+        .and_then(|ip| ip_db.and_then(|db| db.get_country(ip)))
+        .map(|v| v.into_string());
+
+    match resolved {
+        Some(resolved_country) => resolved_country.eq_ignore_ascii_case(country),
+        // No login session or unknown IP country.
+        None => false,
+    }
+}
+
+/// Returns Some(true) if the latest login session has valid basic app
+/// attestation, Some(false) if it does not, and None if the account
+/// does not have a login session.
+///
+/// Valid basic app attestation means a valid iOS app attestation token
+/// or valid Android app and device integrity values.
+fn basic_app_attestation_valid(info: Option<&LoginSessionInfoInternal>) -> Option<bool> {
+    let info = info?;
+
+    match info.app_attestation_type_number {
+        Some(AppAttestationTypeNumber::AppleAppAttest) => {
+            // iOS: valid app attest token and no errors.
+            Some(!info.app_attestation_failed.unwrap_or(true))
+        }
+        Some(AppAttestationTypeNumber::PlayIntegrity) => {
+            // Android: both app and device integrity valid and no errors.
+            Some(
+                info.app_attestation_app_integrity.unwrap_or(false)
+                    && info.app_attestation_device_integrity.unwrap_or(false)
+                    && !info.app_attestation_failed.unwrap_or(true),
+            )
+        }
+        // Web and bot clients do not provide app attestation.
+        None => Some(false),
     }
 }
