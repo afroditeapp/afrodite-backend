@@ -2,13 +2,6 @@
 
 ## [Unreleased]
 
-### Changed
-
-- Breaking change: Admin API `get_admin_profile_iterator_page` is now
-  a POST endpoint which accepts its settings as JSON request body.
-  Breaks the previous GET version which did not support account filters
-  or extra info.
-
 ### Added
 
 - Send email when account deletion is initiated automatically.
@@ -30,9 +23,16 @@
 - Admin API `get_account_login_session_info` now returns also whether the
   account is currently online and the last seen time of the account.
 
+### Changed
+
+- Breaking change: Admin API `get_admin_profile_iterator_page` is now
+  a POST endpoint which accepts its settings as JSON request body.
+  Breaks the previous GET version which did not support account filters
+  or extra info.
+
 ## [0.26.0] - 2026-11-05
 
-## Changed
+### Changed
 
 - Add `initial_setup_completed` and `account_deleted_unix_time` columns to
   `used_account_ids` database table. The initial setup flag survives account
