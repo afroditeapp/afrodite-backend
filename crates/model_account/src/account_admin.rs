@@ -62,4 +62,7 @@ pub struct GetAccountLoginSessionInfo {
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub logged_in: bool,
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    #[schema(default = false)]
+    pub online: bool,
 }

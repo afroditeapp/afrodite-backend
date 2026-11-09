@@ -145,8 +145,14 @@ pub async fn get_account_login_session_info(
         .common()
         .account_is_logged_in(internal_id)
         .await?;
+    let online = state.read().common().account_is_online(internal_id).await?;
 
-    Ok(GetAccountLoginSessionInfo { info, logged_in }.into())
+    Ok(GetAccountLoginSessionInfo {
+        info,
+        logged_in,
+        online,
+    }
+    .into())
 }
 
 const PATH_GET_ACCOUNT_SIGN_IN_WITH_STATE_ADMIN: &str =

@@ -1,5 +1,8 @@
 use database::current::read::GetDbReadCommandsCommon;
-use model::{AccessTokenType, Account, AccountId, AccountIdInternal, BotAccountType, RefreshToken};
+use model::{
+    AccessTokenType, Account, AccountId, AccountIdInternal, BotAccountType, LastSeenTime,
+    RefreshToken,
+};
 use model_server_data::SearchGroupFlags;
 use server_common::data::IntoDataError;
 use simple_backend_model::NonEmptyString;
@@ -98,6 +101,15 @@ impl ReadCommandsCommon<'_> {
     /// Is the account currently logged in, i.e. has a valid access token.
     pub async fn account_is_logged_in(&self, id: AccountIdInternal) -> Result<bool, DataError> {
         self.read_cache_common(id, |e| Ok(e.access_token().is_some()))
+            .await
+            .into_error()
+    }
+
+    pub async fn account_is_online(&self, id: AccountIdInternal) -> Result<bool, DataError> {
+        self.cache()
+            .read_cache(id, |e| {
+                Ok(e.profile.last_seen_time().last_seen_time_private() == LastSeenTime::ONLINE)
+            })
             .await
             .into_error()
     }
