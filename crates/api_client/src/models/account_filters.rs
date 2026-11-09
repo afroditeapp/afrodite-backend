@@ -18,9 +18,9 @@ pub struct AccountFilters {
     pub account_online: Option<bool>,
     #[serde(rename = "account_state", skip_serializing_if = "Option::is_none")]
     pub account_state: Option<models::AccountState>,
-    /// Includes accounts whose latest login session does not have valid basic app attestation. Valid basic app attestation means valid iOS app attestation token or valid Android app and device integrity values.
-    #[serde(rename = "login_session_basic_app_attestation_not_valid", skip_serializing_if = "Option::is_none")]
-    pub login_session_basic_app_attestation_not_valid: Option<bool>,
+    /// Includes accounts whose latest login session basic app attestation validity matches the provided value. Valid basic app attestation means valid iOS app attestation token or valid Android app and device integrity values. Accounts without a login session are included when the value is false.
+    #[serde(rename = "login_session_basic_app_attestation_validity", skip_serializing_if = "Option::is_none")]
+    pub login_session_basic_app_attestation_validity: Option<bool>,
     /// Includes accounts whose latest login session IP country is not the provided country code.
     #[serde(rename = "login_session_ip_country_is_not", skip_serializing_if = "Option::is_none")]
     pub login_session_ip_country_is_not: Option<String>,
@@ -34,7 +34,7 @@ impl AccountFilters {
         AccountFilters {
             account_online: None,
             account_state: None,
-            login_session_basic_app_attestation_not_valid: None,
+            login_session_basic_app_attestation_validity: None,
             login_session_ip_country_is_not: None,
             profile_visibility: None,
         }
