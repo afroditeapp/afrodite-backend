@@ -78,6 +78,15 @@ pub enum GetProfileStatisticsHistoryError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`get_profile_string_iteration_page`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetProfileStringIterationPageError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_profile_string_moderation_queue_page`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -142,23 +151,21 @@ pub enum PutProfileAttributesSchemaError {
 }
 
 
-/// # Access - Permission [model::Permissions::admin_view_all_profiles]
-pub async fn get_admin_profile_iterator_page(configuration: &configuration::Configuration, start_position: i64, page: i64) -> Result<models::ProfileIteratorPage, Error<GetAdminProfileIteratorPageError>> {
+/// HTTP method is POST to allow JSON request body for filters and extra info settings.  Filter values and extra info which the caller does not have permission to use are silently ignored.  # Access - Permission [model::Permissions::admin_view_all_profiles]
+pub async fn get_admin_profile_iterator_page(configuration: &configuration::Configuration, profile_iterator_settings: models::ProfileIteratorSettings) -> Result<models::ProfileIteratorPage, Error<GetAdminProfileIteratorPageError>> {
     // add a prefix to parameters to efficiently prevent name collisions
-    let p_query_start_position = start_position;
-    let p_query_page = page;
+    let p_body_profile_iterator_settings = profile_iterator_settings;
 
     let uri_str = format!("{}/profile_api/get_admin_profile_iterator_page", configuration.base_path);
-    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
 
-    req_builder = req_builder.query(&[("start_position", &p_query_start_position.to_string())]);
-    req_builder = req_builder.query(&[("page", &p_query_page.to_string())]);
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
     if let Some(ref token) = configuration.bearer_access_token {
         req_builder = req_builder.bearer_auth(token.to_owned());
     };
+    req_builder = req_builder.json(&p_body_profile_iterator_settings);
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
@@ -421,6 +428,51 @@ pub async fn get_profile_statistics_history(configuration: &configuration::Confi
     } else {
         let content = resp.text().await?;
         let entity: Option<GetProfileStatisticsHistoryError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// Profiles without the string value are not included.  # Access * [Permissions::admin_moderate_profile_names] or   [Permissions::admin_moderate_profile_texts] depending   on [GetProfileStringIterationPageParams::content_type].
+pub async fn get_profile_string_iteration_page(configuration: &configuration::Configuration, content_type: models::ProfileStringModerationContentType, page: i64, origin_unix_time: i64) -> Result<models::ProfileStringIterationPage, Error<GetProfileStringIterationPageError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_content_type = content_type;
+    let p_query_page = page;
+    let p_query_origin_unix_time = origin_unix_time;
+
+    let uri_str = format!("{}/profile_api/get_profile_string_iteration_page", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    req_builder = req_builder.query(&[("content_type", &p_query_content_type.to_string())]);
+    req_builder = req_builder.query(&[("page", &p_query_page.to_string())]);
+    req_builder = req_builder.query(&[("origin_unix_time", &p_query_origin_unix_time.to_string())]);
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::ProfileStringIterationPage`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::ProfileStringIterationPage`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetProfileStringIterationPageError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

@@ -42,6 +42,15 @@ pub enum GetMediaContentFaceVerifiedNullListError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`get_media_content_iteration_page`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetMediaContentIterationPageError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_media_content_moderation_queue_page`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -215,6 +224,53 @@ pub async fn get_media_content_face_verified_null_list(configuration: &configura
     } else {
         let content = resp.text().await?;
         let entity: Option<GetMediaContentFaceVerifiedNullListError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// `only_security_content` can be used to iterate only security content items. Default is to return all content items (profile and security content).  # Access * Permission [Permissions::admin_moderate_media_content]
+pub async fn get_media_content_iteration_page(configuration: &configuration::Configuration, page: i64, origin_unix_time: i64, only_security_content: Option<bool>) -> Result<models::MediaContentIterationPage, Error<GetMediaContentIterationPageError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_page = page;
+    let p_query_origin_unix_time = origin_unix_time;
+    let p_query_only_security_content = only_security_content;
+
+    let uri_str = format!("{}/media_api/get_media_content_iteration_page", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref param_value) = p_query_only_security_content {
+        req_builder = req_builder.query(&[("only_security_content", &param_value.to_string())]);
+    }
+    req_builder = req_builder.query(&[("page", &p_query_page.to_string())]);
+    req_builder = req_builder.query(&[("origin_unix_time", &p_query_origin_unix_time.to_string())]);
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::MediaContentIterationPage`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::MediaContentIterationPage`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetMediaContentIterationPageError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

@@ -15,19 +15,37 @@ use serde::{Deserialize, Serialize};
 pub struct ProfileIteratorPageValue {
     #[serde(rename = "account_id")]
     pub account_id: models::AccountId,
+    #[serde(rename = "account_online", skip_serializing_if = "Option::is_none")]
+    pub account_online: Option<bool>,
+    #[serde(rename = "account_state", skip_serializing_if = "Option::is_none")]
+    pub account_state: Option<models::AccountState>,
     #[serde(rename = "age")]
     pub age: i64,
+    #[serde(rename = "email", skip_serializing_if = "Option::is_none")]
+    pub email: Option<String>,
+    #[serde(rename = "login_session", skip_serializing_if = "Option::is_none")]
+    pub login_session: Option<models::AdminAccountLoginSessionInfo>,
+    #[serde(rename = "login_session_ip_country", skip_serializing_if = "Option::is_none")]
+    pub login_session_ip_country: Option<String>,
     /// A string wrapper that ensures the string is not empty. This type is used for TEXT columns that should not allow empty strings. In the database, these columns are NULL when there is no value, and this type represents non-NULL values that must be non-empty.
     #[serde(rename = "name", skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
+    #[serde(rename = "profile_visibility", skip_serializing_if = "Option::is_none")]
+    pub profile_visibility: Option<models::ProfileVisibility>,
 }
 
 impl ProfileIteratorPageValue {
     pub fn new(account_id: models::AccountId, age: i64) -> ProfileIteratorPageValue {
         ProfileIteratorPageValue {
             account_id,
+            account_online: None,
+            account_state: None,
             age,
+            email: None,
+            login_session: None,
+            login_session_ip_country: None,
             name: None,
+            profile_visibility: None,
         }
     }
 }

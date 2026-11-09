@@ -13,6 +13,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ProfileIteratorPage {
+    /// Page number of the next page. None if the end of the iteration has been reached.
+    #[serde(rename = "next_page", skip_serializing_if = "Option::is_none")]
+    pub next_page: Option<i64>,
     #[serde(rename = "values")]
     pub values: Vec<models::ProfileIteratorPageValue>,
 }
@@ -20,6 +23,7 @@ pub struct ProfileIteratorPage {
 impl ProfileIteratorPage {
     pub fn new(values: Vec<models::ProfileIteratorPageValue>) -> ProfileIteratorPage {
         ProfileIteratorPage {
+            next_page: None,
             values,
         }
     }

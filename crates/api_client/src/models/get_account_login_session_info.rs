@@ -16,15 +16,21 @@ pub struct GetAccountLoginSessionInfo {
     /// Login session info from current (when logged in) or previous (when logged out) login.
     #[serde(rename = "info", skip_serializing_if = "Option::is_none")]
     pub info: Option<models::LoginSessionInfo>,
+    #[serde(rename = "last_seen_time", skip_serializing_if = "Option::is_none")]
+    pub last_seen_time: Option<models::UnixTime>,
     #[serde(rename = "logged_in", skip_serializing_if = "Option::is_none")]
     pub logged_in: Option<bool>,
+    #[serde(rename = "online", skip_serializing_if = "Option::is_none")]
+    pub online: Option<bool>,
 }
 
 impl GetAccountLoginSessionInfo {
     pub fn new() -> GetAccountLoginSessionInfo {
         GetAccountLoginSessionInfo {
             info: None,
+            last_seen_time: None,
             logged_in: None,
+            online: None,
         }
     }
 }
