@@ -5412,6 +5412,7 @@ version = "0.0.0"
 dependencies = [
  "database",
  "database_profile",
+ "model",
  "model_profile",
  "server_common",
  "server_data",

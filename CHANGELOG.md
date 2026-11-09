@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Breaking change: Admin API `get_admin_profile_iterator_page` is now
+  a POST endpoint which accepts its settings as JSON request body.
+  Breaks the previous GET version which did not support account filters
+  or extra info.
+
 ### Added
 
 - Send email when account deletion is initiated automatically.

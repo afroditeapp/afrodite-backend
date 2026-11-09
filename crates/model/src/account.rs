@@ -111,7 +111,7 @@ impl Account {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, ToSchema)]
 pub enum AccountState {
     InitialSetup,
     Normal,

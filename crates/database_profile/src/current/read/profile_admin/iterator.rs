@@ -1,11 +1,13 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
 use error_stack::ResultExt;
-use model::{AccountIdDb, AccountIdInternal};
+use model::{
+    AccountIdDb, AccountIdInternal, AccountState, AccountStateRelatedSharedState,
+    LoginSessionInfoInternal,
+};
 use model_profile::{
-    AccountIdDbValue, ProfileInternal, ProfileIteratorPage, ProfileIteratorPageValue,
-    ProfileIteratorSettings, ProfileStringIterationPage, ProfileStringIterationValue,
-    ProfileStringModerationContentType,
+    AccountIdDbValue, ProfileInternal, ProfileIteratorPageData, ProfileIteratorSettings,
+    ProfileStringIterationPage, ProfileStringIterationValue, ProfileStringModerationContentType,
 };
 use simple_backend_model::UnixTime;
 use simple_backend_utils::Result;
@@ -25,34 +27,123 @@ impl CurrentReadProfileIterator<'_> {
         Ok(AccountIdDbValue { account_db_id })
     }
 
+    /// Also returns if there are more pages after the requested page.
     pub fn get_profile_page(
         &mut self,
         settings: ProfileIteratorSettings,
-    ) -> Result<ProfileIteratorPage, DieselDatabaseError> {
-        use crate::schema::{account_id, profile};
+    ) -> Result<(Vec<ProfileIteratorPageData>, bool), DieselDatabaseError> {
+        use crate::schema::{account_id, profile, shared_state};
 
         const PAGE_SIZE: i64 = 25;
 
-        let data: Vec<(AccountIdInternal, ProfileInternal)> = account_id::table
+        let filters = settings.filters();
+
+        let mut query = account_id::table
             .inner_join(profile::table)
+            .inner_join(shared_state::table)
+            .select((
+                AccountIdInternal::as_select(),
+                ProfileInternal::as_select(),
+                AccountStateRelatedSharedState::as_select(),
+            ))
+            .into_boxed();
+
+        query = query
             .filter(account_id::id.le(settings.start_position))
-            .order((account_id::id.desc(),))
-            .select((AccountIdInternal::as_select(), ProfileInternal::as_select()))
-            .limit(PAGE_SIZE)
+            .order(account_id::id.desc());
+
+        if let Some(account_state) = filters.account_state {
+            match account_state {
+                AccountState::InitialSetup => {
+                    query = query
+                        .filter(shared_state::account_state_banned.eq(false))
+                        .filter(shared_state::account_state_pending_deletion.eq(false))
+                        .filter(shared_state::account_state_initial_setup_completed.eq(false));
+                }
+                AccountState::Normal => {
+                    query = query
+                        .filter(shared_state::account_state_banned.eq(false))
+                        .filter(shared_state::account_state_pending_deletion.eq(false))
+                        .filter(shared_state::account_state_initial_setup_completed.eq(true));
+                }
+                AccountState::Banned => {
+                    query = query
+                        .filter(shared_state::account_state_banned.eq(true))
+                        .filter(shared_state::account_state_pending_deletion.eq(false));
+                }
+                AccountState::PendingDeletion => {
+                    query = query.filter(shared_state::account_state_pending_deletion.eq(true));
+                }
+            }
+        }
+
+        if let Some(visibility) = filters.profile_visibility {
+            query = query.filter(shared_state::profile_visibility_state_number.eq(visibility));
+        }
+
+        // Fetch one extra row to detect if there are more pages after
+        // the requested page.
+        let limit = PAGE_SIZE.saturating_add(1);
+
+        let data: Vec<(
+            AccountIdInternal,
+            ProfileInternal,
+            AccountStateRelatedSharedState,
+        )> = query
+            .limit(limit)
             .offset(PAGE_SIZE.saturating_mul(settings.page))
             .load(self.conn())
             .change_context(DieselDatabaseError::Execute)?;
 
-        let values = data
-            .into_iter()
-            .map(|(id, profile)| ProfileIteratorPageValue {
-                account_id: id.uuid,
-                age: profile.age,
-                name: profile.profile_name,
-            })
-            .collect();
+        let has_more_pages = data.len() > PAGE_SIZE.try_into().unwrap_or(usize::MAX);
 
-        Ok(ProfileIteratorPage { values })
+        Ok((
+            data.into_iter()
+                .take(PAGE_SIZE.try_into().unwrap_or(usize::MAX))
+                .map(|(id, profile, state)| ProfileIteratorPageData { id, profile, state })
+                .collect(),
+            has_more_pages,
+        ))
+    }
+
+    pub fn get_email_addresses(
+        &mut self,
+        account_db_ids: &[AccountIdDb],
+    ) -> Result<Vec<(AccountIdDb, Option<String>)>, DieselDatabaseError> {
+        use crate::schema::account_email_address_state;
+
+        if account_db_ids.is_empty() {
+            return Ok(vec![]);
+        }
+
+        account_email_address_state::table
+            .filter(account_email_address_state::account_id.eq_any(account_db_ids.to_vec()))
+            .select((
+                account_email_address_state::account_id,
+                account_email_address_state::email.nullable(),
+            ))
+            .load(self.conn())
+            .change_context(DieselDatabaseError::Execute)
+    }
+
+    pub fn get_login_session_infos(
+        &mut self,
+        account_db_ids: &[AccountIdDb],
+    ) -> Result<Vec<(AccountIdDb, LoginSessionInfoInternal)>, DieselDatabaseError> {
+        use crate::schema::login_session_info;
+
+        if account_db_ids.is_empty() {
+            return Ok(vec![]);
+        }
+
+        login_session_info::table
+            .filter(login_session_info::account_id.eq_any(account_db_ids.to_vec()))
+            .select((
+                login_session_info::account_id,
+                LoginSessionInfoInternal::as_select(),
+            ))
+            .load(self.conn())
+            .change_context(DieselDatabaseError::Execute)
     }
 
     pub fn profile_string_iteration_page(
