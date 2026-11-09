@@ -28,7 +28,7 @@
   security content items. Iteration page number and origin upload time
   value can be set.
 - Admin API `get_account_login_session_info` now returns also whether the
-  account is currently online.
+  account is currently online and the last seen time of the account.
 
 ## [0.26.0] - 2026-11-05
 

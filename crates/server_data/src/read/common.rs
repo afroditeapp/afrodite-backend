@@ -1,7 +1,7 @@
 use database::current::read::GetDbReadCommandsCommon;
 use model::{
     AccessTokenType, Account, AccountId, AccountIdInternal, BotAccountType, LastSeenTime,
-    RefreshToken,
+    RefreshToken, UnixTime,
 };
 use model_server_data::SearchGroupFlags;
 use server_common::data::IntoDataError;
@@ -109,6 +109,21 @@ impl ReadCommandsCommon<'_> {
         self.cache()
             .read_cache(id, |e| {
                 Ok(e.profile.last_seen_time().last_seen_time_private() == LastSeenTime::ONLINE)
+            })
+            .await
+            .into_error()
+    }
+
+    /// Last seen time of the account from the cache.
+    pub async fn account_last_seen_time(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<Option<UnixTime>, DataError> {
+        self.cache()
+            .read_cache(id, |e| {
+                Ok(Some(
+                    e.profile.last_seen_time().last_seen_unix_time_for_db().ut,
+                ))
             })
             .await
             .into_error()

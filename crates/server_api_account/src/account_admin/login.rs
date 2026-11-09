@@ -146,9 +146,15 @@ pub async fn get_account_login_session_info(
         .account_is_logged_in(internal_id)
         .await?;
     let online = state.read().common().account_is_online(internal_id).await?;
+    let last_seen_time = state
+        .read()
+        .common()
+        .account_last_seen_time(internal_id)
+        .await?;
 
     Ok(GetAccountLoginSessionInfo {
         info,
+        last_seen_time,
         logged_in,
         online,
     }

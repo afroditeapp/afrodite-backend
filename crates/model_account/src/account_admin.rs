@@ -59,6 +59,9 @@ pub struct GetAccountLoginSessionInfo {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
     pub info: Option<LoginSessionInfo>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub last_seen_time: Option<UnixTime>,
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     #[schema(default = false)]
     pub logged_in: bool,
