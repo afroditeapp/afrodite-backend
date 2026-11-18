@@ -97,6 +97,8 @@ pub struct LoginSessionInfo {
     pub app_attestation_app_integrity: Option<bool>,
     pub app_attestation_device_integrity: Option<bool>,
     pub app_attestation_failed: Option<bool>,
+    pub app_attestation_android_strong_integrity: Option<bool>,
+    pub app_attestation_android_sdk_version: Option<i16>,
 }
 
 #[derive(Debug, Clone, Queryable, Selectable)]
@@ -112,6 +114,8 @@ pub struct LoginSessionInfoInternal {
     pub app_attestation_app_integrity: Option<bool>,
     pub app_attestation_device_integrity: Option<bool>,
     pub app_attestation_failed: Option<bool>,
+    pub app_attestation_android_strong_integrity: Option<bool>,
+    pub app_attestation_android_sdk_version: Option<i16>,
 }
 
 impl From<LoginSessionInfoInternal> for LoginSessionInfo {
@@ -126,6 +130,9 @@ impl From<LoginSessionInfoInternal> for LoginSessionInfo {
             app_attestation_app_integrity: value.app_attestation_app_integrity,
             app_attestation_device_integrity: value.app_attestation_device_integrity,
             app_attestation_failed: value.app_attestation_failed,
+            app_attestation_android_strong_integrity: value
+                .app_attestation_android_strong_integrity,
+            app_attestation_android_sdk_version: value.app_attestation_android_sdk_version,
         }
     }
 }

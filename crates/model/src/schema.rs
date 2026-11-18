@@ -731,6 +731,8 @@ diesel::table! {
         app_attestation_app_integrity -> Nullable<Bool>,
         app_attestation_device_integrity -> Nullable<Bool>,
         app_attestation_failed -> Nullable<Bool>,
+        app_attestation_android_strong_integrity -> Nullable<Bool>,
+        app_attestation_android_sdk_version -> Nullable<Int2>,
     }
 }
 

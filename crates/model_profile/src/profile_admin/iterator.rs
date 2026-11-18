@@ -142,6 +142,12 @@ pub struct AdminAccountLoginSessionInfo {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(nullable = false)]
     pub app_attestation_failed: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub app_attestation_android_strong_integrity: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub app_attestation_android_sdk_version: Option<i16>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

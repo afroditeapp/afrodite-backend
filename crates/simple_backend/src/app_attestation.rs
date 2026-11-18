@@ -126,6 +126,8 @@ impl AppAttestationManager {
                     integrity: simple_backend_model::AppIntegrityResult {
                         app_integrity: false,
                         device_integrity: false,
+                        android_strong_integrity: false,
+                        android_sdk_version: None,
                     },
                 }),
             _ => Err(AppAttestationError::Failed),

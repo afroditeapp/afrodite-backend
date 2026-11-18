@@ -236,6 +236,14 @@ impl ReadCommandsProfileIterator<'_> {
                                 .login_session_app_attestation_info
                                 .then_some(info.app_attestation_failed)
                                 .flatten(),
+                            app_attestation_android_strong_integrity: extra_info
+                                .login_session_app_attestation_info
+                                .then_some(info.app_attestation_android_strong_integrity)
+                                .flatten(),
+                            app_attestation_android_sdk_version: extra_info
+                                .login_session_app_attestation_info
+                                .then_some(info.app_attestation_android_sdk_version)
+                                .flatten(),
                         }
                     })
                 } else {

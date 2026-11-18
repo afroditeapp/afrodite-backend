@@ -62,6 +62,8 @@ pub enum AppAttestationResult {
 pub struct AppIntegrityResult {
     pub app_integrity: bool,
     pub device_integrity: bool,
+    pub android_strong_integrity: bool,
+    pub android_sdk_version: Option<i16>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, ToSchema)]

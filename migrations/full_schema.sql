@@ -237,6 +237,8 @@ CREATE TABLE IF NOT EXISTS login_session_info(
     app_attestation_app_integrity    BOOLEAN,
     app_attestation_device_integrity BOOLEAN,
     app_attestation_failed           BOOLEAN,
+    app_attestation_android_strong_integrity BOOLEAN,
+    app_attestation_android_sdk_version      SMALLINT,
     FOREIGN KEY (account_id)
         REFERENCES account_id (id)
             ON DELETE CASCADE

@@ -138,16 +138,24 @@ impl PlayIntegrityManager {
         }
 
         // Verify device integrity.
-        let device_integrity = payload
+        let verdicts: Vec<&str> = payload
             .get("deviceIntegrity")
             .and_then(|d| d.get("deviceRecognitionVerdict"))
             .and_then(|v| v.as_array())
-            .map(|verdicts| {
-                verdicts
-                    .iter()
-                    .any(|v| v.as_str() == Some("MEETS_DEVICE_INTEGRITY"))
-            })
-            .unwrap_or(false);
+            .map(|verdicts| verdicts.iter().filter_map(|v| v.as_str()).collect())
+            .unwrap_or_default();
+        let device_integrity = verdicts.contains(&"MEETS_DEVICE_INTEGRITY");
+        // Optional verdict which must be enabled from Google Play Console
+        let android_strong_integrity = verdicts.contains(&"MEETS_STRONG_INTEGRITY");
+
+        // Optional device attribute which must be enabled from Google Play Console
+        let android_sdk_version = payload
+            .get("deviceIntegrity")
+            .and_then(|d| d.get("deviceAttributes"))
+            .and_then(|a| a.get("sdkVersion"))
+            .and_then(|v| v.as_i64())
+            .and_then(|v| i16::try_from(v).ok());
+
         if requirements.android_device_integrity && !device_integrity {
             return Err(PlayIntegrityError::DeviceIntegrity);
         }
@@ -166,6 +174,8 @@ impl PlayIntegrityManager {
         Ok(AppIntegrityResult {
             app_integrity,
             device_integrity,
+            android_strong_integrity,
+            android_sdk_version,
         })
     }
 }

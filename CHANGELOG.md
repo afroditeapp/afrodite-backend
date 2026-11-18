@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- Save Google Play Integrity API stronger verdict info to login session
+  info: whether the device recognition verdict contained
+  `MEETS_STRONG_INTEGRITY` and the Android SDK version from the verdict
+  token device attributes.
+
 ## [0.26.1] - 2026-11-09
 
 ### Added

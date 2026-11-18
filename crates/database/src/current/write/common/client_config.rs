@@ -161,7 +161,14 @@ impl CurrentWriteCommonClientConfig<'_> {
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::login_session_info::dsl::*;
 
-        let (attestation_type, app_integrity, device_integrity, failed) = match attestation {
+        let (
+            attestation_type,
+            app_integrity,
+            device_integrity,
+            failed,
+            android_strong_integrity,
+            android_sdk_version,
+        ) = match attestation {
             Some(AppAttestationResult::Success {
                 attestation_type,
                 integrity,
@@ -170,11 +177,18 @@ impl CurrentWriteCommonClientConfig<'_> {
                 Some(integrity.app_integrity),
                 Some(integrity.device_integrity),
                 Some(false),
+                Some(integrity.android_strong_integrity),
+                integrity.android_sdk_version,
             ),
-            Some(AppAttestationResult::Failure { attestation_type }) => {
-                (Some(attestation_type), Some(false), Some(false), Some(true))
-            }
-            None => (None, None, None, None),
+            Some(AppAttestationResult::Failure { attestation_type }) => (
+                Some(attestation_type),
+                Some(false),
+                Some(false),
+                Some(true),
+                Some(false),
+                None,
+            ),
+            None => (None, None, None, None, None, None),
         };
 
         let start_time = UnixTime::current_time();
@@ -191,6 +205,8 @@ impl CurrentWriteCommonClientConfig<'_> {
                 app_attestation_app_integrity.eq(app_integrity),
                 app_attestation_device_integrity.eq(device_integrity),
                 app_attestation_failed.eq(failed),
+                app_attestation_android_strong_integrity.eq(android_strong_integrity),
+                app_attestation_android_sdk_version.eq(android_sdk_version),
             ))
             .on_conflict(account_id)
             .do_update()
@@ -204,6 +220,8 @@ impl CurrentWriteCommonClientConfig<'_> {
                 app_attestation_app_integrity.eq(app_integrity),
                 app_attestation_device_integrity.eq(device_integrity),
                 app_attestation_failed.eq(failed),
+                app_attestation_android_strong_integrity.eq(android_strong_integrity),
+                app_attestation_android_sdk_version.eq(android_sdk_version),
             ))
             .execute_my_conn(self.conn())
             .into_db_error(())?;
