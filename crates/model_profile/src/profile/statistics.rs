@@ -4,11 +4,10 @@ use utoipa::IntoParams;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, IntoParams)]
 pub struct GetProfileStatisticsParams {
-    /// Control which profiles are included in
-    /// [GetProfileStatisticsResult::age_counts]
-    /// by profile visibility.
+    /// Deprecated. Does nothing.
+    /// Statistics for public and private profiles are always returned.
     ///
-    /// Non default value is only for admins.
+    /// Non default value was only for admins.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[into_params(nullable = false)]
     pub profile_visibility: Option<StatisticsProfileVisibility>,
@@ -20,10 +19,6 @@ pub struct GetProfileStatisticsParams {
 
 impl GetProfileStatisticsParams {
     pub fn contains_admin_settings(&self) -> bool {
-        !self
-            .profile_visibility
-            .unwrap_or_default()
-            .is_default_statistics()
-            || self.generate_new_statistics
+        self.generate_new_statistics
     }
 }

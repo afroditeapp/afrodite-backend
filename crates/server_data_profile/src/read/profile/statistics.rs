@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use model_profile::{
     ConnectionStatistics, ProfileAgeCounts, ProfileStatisticsInternal, PublicProfileCounts,
-    StatisticsGender, StatisticsProfileVisibility, UnixTime,
+    StatisticsGender, UnixTime,
 };
 use server_data::{DataError, define_cmd_wrapper_read, result::Result};
 use simple_backend::perf::{PerfMetricsManagerData, websocket};
@@ -13,9 +13,11 @@ use crate::cache::CacheReadProfile;
 define_cmd_wrapper_read!(ReadCommandsProfileStatistics);
 
 impl ReadCommandsProfileStatistics<'_> {
+    /// Calculates statistics for public and private profiles
+    /// separately. Age counts are returned separately for both
+    /// visibilities.
     pub async fn profile_statistics(
         &self,
-        profile_visibility: StatisticsProfileVisibility,
         perf_data: Arc<PerfMetricsManagerData>,
     ) -> Result<ProfileStatisticsInternal, DataError> {
         let generation_time = UnixTime::current_time();
@@ -24,50 +26,45 @@ impl ReadCommandsProfileStatistics<'_> {
         let mut public_profile_counts = PublicProfileCounts::default();
 
         let mut age_counts = ProfileAgeCounts::empty();
+        let mut private_age_counts = ProfileAgeCounts::empty();
 
         self.read_cache_profile_and_common_for_all_accounts(|p, e| {
             account_count += 1;
 
-            if !e.other_shared_state.is_bot() {
-                account_count_bots_excluded += 1;
+            if e.other_shared_state.is_bot() {
+                return;
             }
 
-            let visibility = e.account.is_profile_visible();
+            account_count_bots_excluded += 1;
 
+            let visible = e.account.is_profile_visible();
+            let private = e.account.is_profile_private();
             let groups = p.state.search_group_flags;
-            if visibility {
-                if groups.is_man() {
+
+            let age_counts = if visible {
+                &mut age_counts
+            } else if private {
+                &mut private_age_counts
+            } else {
+                return;
+            };
+
+            let age = p.profile_internal().age.value();
+            if groups.is_man() {
+                age_counts.increment_age(StatisticsGender::Man, age);
+                if visible {
                     public_profile_counts.men += 1;
-                } else if groups.is_woman() {
+                }
+            } else if groups.is_woman() {
+                age_counts.increment_age(StatisticsGender::Woman, age);
+                if visible {
                     public_profile_counts.women += 1;
-                } else if groups.is_non_binary() {
+                }
+            } else if groups.is_non_binary() {
+                age_counts.increment_age(StatisticsGender::NonBinary, age);
+                if visible {
                     public_profile_counts.nonbinaries += 1;
                 }
-            }
-
-            match profile_visibility {
-                StatisticsProfileVisibility::All => (),
-                StatisticsProfileVisibility::Public => {
-                    if !visibility {
-                        return;
-                    }
-                }
-                StatisticsProfileVisibility::Private => {
-                    if visibility {
-                        return;
-                    }
-                }
-            }
-
-            if groups.is_man() {
-                age_counts.increment_age(StatisticsGender::Man, p.profile_internal().age.value());
-            } else if groups.is_woman() {
-                age_counts.increment_age(StatisticsGender::Woman, p.profile_internal().age.value());
-            } else if groups.is_non_binary() {
-                age_counts.increment_age(
-                    StatisticsGender::NonBinary,
-                    p.profile_internal().age.value(),
-                );
             }
         })
         .await?;
@@ -78,6 +75,7 @@ impl ReadCommandsProfileStatistics<'_> {
         Ok(ProfileStatisticsInternal {
             generation_time,
             age_counts,
+            private_age_counts,
             account_count,
             account_count_bots_excluded,
             online_account_count_bots_excluded: websocket::Connections::connection_count().into(),

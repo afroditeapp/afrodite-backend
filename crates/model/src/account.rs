@@ -98,6 +98,11 @@ impl Account {
         Into::<AccountStateRelatedSharedState>::into(self.clone()).is_profile_visible()
     }
 
+    /// Profile is private and initial setup is completed.
+    pub fn is_profile_private(&self) -> bool {
+        Into::<AccountStateRelatedSharedState>::into(self.clone()).is_profile_private()
+    }
+
     pub fn sync_version(&self) -> AccountSyncVersion {
         self.sync_version
     }

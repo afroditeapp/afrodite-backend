@@ -39,7 +39,7 @@ impl ProfileStatisticsCacheUtils for ProfileStatisticsCache {
         let r = handle
             .profile()
             .statistics()
-            .profile_statistics(Self::VISIBILITY, perf_data)
+            .profile_statistics(perf_data)
             .await?;
         *data = Some(r.clone());
         Ok(r)
@@ -54,7 +54,7 @@ impl ProfileStatisticsCacheUtils for ProfileStatisticsCache {
         let r = handle
             .profile()
             .statistics()
-            .profile_statistics(Self::VISIBILITY, perf_data)
+            .profile_statistics(perf_data)
             .await?;
         *data = Some(r.clone());
         Ok(r)

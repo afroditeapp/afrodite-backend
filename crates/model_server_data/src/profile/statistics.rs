@@ -9,19 +9,16 @@ pub enum StatisticsGender {
     NonBinary,
 }
 
+/// Deprecated. Profile statistics are now always calculated
+/// for public and private profiles and are returned separately
+/// in [GetProfileStatisticsResult].
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, ToSchema, Default)]
+#[schema(deprecated)]
 pub enum StatisticsProfileVisibility {
     #[default]
     Public,
-    /// Includes accounts which have not completed initial setup.
     Private,
     All,
-}
-
-impl StatisticsProfileVisibility {
-    pub fn is_default_statistics(&self) -> bool {
-        *self == Self::default()
-    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -69,7 +66,11 @@ impl ProfileAgeCounts {
 #[derive(Debug, Clone)]
 pub struct ProfileStatisticsInternal {
     pub generation_time: UnixTime,
+    /// Age counts for public profiles, excluding bots.
     pub age_counts: ProfileAgeCounts,
+    /// Age counts for private profiles which have completed the initial
+    /// setup, excluding bots.
+    pub private_age_counts: ProfileAgeCounts,
     pub account_count: i64,
     pub account_count_bots_excluded: i64,
     pub online_account_count_bots_excluded: i64,
@@ -84,7 +85,16 @@ pub struct GetProfileStatisticsResult {
     pub generation_time: UnixTime,
     pub account_count_bots_excluded: i64,
     pub online_account_count_bots_excluded: i64,
+    /// Age counts for public profiles, excluding bots.
     pub age_counts: ProfileAgeCounts,
+    /// Age counts for private profiles which have completed the initial
+    /// setup, excluding bots.
+    ///
+    /// This is always `Some` currently. The value is optional so that in future,
+    /// if more privacy is needed, private statistics can be omitted
+    /// and clients can default to public statistics.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub private_age_counts: Option<ProfileAgeCounts>,
     /// Min WebSocket connections per hour
     pub connections_min: ConnectionStatistics,
     /// Max WebSocket connections per hour
@@ -100,6 +110,7 @@ impl From<ProfileStatisticsInternal> for GetProfileStatisticsResult {
             account_count_bots_excluded: value.account_count_bots_excluded,
             online_account_count_bots_excluded: value.online_account_count_bots_excluded,
             age_counts: value.age_counts,
+            private_age_counts: Some(value.private_age_counts),
             connections_min: value.connections_min,
             connections_max: value.connections_max,
             connections_average: value.connections_average,

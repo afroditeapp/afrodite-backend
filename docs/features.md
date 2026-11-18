@@ -90,8 +90,8 @@ example if daily chat request is already used.
 
 ### Profile statistics
 
-Age and gender statistics for public profiles. Admins can also access
-statistics for private profiles and profile statistics history (updated daily).
+Age and gender statistics for public and private profiles. Admins can also
+access profile statistics history (updated daily).
 
 ### Automatic profile search
 
@@ -209,7 +209,6 @@ users about app version changelogs and terms of service updates.
   * CPU and RAM usage
 * IP country statistics
 * Profile statistics
-  * Private
   * History
 
 ### With manager mode

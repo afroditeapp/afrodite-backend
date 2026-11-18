@@ -14,7 +14,7 @@ use crate::{
 
 const PATH_GET_PROFILE_STATISTICS: &str = "/profile_api/profile_statistics";
 
-/// Non default values for [model::GetProfileStatisticsParams]
+/// Setting [model::GetProfileStatisticsParams::generate_new_statistics]
 /// requires [model::Permissions::admin_profile_statistics].
 #[utoipa::path(
     get,
@@ -46,10 +46,7 @@ pub async fn get_profile_statistics(
             .read()
             .profile()
             .statistics()
-            .profile_statistics(
-                params.profile_visibility.unwrap_or_default(),
-                state.perf_counter_data_arc(),
-            )
+            .profile_statistics(state.perf_counter_data_arc())
             .await?
             .into()
     } else {

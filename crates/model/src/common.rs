@@ -763,6 +763,12 @@ impl AccountStateRelatedSharedState {
             && self.profile_visibility_state_number == ProfileVisibility::Public
     }
 
+    /// Profile is private and initial setup is completed.
+    pub fn is_profile_private(&self) -> bool {
+        self.account_state_initial_setup_completed
+            && self.profile_visibility_state_number == ProfileVisibility::Private
+    }
+
     pub fn state_container(&self) -> AccountStateContainer {
         AccountStateContainer {
             initial_setup_completed: self.account_state_initial_setup_completed,

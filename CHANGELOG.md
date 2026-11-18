@@ -11,6 +11,14 @@
 
 ### Changed
 
+- Profile statistics API `get_profile_statistics` now returns private
+  profile statistics in new optional field `private_age_counts`
+  alongside public statistics.
+- Profile statistics now exclude bot accounts from age counts and
+  profile counts. This affects also profile statistics history which
+  is saved daily.
+- Deprecated the `profile_visibility` query parameter of API
+  `get_profile_statistics`.
 - The first account deletion reminder email is now sent only when 30 or
   fewer days remain before deletion, instead of on the first scheduled
   tasks run after deletion was scheduled.
