@@ -187,9 +187,11 @@ async fn handle_account_deletion_email_notification(
     let time_until_deletion = deletion_time.ut - current_time.ut;
 
     const SECONDS_PER_DAY: i64 = 60 * 60 * 24;
-    const SECOND_EMAIL_DAYS_REMAINING: i64 = 30;
+    const FIRST_EMAIL_DAYS_REMAINING: i64 = 30;
+    const SECOND_EMAIL_DAYS_REMAINING: i64 = 14;
     const THIRD_EMAIL_DAYS_REMAINING: i64 = 7;
 
+    let first_email_threshold = FIRST_EMAIL_DAYS_REMAINING * SECONDS_PER_DAY;
     let second_email_threshold = SECOND_EMAIL_DAYS_REMAINING * SECONDS_PER_DAY;
     let third_email_threshold = THIRD_EMAIL_DAYS_REMAINING * SECONDS_PER_DAY;
 
@@ -199,10 +201,14 @@ async fn handle_account_deletion_email_notification(
         // 7 days or less remaining - send third email
         EmailMessages::AccountDeletionRemainderThird
     } else if time_until_deletion <= second_email_threshold {
-        // Between 7 and 30 days remaining - send second email
+        // Between 7 and 14 days remaining - send second email
         EmailMessages::AccountDeletionRemainderSecond
-    } else {
+    } else if time_until_deletion <= first_email_threshold {
+        // Between 14 and 30 days remaining - send first email
         EmailMessages::AccountDeletionRemainderFirst
+    } else {
+        // More than 30 days remaining - no reminder yet
+        return Ok(());
     };
 
     db_write_raw!(state, move |cmds| {

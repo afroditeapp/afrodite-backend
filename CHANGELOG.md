@@ -9,6 +9,12 @@
   `MEETS_STRONG_INTEGRITY` and the Android SDK version from the verdict
   token device attributes.
 
+### Changed
+
+- The first account deletion reminder email is now sent only when 30 or
+  fewer days remain before deletion, instead of on the first scheduled
+  tasks run after deletion was scheduled.
+
 ## [0.26.1] - 2026-11-09
 
 ### Added
