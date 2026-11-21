@@ -3,7 +3,7 @@ use diesel::{dsl::not, insert_into, prelude::*, update};
 use model::{AccountIdDb, ConversationId, UnixTime};
 use model_chat::{
     AccountIdInternal, CHAT_GLOBAL_STATE_ROW_TYPE, ChatStateRaw, MatchId, NewReceivedLikesCount,
-    PublicKeyId, ReceivedLikesSyncVersion, SyncVersionUtils,
+    PublicKeyId, ReceivedLikesSyncVersion, SentLikeId, SyncVersionUtils,
 };
 use simple_backend_utils::{ContextExt, Result, db::MyRunQueryDsl};
 
@@ -173,6 +173,27 @@ impl CurrentWriteChat<'_> {
             .on_conflict(row_type)
             .do_update()
             .set(next_match_id.eq(next))
+            .execute_my_conn(self.conn())
+            .into_db_error(())?;
+
+        Ok(current)
+    }
+
+    /// Return unused SentLikeId
+    pub fn upsert_next_sent_like_id(&mut self) -> Result<SentLikeId, DieselDatabaseError> {
+        use model::schema::chat_global_state::dsl::*;
+
+        let current = self.read().chat().global_state()?.next_sent_like_id;
+        let next = current.increment();
+
+        insert_into(chat_global_state)
+            .values((
+                row_type.eq(CHAT_GLOBAL_STATE_ROW_TYPE),
+                next_sent_like_id.eq(next),
+            ))
+            .on_conflict(row_type)
+            .do_update()
+            .set(next_sent_like_id.eq(next))
             .execute_my_conn(self.conn())
             .into_db_error(())?;
 

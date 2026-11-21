@@ -1,4 +1,4 @@
-use model::{MatchId, ReceivedLikeId};
+use model::{MatchId, ReceivedLikeId, SentLikeId};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -21,5 +21,11 @@ pub struct MatchesIteratorState {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
 pub struct ReceivedLikesIteratorState {
     pub id_at_reset: ReceivedLikeId,
+    pub page: i64,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, PartialEq)]
+pub struct SentLikesIteratorState {
+    pub id_at_reset: SentLikeId,
     pub page: i64,
 }

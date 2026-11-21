@@ -129,6 +129,7 @@ diesel::table! {
         received_like_viewed -> Bool,
         match_id -> Nullable<Int8>,
         match_unix_time -> Nullable<Int8>,
+        sent_like_id -> Nullable<Int8>,
     }
 }
 
@@ -331,6 +332,7 @@ diesel::table! {
     chat_global_state (row_type) {
         row_type -> Int4,
         next_match_id -> Int8,
+        next_sent_like_id -> Int8,
     }
 }
 

@@ -4,7 +4,7 @@ use model_chat::{
     AccountIdInternal, AccountInteractionState, CurrentAccountInteractionState, DailyLikesLeft,
     LimitedActionStatus, MarkReceivedLikesViewed, NewReceivedLikesCountResult,
     ReceivedLikesIteratorState, ReceivedLikesPage, ResetReceivedLikesIteratorResult, SendLike,
-    SendLikeResult,
+    SendLikeResult, SentLikesIteratorState, SentLikesPage,
 };
 use server_api::{
     S,
@@ -289,6 +289,73 @@ pub async fn post_mark_received_likes_viewed(
     Ok(())
 }
 
+const PATH_GET_INITIAL_SENT_LIKES_ITERATOR_STATE: &str = "/chat_api/sent_likes/initial_state";
+
+#[utoipa::path(
+    get,
+    path = PATH_GET_INITIAL_SENT_LIKES_ITERATOR_STATE,
+    responses(
+        (status = 200, description = "Successful.", body = SentLikesIteratorState),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_initial_sent_likes_iterator_state(
+    State(state): State<S>,
+    Extension(account_state): Extension<AccountState>,
+) -> Result<Json<SentLikesIteratorState>, StatusCode> {
+    CHAT.get_initial_sent_likes_iterator_state.incr();
+
+    if account_state != AccountState::Normal {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    let iterator_state = state
+        .read()
+        .chat()
+        .get_initial_sent_likes_iterator_state()
+        .await?;
+    Ok(iterator_state.into())
+}
+
+const PATH_POST_GET_SENT_LIKES_PAGE: &str = "/chat_api/sent_likes";
+
+/// Get next page of sent likes. If the page is empty there is no more
+/// sent likes available.
+///
+/// Blocked profiles are not filtered away from the list.
+#[utoipa::path(
+    post,
+    path = PATH_POST_GET_SENT_LIKES_PAGE,
+    request_body(content = SentLikesIteratorState),
+    responses(
+        (status = 200, description = "Success.", body = SentLikesPage),
+        (status = 401, description = "Unauthorized."),
+        (status = 500, description = "Internal server error."),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn post_get_sent_likes_page(
+    State(state): State<S>,
+    Extension(account_id): Extension<AccountIdInternal>,
+    Extension(account_state): Extension<AccountState>,
+    Json(iterator_state): Json<SentLikesIteratorState>,
+) -> Result<Json<SentLikesPage>, StatusCode> {
+    CHAT.post_get_sent_likes_page.incr();
+
+    if account_state != AccountState::Normal {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    let page = state
+        .read()
+        .chat()
+        .sent_likes_page(account_id, iterator_state)
+        .await?;
+    Ok(page.into())
+}
+
 const PATH_GET_DAILY_LIKES_LEFT: &str = "/chat_api/daily_likes_left";
 
 /// Get daily likes left value.
@@ -327,6 +394,8 @@ create_open_api_router!(
         post_get_received_likes_page,
         post_mark_received_likes_viewed,
         get_daily_likes_left,
+        get_initial_sent_likes_iterator_state,
+        post_get_sent_likes_page,
 );
 
 create_counters!(
@@ -340,4 +409,6 @@ create_counters!(
     post_get_received_likes_page,
     post_mark_received_likes_viewed,
     get_daily_likes_left,
+    get_initial_sent_likes_iterator_state,
+    post_get_sent_likes_page,
 );

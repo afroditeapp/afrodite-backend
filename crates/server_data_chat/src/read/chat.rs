@@ -4,6 +4,7 @@ use model_chat::{
     AccountId, AccountIdInternal, AccountInteractionInternal, ChatStateRaw, GetSentMessage,
     LatestSeenMessageInfo, MatchesIteratorState, MessageDeliveryInfo, ProfileLink,
     ReceivedLikesIteratorState, ReceivedLikesPage, ReceivedLikesPageItem, SentBlocksPage,
+    SentLikesIteratorState, SentLikesPage,
 };
 use server_data::{
     DataError, IntoDataError, cache::CacheReadCommon, db_manager::InternalReading,
@@ -88,6 +89,25 @@ impl ReadCommandsChat<'_> {
             .await?;
 
         self.to_profile_link_list(accounts).await
+    }
+
+    pub async fn sent_likes_page(
+        &self,
+        id: AccountIdInternal,
+        state: SentLikesIteratorState,
+    ) -> Result<SentLikesPage, DataError> {
+        let accounts = self
+            .db_read(move |mut cmds| {
+                let value = cmds
+                    .chat()
+                    .interaction()
+                    .paged_sent_likes_from_sent_like_id(id, state.id_at_reset, state.page)?;
+                Ok(value)
+            })
+            .await?;
+
+        let profiles = self.to_profile_link_list(accounts).await?;
+        Ok(SentLikesPage { p: profiles })
     }
 
     async fn to_profile_link_list(
@@ -209,6 +229,20 @@ impl ReadCommandsChat<'_> {
             .next_match_id
             .next_id_to_latest_used_id();
         Ok(MatchesIteratorState {
+            id_at_reset: latest_used_id,
+            page: 0,
+        })
+    }
+
+    pub async fn get_initial_sent_likes_iterator_state(
+        &self,
+    ) -> Result<SentLikesIteratorState, DataError> {
+        let latest_used_id = self
+            .db_read(|mut cmds| cmds.chat().global_state())
+            .await?
+            .next_sent_like_id
+            .next_id_to_latest_used_id();
+        Ok(SentLikesIteratorState {
             id_at_reset: latest_used_id,
             page: 0,
         })

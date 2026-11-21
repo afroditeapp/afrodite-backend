@@ -2,7 +2,8 @@ use base64::Engine;
 use diesel::prelude::*;
 use model::{
     ConversationId, DailyLikesLeftSyncVersion, MatchId, MessageNumber, NewReceivedLikesCount,
-    NewReceivedLikesCountResult, PublicKeyId, ReceivedLikeId, ReceivedLikesSyncVersion, UnixTime,
+    NewReceivedLikesCountResult, PublicKeyId, ReceivedLikeId, ReceivedLikesSyncVersion, SentLikeId,
+    UnixTime,
 };
 use model_server_data::LimitedActionStatus;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -18,6 +19,9 @@ pub use received_likes::*;
 
 mod matches;
 pub use matches::*;
+
+mod sent_likes;
+pub use sent_likes::*;
 
 mod report;
 pub use report::*;
@@ -341,12 +345,12 @@ pub enum CurrentAccountInteractionState {
 
 pub const CHAT_GLOBAL_STATE_ROW_TYPE: i32 = 0;
 
-/// Global state for account component
 #[derive(Debug, Default, Clone, PartialEq, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::chat_global_state)]
 #[diesel(check_for_backend(crate::Db))]
 pub struct ChatGlobalState {
     pub next_match_id: MatchId,
+    pub next_sent_like_id: SentLikeId,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Serialize, Queryable, Selectable)]

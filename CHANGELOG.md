@@ -13,6 +13,11 @@
   `get_profile_content_info_binary` and `get_content`. When set to `true`,
   access to the requested data is allowed if the requested profile has sent
   a like to current account. Blocking can be used to cancel the access.
+- New APIs `POST /chat_api/sent_likes` and
+  `GET /chat_api/sent_likes/initial_state` for listing likes sent by
+  the current account, paged similarly to matches listing. The listing
+  uses new `sent_like_id` column in `account_interaction` which is
+  cleared when a like transitions into a match.
 
 ### Changed
 

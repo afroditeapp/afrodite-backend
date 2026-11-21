@@ -1266,6 +1266,10 @@ CREATE TABLE IF NOT EXISTS account_interaction(
     -- Matches iterator uses match ID to return correct pages.
     match_id                        BIGINT,
     match_unix_time                 BIGINT,
+    -- Sent likes iterator uses globally unique like ID to return
+    -- correct pages. NULL is used for account interactions which
+    -- aren't in Like state.
+    sent_like_id                    BIGINT,
     FOREIGN KEY (account_id_sender)
         REFERENCES account_id (id)
             ON DELETE CASCADE
@@ -1491,7 +1495,8 @@ CREATE TABLE IF NOT EXISTS chat_privacy_settings(
 CREATE TABLE IF NOT EXISTS chat_global_state(
     -- 0 = chat component global state
     row_type              INTEGER PRIMARY KEY NOT NULL,
-    next_match_id         BIGINT              NOT NULL DEFAULT 0
+    next_match_id         BIGINT              NOT NULL DEFAULT 0,
+    next_sent_like_id     BIGINT              NOT NULL DEFAULT 0
 );
 
 ---------- History tables for server component common ----------

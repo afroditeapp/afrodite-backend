@@ -160,6 +160,59 @@ impl From<MatchId> for i64 {
     ToSchema,
 )]
 #[diesel(sql_type = BigInt)]
+pub struct SentLikeId {
+    pub id: i64,
+}
+
+impl SentLikeId {
+    /// Return new incremented value using `saturated_add`.
+    pub fn increment(&self) -> Self {
+        Self {
+            id: self.id.saturating_add(1),
+        }
+    }
+
+    /// This returns -1 if ID is not incremented.
+    pub fn next_id_to_latest_used_id(&self) -> Self {
+        Self { id: self.id - 1 }
+    }
+}
+
+impl TryFrom<i64> for SentLikeId {
+    type Error = String;
+
+    fn try_from(id: i64) -> Result<Self, Self::Error> {
+        Ok(Self { id })
+    }
+}
+
+impl AsRef<i64> for SentLikeId {
+    fn as_ref(&self) -> &i64 {
+        &self.id
+    }
+}
+
+diesel_i64_wrapper!(SentLikeId);
+
+impl From<SentLikeId> for i64 {
+    fn from(value: SentLikeId) -> Self {
+        value.id
+    }
+}
+
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Default,
+    Deserialize,
+    Serialize,
+    PartialEq,
+    FromSqlRow,
+    AsExpression,
+    ToSchema,
+)]
+#[diesel(sql_type = BigInt)]
 pub struct ReceivedLikeId {
     pub id: i64,
 }
@@ -283,6 +336,7 @@ pub struct AccountInteractionInternal {
     received_like_viewed: bool,
     pub match_id: Option<MatchId>,
     match_unix_time: Option<UnixTime>,
+    sent_like_id: Option<SentLikeId>,
 }
 
 impl AccountInteractionInternal {
@@ -291,6 +345,7 @@ impl AccountInteractionInternal {
         id_like_sender: AccountIdInternal,
         id_like_recipient: AccountIdInternal,
         received_like_id: ReceivedLikeId,
+        sent_like_id: SentLikeId,
     ) -> Result<Self, AccountInteractionStateError> {
         let target = AccountInteractionState::Like;
         let state = self.state_number;
@@ -300,6 +355,7 @@ impl AccountInteractionInternal {
                 account_id_sender: Some(id_like_sender.into_db_id()),
                 account_id_recipient: Some(id_like_recipient.into_db_id()),
                 received_like_id: Some(received_like_id),
+                sent_like_id: Some(sent_like_id),
                 ..self
             }),
             AccountInteractionState::Like => Ok(self),
@@ -316,6 +372,9 @@ impl AccountInteractionInternal {
             AccountInteractionState::Like => Ok(Self {
                 state_number: target,
                 received_like_id: None,
+                // Like was transitioned into match so it doesn't exist
+                // anymore in sent likes listing.
+                sent_like_id: None,
                 match_id: Some(match_id),
                 match_unix_time: Some(UnixTime::current_time()),
                 ..self

@@ -2,7 +2,7 @@ use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
 use model_chat::{
     AccountId, AccountIdInternal, AccountInteractionInternal, AccountInteractionState, MatchId,
-    ReceivedLikeId,
+    ReceivedLikeId, SentLikeId,
 };
 use simple_backend_utils::Result;
 
@@ -162,6 +162,37 @@ impl CurrentReadChatInteraction<'_> {
             .filter(match_id.le(match_id_value))
             .select(account_id::uuid)
             .order((match_id.desc(),))
+            .limit(PAGE_SIZE)
+            .offset(PAGE_SIZE.saturating_mul(page))
+            .load(self.conn())
+            .into_db_error(())?;
+
+        Ok(account_ids)
+    }
+
+    /// Interaction ordering goes from recent to older starting
+    /// from `sent_like_id_value`.
+    pub fn paged_sent_likes_from_sent_like_id(
+        &mut self,
+        id_sender: AccountIdInternal,
+        sent_like_id_value: SentLikeId,
+        page: i64,
+    ) -> Result<Vec<AccountId>, DieselDatabaseError> {
+        use crate::schema::{account_id, account_interaction::dsl::*};
+
+        const PAGE_SIZE: i64 = 25;
+
+        let account_ids: Vec<AccountId> = account_interaction
+            .inner_join(
+                account_id::table.on(account_id_recipient.assume_not_null().eq(account_id::id)),
+            )
+            .filter(account_id_recipient.is_not_null())
+            .filter(account_id_sender.eq(id_sender.as_db_id()))
+            .filter(state_number.eq(AccountInteractionState::Like))
+            .filter(sent_like_id.is_not_null())
+            .filter(sent_like_id.le(sent_like_id_value))
+            .select(account_id::uuid)
+            .order(sent_like_id.desc())
             .limit(PAGE_SIZE)
             .offset(PAGE_SIZE.saturating_mul(page))
             .load(self.conn())

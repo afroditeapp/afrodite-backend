@@ -121,9 +121,15 @@ impl WriteCommandsChat<'_> {
                     .chat()
                     .chat_state(id_like_recipient)?
                     .next_received_like_id;
+                let next_sent_like_id = cmds.chat().upsert_next_sent_like_id()?;
                 let updated_interaction = interaction
                     .clone()
-                    .try_into_like(id_like_sender, id_like_recipient, next_id)
+                    .try_into_like(
+                        id_like_sender,
+                        id_like_recipient,
+                        next_id,
+                        next_sent_like_id,
+                    )
                     .change_context(DieselDatabaseError::NotAllowed)?;
                 cmds.chat().modify_chat_state(id_like_recipient, |s| {
                     s.next_received_like_id = next_id.increment();
