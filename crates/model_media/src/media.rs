@@ -714,10 +714,21 @@ pub struct GetContentQueryParams {
     /// If true media content access is allowed when users are a match.
     #[serde(default)]
     pub is_match: bool,
+    /// If false media content access is allowed when profile is set as public.
+    /// If true media content access is allowed when the content owner has
+    /// sent a like to current account.
+    #[serde(default)]
+    pub is_received_like: bool,
     /// Preferred content quality. Use value: h (high), m (medium), or l (low).
     /// Server may downgrade quality based on load. Response header "q"
     /// contains the actual quality returned.
     pub q: Option<String>,
+}
+
+impl GetContentQueryParams {
+    pub fn allow_get_content_if_received_like(&self) -> bool {
+        self.is_received_like
+    }
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, IntoParams)]
@@ -729,6 +740,11 @@ pub struct GetProfileContentQueryParams {
     /// If true profile content access is allowed when users are a match.
     #[serde(default)]
     is_match: bool,
+    /// If false profile content access is allowed when profile is set as public.
+    /// If true profile content access is allowed when the requested profile
+    /// has sent a like to current account.
+    #[serde(default)]
+    is_received_like: bool,
 }
 
 impl GetProfileContentQueryParams {
@@ -738,6 +754,10 @@ impl GetProfileContentQueryParams {
 
     pub fn allow_get_content_if_match(&self) -> bool {
         self.is_match
+    }
+
+    pub fn allow_get_content_if_received_like(&self) -> bool {
+        self.is_received_like
     }
 }
 

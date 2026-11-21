@@ -445,6 +445,10 @@ pub struct GetProfileQueryParam {
     /// data if the requested profile is a match.
     #[serde(default)]
     is_match: bool,
+    /// If requested profile is not public, allow getting the profile
+    /// data if the requested profile has sent a like to current account.
+    #[serde(default)]
+    is_received_like: bool,
 }
 
 impl GetProfileQueryParam {
@@ -454,6 +458,10 @@ impl GetProfileQueryParam {
 
     pub fn allow_get_profile_if_match(self) -> bool {
         self.is_match
+    }
+
+    pub fn allow_get_profile_if_received_like(self) -> bool {
+        self.is_received_like
     }
 }
 

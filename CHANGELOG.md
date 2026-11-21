@@ -8,6 +8,11 @@
   info: whether the device recognition verdict contained
   `MEETS_STRONG_INTEGRITY` and the Android SDK version from the verdict
   token device attributes.
+- New query parameter `is_received_like` for APIs `get_profile`,
+  `get_profile_binary`, `get_profile_content_info`,
+  `get_profile_content_info_binary` and `get_content`. When set to `true`,
+  access to the requested data is allowed if the requested profile has sent
+  a like to current account. Blocking can be used to cancel the access.
 
 ### Changed
 

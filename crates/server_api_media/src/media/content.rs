@@ -61,6 +61,11 @@ const PATH_GET_CONTENT: &str = "/media_api/content/{aid}/{cid}";
 /// is in current profile content, then the requested content can be accessed
 /// if query parameter `is_match` is set to `true`.
 ///
+/// If owner of the requested content has sent a like to current account and
+/// the requested content is in current profile content, then the requested
+/// content can be accessed if query parameter `is_received_like` is set to
+/// `true`.
+///
 /// Only accepted content can be accessed.
 ///
 /// ## Admin access
@@ -181,6 +186,13 @@ pub async fn get_content(
             && state
                 .data_all_access()
                 .is_match(account_id, requested_profile_internal_id)
+                .await?)
+        || (params.allow_get_content_if_received_like()
+            && requested_content_is_profile_content
+            && content_accepted
+            && state
+                .data_all_access()
+                .is_received_like_from(account_id, requested_profile_internal_id)
                 .await?);
 
     if !access_allowed {

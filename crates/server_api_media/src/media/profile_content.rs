@@ -57,6 +57,11 @@ async fn read_profile_content_info_result(
                 .data_all_access()
                 .is_match(account_id, requested_profile)
                 .await?)
+        || (params.allow_get_content_if_received_like()
+            && state
+                .data_all_access()
+                .is_received_like_from(account_id, requested_profile)
+                .await?)
     {
         read_profile_content_info_result_for_account(state, requested_profile, params).await
     } else {
@@ -104,8 +109,12 @@ const PATH_GET_PROFILE_CONTENT_INFO: &str = "/media_api/profile_content_info/{ai
 /// If the profile is a match, then the profile can be accessed if query
 /// parameter `is_match` is set to `true`.
 ///
-/// If the profile is not a match, then permission `admin_view_all_profiles`
-/// is required.
+/// If the requested profile has sent a like to current account, then the
+/// profile can be accessed if query parameter `is_received_like` is set to
+/// `true`.
+///
+/// If the profile is not a match and has not sent a like to current account,
+/// then permission `admin_view_all_profiles` is required.
 #[utoipa::path(
     get,
     path = PATH_GET_PROFILE_CONTENT_INFO,

@@ -171,6 +171,15 @@ pub trait DataAllUtils: Send + Sync + 'static {
         account1: AccountIdInternal,
     ) -> BoxFuture<'a, server_common::result::Result<bool, DataError>>;
 
+    /// Return true if `other` has sent a like to `account` and there is no
+    /// one or two way block.
+    fn is_received_like_from<'a>(
+        &self,
+        read_handle: &'a RouterDatabaseReadHandle,
+        account: AccountIdInternal,
+        other: AccountIdInternal,
+    ) -> BoxFuture<'a, server_common::result::Result<bool, DataError>>;
+
     fn delete_all_accounts<'a>(
         &self,
         write_handle: &'a WriteCommandRunnerHandle,

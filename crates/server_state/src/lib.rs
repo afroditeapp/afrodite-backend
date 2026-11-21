@@ -263,6 +263,19 @@ impl DataAllAccess<'_> {
         cmd.await
     }
 
+    /// Return true if `other` has sent a like to `account` and there is no
+    /// one or two way block.
+    pub async fn is_received_like_from(
+        &self,
+        account: AccountIdInternal,
+        other: AccountIdInternal,
+    ) -> server_common::result::Result<bool, DataError> {
+        let cmd = self
+            .utils()
+            .is_received_like_from(self.read(), account, other);
+        cmd.await
+    }
+
     pub async fn delete_all_accounts(&self) -> server_common::result::Result<(), DataError> {
         let cmd = self.utils().delete_all_accounts(self.write());
         cmd.await

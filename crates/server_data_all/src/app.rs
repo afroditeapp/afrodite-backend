@@ -155,6 +155,26 @@ impl DataAllUtils for DataAllUtilsImpl {
         .boxed()
     }
 
+    fn is_received_like_from<'a>(
+        &self,
+        read_handle: &'a RouterDatabaseReadHandle,
+        account: AccountIdInternal,
+        other: AccountIdInternal,
+    ) -> BoxFuture<'a, server_common::result::Result<bool, DataError>> {
+        async move {
+            let interaction = read_handle
+                .chat()
+                .account_interaction(account, other)
+                .await?;
+            if let Some(interaction) = interaction {
+                Ok(interaction.is_direction_liked(other, account) && !interaction.is_blocked())
+            } else {
+                Ok(false)
+            }
+        }
+        .boxed()
+    }
+
     fn delete_all_accounts<'a>(
         &self,
         write_command_runner: &'a WriteCommandRunnerHandle,
