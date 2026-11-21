@@ -189,23 +189,6 @@ impl CurrentWriteMediaContent<'_> {
         Ok(())
     }
 
-    pub fn reset_security_content_verified_values(
-        &mut self,
-        account: AccountIdInternal,
-    ) -> Result<(), DieselDatabaseError> {
-        use model::schema::current_account_media::dsl::*;
-
-        update(current_account_media.filter(account_id.eq(account.as_db_id())))
-            .set((
-                security_content_verified.eq(None::<bool>),
-                security_content_verified_manual.eq(None::<bool>),
-            ))
-            .execute(self.conn())
-            .into_db_error(account)?;
-
-        Ok(())
-    }
-
     pub fn reset_face_verified_values(
         &mut self,
         account: AccountIdInternal,

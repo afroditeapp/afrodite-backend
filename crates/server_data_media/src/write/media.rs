@@ -305,6 +305,9 @@ impl WriteCommandsMedia<'_> {
         Ok(true)
     }
 
+    /// Note: security content removal does not reset face verified or
+    /// security content verified values to allow setting security content
+    /// temporarily for getting verification values.
     pub async fn delete_content(
         &self,
         content_id: ContentIdInternal,
@@ -321,28 +324,6 @@ impl WriteCommandsMedia<'_> {
                 .media()
                 .media_content()
                 .current_account_media(content_id.content_owner())?;
-            let security_content_changed = media_content
-                .security_content_id
-                .as_ref()
-                .map(|v| v.content_id())
-                != media_content_new
-                    .security_content_id
-                    .as_ref()
-                    .map(|v| v.content_id());
-            let media_content_new = if security_content_changed {
-                cmds.media()
-                    .media_content()
-                    .reset_face_verified_values(content_id.content_owner())?;
-                cmds.media()
-                    .media_content()
-                    .reset_security_content_verified_values(content_id.content_owner())?;
-                cmds.read()
-                    .media()
-                    .media_content()
-                    .current_account_media(content_id.content_owner())?
-            } else {
-                media_content_new
-            };
             let current_media_changed = media_content != media_content_new;
             let cache_update = if current_media_changed {
                 // Admin removed in use image, so current media content changed

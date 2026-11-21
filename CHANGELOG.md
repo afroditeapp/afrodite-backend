@@ -34,6 +34,11 @@
   tasks run after deletion was scheduled.
 - Account deletion reminder emails are sent only when the deletion was
   initiated automatically for an inactive account.
+- Deleting the current security content no longer resets face verified
+  values from the account's media content or security content verified
+  values from the account's current media content. Verification status
+  stays until new security content is set or verified values are edited
+  by an admin.
 
 ## [0.26.1] - 2026-11-09
 
