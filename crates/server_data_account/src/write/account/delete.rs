@@ -22,6 +22,26 @@ impl WriteCommandsAccountDelete<'_> {
         id: AccountIdInternal,
         value: bool,
     ) -> Result<(), DataError> {
+        self.set_account_deletion_request_state_impl(id, value, false)
+            .await
+    }
+
+    /// `automatic` marks deletion requests which are initiated by the
+    /// scheduled task e.g. for inactive accounts instead of a user request.
+    pub async fn set_deletion_requested_automatically(
+        &self,
+        id: AccountIdInternal,
+    ) -> Result<(), DataError> {
+        self.set_account_deletion_request_state_impl(id, true, true)
+            .await
+    }
+
+    async fn set_account_deletion_request_state_impl(
+        &self,
+        id: AccountIdInternal,
+        value: bool,
+        automatic: bool,
+    ) -> Result<(), DataError> {
         let (deletion_requested, current_account) = self
             .db_read(move |mut cmds| {
                 let deletion_requested = cmds.account().delete().account_deletion_requested(id)?;
@@ -48,7 +68,7 @@ impl WriteCommandsAccountDelete<'_> {
 
             cmds.account()
                 .delete()
-                .set_account_deletion_request_state(id, value)?;
+                .set_account_deletion_request_state(id, value, automatic)?;
 
             cmds.account()
                 .email()

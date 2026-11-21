@@ -445,7 +445,7 @@ impl ScheduledTaskManager {
                 db_write_raw!(self.state, move |cmds| {
                     cmds.account()
                         .delete()
-                        .set_account_deletion_request_state(id, true)
+                        .set_deletion_requested_automatically(id)
                         .await
                 })
                 .await

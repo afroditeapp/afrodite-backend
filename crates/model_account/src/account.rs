@@ -776,6 +776,7 @@ impl From<SignInWithInfoRaw> for SignInWithInfo {
 #[diesel(check_for_backend(crate::Db))]
 pub struct AccountStateTableRaw {
     account_deletion_request_unix_time: Option<UnixTime>,
+    account_deletion_request_automatic: bool,
     account_banned_reason_category: Option<i16>,
     account_banned_reason_details: Option<AccountBanReasonDetails>,
     account_banned_reason_details_visible_to_user: bool,

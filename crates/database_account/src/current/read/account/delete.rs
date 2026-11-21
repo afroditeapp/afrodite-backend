@@ -20,4 +20,19 @@ impl CurrentReadAccountDelete<'_> {
             .first(self.conn())
             .into_db_error(id)
     }
+
+    /// Returns whether the deletion request was initiated automatically
+    /// e.g. for inactive account.
+    pub fn account_deletion_requested_is_automatic(
+        &mut self,
+        id: AccountIdInternal,
+    ) -> Result<bool, DieselDatabaseError> {
+        use crate::schema::account_state::dsl::*;
+
+        account_state
+            .filter(account_id.eq(id.as_db_id()))
+            .select(account_deletion_request_automatic)
+            .first(self.conn())
+            .into_db_error(id)
+    }
 }

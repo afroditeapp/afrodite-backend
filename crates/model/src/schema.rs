@@ -228,6 +228,7 @@ diesel::table! {
         account_verification_method -> Nullable<Int2>,
         account_verification_unix_time -> Nullable<Int8>,
         account_verification_error_flags -> Int2,
+        account_deletion_request_automatic -> Bool,
     }
 }
 

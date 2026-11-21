@@ -14,6 +14,8 @@
 - The first account deletion reminder email is now sent only when 30 or
   fewer days remain before deletion, instead of on the first scheduled
   tasks run after deletion was scheduled.
+- Account deletion reminder emails are sent only when the deletion was
+  initiated automatically for an inactive account.
 
 ## [0.26.1] - 2026-11-09
 

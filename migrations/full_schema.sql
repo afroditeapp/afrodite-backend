@@ -573,6 +573,8 @@ CREATE TABLE IF NOT EXISTS account_email_sending_state(
 CREATE TABLE IF NOT EXISTS account_state(
     account_id                         BIGINT PRIMARY KEY NOT NULL,
     account_deletion_request_unix_time BIGINT,
+    -- True when deletion request was initiated automatically.
+    account_deletion_request_automatic BOOLEAN            NOT NULL DEFAULT FALSE,
     account_banned_reason_category     SMALLINT,
     -- Null or non-empty string
     account_banned_reason_details      TEXT,

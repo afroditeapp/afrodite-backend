@@ -167,6 +167,17 @@ async fn handle_account_deletion_email_notification(
     state: &S,
     id: AccountIdInternal,
 ) -> Result<(), DataError> {
+    // Reminders are sent only when deleting inactive accounts
+    let deletion_is_automatic = state
+        .read()
+        .account()
+        .delete()
+        .account_deletion_requested_is_automatic(id)
+        .await?;
+    if !deletion_is_automatic {
+        return Ok(());
+    }
+
     let deletion_state = state
         .read()
         .account()

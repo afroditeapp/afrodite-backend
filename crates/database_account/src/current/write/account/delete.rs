@@ -12,6 +12,7 @@ impl CurrentWriteAccountDelete<'_> {
         &mut self,
         id: AccountIdInternal,
         value: bool,
+        automatic: bool,
     ) -> Result<(), DieselDatabaseError> {
         use model::schema::account_state::dsl::*;
 
@@ -23,7 +24,10 @@ impl CurrentWriteAccountDelete<'_> {
 
         update(account_state)
             .filter(account_id.eq(id.as_db_id()))
-            .set(account_deletion_request_unix_time.eq(state))
+            .set((
+                account_deletion_request_unix_time.eq(state),
+                account_deletion_request_automatic.eq(automatic && value),
+            ))
             .execute(self.conn())
             .into_db_error(())?;
 
