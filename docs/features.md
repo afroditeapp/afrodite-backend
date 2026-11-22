@@ -38,7 +38,7 @@
   * Starts with an uppercase letter
   * Optional validation regex
 * Text (max 2000 bytes)
-* Images (max 6 images and the first must be a face image)
+* Images (max 6 images)
 * First image crop info (for displaying thumbnail image for the profile)
 * Unlimited chat requests enabled boolean
   * Automatic daily disabling (server config)
