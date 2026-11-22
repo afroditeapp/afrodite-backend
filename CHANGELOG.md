@@ -40,6 +40,11 @@
   stays until new security content is set or verified values are edited
   by an admin.
 
+### Fixed
+
+- Received likes listing now skips profiles which are blocked by either
+  account.
+
 ## [0.26.1] - 2026-11-09
 
 ### Added

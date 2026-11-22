@@ -114,6 +114,8 @@ impl CurrentReadChatInteraction<'_> {
             .filter(state_number.eq(AccountInteractionState::Like))
             .filter(received_like_id.is_not_null())
             .filter(received_like_id.le(received_like_id_value))
+            // Prevent returning accounts which are blocked in either direction
+            .filter(account_id_block_sender.is_null())
             .select((
                 account_id::uuid,
                 received_like_id.assume_not_null(),

@@ -235,7 +235,7 @@ const PATH_POST_GET_RECEIVED_LIKES_PAGE: &str = "/chat_api/received_likes";
 /// received likes available.
 ///
 /// Profile will not be returned if:
-/// - Profile is blocked
+/// - Profile is blocked by either account
 /// - Profile is a match
 #[utoipa::path(
     post,
