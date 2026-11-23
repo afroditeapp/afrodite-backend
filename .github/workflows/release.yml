@@ -26,8 +26,11 @@ jobs:
           sudo apt-get install -y libpq-dev
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Set reproducible build timestamp
+        run: echo "SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)" >> "$GITHUB_ENV"
       - name: Build binary
         run: |
+          export RUSTFLAGS="--remap-path-prefix=$GITHUB_WORKSPACE=/build --remap-path-prefix=${CARGO_HOME:-$HOME/.cargo}=/cargo"
           cargo build --release
       - name: Create release assets
         run: |
@@ -38,7 +41,10 @@ jobs:
           cd target/assets
           mkdir "$NAME"
           mv "../release/$BINARY" "$NAME"
-          tar --owner=0 --group=0 -czf "$ASSET" "$NAME"
+          tar --sort=name \
+              --mtime="@${SOURCE_DATE_EPOCH}" \
+              --owner=0 --group=0 --numeric-owner \
+              -cf - "$NAME" | gzip -9n > "$ASSET"
       - name: Upload assets
         uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda # v2.2.1
         if: startsWith(github.ref, 'refs/tags/')
@@ -50,15 +56,19 @@ jobs:
   release-macos:
     name: Release aarch64-apple-darwin
     runs-on: macos-26
+    # TODO: macOS builds are not yet reproducible
     steps:
       - name: Install PostgreSQL library
         run: brew install libpq
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Select Xcode version
+        run: sudo xcode-select -s /Applications/Xcode_26.0.app
+      - name: Set reproducible build timestamp
+        run: echo "SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)" >> "$GITHUB_ENV"
       - name: Build binary
-        env:
-          RUSTFLAGS: -C link-arg=-L/opt/homebrew/opt/libpq/lib
         run: |
+          export RUSTFLAGS="-C link-arg=-L/opt/homebrew/opt/libpq/lib --remap-path-prefix=$GITHUB_WORKSPACE=/build --remap-path-prefix=${CARGO_HOME:-$HOME/.cargo}=/cargo"
           cargo build --release --target aarch64-apple-darwin
       - name: Create release assets
         run: |
@@ -70,7 +80,10 @@ jobs:
           cd target/assets
           mkdir "$NAME"
           mv "../$TARGET/release/$BINARY" "$NAME"
-          tar -czf "$ASSET" "$NAME"
+          # bsdtar has no --mtime/--sort, so normalize mtimes with touch
+          touch -t "$(date -r "$SOURCE_DATE_EPOCH" +%Y%m%d%H%M.%S)" "$NAME" "$NAME/$BINARY"
+          tar --uid=0 --gid=0 --uname=root --gname=root --format=ustar \
+              -cf - "$NAME" | gzip -9n > "$ASSET"
       - name: Upload assets
         uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda # v2.2.1
         if: startsWith(github.ref, 'refs/tags/')
