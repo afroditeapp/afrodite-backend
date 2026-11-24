@@ -15,6 +15,30 @@ use crate::IntoDatabaseError;
 define_current_read_commands!(CurrentReadMediaAdminContent);
 
 impl CurrentReadMediaAdminContent<'_> {
+    /// Get all media content of an account with the moderator account ID
+    /// resolved to the public account ID.
+    pub fn all_account_media_content_admin(
+        &mut self,
+        media_owner_id: AccountIdInternal,
+    ) -> Result<Vec<(MediaContentRaw, Option<AccountId>)>, DieselDatabaseError> {
+        use crate::schema::{account_id, media_content};
+
+        let moderator_aid = diesel::alias!(crate::schema::account_id as moderator_aid);
+
+        media_content::table
+            .left_join(
+                moderator_aid.on(media_content::moderation_moderator_account_id
+                    .eq(moderator_aid.field(account_id::id).nullable())),
+            )
+            .filter(media_content::account_id.eq(media_owner_id.as_db_id()))
+            .select((
+                MediaContentRaw::as_select(),
+                moderator_aid.field(account_id::uuid).nullable(),
+            ))
+            .load(self.conn())
+            .into_db_error(media_owner_id)
+    }
+
     pub fn media_content_moderation_queue_page(
         &mut self,
         content_type: MediaContentType,

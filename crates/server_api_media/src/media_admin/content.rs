@@ -1,8 +1,12 @@
-use axum::{Extension, extract::State};
+use axum::{
+    Extension,
+    extract::{Path, State},
+};
 use model::AdminBotNotificationTypes;
 use model_media::{
-    AccountIdInternal, GetMediaContentFaceVerifiedNullList, Permissions,
-    PostMediaContentFaceDetectedValue, PostMediaContentFaceVerifiedValue,
+    AccountContentAdmin, AccountId, AccountIdInternal, ContentInfoDetailedAdmin,
+    GetMediaContentFaceVerifiedNullList, Permissions, PostMediaContentFaceDetectedValue,
+    PostMediaContentFaceVerifiedValue,
 };
 use server_api::{
     DataError, S,
@@ -18,6 +22,59 @@ use crate::{
     db_write,
     utils::{Json, StatusCode},
 };
+
+const PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT_ADMIN: &str =
+    "/media_api/all_account_media_content_admin/{aid}";
+
+/// Get list of all media content on the server for one account.
+///
+/// # Access
+///
+/// - Permission [model::Permissions::admin_moderate_media_content]
+/// - Permission [model::Permissions::admin_edit_media_content_face_detected_value]
+/// - Permission [model::Permissions::admin_edit_media_content_face_verified_value]
+#[utoipa::path(
+    get,
+    path = PATH_GET_ALL_ACCOUNT_MEDIA_CONTENT_ADMIN,
+    params(AccountId),
+    responses(
+        (status = 200, description = "Successful.", body = AccountContentAdmin),
+        (status = 401, description = "Unauthorized."),
+        (status = 500),
+    ),
+    security(("access_token" = [])),
+)]
+pub async fn get_all_account_media_content_admin(
+    State(state): State<S>,
+    Path(account_id): Path<AccountId>,
+    Extension(permissions): Extension<Permissions>,
+) -> Result<Json<AccountContentAdmin>, StatusCode> {
+    MEDIA_ADMIN.get_all_account_media_content_admin.incr();
+
+    let access_allowed = permissions.admin_moderate_media_content
+        || permissions.admin_edit_media_content_face_detected_value
+        || permissions.admin_edit_media_content_face_verified_value;
+    if !access_allowed {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    let internal_id = state.get_internal_id(account_id).await?;
+
+    let content = state
+        .read()
+        .media_admin()
+        .all_account_media_content_admin(internal_id)
+        .await?;
+
+    let data = content
+        .into_iter()
+        .map(|(content, moderator_account_id)| {
+            ContentInfoDetailedAdmin::new(content, moderator_account_id)
+        })
+        .collect();
+
+    Ok(AccountContentAdmin { data }.into())
+}
 
 const PATH_POST_MEDIA_CONTENT_FACE_DETECTED_VALUE: &str =
     "/media_api/media_content_face_detected_value";
@@ -192,6 +249,7 @@ pub async fn post_media_content_face_verified_value(
 
 create_open_api_router!(
         fn router_admin_content,
+        get_all_account_media_content_admin,
         post_media_content_face_detected_value,
         get_media_content_face_verified_null_list,
         post_media_content_face_verified_value,
@@ -201,6 +259,7 @@ create_counters!(
     MediaAdminCounters,
     MEDIA_ADMIN,
     MEDIA_ADMIN_CONTENT_COUNTERS_LIST,
+    get_all_account_media_content_admin,
     post_media_content_face_detected_value,
     get_media_content_face_verified_null_list,
     post_media_content_face_verified_value,

@@ -9,6 +9,11 @@
   admin email address configured in `server.toml`. Categories, email
   subject and body are configurable and translatable, and the user's
   email address is added to the `Reply-To` header.
+- New admin API `GET /media_api/all_account_media_content_admin/{aid}`
+  which returns all media content of an account using the new
+  `ContentInfoDetailedAdmin` model. The model has the same fields as
+  `ContentInfoDetailed` and also includes the account ID of the
+  moderator which moderated the content.
 
 ### Fixed
 

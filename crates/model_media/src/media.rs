@@ -297,6 +297,11 @@ impl MediaContentRaw {
         self.id
     }
 
+    /// Automatic face detected value.
+    pub fn face_detected(&self) -> bool {
+        self.face_detected
+    }
+
     /// Get the effective face detected value.
     /// If face_detected_manual is set, it overrides face_detected.
     pub fn effective_face_detected(&self) -> bool {
@@ -306,6 +311,11 @@ impl MediaContentRaw {
     /// Admin set face detected value
     pub fn manual_face_detected(&self) -> Option<bool> {
         self.face_detected_manual
+    }
+
+    /// Automatic face verified value.
+    pub fn face_verified(&self) -> Option<bool> {
+        self.face_verified
     }
 
     /// Get the effective face verified value.

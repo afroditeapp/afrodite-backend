@@ -1,11 +1,12 @@
 use diesel::prelude::*;
-use model::{AccountId, ContentId};
+use model::{AccountId, ContentId, ContentSlot, UnixTime};
 use model_server_data::MediaContentType;
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    MediaContentModerationRejectedReasonCategory, MediaContentModerationRejectedReasonDetails,
+    ContentModerationState, MediaContentModerationRejectedReasonCategory,
+    MediaContentModerationRejectedReasonDetails, MediaContentRaw,
 };
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema)]
@@ -109,4 +110,71 @@ pub struct PostSecurityContentVerifiedValue {
     /// Human admin sets manual override value.
     /// Set to None to clear the currently applicable value.
     pub value: Option<bool>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct ContentInfoDetailedAdmin {
+    pub cid: ContentId,
+    pub ctype: MediaContentType,
+    pub state: ContentModerationState,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub slot: Option<ContentSlot>,
+    pub secure_capture: bool,
+    /// Face detected (automatic)
+    pub face_detected: bool,
+    /// Manual face detected value set by admin
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub face_detected_manual: Option<bool>,
+    /// Face verified against current security content (automatic or manual)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub face_verified: Option<bool>,
+    /// Manual face verified value set by admin
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub face_verified_manual: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub usage_start_time: Option<UnixTime>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub usage_end_time: Option<UnixTime>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub rejected_reason_category: Option<MediaContentModerationRejectedReasonCategory>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub rejected_reason_details: Option<MediaContentModerationRejectedReasonDetails>,
+    /// Account which moderated the content
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(nullable = false)]
+    pub moderator_account_id: Option<AccountId>,
+}
+
+impl ContentInfoDetailedAdmin {
+    pub fn new(value: MediaContentRaw, moderator_account_id: Option<AccountId>) -> Self {
+        ContentInfoDetailedAdmin {
+            cid: value.uuid,
+            ctype: value.content_type_number,
+            state: value.moderation_state,
+            slot: value.slot_number(),
+            secure_capture: value.secure_capture,
+            face_detected: value.face_detected(),
+            face_detected_manual: value.manual_face_detected(),
+            face_verified: value.face_verified(),
+            face_verified_manual: value.manual_face_verified(),
+            usage_end_time: value.usage_end_unix_time,
+            usage_start_time: value.usage_start_unix_time,
+            rejected_reason_category: value.moderation_rejected_reason_category,
+            rejected_reason_details: value.moderation_rejected_reason_details,
+            moderator_account_id,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema, IntoParams)]
+pub struct AccountContentAdmin {
+    pub data: Vec<ContentInfoDetailedAdmin>,
 }

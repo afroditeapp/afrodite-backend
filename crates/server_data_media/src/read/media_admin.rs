@@ -1,9 +1,9 @@
 use database_media::current::read::GetDbReadCommandsMedia;
 use model::{ImageProcessingDynamicConfig, UnixTime};
 use model_media::{
-    GetMediaContentFaceVerifiedNullList, MediaContentIterationPage,
+    AccountId, AccountIdInternal, GetMediaContentFaceVerifiedNullList, MediaContentIterationPage,
     MediaContentModerationQueuePage, MediaContentModerationQueueType, MediaContentModerationType,
-    MediaContentType,
+    MediaContentRaw, MediaContentType,
 };
 use server_common::result::Result;
 use server_data::{DataError, IntoDataError, define_cmd_wrapper_read, read::DbRead};
@@ -11,6 +11,19 @@ use server_data::{DataError, IntoDataError, define_cmd_wrapper_read, read::DbRea
 define_cmd_wrapper_read!(ReadCommandsMediaAdmin);
 
 impl ReadCommandsMediaAdmin<'_> {
+    pub async fn all_account_media_content_admin(
+        &self,
+        account_id: AccountIdInternal,
+    ) -> Result<Vec<(MediaContentRaw, Option<AccountId>)>, DataError> {
+        self.db_read(move |mut cmds| {
+            cmds.media_admin()
+                .content()
+                .all_account_media_content_admin(account_id)
+        })
+        .await
+        .into_error()
+    }
+
     pub async fn media_content_moderation_queue_page(
         &self,
         content_type: MediaContentType,
