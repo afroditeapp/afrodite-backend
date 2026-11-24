@@ -14,6 +14,9 @@
   `ContentInfoDetailedAdmin` model. The model has the same fields as
   `ContentInfoDetailed` and also includes the account ID of the
   moderator which moderated the content.
+- New admin API routes `get_latest_media_content_id_db` and
+  `get_admin_media_content_iterator_page` for iterating all media content
+  items with filters and optional extra info.
 
 ### Fixed
 

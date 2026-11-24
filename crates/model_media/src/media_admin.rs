@@ -9,6 +9,10 @@ use crate::{
     MediaContentModerationRejectedReasonDetails, MediaContentRaw,
 };
 
+pub mod iterator;
+
+pub use iterator::*;
+
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, ToSchema)]
 pub enum MediaContentModerationType {
     Normal,

@@ -1,13 +1,15 @@
 use database::{DieselDatabaseError, define_current_read_commands};
 use diesel::prelude::*;
-use model::{AccountId, ContentId};
+use model::{AccountId, ContentId, ContentIdDb, ProfileAge};
 use model_media::{
     AccountIdInternal, ContentModerationState, GetMediaContentFaceVerifiedNullList,
-    MediaContentFaceVerifiedNullByAccount, MediaContentIterationPage, MediaContentIterationValue,
-    MediaContentModerationQueuePage, MediaContentModerationQueueType, MediaContentModerationType,
-    MediaContentPendingModeration, MediaContentRaw, MediaContentType,
+    MediaContentFaceVerifiedNullByAccount, MediaContentIdDbValue, MediaContentIterationPage,
+    MediaContentIterationValue, MediaContentIteratorPageData, MediaContentIteratorSettingsInternal,
+    MediaContentModerationQueuePage, MediaContentModerationQueueType,
+    MediaContentModerationRejectedReasonCategory, MediaContentModerationRejectedReasonDetails,
+    MediaContentModerationType, MediaContentPendingModeration, MediaContentRaw, MediaContentType,
 };
-use simple_backend_model::UnixTime;
+use simple_backend_model::{NonEmptyString, UnixTime};
 use simple_backend_utils::Result;
 
 use crate::IntoDatabaseError;
@@ -241,6 +243,193 @@ impl CurrentReadMediaAdminContent<'_> {
             .into_db_error(())?;
 
         Ok(convert_iteration_rows(rows))
+    }
+
+    pub fn get_latest_media_content_id_db(
+        &mut self,
+    ) -> Result<MediaContentIdDbValue, DieselDatabaseError> {
+        use crate::schema::media_content;
+
+        let content_id_db: ContentIdDb = media_content::table
+            .order(media_content::id.desc())
+            .select(media_content::id)
+            .first(self.conn())
+            .into_db_error(())?;
+
+        Ok(MediaContentIdDbValue { content_id_db })
+    }
+
+    /// Also returns if there are more pages after the requested page.
+    pub fn media_content_iterator_page(
+        &mut self,
+        settings: MediaContentIteratorSettingsInternal,
+    ) -> Result<(Vec<MediaContentIteratorPageData>, bool), DieselDatabaseError> {
+        use crate::schema::{account_id, media_content, profile};
+
+        const PAGE_SIZE: i64 = 25;
+
+        let moderator_aid = diesel::alias!(crate::schema::account_id as moderator_aid);
+
+        let filters = settings.filters;
+
+        let mut query = media_content::table
+            .inner_join(account_id::table.on(media_content::account_id.eq(account_id::id)))
+            .inner_join(profile::table.on(media_content::account_id.eq(profile::account_id)))
+            .left_join(
+                moderator_aid.on(media_content::moderation_moderator_account_id
+                    .eq(moderator_aid.field(account_id::id).nullable())),
+            )
+            .select((
+                account_id::uuid,
+                media_content::uuid,
+                profile::profile_name,
+                profile::age,
+                media_content::upload_unix_time,
+                media_content::secure_capture,
+                media_content::face_detected,
+                media_content::face_detected_manual,
+                media_content::initial_content,
+                media_content::moderation_state,
+                media_content::moderation_rejected_reason_category,
+                media_content::moderation_rejected_reason_details,
+                moderator_aid.field(account_id::uuid).nullable(),
+            ))
+            .filter(media_content::id.le(settings.start_position))
+            .order(media_content::id.desc())
+            .into_boxed();
+
+        // Empty list is treated as no filter.
+        if let Some(states) = filters
+            .moderation_states
+            .filter(|states| !states.is_empty())
+        {
+            query = query.filter(media_content::moderation_state.eq_any(states));
+        }
+
+        if let Some(value) = filters.initial_content {
+            query = query.filter(media_content::initial_content.eq(value));
+        }
+
+        if let Some(value) = filters.secure_capture {
+            query = query.filter(media_content::secure_capture.eq(value));
+        }
+
+        if let Some(in_use) = filters.in_use {
+            query = if in_use {
+                query
+                    .filter(media_content::usage_start_unix_time.is_not_null())
+                    .filter(media_content::usage_end_unix_time.is_null())
+            } else {
+                query.filter(
+                    media_content::usage_start_unix_time
+                        .is_null()
+                        .or(media_content::usage_end_unix_time.is_not_null()),
+                )
+            };
+        }
+
+        if let Some(time) = filters.uploaded_after_unix_time {
+            query = query.filter(media_content::upload_unix_time.gt(time));
+        }
+
+        if let Some(time) = filters.uploaded_before_unix_time {
+            query = query.filter(media_content::upload_unix_time.lt(time));
+        }
+
+        if let Some(value) = filters.face_detected {
+            // Manual value overrides the automatic value.
+            query = query.filter(
+                media_content::face_detected_manual.eq(Some(value)).or(
+                    media_content::face_detected_manual
+                        .is_null()
+                        .and(media_content::face_detected.eq(value)),
+                ),
+            );
+        }
+
+        if let Some(value) = filters.face_detected_manual_set {
+            query = if value {
+                query.filter(media_content::face_detected_manual.is_not_null())
+            } else {
+                query.filter(media_content::face_detected_manual.is_null())
+            };
+        }
+
+        if let Some(id) = filters.moderator_account_id {
+            query = query.filter(media_content::moderation_moderator_account_id.eq(id));
+        }
+
+        if let Some(id) = filters.moderator_account_id_not {
+            query = query.filter(
+                media_content::moderation_moderator_account_id
+                    .ne(id)
+                    .or(media_content::moderation_moderator_account_id.is_null()),
+            );
+        }
+
+        // Fetch one extra row to detect if there are more pages after
+        // the requested page.
+        let limit = PAGE_SIZE.saturating_add(1);
+
+        #[allow(clippy::type_complexity)]
+        let data: Vec<(
+            AccountId,
+            ContentId,
+            Option<NonEmptyString>,
+            ProfileAge,
+            UnixTime,
+            bool,
+            bool,
+            Option<bool>,
+            bool,
+            ContentModerationState,
+            Option<MediaContentModerationRejectedReasonCategory>,
+            Option<MediaContentModerationRejectedReasonDetails>,
+            Option<AccountId>,
+        )> = query
+            .limit(limit)
+            .offset(PAGE_SIZE.saturating_mul(settings.page))
+            .load(self.conn())
+            .into_db_error(())?;
+
+        let has_more_pages = data.len() > PAGE_SIZE.try_into().unwrap_or(usize::MAX);
+
+        Ok((
+            data.into_iter()
+                .take(PAGE_SIZE.try_into().unwrap_or(usize::MAX))
+                .map(
+                    |(
+                        account_id,
+                        content_id,
+                        name,
+                        age,
+                        upload_time,
+                        secure_capture,
+                        face_detected,
+                        face_detected_manual,
+                        initial_content,
+                        moderation_state,
+                        rejected_reason_category,
+                        rejected_reason_details,
+                        moderator_account_id,
+                    )| MediaContentIteratorPageData {
+                        account_id,
+                        content_id,
+                        name,
+                        age,
+                        upload_time,
+                        secure_capture,
+                        face_detected: face_detected_manual.unwrap_or(face_detected),
+                        initial_content,
+                        moderation_state,
+                        rejected_reason_category,
+                        rejected_reason_details,
+                        moderator_account_id,
+                    },
+                )
+                .collect(),
+            has_more_pages,
+        ))
     }
 }
 
