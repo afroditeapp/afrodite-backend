@@ -6,6 +6,8 @@
 
 - Profile attribute filters with multiple wanted values no longer miss
   matching profiles.
+- Unwanted values in profile attribute filters are now used. Previously the
+  wanted values were checked instead.
 
 ## [0.27.1] - 2026-11-23
 

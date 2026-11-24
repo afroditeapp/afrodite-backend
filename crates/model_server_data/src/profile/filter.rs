@@ -78,11 +78,99 @@ impl ProfileAttributeFilterValue {
         } else {
             AttributeValueReader::unwanted_is_match(
                 attribute_info.mode,
-                &self.wanted,
+                &self.unwanted,
                 value.raw_values(),
             )
         };
 
         wanted_match && unwanted_match
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use std::num::NonZeroU8;
+
+    use model::{
+        Attribute, AttributeId,
+        AttributeMode::{self, Bitflag, OneLevel, TwoLevel},
+        AttributeValueOrderMode,
+    };
+
+    use super::{ProfileAttributeFilterValue, ProfileAttributeValue};
+
+    const V1: u32 = 1 << 16;
+    const V1_G1: u32 = V1 | 1;
+    const V1_G2: u32 = V1 | 2;
+    const V2: u32 = 2 << 16;
+    const V2_G1: u32 = V2 | 1;
+
+    fn is_match(mode: AttributeMode, wanted: &[u32], unwanted: &[u32], profile: &[u32]) -> bool {
+        let id = AttributeId::new(0);
+        let attribute = Attribute {
+            key: String::new(),
+            name: String::new(),
+            mode,
+            unsigned_integer_config: None,
+            max_selected: NonZeroU8::MAX,
+            max_filters: NonZeroU8::MAX,
+            editable: true,
+            visible: true,
+            required: false,
+            icon: None,
+            id,
+            order_number: 0,
+            value_order: AttributeValueOrderMode::OrderNumber,
+            values: vec![],
+            translations: vec![],
+        };
+        ProfileAttributeFilterValue::new(id, wanted.to_vec(), unwanted.to_vec(), false, false)
+            .is_match_with_attribute_value(
+                &ProfileAttributeValue::new(id, profile.to_vec()),
+                &attribute,
+            )
+    }
+
+    #[test]
+    fn bitflag_unwanted() {
+        assert!(is_match(Bitflag, &[], &[0b10], &[0b01]));
+        assert!(!is_match(Bitflag, &[], &[0b10], &[0b10]));
+        assert!(!is_match(Bitflag, &[], &[0b10], &[0b11]));
+    }
+
+    #[test]
+    fn bitflag_wanted_and_unwanted() {
+        assert!(is_match(Bitflag, &[0b01], &[0b10], &[0b01]));
+        assert!(!is_match(Bitflag, &[0b01], &[0b10], &[0b11]));
+        assert!(!is_match(Bitflag, &[0b01], &[0b10], &[0b100]));
+    }
+
+    #[test]
+    fn one_level_unwanted() {
+        assert!(is_match(OneLevel, &[], &[2], &[1]));
+        assert!(!is_match(OneLevel, &[], &[2], &[2]));
+        assert!(!is_match(OneLevel, &[], &[2], &[1, 2]));
+    }
+
+    #[test]
+    fn one_level_wanted_and_unwanted() {
+        assert!(is_match(OneLevel, &[1], &[2], &[1]));
+        assert!(!is_match(OneLevel, &[1], &[2], &[1, 2]));
+        assert!(!is_match(OneLevel, &[1], &[2], &[3]));
+    }
+
+    #[test]
+    fn two_level_unwanted() {
+        assert!(is_match(TwoLevel, &[], &[V1_G2], &[V1_G1]));
+        assert!(!is_match(TwoLevel, &[], &[V1_G2], &[V1_G2]));
+        assert!(is_match(TwoLevel, &[], &[V1], &[V2_G1]));
+        assert!(!is_match(TwoLevel, &[], &[V1], &[V1_G2]));
+    }
+
+    #[test]
+    fn two_level_wanted_and_unwanted() {
+        assert!(is_match(TwoLevel, &[V1], &[V1_G2], &[V1_G1]));
+        assert!(!is_match(TwoLevel, &[V1], &[V1_G2], &[V1_G1, V1_G2]));
+        assert!(!is_match(TwoLevel, &[V1], &[V1_G2], &[V2_G1]));
     }
 }
