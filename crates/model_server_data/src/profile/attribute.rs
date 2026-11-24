@@ -132,13 +132,13 @@ impl AttributeValueReader {
                 filter_data,
                 attribute_data,
                 logical_and,
-                NumberExistence::one_level_attribute_find_from_sorted,
+                Self::one_level_value_exists,
             ),
             AttributeMode::TwoLevel => Self::wanted_is_number_lists_match(
                 filter_data,
                 attribute_data,
                 logical_and,
-                NumberExistence::two_level_attribute_find_from_sorted,
+                Self::two_level_value_exists,
             ),
             AttributeMode::UnsignedInteger => {
                 let value = attribute_data.first().copied().unwrap_or_default();
@@ -150,33 +150,17 @@ impl AttributeValueReader {
     }
 
     /// The filter_data must not be empty
-    fn wanted_is_number_lists_match<
-        'a,
-        F: Fn(u32, &mut std::iter::Copied<std::slice::Iter<'a, u32>>) -> NumberExistence,
-    >(
+    fn wanted_is_number_lists_match(
         filter_data: &[u32],
-        attribute_data: &'a [u32],
+        attribute_data: &[u32],
         logical_and: bool,
-        existence_check: F,
+        value_exists: fn(u32, &[u32]) -> bool,
     ) -> bool {
-        // Assume that both number lists are sorted
-        let mut value_iter = attribute_data.iter().copied();
+        let mut filter_numbers = filter_data.iter().copied();
         if logical_and {
-            for filter_number in filter_data {
-                match existence_check(*filter_number, &mut value_iter) {
-                    NumberExistence::Found => continue,
-                    NumberExistence::NotFound => return false,
-                }
-            }
-            true
+            filter_numbers.all(|v| value_exists(v, attribute_data))
         } else {
-            for filter_number in filter_data {
-                match existence_check(*filter_number, &mut value_iter) {
-                    NumberExistence::Found => return true,
-                    NumberExistence::NotFound => continue,
-                }
-            }
-            false
+            filter_numbers.any(|v| value_exists(v, attribute_data))
         }
     }
 
@@ -195,12 +179,12 @@ impl AttributeValueReader {
             AttributeMode::OneLevel => Self::unwanted_is_number_lists_match(
                 filter_data,
                 attribute_data,
-                NumberExistence::one_level_attribute_find_from_sorted,
+                Self::one_level_value_exists,
             ),
             AttributeMode::TwoLevel => Self::unwanted_is_number_lists_match(
                 filter_data,
                 attribute_data,
-                NumberExistence::two_level_attribute_find_from_sorted,
+                Self::two_level_value_exists,
             ),
             // The unsigned integer mode has no unwanted values so no values are
             // excluded.
@@ -209,65 +193,163 @@ impl AttributeValueReader {
     }
 
     /// The filter_data must not be empty
-    fn unwanted_is_number_lists_match<
-        'a,
-        F: Fn(u32, &mut std::iter::Copied<std::slice::Iter<'a, u32>>) -> NumberExistence,
-    >(
+    fn unwanted_is_number_lists_match(
         filter_data: &[u32],
-        attribute_data: &'a [u32],
-        existence_check: F,
+        attribute_data: &[u32],
+        value_exists: fn(u32, &[u32]) -> bool,
     ) -> bool {
-        // Assume that both number lists are sorted
-        let mut value_iter = attribute_data.iter().copied();
-        for filter_number in filter_data {
-            match existence_check(*filter_number, &mut value_iter) {
-                NumberExistence::Found => return false,
-                NumberExistence::NotFound => continue,
-            }
-        }
-        true
-    }
-}
-
-enum NumberExistence {
-    Found,
-    NotFound,
-}
-
-impl NumberExistence {
-    fn one_level_attribute_find_from_sorted<T: Iterator<Item = u32>>(
-        filter_number: u32,
-        value_iter: &mut T,
-    ) -> Self {
-        for value_number in value_iter {
-            if value_number < filter_number {
-                // Can be found still
-                continue;
-            } else if value_number == filter_number {
-                // Found
-                return NumberExistence::Found;
-            } else {
-                // Not found
-                return NumberExistence::NotFound;
-            }
-        }
-        NumberExistence::NotFound
+        !filter_data.iter().any(|v| value_exists(*v, attribute_data))
     }
 
-    fn two_level_attribute_find_from_sorted<T: Iterator<Item = u32>>(
-        filter_number: u32,
-        value_iter: &mut T,
-    ) -> Self {
+    fn one_level_value_exists(filter_number: u32, attribute_data: &[u32]) -> bool {
+        attribute_data.contains(&filter_number)
+    }
+
+    fn two_level_value_exists(filter_number: u32, attribute_data: &[u32]) -> bool {
         let filter_group_value = (filter_number & 0xFFFF) as u16;
         if filter_group_value == 0 {
             // Compare only with attribute value
-            let filter_number = filter_number & 0xFFFF0000;
-            Self::one_level_attribute_find_from_sorted(
-                filter_number,
-                &mut value_iter.by_ref().map(|v| v & 0xFFFF0000),
-            )
+            attribute_data
+                .iter()
+                .any(|v| v & 0xFFFF0000 == filter_number)
         } else {
-            Self::one_level_attribute_find_from_sorted(filter_number, value_iter)
+            attribute_data.contains(&filter_number)
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use model::AttributeMode::{self, Bitflag, OneLevel, TwoLevel};
+
+    use super::AttributeValueReader;
+
+    const fn two_level(value: u32, group_value: u32) -> u32 {
+        (value << 16) | group_value
+    }
+
+    const V1: u32 = two_level(1, 0);
+    const V1_G1: u32 = two_level(1, 1);
+    const V1_G2: u32 = two_level(1, 2);
+    const V1_G3: u32 = two_level(1, 3);
+    const V2: u32 = two_level(2, 0);
+    const V2_G1: u32 = two_level(2, 1);
+    const V2_G2: u32 = two_level(2, 2);
+    const V3: u32 = two_level(3, 0);
+    const V3_G1: u32 = two_level(3, 1);
+
+    fn wanted_or(mode: AttributeMode, filter: &[u32], profile: &[u32]) -> bool {
+        AttributeValueReader::wanted_is_match(mode, filter, profile, false)
+    }
+
+    fn wanted_and(mode: AttributeMode, filter: &[u32], profile: &[u32]) -> bool {
+        AttributeValueReader::wanted_is_match(mode, filter, profile, true)
+    }
+
+    fn unwanted(mode: AttributeMode, filter: &[u32], profile: &[u32]) -> bool {
+        AttributeValueReader::unwanted_is_match(mode, filter, profile)
+    }
+
+    #[test]
+    fn bitflag_wanted_or() {
+        assert!(wanted_or(Bitflag, &[0b101], &[0b100]));
+        assert!(wanted_or(Bitflag, &[0b101], &[0b011]));
+        assert!(!wanted_or(Bitflag, &[0b101], &[0b010]));
+    }
+
+    #[test]
+    fn bitflag_wanted_and() {
+        assert!(wanted_and(Bitflag, &[0b101], &[0b111]));
+        assert!(!wanted_and(Bitflag, &[0b101], &[0b100]));
+    }
+
+    #[test]
+    fn bitflag_unwanted() {
+        assert!(unwanted(Bitflag, &[0b101], &[0b010]));
+        assert!(!unwanted(Bitflag, &[0b101], &[0b110]));
+    }
+
+    #[test]
+    fn one_level_wanted_or() {
+        assert!(wanted_or(OneLevel, &[1, 3], &[1]));
+        assert!(wanted_or(OneLevel, &[1, 3], &[3]));
+        assert!(wanted_or(OneLevel, &[1, 3], &[2, 3]));
+        assert!(wanted_or(OneLevel, &[1, 2, 3], &[3, 4]));
+        assert!(!wanted_or(OneLevel, &[1, 3], &[2]));
+        assert!(!wanted_or(OneLevel, &[1, 3], &[2, 4]));
+    }
+
+    #[test]
+    fn one_level_wanted_and() {
+        assert!(wanted_and(OneLevel, &[1, 3], &[1, 3]));
+        assert!(wanted_and(OneLevel, &[1, 3], &[1, 2, 3, 4]));
+        assert!(!wanted_and(OneLevel, &[1, 3], &[1]));
+        assert!(!wanted_and(OneLevel, &[1, 3], &[3]));
+    }
+
+    #[test]
+    fn one_level_unwanted() {
+        assert!(unwanted(OneLevel, &[1, 3], &[2]));
+        assert!(!unwanted(OneLevel, &[1, 3], &[1]));
+        assert!(!unwanted(OneLevel, &[1, 3], &[3]));
+        assert!(!unwanted(OneLevel, &[1, 3], &[2, 3]));
+    }
+
+    #[test]
+    fn two_level_wanted_or() {
+        assert!(wanted_or(TwoLevel, &[V1_G1, V1_G3], &[V1_G3]));
+        assert!(wanted_or(TwoLevel, &[V1_G1, V2_G1], &[V2_G1]));
+        assert!(!wanted_or(TwoLevel, &[V1_G1, V2_G1], &[V1_G2]));
+        assert!(!wanted_or(TwoLevel, &[V1_G1], &[V1]));
+    }
+
+    #[test]
+    fn two_level_wanted_or_top_level_value() {
+        assert!(wanted_or(TwoLevel, &[V1], &[V1]));
+        assert!(wanted_or(TwoLevel, &[V1], &[V1_G2]));
+        assert!(wanted_or(TwoLevel, &[V1, V3], &[V3_G1]));
+        assert!(wanted_or(TwoLevel, &[V1, V2_G1], &[V2_G1]));
+        assert!(!wanted_or(TwoLevel, &[V1, V3], &[V2_G1]));
+    }
+
+    #[test]
+    fn two_level_wanted_and() {
+        assert!(wanted_and(TwoLevel, &[V1_G1, V2_G1], &[V1_G1, V2_G1]));
+        assert!(wanted_and(
+            TwoLevel,
+            &[V1_G1, V2_G1],
+            &[V1_G1, V1_G2, V2_G1]
+        ));
+        assert!(!wanted_and(TwoLevel, &[V1_G1, V2_G1], &[V1_G1]));
+        assert!(!wanted_and(TwoLevel, &[V1_G1, V2_G1], &[V2_G1]));
+    }
+
+    #[test]
+    fn two_level_wanted_and_top_level_value() {
+        assert!(wanted_and(TwoLevel, &[V1, V2], &[V1_G1, V2_G2]));
+        assert!(wanted_and(TwoLevel, &[V1, V2_G1], &[V1_G2, V2_G1]));
+        assert!(!wanted_and(TwoLevel, &[V1, V2], &[V1_G1, V1_G2]));
+        assert!(!wanted_and(TwoLevel, &[V1, V2_G1], &[V1_G2, V2_G2]));
+    }
+
+    #[test]
+    fn two_level_wanted_and_top_level_value_with_its_group_value() {
+        assert!(wanted_and(TwoLevel, &[V1, V1_G2], &[V1_G2]));
+        assert!(wanted_and(TwoLevel, &[V1, V1_G2], &[V1_G1, V1_G2]));
+        assert!(!wanted_and(TwoLevel, &[V1, V1_G2], &[V1_G1]));
+    }
+
+    #[test]
+    fn two_level_unwanted() {
+        assert!(unwanted(TwoLevel, &[V1_G1, V2_G1], &[V1_G2]));
+        assert!(!unwanted(TwoLevel, &[V1_G1, V2_G1], &[V1_G1]));
+        assert!(!unwanted(TwoLevel, &[V1_G1, V2_G1], &[V2_G1]));
+    }
+
+    #[test]
+    fn two_level_unwanted_top_level_value() {
+        assert!(unwanted(TwoLevel, &[V1, V3], &[V2_G1]));
+        assert!(!unwanted(TwoLevel, &[V1, V3], &[V1_G1]));
+        assert!(!unwanted(TwoLevel, &[V1, V3], &[V3_G1]));
     }
 }

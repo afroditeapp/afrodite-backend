@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- Profile attribute filters with multiple wanted values no longer miss
+  matching profiles.
+
 ## [0.27.1] - 2026-11-23
 
 ### Changed
