@@ -122,6 +122,13 @@ impl EmailManager {
                                 error!("Account deletion initiated email send failed: {:?}", e);
                             }
                         }
+                        HighPriorityEmailMsg::Feedback { feedback_sender, category_key, body, result_sender } => {
+                            let result = self.handle_send_feedback(feedback_sender, &category_key, &body).await;
+                            if let Err(e) = &result {
+                                error!("Feedback email send failed: {:?}", e);
+                            }
+                            let _ = result_sender.send(result.map_err(|_| DataError::EmailSendingFailed));
+                        }
                     }
                 }
                 Some(cmd) = self.normal_receiver.recv() => {
@@ -241,6 +248,81 @@ impl EmailManager {
                 &content.subject,
                 &content.body,
                 content.body_is_html,
+            )
+            .await
+            .change_context(EmailError::SendingFailed)?;
+
+        Ok(())
+    }
+
+    async fn handle_send_feedback(
+        &self,
+        feedback_sender: AccountIdInternal,
+        category_key: &str,
+        body: &str,
+    ) -> simple_backend_utils::Result<(), EmailError> {
+        let Some(feedback_config) = self.state.config().feedback() else {
+            // Feedback feature is disabled
+            return Err(EmailError::FeedbackConfigNotFound).attach("Feedback feature is disabled");
+        };
+
+        let Some(category) = feedback_config.category(category_key) else {
+            // Unknown category
+            return Err(EmailError::FeedbackConfigNotFound)
+                .attach(format!("Unknown feedback category {category_key}"));
+        };
+
+        let admin_email = feedback_config.admin_email.as_str().to_string();
+
+        let language = self
+            .state
+            .read()
+            .common()
+            .client_config()
+            .client_language(feedback_sender)
+            .await
+            .ok()
+            .flatten();
+
+        let category_name = category
+            .name
+            .translations
+            .get(language.as_ref().map(|v| v.as_str()).unwrap_or_default())
+            .unwrap_or(&category.name.default)
+            .clone();
+
+        let user_email = self
+            .state
+            .read()
+            .account()
+            .email_address(feedback_sender)
+            .await
+            .map_err(|e| e.into_report())
+            .change_context(EmailError::GettingEmailDataFailed)?
+            .map(|v| v.into_string());
+
+        let body = if user_email.is_none() {
+            format!(
+                "Warning: The user's email address was not found. Sender account ID: {}\n\n{body}",
+                feedback_sender.as_id()
+            )
+        } else {
+            body.to_string()
+        };
+
+        let email_content = self.state.config().email_content();
+        let getter = email_content.get(language.as_ref());
+        let content = getter
+            .feedback(&category_name, &body)
+            .change_context(EmailError::GettingEmailDataFailed)?;
+
+        self.smtp_client
+            .send_with_reply_to(
+                &admin_email,
+                &content.subject,
+                &content.body,
+                content.body_is_html,
+                user_email.as_deref(),
             )
             .await
             .change_context(EmailError::SendingFailed)?;

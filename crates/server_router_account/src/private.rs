@@ -50,6 +50,7 @@ impl PrivateRoutes {
             .merge(api::account::router_verification(self.state.clone()))
             .merge(api::account::router_account_report(self.state.clone()))
             .merge(api::account::router_client_features(self.state.clone()))
+            .merge(api::account::router_feedback(self.state.clone()))
             .merge(api::account::router_notification(self.state.clone()))
             .merge(api::account::router_email_private(self.state.clone()))
             .merge(api::account_admin::router_admin_ban(self.state.clone()))

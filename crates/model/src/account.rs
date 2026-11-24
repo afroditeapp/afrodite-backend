@@ -14,6 +14,9 @@ pub use time::*;
 mod custom_reports;
 pub use custom_reports::*;
 
+mod feedback;
+pub use feedback::*;
+
 mod client_features;
 pub use client_features::*;
 

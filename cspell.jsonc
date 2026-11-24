@@ -142,6 +142,9 @@
     "Stad",
     "Helsingfors",
     "Berghäll",
-    "Kallio"
+    "Kallio",
+
+    // Finnish words
+    "bugiraportti"
   ]
 }

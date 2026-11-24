@@ -28,6 +28,9 @@ pub use ban::*;
 mod report;
 pub use report::*;
 
+mod feedback;
+pub use feedback::*;
+
 mod client_features;
 pub use client_features::*;
 

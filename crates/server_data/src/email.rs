@@ -57,6 +57,12 @@ pub enum HighPriorityEmailMsg {
         email: EmailAddress,
         language: Option<ClientLanguage>,
     },
+    Feedback {
+        feedback_sender: model::AccountIdInternal,
+        category_key: String,
+        body: String,
+        result_sender: oneshot::Sender<Result<(), DataError>>,
+    },
 }
 
 /// A handle that can be awaited to get the result of sending a high priority email.
@@ -197,6 +203,28 @@ impl EmailChannelSender {
                 error!("Account deletion initiated email send failed: channel full");
             }
         }
+    }
+
+    pub fn send_feedback(
+        &self,
+        recipient: model::AccountIdInternal,
+        category_key: String,
+        body: String,
+    ) -> simple_backend_utils::Result<EmailSendingHandle, DataError> {
+        let (result_sender, result_receiver) = oneshot::channel();
+        let cmd = HighPriorityEmailMsg::Feedback {
+            feedback_sender: recipient,
+            category_key,
+            body,
+            result_sender,
+        };
+        match self.high_priority_sender.try_send(cmd) {
+            Ok(()) => (),
+            Err(TrySendError::Closed(_)) => return Err(DataError::EmailSendingFailed.into_report()),
+            Err(TrySendError::Full(_)) => return Err(DataError::EmailSendingFailed.into_report()),
+        }
+
+        Ok(EmailSendingHandle { result_receiver })
     }
 }
 

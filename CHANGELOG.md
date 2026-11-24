@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Added
+
+- New APIs `GET /account_api/feedback_config` and
+  `POST /account_api/send_feedback` for sending feedback emails to an
+  admin email address configured in `server.toml`. Categories, email
+  subject and body are configurable and translatable, and the user's
+  email address is added to the `Reply-To` header.
+
 ### Fixed
 
 - Profile attribute filters with multiple wanted values no longer miss

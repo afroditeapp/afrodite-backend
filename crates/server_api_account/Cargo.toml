@@ -15,6 +15,7 @@ utoipa = { workspace = true }
 utoipa-axum = { workspace = true }
 
 base64 = { workspace = true }
+unicode-segmentation = { workspace = true }
 
 model = { path = "../model" }
 model_server_state = { path = "../model_server_state" }

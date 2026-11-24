@@ -112,6 +112,17 @@ default = "Your login code"
 [email_login.body]
 default = "Here is your login code: {token}"
 
+# Feedback sent to the admin email address.
+# "{category}" is replaced with the translated feedback category name and
+# "{body}" is replaced with the feedback body. The global email template is
+# not applied to feedback emails.
+
+[feedback.subject]
+default = "Feedback: {category}"
+
+[feedback.body]
+default = "{body}"
+
 "#;
 
 #[derive(Debug, Clone)]
@@ -146,6 +157,9 @@ pub struct EmailContentFile {
     email_change_notification: Option<EmailContentStrings>,
     /// "{token}" is replaced with email login token
     email_login: Option<EmailContentStrings>,
+    /// "{category}" is replaced with the translated feedback category name
+    /// and "{body}" is replaced with the feedback body.
+    feedback: Option<EmailContentStrings>,
     #[serde(flatten)]
     other: toml::Table,
 }
@@ -191,6 +205,7 @@ impl Default for EmailContentFile {
             email_change_verification: None,
             email_change_notification: None,
             email_login: None,
+            feedback: None,
             other: toml::Table::new(),
         }
     }
@@ -318,6 +333,13 @@ impl EmailContentFile {
         {
             return Err(ConfigFileError::InvalidConfig)
                 .attach("'{token}' is missing from email_verification body text".to_string());
+        }
+
+        if let Some(feedback) = &config.feedback
+            && !feedback.body.all_strings_contain("{body}")
+        {
+            return Err(ConfigFileError::InvalidConfig)
+                .attach("'{body}' is missing from feedback body text".to_string());
         }
 
         Ok(config)
@@ -488,5 +510,34 @@ impl<'a> EmailStringGetter<'a> {
             "Here is your login code: {token}",
             HashMap::from_iter([("token", token)]),
         )
+    }
+
+    /// Render a feedback email. The global email template is not applied so
+    /// the body contains only the feedback body.
+    pub fn feedback(&self, category: &str, body: &str) -> Result<EmailContent, ConfigFileError> {
+        let resource = &self.config.feedback;
+
+        let subject = resource
+            .as_ref()
+            .map(|v| &v.subject)
+            .map(|v| v.translations.get(self.language).unwrap_or(&v.default))
+            .cloned()
+            .unwrap_or_else(|| "Feedback: {category}".to_string());
+
+        let body_template = resource
+            .as_ref()
+            .map(|v| &v.body)
+            .map(|v| v.translations.get(self.language).unwrap_or(&v.default))
+            .cloned()
+            .unwrap_or_else(|| "{body}".to_string());
+
+        let subject = render_template(&subject, &[("category", category)]);
+        let body = render_template(&body_template, &[("body", body)]);
+
+        Ok(EmailContent {
+            subject,
+            body,
+            body_is_html: false,
+        })
     }
 }

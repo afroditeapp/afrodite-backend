@@ -166,6 +166,16 @@ impl AccountApiLimits<'_> {
             })
             .await
     }
+
+    pub async fn send_feedback(&self) -> Result<(), ApiLimitError> {
+        self.limits
+            .check(|state, config| {
+                state.send_feedback.increment_and_check_is_limit_reached(
+                    config.limits_account().send_feedback_daily_max_count,
+                )
+            })
+            .await
+    }
 }
 
 pub struct ProfileApiLimits<'a> {

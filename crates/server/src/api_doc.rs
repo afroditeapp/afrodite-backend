@@ -78,6 +78,7 @@ impl ApiDoc {
             .merge_from(
                 server_api_account::account::router_client_features(state.clone()).into_openapi(),
             )
+            .merge_from(server_api_account::account::router_feedback(state.clone()).into_openapi())
             .merge_from(
                 server_api_account::account::router_notification(state.clone()).into_openapi(),
             )

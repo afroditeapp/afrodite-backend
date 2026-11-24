@@ -38,7 +38,7 @@ use simple_backend_utils::{
     IntoReportFromString, Result, dir::abs_path_for_directory_or_file_which_might_not_exists,
 };
 
-use self::file::{AssociationServerConfig, ConfigFile, LocationConfig};
+use self::file::{AssociationServerConfig, ConfigFile, FeedbackConfig, LocationConfig};
 use crate::{
     file::{
         ApiConfig, ClientVersionTrackingConfig, GeneralConfig, MinClientVersion,
@@ -284,6 +284,10 @@ impl Config {
 
     pub fn association_server(&self) -> Option<&AssociationServerConfig> {
         self.file.association.as_ref()
+    }
+
+    pub fn feedback(&self) -> Option<&FeedbackConfig> {
+        self.file.feedback.as_ref()
     }
 
     pub fn parsed_files(&self) -> ParsedFiles<'_> {

@@ -5202,6 +5202,7 @@ dependencies = [
  "simple_backend_model",
  "simple_backend_utils",
  "tokio",
+ "unicode-segmentation",
  "utils",
  "utoipa",
  "utoipa-axum",

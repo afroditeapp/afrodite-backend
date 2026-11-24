@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use simple_backend_config::file::IpAddressAccessConfig;
 use simple_backend_model::{IsoCountryCode, VersionNumber};
 use simple_backend_utils::{
-    Result,
+    IntoReportFromString, Result,
     byte::ByteCount,
     time::{DurationValue, TimeValue, UtcTimeValue},
 };
@@ -79,6 +79,7 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 # play_integrity_daily_max_count = 20
 # custom_email_send_to_all_accounts_monthly_max_count = 1
 # custom_email_send_draft_to_my_email_address_monthly_max_count = 10
+# send_feedback_daily_max_count = 5
 
 # [limits.chat]
 # max_public_key_count = 20
@@ -115,6 +116,23 @@ pub const DEFAULT_CONFIG_FILE_TEXT: &str = r#"
 
 # [remote_bot_login]
 # password = "TODO"
+
+# Feedback emails are sent to the admin email address. The user's current
+# email address is added to the Reply-To header.
+# [feedback]
+# admin_email = "admin@example.com"
+# body_max_grapheme_cluster_count = 1000
+#
+# [[feedback.categories]]
+# key = "bug"
+# order_number = 0
+# visible = true # Optional, hidden categories are not shown in the client
+# name = { default = "Bug report", fi = "Bugiraportti" }
+#
+# [[feedback.categories]]
+# key = "other"
+# order_number = 1
+# name = { default = "Other" }
 
 # [automatic_profile_search]
 # daily_start_time = "9:00"
@@ -181,6 +199,7 @@ pub struct ConfigFile {
     pub profile_name_allowlists: Option<Vec<ProfileNameAllowlistConfig>>,
     pub manual_server_maintenance_info_for_another_server: Option<StringResourceInternal>,
     pub association: Option<AssociationServerConfig>,
+    pub feedback: Option<FeedbackConfig>,
 }
 
 impl ConfigFile {
@@ -200,6 +219,7 @@ impl ConfigFile {
             profile_name_allowlists: None,
             manual_server_maintenance_info_for_another_server: None,
             association: None,
+            feedback: None,
         }
     }
 
@@ -220,8 +240,14 @@ impl ConfigFile {
     pub fn load(file: impl AsRef<Path>) -> Result<Self, ConfigFileError> {
         let config_string =
             std::fs::read_to_string(file).change_context(ConfigFileError::LoadConfig)?;
-        let file: Self =
+        let mut file: Self =
             toml::from_str(&config_string).change_context(ConfigFileError::LoadConfig)?;
+
+        if let Some(feedback) = file.feedback.as_mut() {
+            feedback
+                .validate_and_sort()
+                .into_error_string(ConfigFileError::InvalidConfig)?;
+        }
 
         Ok(file)
     }
@@ -455,6 +481,7 @@ pub struct AccountLimitsConfig {
     pub play_integrity_daily_max_count: u16,
     pub custom_email_send_to_all_accounts_monthly_max_count: u16,
     pub custom_email_send_draft_to_my_email_address_monthly_max_count: u16,
+    pub send_feedback_daily_max_count: u16,
 }
 
 impl Default for AccountLimitsConfig {
@@ -487,6 +514,7 @@ impl Default for AccountLimitsConfig {
             play_integrity_daily_max_count: 20,
             custom_email_send_to_all_accounts_monthly_max_count: 1,
             custom_email_send_draft_to_my_email_address_monthly_max_count: 10,
+            send_feedback_daily_max_count: 5,
         }
     }
 }
@@ -675,4 +703,131 @@ impl Default for ScheduledTasksConfig {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AssociationServerConfig {
     pub members_only_info_markdown: Option<StringResourceInternal>,
+}
+
+/// Feedback email config.
+///
+/// Feedback is sent to [Self::admin_email] and the user's current email
+/// address is added to the `Reply-To` header.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct FeedbackConfig {
+    pub admin_email: EmailAddress,
+    pub body_max_grapheme_cluster_count: NonZeroU16,
+    #[serde(default)]
+    pub categories: Vec<FeedbackCategoryConfig>,
+}
+
+impl FeedbackConfig {
+    pub const BODY_MAX_GRAPHEME_CLUSTER_COUNT_LIMIT: u16 = 10_000;
+
+    pub fn validate_and_sort(&mut self) -> std::result::Result<(), String> {
+        if self.body_max_grapheme_cluster_count.get() > Self::BODY_MAX_GRAPHEME_CLUSTER_COUNT_LIMIT
+        {
+            return Err(format!(
+                "Feedback body_max_grapheme_cluster_count max value is {}, got {}",
+                Self::BODY_MAX_GRAPHEME_CLUSTER_COUNT_LIMIT,
+                self.body_max_grapheme_cluster_count
+            ));
+        }
+
+        let mut keys = std::collections::HashSet::new();
+        let mut order_numbers = std::collections::HashSet::new();
+        for category in &self.categories {
+            if !keys.insert(category.key.clone()) {
+                return Err(format!("Duplicate feedback category key {}", category.key));
+            }
+            if !order_numbers.insert(category.order_number) {
+                return Err(format!(
+                    "Duplicate feedback category order number {}",
+                    category.order_number
+                ));
+            }
+            category.validate()?;
+        }
+
+        self.categories.sort_by_key(|v| v.order_number);
+
+        Ok(())
+    }
+
+    /// Create the client facing config. Hidden categories are filtered out
+    /// and the admin email address is not included.
+    pub fn to_client_config(&self) -> model::FeedbackConfig {
+        model::FeedbackConfig {
+            body_max_grapheme_cluster_count: self.body_max_grapheme_cluster_count.get(),
+            categories: self
+                .categories
+                .iter()
+                .filter(|v| v.visible)
+                .map(|v| model::FeedbackCategory {
+                    key: v.key.clone(),
+                    name: v.name.clone().into(),
+                })
+                .collect(),
+        }
+    }
+
+    pub fn category(&self, key: &str) -> Option<&FeedbackCategoryConfig> {
+        self.categories.iter().find(|v| v.key == key)
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct FeedbackCategoryConfig {
+    /// Stable category key which the client sends back when sending
+    /// feedback.
+    pub key: String,
+    /// Category name.
+    pub name: StringResourceInternal,
+    /// Client should show the category in the feedback form.
+    #[serde(default = "value_bool_true")]
+    pub visible: bool,
+    /// Client should order categories with this number.
+    pub order_number: u16,
+}
+
+fn value_bool_true() -> bool {
+    true
+}
+
+impl FeedbackCategoryConfig {
+    pub const KEY_MAX_LENGTH: usize = 64;
+
+    fn validate(&self) -> std::result::Result<(), String> {
+        if self.key.is_empty() {
+            return Err("Feedback category key is empty".to_string());
+        }
+        if self.key.len() > Self::KEY_MAX_LENGTH {
+            return Err(format!(
+                "Feedback category key max length is {}, got {}",
+                Self::KEY_MAX_LENGTH,
+                self.key.len()
+            ));
+        }
+        if !self
+            .key
+            .chars()
+            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-' || c == '_')
+        {
+            return Err(format!(
+                "Feedback category key '{}' contains invalid characters, allowed characters are a-z, 0-9, '-' and '_'",
+                self.key
+            ));
+        }
+        if self.name.default.trim().is_empty() {
+            return Err(format!(
+                "Feedback category '{}' name default value is empty",
+                self.key
+            ));
+        }
+        for (language, name) in &self.name.translations {
+            if name.trim().is_empty() {
+                return Err(format!(
+                    "Feedback category '{}' name translation '{}' is empty",
+                    self.key, language
+                ));
+            }
+        }
+        Ok(())
+    }
 }

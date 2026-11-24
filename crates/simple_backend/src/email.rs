@@ -25,6 +25,8 @@ pub enum EmailError {
     EmailSendingResponseNotPositive,
     #[error("Getting email data failed")]
     GettingEmailDataFailed,
+    #[error("Feedback config or category not found")]
+    FeedbackConfigNotFound,
     #[error("Account email address parsing failed")]
     AccountEmailAddressParsingFailed,
     #[error("Message building failed")]
@@ -134,11 +136,24 @@ impl SmtpClient {
         body: &str,
         body_is_html: bool,
     ) -> Result<(), EmailError> {
+        self.send_with_reply_to(to, subject, body, body_is_html, None)
+            .await
+    }
+
+    /// Might block until email sending is possible
+    pub async fn send_with_reply_to(
+        &self,
+        to: &str,
+        subject: &str,
+        body: &str,
+        body_is_html: bool,
+        reply_to: Option<&str>,
+    ) -> Result<(), EmailError> {
         let mut sender = match &self.sending_logic {
             Some(s) => s.lock().await,
             None => return Ok(()),
         };
-        sender.send(to, subject, body, body_is_html).await
+        sender.send(to, subject, body, body_is_html, reply_to).await
     }
 }
 
@@ -167,6 +182,7 @@ impl EmailSendingLogic {
         subject: &str,
         body: &str,
         body_is_html: bool,
+        reply_to: Option<&str>,
     ) -> Result<(), EmailError> {
         let address =
             Address::from_str(to).change_context(EmailError::AccountEmailAddressParsingFailed)?;
@@ -184,11 +200,19 @@ impl EmailSendingLogic {
             );
         }
 
-        let message = Message::builder()
+        let mut builder = Message::builder()
             .from(self.config.email_from_header.0.clone())
             .to(Mailbox::new(None, address))
             .subject(subject.to_string())
-            .header(content_type)
+            .header(content_type);
+
+        if let Some(reply_to) = reply_to {
+            let reply_to_address = Address::from_str(reply_to)
+                .change_context(EmailError::AccountEmailAddressParsingFailed)?;
+            builder = builder.reply_to(Mailbox::new(None, reply_to_address));
+        }
+
+        let message = builder
             .body(body.to_string())
             .change_context(EmailError::MessageBuildingFailed)?;
 
