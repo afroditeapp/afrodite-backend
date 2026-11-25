@@ -229,12 +229,13 @@ pub async fn get_all_account_media_content(configuration: &configuration::Config
     }
 }
 
-/// # Access  ## Own content Unrestricted access.  ## Public other content Normal account state required. Only accepted content can be accessed.  ## Private other content If owner of the requested content is a match and the requested content is in current profile content, then the requested content can be accessed if query parameter `is_match` is set to `true`.  Only accepted content can be accessed.  ## Admin access - [Permissions::admin_view_all_profiles] - [Permissions::admin_moderate_media_content] - [Permissions::admin_edit_media_content_face_verified_value] - [Permissions::admin_edit_security_content_verified_value] - [Permissions::admin_process_reports]  # Content quality  When content owner or admins requests content, high quality version is returned even if lower quality version is requested.  For any other case preferred quality is used if API has not too much concurrent access.  
-pub async fn get_content(configuration: &configuration::Configuration, aid: &str, cid: &str, is_match: Option<bool>, q: Option<&str>) -> Result<reqwest::Response, Error<GetContentError>> {
+/// # Access  ## Own content Unrestricted access.  ## Public other content Normal account state required. Only accepted content can be accessed.  ## Private other content If owner of the requested content is a match and the requested content is in current profile content, then the requested content can be accessed if query parameter `is_match` is set to `true`.  If owner of the requested content has sent a like to current account and the requested content is in current profile content, then the requested content can be accessed if query parameter `is_received_like` is set to `true`.  Only accepted content can be accessed.  ## Admin access - [Permissions::admin_view_all_profiles] - [Permissions::admin_moderate_media_content] - [Permissions::admin_edit_media_content_face_verified_value] - [Permissions::admin_edit_security_content_verified_value] - [Permissions::admin_process_reports]  # Content quality  When content owner or admins requests content, high quality version is returned even if lower quality version is requested.  For any other case preferred quality is used if API has not too much concurrent access.  
+pub async fn get_content(configuration: &configuration::Configuration, aid: &str, cid: &str, is_match: Option<bool>, is_received_like: Option<bool>, q: Option<&str>) -> Result<reqwest::Response, Error<GetContentError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_aid = aid;
     let p_path_cid = cid;
     let p_query_is_match = is_match;
+    let p_query_is_received_like = is_received_like;
     let p_query_q = q;
 
     let uri_str = format!("{}/media_api/content/{aid}/{cid}", configuration.base_path, aid=crate::apis::urlencode(p_path_aid), cid=crate::apis::urlencode(p_path_cid));
@@ -242,6 +243,9 @@ pub async fn get_content(configuration: &configuration::Configuration, aid: &str
 
     if let Some(ref param_value) = p_query_is_match {
         req_builder = req_builder.query(&[("is_match", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_is_received_like {
+        req_builder = req_builder.query(&[("is_received_like", &param_value.to_string())]);
     }
     if let Some(ref param_value) = p_query_q {
         req_builder = req_builder.query(&[("q", &param_value.to_string())]);
@@ -452,12 +456,13 @@ pub async fn get_media_content_states(configuration: &configuration::Configurati
     }
 }
 
-/// # Access  ## Own profile Unrestricted access.  ## Other profiles Normal account state required.  ## Private other profiles If the profile is a match, then the profile can be accessed if query parameter `is_match` is set to `true`.  If the profile is not a match, then permission `admin_view_all_profiles` is required.
-pub async fn get_profile_content_info(configuration: &configuration::Configuration, aid: &str, version: Option<&str>, is_match: Option<bool>) -> Result<models::GetProfileContentResult, Error<GetProfileContentInfoError>> {
+/// # Access  ## Own profile Unrestricted access.  ## Other profiles Normal account state required.  ## Private other profiles If the profile is a match, then the profile can be accessed if query parameter `is_match` is set to `true`.  If the requested profile has sent a like to current account, then the profile can be accessed if query parameter `is_received_like` is set to `true`.  If the profile is not a match and has not sent a like to current account, then permission `admin_view_all_profiles` is required.
+pub async fn get_profile_content_info(configuration: &configuration::Configuration, aid: &str, version: Option<&str>, is_match: Option<bool>, is_received_like: Option<bool>) -> Result<models::GetProfileContentResult, Error<GetProfileContentInfoError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_aid = aid;
     let p_query_version = version;
     let p_query_is_match = is_match;
+    let p_query_is_received_like = is_received_like;
 
     let uri_str = format!("{}/media_api/profile_content_info/{aid}", configuration.base_path, aid=crate::apis::urlencode(p_path_aid));
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
@@ -467,6 +472,9 @@ pub async fn get_profile_content_info(configuration: &configuration::Configurati
     }
     if let Some(ref param_value) = p_query_is_match {
         req_builder = req_builder.query(&[("is_match", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_is_received_like {
+        req_builder = req_builder.query(&[("is_received_like", &param_value.to_string())]);
     }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
@@ -501,11 +509,12 @@ pub async fn get_profile_content_info(configuration: &configuration::Configurati
 }
 
 /// The first byte is result variant: - 0 = Empty - 1 = VersionOnly - 2 = ContentWithVersion  Variant payloads: - Empty: no payload - VersionOnly: 16-byte profile content version UUID - ContentWithVersion:   - 16-byte profile content version UUID   - 1-byte verification status (low 8 bits of internal flags)   - 1-byte content count (max 6)   - repeated content entries:     - 16-byte content UUID     - 1-byte packed content info   - 4-byte crop size as little-endian f32   - 4-byte crop x as little-endian f32   - 4-byte crop y as little-endian f32  Packed content info byte layout: - bits 0..2: face verified (0 None, 1 false, 2 true) - bit 3: face detected - bit 4: accepted - bits 5..7: media content type
-pub async fn get_profile_content_info_binary(configuration: &configuration::Configuration, aid: &str, version: Option<&str>, is_match: Option<bool>) -> Result<reqwest::Response, Error<GetProfileContentInfoBinaryError>> {
+pub async fn get_profile_content_info_binary(configuration: &configuration::Configuration, aid: &str, version: Option<&str>, is_match: Option<bool>, is_received_like: Option<bool>) -> Result<reqwest::Response, Error<GetProfileContentInfoBinaryError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_aid = aid;
     let p_query_version = version;
     let p_query_is_match = is_match;
+    let p_query_is_received_like = is_received_like;
 
     let uri_str = format!("{}/media_api/profile_content_info_binary/{aid}", configuration.base_path, aid=crate::apis::urlencode(p_path_aid));
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
@@ -515,6 +524,9 @@ pub async fn get_profile_content_info_binary(configuration: &configuration::Conf
     }
     if let Some(ref param_value) = p_query_is_match {
         req_builder = req_builder.query(&[("is_match", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_is_received_like {
+        req_builder = req_builder.query(&[("is_received_like", &param_value.to_string())]);
     }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());

@@ -30,7 +30,7 @@ pub struct GetProfile;
 #[async_trait]
 impl BotAction for GetProfile {
     async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        get_profile(&state.api(), &state.account_id_string()?, None, None)
+        get_profile(&state.api(), &state.account_id_string()?, None, None, None)
             .await
             .change_context(TestError::ApiRequest)?;
         Ok(())

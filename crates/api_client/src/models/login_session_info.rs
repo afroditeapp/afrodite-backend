@@ -13,6 +13,10 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct LoginSessionInfo {
+    #[serde(rename = "app_attestation_android_sdk_version", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub app_attestation_android_sdk_version: Option<Option<i32>>,
+    #[serde(rename = "app_attestation_android_strong_integrity", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub app_attestation_android_strong_integrity: Option<Option<bool>>,
     #[serde(rename = "app_attestation_app_integrity", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub app_attestation_app_integrity: Option<Option<bool>>,
     #[serde(rename = "app_attestation_device_integrity", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -38,6 +42,8 @@ pub struct LoginSessionInfo {
 impl LoginSessionInfo {
     pub fn new(client_ip: String, login_method: models::LoginMethod, start_unix_time: models::UnixTime) -> LoginSessionInfo {
         LoginSessionInfo {
+            app_attestation_android_sdk_version: None,
+            app_attestation_android_strong_integrity: None,
             app_attestation_app_integrity: None,
             app_attestation_device_integrity: None,
             app_attestation_failed: None,

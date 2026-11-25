@@ -487,12 +487,13 @@ pub async fn get_my_profile(configuration: &configuration::Configuration, ) -> R
     }
 }
 
-/// Response includes version UUID which can be used for caching.  # Access  ## Own profile Unrestricted access.  ## Public other profiles Normal account state required.  ## Private other profiles If the profile is a match, then the profile can be accessed if query parameter `is_match` is set to `true`.  If the profile is not a match, then permission `admin_view_all_profiles` is required.  
-pub async fn get_profile(configuration: &configuration::Configuration, aid: &str, v: Option<&str>, is_match: Option<bool>) -> Result<models::GetProfileResult, Error<GetProfileError>> {
+/// Response includes version UUID which can be used for caching.  # Access  ## Own profile Unrestricted access.  ## Public other profiles Normal account state required.  ## Private other profiles If the profile is a match, then the profile can be accessed if query parameter `is_match` is set to `true`.  If the requested profile has sent a like to current account, then the profile can be accessed if query parameter `is_received_like` is set to `true`.  If the profile is not a match and has not sent a like to current account, then permission `admin_view_all_profiles` is required.  
+pub async fn get_profile(configuration: &configuration::Configuration, aid: &str, v: Option<&str>, is_match: Option<bool>, is_received_like: Option<bool>) -> Result<models::GetProfileResult, Error<GetProfileError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_aid = aid;
     let p_query_v = v;
     let p_query_is_match = is_match;
+    let p_query_is_received_like = is_received_like;
 
     let uri_str = format!("{}/profile_api/profile/{aid}", configuration.base_path, aid=crate::apis::urlencode(p_path_aid));
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
@@ -502,6 +503,9 @@ pub async fn get_profile(configuration: &configuration::Configuration, aid: &str
     }
     if let Some(ref param_value) = p_query_is_match {
         req_builder = req_builder.query(&[("is_match", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_is_received_like {
+        req_builder = req_builder.query(&[("is_received_like", &param_value.to_string())]);
     }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
@@ -573,11 +577,12 @@ pub async fn get_profile_app_notification_settings(configuration: &configuration
 }
 
 /// The first byte is result variant: - 0 = Empty - 1 = VersionOnly - 2 = ProfileWithVersion  Variant payloads: - Empty: no payload - VersionOnly:   - 16-byte profile version UUID   - null last seen time (0 byte) or last seen time as minimal i64 - ProfileWithVersion:   - 16-byte profile version UUID   - null last seen time (0 byte) or last seen time as minimal i64   - profile payload:     - optional name string:       - 1-byte u8 byte count (0 means null)       - string UTF-8 bytes when count > 0     - optional profile text string:       - 2-byte little-endian u16 byte count (0 means null)       - string UTF-8 bytes when count > 0     - 1-byte age     - attributes list:       - 2-byte little-endian u16 attribute count       - repeated entries:         - 2-byte little-endian u16 attribute id with value width flag in most significant bit:           - bits 0..14: attribute ID           - bit 15: value width flag (0 = u16 values, 1 = u32 values)         - 1-byte u8 value count         - repeated values:           - value width flag 0: 2-byte little-endian u16 values           - value width flag 1: 4-byte little-endian u32 values     - 1-byte profile flags:       - bit 0: unlimited_likes       - bit 1: name_accepted       - bit 2: ptext_accepted       - bits 3..7: reserved (0)     - 2-byte verification status i16 (little-endian)  Minimal i64 format: - i64 byte count (u8, values: 1, 2, 3, 4, 5, 6, 7, 8) - i64 bytes (little-endian)
-pub async fn get_profile_binary(configuration: &configuration::Configuration, aid: &str, v: Option<&str>, is_match: Option<bool>) -> Result<reqwest::Response, Error<GetProfileBinaryError>> {
+pub async fn get_profile_binary(configuration: &configuration::Configuration, aid: &str, v: Option<&str>, is_match: Option<bool>, is_received_like: Option<bool>) -> Result<reqwest::Response, Error<GetProfileBinaryError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_aid = aid;
     let p_query_v = v;
     let p_query_is_match = is_match;
+    let p_query_is_received_like = is_received_like;
 
     let uri_str = format!("{}/profile_api/profile_binary/{aid}", configuration.base_path, aid=crate::apis::urlencode(p_path_aid));
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
@@ -587,6 +592,9 @@ pub async fn get_profile_binary(configuration: &configuration::Configuration, ai
     }
     if let Some(ref param_value) = p_query_is_match {
         req_builder = req_builder.query(&[("is_match", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_is_received_like {
+        req_builder = req_builder.query(&[("is_received_like", &param_value.to_string())]);
     }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());

@@ -36,6 +36,7 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**get_association_membership**](docs/AccountApi.md#get_association_membership) | **GET** /account_api/association_membership | Get current association membership.
 *AccountApi* | [**get_email_address_state**](docs/AccountApi.md#get_email_address_state) | **GET** /account_api/email_address_state | 
 *AccountApi* | [**get_email_registration_platforms**](docs/AccountApi.md#get_email_registration_platforms) | **GET** /account_api/email_registration_platforms | Get email registration platforms from dynamic server config.
+*AccountApi* | [**get_feedback_config**](docs/AccountApi.md#get_feedback_config) | **GET** /account_api/feedback_config | Get feedback form config.
 *AccountApi* | [**get_news_item**](docs/AccountApi.md#get_news_item) | **GET** /account_api/news_item/{nid} | Get news item content using specific locale and fallback to locale \"en\" if news translation is not found.
 *AccountApi* | [**get_sign_in_with_info**](docs/AccountApi.md#get_sign_in_with_info) | **GET** /account_api/sign_in_with_info | Get current sign in with Apple and Google state.
 *AccountApi* | [**get_verify_email**](docs/AccountApi.md#get_verify_email) | **GET** /verify_email | Show email verification form page. Token is passed via query parameter to prevent email scanners from accidentally verifying the email.
@@ -65,6 +66,7 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**post_request_app_attest_challenge**](docs/AccountApi.md#post_request_app_attest_challenge) | **POST** /account_api/request_app_attest_challenge | Request a random string for app attestation token.
 *AccountApi* | [**post_request_email_login_token**](docs/AccountApi.md#post_request_email_login_token) | **POST** /account_api/request_email_login_token | Request email login token to be sent via email.
 *AccountApi* | [**post_reset_news_paging**](docs/AccountApi.md#post_reset_news_paging) | **POST** /account_api/reset_news_paging | 
+*AccountApi* | [**post_send_feedback**](docs/AccountApi.md#post_send_feedback) | **POST** /account_api/send_feedback | Send feedback to the server admins.
 *AccountApi* | [**post_send_verify_email_message**](docs/AccountApi.md#post_send_verify_email_message) | **POST** /account_api/send_verify_email_message | 
 *AccountApi* | [**post_set_account_deletion_request_state**](docs/AccountApi.md#post_set_account_deletion_request_state) | **POST** /account_api/set_account_deletion_request_state/{aid} | Request account deletion or cancel the deletion
 *AccountApi* | [**post_set_email_login_enabled**](docs/AccountApi.md#post_set_email_login_enabled) | **POST** /account_api/set_email_login_enabled | Enable or disable email login for an account.
@@ -123,6 +125,7 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**get_conversation_id**](docs/ChatApi.md#get_conversation_id) | **GET** /chat_api/conversation_id/{aid} | Get account specific conversation ID which can be used to display new message received notifications.
 *ChatApi* | [**get_daily_likes_left**](docs/ChatApi.md#get_daily_likes_left) | **GET** /chat_api/daily_likes_left | Get daily likes left value.
 *ChatApi* | [**get_initial_matches_iterator_state**](docs/ChatApi.md#get_initial_matches_iterator_state) | **GET** /chat_api/matches/initial_state | 
+*ChatApi* | [**get_initial_sent_likes_iterator_state**](docs/ChatApi.md#get_initial_sent_likes_iterator_state) | **GET** /chat_api/sent_likes/initial_state | 
 *ChatApi* | [**get_latest_public_key_id**](docs/ChatApi.md#get_latest_public_key_id) | **GET** /chat_api/latest_public_key_id/{aid} | Get latest public key ID for some account
 *ChatApi* | [**get_message_delivery_info**](docs/ChatApi.md#get_message_delivery_info) | **GET** /chat_api/message_delivery_info | Get all message delivery info where the API caller is the message sender.
 *ChatApi* | [**get_pending_chat_notifications**](docs/ChatApi.md#get_pending_chat_notifications) | **GET** /chat_api/pending_notifications | 
@@ -147,6 +150,7 @@ Class | Method | HTTP request | Description
 *ChatApi* | [**post_get_matches_iterator_page**](docs/ChatApi.md#post_get_matches_iterator_page) | **POST** /chat_api/matches | Get requested page of matches iterator page. If the page is empty there is no more matches available.
 *ChatApi* | [**post_get_new_received_likes_count**](docs/ChatApi.md#post_get_new_received_likes_count) | **POST** /chat_api/new_received_likes_count | 
 *ChatApi* | [**post_get_received_likes_page**](docs/ChatApi.md#post_get_received_likes_page) | **POST** /chat_api/received_likes | Get next page of received likes. If the page is empty there is no more received likes available.
+*ChatApi* | [**post_get_sent_likes_page**](docs/ChatApi.md#post_get_sent_likes_page) | **POST** /chat_api/sent_likes | Get next page of sent likes. If the page is empty there is no more sent likes available.
 *ChatApi* | [**post_get_sent_message**](docs/ChatApi.md#post_get_sent_message) | **POST** /chat_api/sent_message | Receive unreceived [model_chat::SignedMessageData] for sent message.
 *ChatApi* | [**post_mark_message_as_seen**](docs/ChatApi.md#post_mark_message_as_seen) | **POST** /chat_api/mark_message_as_seen | Mark received message as seen. Only latest message number is stored so client should mark the latest messages as seen.
 *ChatApi* | [**post_mark_received_likes_viewed**](docs/ChatApi.md#post_mark_received_likes_viewed) | **POST** /chat_api/mark_received_likes_viewed | 
@@ -224,8 +228,11 @@ Class | Method | HTTP request | Description
 *MediaApi* | [**put_profile_content**](docs/MediaApi.md#put_profile_content) | **PUT** /media_api/profile_content | Set new profile content for current account.
 *MediaApi* | [**put_security_content_info**](docs/MediaApi.md#put_security_content_info) | **PUT** /media_api/security_content_info | Set current security content for current account.
 *MediaApi* | [**put_upload_content**](docs/MediaApi.md#put_upload_content) | **PUT** /media_api/upload_content | Upload content to server for processing.
+*MediaAdminApi* | [**get_admin_media_content_iterator_page**](docs/MediaAdminApi.md#get_admin_media_content_iterator_page) | **POST** /media_api/get_admin_media_content_iterator_page | Get admin media content iterator page
+*MediaAdminApi* | [**get_all_account_media_content_admin**](docs/MediaAdminApi.md#get_all_account_media_content_admin) | **GET** /media_api/all_account_media_content_admin/{aid} | Get list of all media content on the server for one account.
 *MediaAdminApi* | [**get_image_processing_config**](docs/MediaAdminApi.md#get_image_processing_config) | **GET** /media_api/image_processing_config | Get image processing configuration
 *MediaAdminApi* | [**get_image_processing_config_warnings**](docs/MediaAdminApi.md#get_image_processing_config_warnings) | **GET** /media_api/image_processing_config_warnings | Get image processing config warnings
+*MediaAdminApi* | [**get_latest_media_content_id_db**](docs/MediaAdminApi.md#get_latest_media_content_id_db) | **GET** /media_api/get_latest_media_content_id_db | Get latest created media content ID DB
 *MediaAdminApi* | [**get_media_content_face_verified_null_list**](docs/MediaAdminApi.md#get_media_content_face_verified_null_list) | **GET** /media_api/media_content_face_verified_null_list | Get first page of accounts with security selfie and content where `face_verified` is NULL and `face_detected` is true or `face_detected_manual` is true. Oldest security content set time is first and count 25.
 *MediaAdminApi* | [**get_media_content_iteration_page**](docs/MediaAdminApi.md#get_media_content_iteration_page) | **GET** /media_api/get_media_content_iteration_page | Get a page of media content items iterated in descending content upload time order. Max 25 values are returned.
 *MediaAdminApi* | [**get_media_content_moderation_queue_page**](docs/MediaAdminApi.md#get_media_content_moderation_queue_page) | **GET** /media_api/media_content_moderation_queue_page | Get the first page from media content moderation queue. The first item is the oldest item and max 25 items are returned.
@@ -247,7 +254,7 @@ Class | Method | HTTP request | Description
 *ProfileApi* | [**get_profile_filters**](docs/ProfileApi.md#get_profile_filters) | **GET** /profile_api/profile_filters | Get current profile filters.
 *ProfileApi* | [**get_profile_from_database_debug_mode_benchmark**](docs/ProfileApi.md#get_profile_from_database_debug_mode_benchmark) | **GET** /profile_api/benchmark/profile/{aid} | Get account's current profile from database. Debug mode must be enabled that route can be used.
 *ProfileApi* | [**get_profile_privacy_settings**](docs/ProfileApi.md#get_profile_privacy_settings) | **GET** /profile_api/get_profile_privacy_settings | 
-*ProfileApi* | [**get_profile_statistics**](docs/ProfileApi.md#get_profile_statistics) | **GET** /profile_api/profile_statistics | Non default values for [model::GetProfileStatisticsParams] requires [model::Permissions::admin_profile_statistics].
+*ProfileApi* | [**get_profile_statistics**](docs/ProfileApi.md#get_profile_statistics) | **GET** /profile_api/profile_statistics | Setting [model::GetProfileStatisticsParams::generate_new_statistics] requires [model::Permissions::admin_profile_statistics].
 *ProfileApi* | [**get_search_age_range**](docs/ProfileApi.md#get_search_age_range) | **GET** /profile_api/search_age_range | Get account's current search age range
 *ProfileApi* | [**get_search_groups**](docs/ProfileApi.md#get_search_groups) | **GET** /profile_api/search_groups | Get account's current search groups (gender and what gender user is looking for)
 *ProfileApi* | [**post_automatic_profile_search_settings**](docs/ProfileApi.md#post_automatic_profile_search_settings) | **POST** /profile_api/automatic_profile_search_settings | 
@@ -291,6 +298,7 @@ Class | Method | HTTP request | Description
  - [AccountBanReasonDetails](docs/AccountBanReasonDetails.md)
  - [AccountBannedAdminType](docs/AccountBannedAdminType.md)
  - [AccountContent](docs/AccountContent.md)
+ - [AccountContentAdmin](docs/AccountContentAdmin.md)
  - [AccountExtraInfoSettings](docs/AccountExtraInfoSettings.md)
  - [AccountFilters](docs/AccountFilters.md)
  - [AccountId](docs/AccountId.md)
@@ -396,6 +404,7 @@ Class | Method | HTTP request | Description
  - [ContentId](docs/ContentId.md)
  - [ContentInfo](docs/ContentInfo.md)
  - [ContentInfoDetailed](docs/ContentInfoDetailed.md)
+ - [ContentInfoDetailedAdmin](docs/ContentInfoDetailedAdmin.md)
  - [ContentModerationState](docs/ContentModerationState.md)
  - [ContentProcessingState](docs/ContentProcessingState.md)
  - [ContentProcessingStateType](docs/ContentProcessingStateType.md)
@@ -442,6 +451,8 @@ Class | Method | HTTP request | Description
  - [EmailRegistrationPlatforms](docs/EmailRegistrationPlatforms.md)
  - [FavoriteProfilesPage](docs/FavoriteProfilesPage.md)
  - [FeaturesConfig](docs/FeaturesConfig.md)
+ - [FeedbackCategory](docs/FeedbackCategory.md)
+ - [FeedbackConfig](docs/FeedbackConfig.md)
  - [FirstImageConfig](docs/FirstImageConfig.md)
  - [GetAccountBanTimeResult](docs/GetAccountBanTimeResult.md)
  - [GetAccountDeletionRequestResult](docs/GetAccountDeletionRequestResult.md)
@@ -532,9 +543,15 @@ Class | Method | HTTP request | Description
  - [MatchesPage](docs/MatchesPage.md)
  - [MaxDistanceKm](docs/MaxDistanceKm.md)
  - [MediaAppNotificationSettings](docs/MediaAppNotificationSettings.md)
+ - [MediaContentExtraInfoSettings](docs/MediaContentExtraInfoSettings.md)
  - [MediaContentFaceVerifiedNullByAccount](docs/MediaContentFaceVerifiedNullByAccount.md)
+ - [MediaContentFilters](docs/MediaContentFilters.md)
+ - [MediaContentIdDbValue](docs/MediaContentIdDbValue.md)
  - [MediaContentIterationPage](docs/MediaContentIterationPage.md)
  - [MediaContentIterationValue](docs/MediaContentIterationValue.md)
+ - [MediaContentIteratorPage](docs/MediaContentIteratorPage.md)
+ - [MediaContentIteratorPageValue](docs/MediaContentIteratorPageValue.md)
+ - [MediaContentIteratorSettings](docs/MediaContentIteratorSettings.md)
  - [MediaContentModerationQueuePage](docs/MediaContentModerationQueuePage.md)
  - [MediaContentModerationQueueType](docs/MediaContentModerationQueueType.md)
  - [MediaContentModerationRejectedReasonCategory](docs/MediaContentModerationRejectedReasonCategory.md)
@@ -691,11 +708,16 @@ Class | Method | HTTP request | Description
  - [SecurityContentAdminInfo](docs/SecurityContentAdminInfo.md)
  - [SeenMessage](docs/SeenMessage.md)
  - [SendCustomEmail](docs/SendCustomEmail.md)
+ - [SendFeedback](docs/SendFeedback.md)
+ - [SendFeedbackResult](docs/SendFeedbackResult.md)
  - [SendLike](docs/SendLike.md)
  - [SendLikeResult](docs/SendLikeResult.md)
  - [SendMessageResult](docs/SendMessageResult.md)
  - [SendVerifyEmailMessageResult](docs/SendVerifyEmailMessageResult.md)
  - [SentBlocksPage](docs/SentBlocksPage.md)
+ - [SentLikeId](docs/SentLikeId.md)
+ - [SentLikesIteratorState](docs/SentLikesIteratorState.md)
+ - [SentLikesPage](docs/SentLikesPage.md)
  - [SentMessageIdList](docs/SentMessageIdList.md)
  - [ServerMaintenanceStatus](docs/ServerMaintenanceStatus.md)
  - [ServerMessageType](docs/ServerMessageType.md)

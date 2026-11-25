@@ -54,7 +54,7 @@ pub struct ChangeProfileText {
 impl BotAction for ChangeProfileText {
     async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
         let id = state.account_id_string()?;
-        let current_profile = get_profile(&state.api(), &id, None, None)
+        let current_profile = get_profile(&state.api(), &id, None, None, None)
             .await
             .change_context(TestError::ApiRequest)?
             .profile
@@ -138,7 +138,7 @@ pub struct GetProfile;
 #[async_trait]
 impl BotAction for GetProfile {
     async fn execute_impl(&self, state: &mut BotState) -> Result<(), TestError> {
-        let profile = get_profile(&state.api(), &state.account_id_string()?, None, None)
+        let profile = get_profile(&state.api(), &state.account_id_string()?, None, None, None)
             .await
             .change_context(TestError::ApiRequest)?
             .profile

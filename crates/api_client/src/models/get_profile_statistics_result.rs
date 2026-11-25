@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 pub struct GetProfileStatisticsResult {
     #[serde(rename = "account_count_bots_excluded")]
     pub account_count_bots_excluded: i64,
+    /// Age counts for public profiles, excluding bots.
     #[serde(rename = "age_counts")]
     pub age_counts: models::ProfileAgeCounts,
     /// Average WebSocket connections per hour
@@ -30,6 +31,9 @@ pub struct GetProfileStatisticsResult {
     pub generation_time: models::UnixTime,
     #[serde(rename = "online_account_count_bots_excluded")]
     pub online_account_count_bots_excluded: i64,
+    /// Age counts for private profiles which have completed the initial setup, excluding bots.  This is always `Some` currently. The value is optional so that in future, if more privacy is needed, private statistics can be omitted and clients can default to public statistics.
+    #[serde(rename = "private_age_counts", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub private_age_counts: Option<Option<models::ProfileAgeCounts>>,
 }
 
 impl GetProfileStatisticsResult {
@@ -42,6 +46,7 @@ impl GetProfileStatisticsResult {
             connections_min,
             generation_time,
             online_account_count_bots_excluded,
+            private_age_counts: None,
         }
     }
 }

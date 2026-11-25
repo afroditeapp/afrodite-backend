@@ -106,7 +106,7 @@ async fn handle_check_image_method(
     verification_image: &[u8],
 ) -> Result<bool, TestError> {
     let security_content =
-        media_api::get_content(&api.api(), &aid.aid, &cid.cid, Some(false), None)
+        media_api::get_content(&api.api(), &aid.aid, &cid.cid, Some(false), None, None)
             .await
             .change_context(TestError::ApiRequest)?
             .bytes()

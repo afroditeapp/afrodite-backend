@@ -30,6 +30,7 @@ async fn get_first_content_id(account: &Account) -> TestResult<ContentId> {
         &account.account_id_string(),
         None,
         None,
+        None,
     )
     .await?;
     let content = result

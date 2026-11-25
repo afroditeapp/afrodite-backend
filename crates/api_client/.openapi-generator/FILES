@@ -24,6 +24,7 @@ src/models/account_ban_reason_category.rs
 src/models/account_ban_reason_details.rs
 src/models/account_banned_admin_type.rs
 src/models/account_content.rs
+src/models/account_content_admin.rs
 src/models/account_extra_info_settings.rs
 src/models/account_filters.rs
 src/models/account_id.rs
@@ -129,6 +130,7 @@ src/models/connection_statistics.rs
 src/models/content_id.rs
 src/models/content_info.rs
 src/models/content_info_detailed.rs
+src/models/content_info_detailed_admin.rs
 src/models/content_moderation_state.rs
 src/models/content_processing_state.rs
 src/models/content_processing_state_type.rs
@@ -175,6 +177,8 @@ src/models/email_registration_domain_lists.rs
 src/models/email_registration_platforms.rs
 src/models/favorite_profiles_page.rs
 src/models/features_config.rs
+src/models/feedback_category.rs
+src/models/feedback_config.rs
 src/models/first_image_config.rs
 src/models/get_account_ban_time_result.rs
 src/models/get_account_deletion_request_result.rs
@@ -265,9 +269,15 @@ src/models/matches_iterator_state.rs
 src/models/matches_page.rs
 src/models/max_distance_km.rs
 src/models/media_app_notification_settings.rs
+src/models/media_content_extra_info_settings.rs
 src/models/media_content_face_verified_null_by_account.rs
+src/models/media_content_filters.rs
+src/models/media_content_id_db_value.rs
 src/models/media_content_iteration_page.rs
 src/models/media_content_iteration_value.rs
+src/models/media_content_iterator_page.rs
+src/models/media_content_iterator_page_value.rs
+src/models/media_content_iterator_settings.rs
 src/models/media_content_moderation_queue_page.rs
 src/models/media_content_moderation_queue_type.rs
 src/models/media_content_moderation_rejected_reason_category.rs
@@ -425,11 +435,16 @@ src/models/search_groups.rs
 src/models/security_content_admin_info.rs
 src/models/seen_message.rs
 src/models/send_custom_email.rs
+src/models/send_feedback.rs
+src/models/send_feedback_result.rs
 src/models/send_like.rs
 src/models/send_like_result.rs
 src/models/send_message_result.rs
 src/models/send_verify_email_message_result.rs
 src/models/sent_blocks_page.rs
+src/models/sent_like_id.rs
+src/models/sent_likes_iterator_state.rs
+src/models/sent_likes_page.rs
 src/models/sent_message_id_list.rs
 src/models/server_maintenance_status.rs
 src/models/server_message_type.rs

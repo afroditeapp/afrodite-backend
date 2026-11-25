@@ -14,6 +14,10 @@ use serde::{Deserialize, Serialize};
 /// AdminAccountLoginSessionInfo : Login session info for account extra info.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct AdminAccountLoginSessionInfo {
+    #[serde(rename = "app_attestation_android_sdk_version", skip_serializing_if = "Option::is_none")]
+    pub app_attestation_android_sdk_version: Option<i32>,
+    #[serde(rename = "app_attestation_android_strong_integrity", skip_serializing_if = "Option::is_none")]
+    pub app_attestation_android_strong_integrity: Option<bool>,
     #[serde(rename = "app_attestation_app_integrity", skip_serializing_if = "Option::is_none")]
     pub app_attestation_app_integrity: Option<bool>,
     #[serde(rename = "app_attestation_device_integrity", skip_serializing_if = "Option::is_none")]
@@ -32,6 +36,8 @@ impl AdminAccountLoginSessionInfo {
     /// Login session info for account extra info.
     pub fn new() -> AdminAccountLoginSessionInfo {
         AdminAccountLoginSessionInfo {
+            app_attestation_android_sdk_version: None,
+            app_attestation_android_strong_integrity: None,
             app_attestation_app_integrity: None,
             app_attestation_device_integrity: None,
             app_attestation_failed: None,

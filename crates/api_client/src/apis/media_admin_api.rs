@@ -15,6 +15,24 @@ use crate::{apis::ResponseContent, models};
 use super::{Error, configuration, ContentType};
 
 
+/// struct for typed errors of method [`get_admin_media_content_iterator_page`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetAdminMediaContentIteratorPageError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`get_all_account_media_content_admin`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetAllAccountMediaContentAdminError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`get_image_processing_config`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -28,6 +46,15 @@ pub enum GetImageProcessingConfigError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum GetImageProcessingConfigWarningsError {
+    Status401(),
+    Status500(),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`get_latest_media_content_id_db`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum GetLatestMediaContentIdDbError {
     Status401(),
     Status500(),
     UnknownValue(serde_json::Value),
@@ -115,6 +142,87 @@ pub enum PostSecurityContentVerifiedValueError {
 }
 
 
+/// HTTP method is POST to allow JSON request body for filters and extra info settings.  # Access - Permission [model::Permissions::admin_moderate_media_content]
+pub async fn get_admin_media_content_iterator_page(configuration: &configuration::Configuration, media_content_iterator_settings: models::MediaContentIteratorSettings) -> Result<models::MediaContentIteratorPage, Error<GetAdminMediaContentIteratorPageError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_media_content_iterator_settings = media_content_iterator_settings;
+
+    let uri_str = format!("{}/media_api/get_admin_media_content_iterator_page", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_media_content_iterator_settings);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::MediaContentIteratorPage`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::MediaContentIteratorPage`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetAdminMediaContentIteratorPageError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// # Access  - Permission [model::Permissions::admin_moderate_media_content] - Permission [model::Permissions::admin_edit_media_content_face_detected_value] - Permission [model::Permissions::admin_edit_media_content_face_verified_value]
+pub async fn get_all_account_media_content_admin(configuration: &configuration::Configuration, aid: &str) -> Result<models::AccountContentAdmin, Error<GetAllAccountMediaContentAdminError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_aid = aid;
+
+    let uri_str = format!("{}/media_api/all_account_media_content_admin/{aid}", configuration.base_path, aid=crate::apis::urlencode(p_path_aid));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::AccountContentAdmin`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::AccountContentAdmin`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetAllAccountMediaContentAdminError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 /// # Permissions Requires admin_server_view_image_processing_config.
 pub async fn get_image_processing_config(configuration: &configuration::Configuration, ) -> Result<models::ImageProcessingDynamicConfig, Error<GetImageProcessingConfigError>> {
 
@@ -187,6 +295,44 @@ pub async fn get_image_processing_config_warnings(configuration: &configuration:
     } else {
         let content = resp.text().await?;
         let entity: Option<GetImageProcessingConfigWarningsError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// # Access - Permission [model::Permissions::admin_moderate_media_content]
+pub async fn get_latest_media_content_id_db(configuration: &configuration::Configuration, ) -> Result<models::MediaContentIdDbValue, Error<GetLatestMediaContentIdDbError>> {
+
+    let uri_str = format!("{}/media_api/get_latest_media_content_id_db", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::MediaContentIdDbValue`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::MediaContentIdDbValue`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<GetLatestMediaContentIdDbError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

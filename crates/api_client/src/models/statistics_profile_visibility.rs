@@ -11,7 +11,8 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// 
+/// StatisticsProfileVisibility : Deprecated. Profile statistics are now always calculated for public and private profiles and are returned separately in [GetProfileStatisticsResult].
+/// Deprecated. Profile statistics are now always calculated for public and private profiles and are returned separately in [GetProfileStatisticsResult].
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum StatisticsProfileVisibility {
     #[serde(rename = "Public")]
