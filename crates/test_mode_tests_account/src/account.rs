@@ -9,10 +9,15 @@
 //!   custom reports are not configured in the test server config.
 //! - Association membership APIs are not tested because the association
 //!   feature is not enabled in the test server client features config.
+//! - Feedback APIs (`account/feedback.rs`) are tested only with the
+//!   default config where the feedback feature is disabled. Positive path
+//!   tests are not possible because feedback sending requires an SMTP
+//!   server configuration which is not available in the test environment.
 
 pub(crate) mod ban;
 pub(crate) mod client_features;
 pub(crate) mod delete;
+pub(crate) mod feedback;
 pub(crate) mod logout;
 pub(crate) mod news;
 pub(crate) mod notification;
